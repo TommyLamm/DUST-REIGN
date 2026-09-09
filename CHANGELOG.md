@@ -79,3 +79,14 @@
 - 新核心沿用既有 orb 吸附／拾取流程，HUD 顯示倒數與增幅內容。
 
 畫面：screenshots/v0.0.8-overclock-core.png
+
+## V0.0.9 — 2026-09-09
+
+REPAIR SCRAP 生存增量：
+
+- brute／elite 擊殺額外掉落紅橙修復碎片；crawler／rusher 維持原有 scrap 掉落。
+- 拾取修復碎片最多回復 18 點 Hull，不提供 XP，滿血也會消耗掉落物。
+- Canvas 以十字修復 orb 呈現，HUD 狀態回饋實際修復量；補強 selfCheck 驗證掉落與回血封頂。
+- 更新架構資料契約，維持零依賴與既有 orb 吸附流程。
+
+畫面：screenshots/v0.0.9-repair-scrap.png

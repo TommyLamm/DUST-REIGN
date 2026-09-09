@@ -17,6 +17,7 @@
   var OVERDRIVE_DURATION = 6;
   var OVERDRIVE_COOLDOWN = 0.62;
   var OVERDRIVE_DAMAGE = 1.5;
+  var REPAIR_HEAL = 18;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -547,6 +548,7 @@
     state.comboTimer = COMBO_WINDOW;
     state.score += Math.round(baseScore * (1 + (state.combo - 1) * 0.25));
     state.orbs.push({ kind: 'scrap', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
+    if (elite || e.kind === 'brute') state.orbs.push({ kind: 'repair', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 85, vy: (Math.random() - 0.5) * 85, r: 10, value: 0, life: 22 });
     if (elite) state.orbs.push({ kind: 'overdrive', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 95, vy: (Math.random() - 0.5) * 95, r: 11, value: 0, life: 18 });
     spawnParticles(e.x, e.y, e.color, elite ? 26 : e.kind === 'brute' ? 22 : 11, elite ? 260 : e.kind === 'brute' ? 220 : 150, elite ? 5 : e.kind === 'brute' ? 5 : 3);
     state.shake = Math.max(state.shake, elite ? 10 : e.kind === 'brute' ? 7 : 3);
@@ -642,6 +644,11 @@
         if (orb.kind === 'overdrive') {
           p.overdrive = OVERDRIVE_DURATION;
           spawnParticles(orb.x, orb.y, '#f0cf88', 14, 160, 3);
+        } else if (orb.kind === 'repair') {
+          var healed = Math.max(0, Math.min(REPAIR_HEAL, p.maxHp - p.hp));
+          p.hp += healed;
+          if (ui.statusText) ui.statusText.textContent = healed > 0 ? 'REPAIR SCRAP +' + Math.round(healed) + ' HULL' : 'REPAIR SCRAP — HULL FULL';
+          spawnParticles(orb.x, orb.y, '#ed6842', 12, 145, 3);
         } else {
           addXp(orb.value);
           spawnParticles(orb.x, orb.y, '#75d1b0', 6, 90, 2);
@@ -725,20 +732,26 @@
 
   function drawOrb(ctx, orb) {
     var power = orb.kind === 'overdrive';
-    var color = power ? '#f0cf88' : '#75d1b0';
+    var repair = orb.kind === 'repair';
+    var color = power ? '#f0cf88' : repair ? '#ed6842' : '#75d1b0';
     var pulse = 1 + Math.sin((orb.life * 5) + orb.x) * 0.12;
     ctx.save();
     ctx.globalAlpha = 0.2;
     ctx.fillStyle = color;
     ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.r * 2.8 * pulse, 0, TAU); ctx.fill();
     ctx.globalAlpha = 1;
-    if (power) {
+    if (power || repair) {
       ctx.translate(orb.x, orb.y);
-      ctx.rotate(orb.life * 1.8);
+      ctx.rotate(power ? orb.life * 1.8 : Math.PI / 4);
       ctx.fillStyle = color;
       ctx.fillRect(-orb.r * pulse, -orb.r * pulse, orb.r * 2 * pulse, orb.r * 2 * pulse);
-      ctx.fillStyle = '#fff1b5';
-      ctx.fillRect(-2, -2, 4, 4);
+      ctx.fillStyle = power ? '#fff1b5' : '#ffd2b0';
+      if (repair) {
+        ctx.fillRect(-2, -orb.r * 0.72, 4, orb.r * 1.44);
+        ctx.fillRect(-orb.r * 0.72, -2, orb.r * 1.44, 4);
+      } else {
+        ctx.fillRect(-2, -2, 4, 4);
+      }
     } else {
       ctx.fillStyle = color;
       ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.r * pulse, 0, TAU); ctx.fill();
@@ -1032,15 +1045,57 @@
   function selfCheck() {
     var test = makeState(320, 240);
     var previous = state;
+    var previousUi = ui;
+    var previousMouseDown = input.mouse.down;
+    var previousKeys = input.keys;
+    var firstScore;
+    var chainScore;
+    var lightDrop;
+    var bruteDrop;
+    var eliteDrop;
+    var healed;
+    var capped;
+    var repairStatus;
     state = test;
-    test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
-    killEnemy(0);
-    var firstScore = test.score;
-    test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
-    killEnemy(0);
-    state = previous;
-    if (test.player.hp !== test.player.maxHp || test.player.overdrive !== 0 || UPGRADES.length < 3 || test.combo !== 2 || firstScore !== 20 || test.score !== 45) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core' };
+    try {
+      test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+      killEnemy(0);
+      firstScore = test.score;
+      test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+      killEnemy(0);
+      chainScore = test.score;
+      test.orbs = [];
+      test.enemies.push({ kind: 'rusher', x: 0, y: 0, r: 10, color: '#e1a644' });
+      killEnemy(0);
+      lightDrop = test.orbs.some(function (orb) { return orb.kind === 'repair'; });
+      test.orbs = [];
+      test.enemies.push({ kind: 'brute', x: 0, y: 0, r: 23, color: '#bd573f' });
+      killEnemy(0);
+      bruteDrop = test.orbs.some(function (orb) { return orb.kind === 'repair'; });
+      test.orbs = [];
+      test.enemies.push({ kind: 'elite', x: 0, y: 0, r: 19, color: '#75d1b0' });
+      killEnemy(0);
+      eliteDrop = test.orbs.some(function (orb) { return orb.kind === 'repair'; }) && test.orbs.some(function (orb) { return orb.kind === 'overdrive'; });
+      ui = { width: 320, height: 240, statusText: { textContent: '' } };
+      input.keys = new Set();
+      input.mouse.down = false;
+      test.player.hp = 50;
+      test.orbs = [{ kind: 'repair', x: test.player.x, y: test.player.y, vx: 0, vy: 0, r: 10, value: 0, life: 22 }];
+      update(0.016);
+      healed = test.player.hp;
+      repairStatus = ui.statusText.textContent;
+      test.player.hp = test.player.maxHp - 5;
+      test.orbs = [{ kind: 'repair', x: test.player.x, y: test.player.y, vx: 0, vy: 0, r: 10, value: 0, life: 22 }];
+      update(0.016);
+      capped = test.player.hp;
+    } finally {
+      state = previous;
+      ui = previousUi;
+      input.mouse.down = previousMouseDown;
+      input.keys = previousKeys;
+    }
+    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap' };
   }
 
   var api = {
