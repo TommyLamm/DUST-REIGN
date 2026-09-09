@@ -19,6 +19,7 @@
   var OVERDRIVE_DAMAGE = 1.5;
   var REPAIR_HEAL = 18;
   var BOUNTY_SURGE_DURATION = 3;
+  var REPAIR_OVERFLOW_SCORE = 12;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -674,7 +675,12 @@
         } else if (orb.kind === 'repair') {
           var healed = Math.max(0, Math.min(REPAIR_HEAL, p.maxHp - p.hp));
           p.hp += healed;
-          if (ui.statusText) ui.statusText.textContent = healed > 0 ? 'REPAIR SCRAP +' + Math.round(healed) + ' HULL' : 'REPAIR SCRAP — HULL FULL';
+          if (healed > 0) {
+            if (ui.statusText) ui.statusText.textContent = 'REPAIR SCRAP +' + Math.round(healed) + ' HULL';
+          } else {
+            state.score += REPAIR_OVERFLOW_SCORE;
+            if (ui.statusText) ui.statusText.textContent = 'REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE';
+          }
           spawnParticles(orb.x, orb.y, '#ed6842', 12, 145, 3);
         } else {
           addXp(orb.value);
@@ -1085,6 +1091,9 @@
     var eliteDrop;
     var healed;
     var capped;
+    var cappedScore;
+    var overflowScore;
+    var overflowStatus;
     var repairStatus;
     var bountyScore;
     var secondBountyScore;
@@ -1120,10 +1129,17 @@
       update(0.016);
       healed = test.player.hp;
       repairStatus = ui.statusText.textContent;
+      test.score = 0;
       test.player.hp = test.player.maxHp - 5;
       test.orbs = [{ kind: 'repair', x: test.player.x, y: test.player.y, vx: 0, vy: 0, r: 10, value: 0, life: 22 }];
       update(0.016);
       capped = test.player.hp;
+      cappedScore = test.score;
+      test.player.hp = test.player.maxHp;
+      test.orbs = [{ kind: 'repair', x: test.player.x, y: test.player.y, vx: 0, vy: 0, r: 10, value: 0, life: 22 }];
+      update(0.016);
+      overflowScore = test.score;
+      overflowStatus = ui.statusText.textContent;
       test.score = 0;
       test.combo = 0;
       test.comboTimer = 0;
@@ -1164,8 +1180,8 @@
       input.mouse.down = previousMouseDown;
       input.keys = previousKeys;
     }
-    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !waveReset) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive' };
+    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !waveReset) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair' };
   }
 
 

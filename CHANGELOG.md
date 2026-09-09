@@ -111,3 +111,13 @@ BOUNTY SURGE 增量：
 - selfCheck 補上 3 秒啟動與較長超頻保留驗證；不改 XP、掉落、敵型或依賴。
 
 畫面：screenshots/v0.0.11-bounty-surge.png
+
+## V0.0.12 — 2026-09-09
+
+SALVAGE OVERFLOW 增量：
+
+- 滿 Hull 撿到 repair scrap 時不再只是浪費，改為固定 +12 SCORE；受傷時仍按原規則回血。
+- 狀態文字顯示 `REPAIR SCRAP FULL +12 SCORE`，不增加 XP、不改最大生命與掉落生命周期。
+- selfCheck 補上滿血轉分與受傷零 overflow 分驗證。
+
+畫面：screenshots/v0.0.12-salvage-overflow.png

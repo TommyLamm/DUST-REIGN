@@ -100,6 +100,14 @@
 - 邊界：重用既有 `player.overdrive` 與射擊倍率，不新增 orb、武器、敵型、XP 或持久化資料。
 - 驗證：bounty 達標同時加分並啟動 3 秒 surge；重複擊殺不再派獎；換波重置 bounty、overdrive 依既有倒數自然結束；node --check、selfCheck 與 surge 功能畫面煙霧測試通過。
 
+### 增量 13／SALVAGE OVERFLOW（V0.0.12，本輪）
+
+- 觸發：玩家已滿 Hull 時拾取 repair orb。
+- 行為：repair orb 仍立即消耗；無法回復的 18 HP 轉為固定 `+12 SCORE`，受傷時維持原本回血且不給 XP。
+- 呈現：HUD 狀態顯示 `REPAIR SCRAP FULL +12 SCORE`，Canvas 保留紅橙修復 orb 與拾取粒子。
+- 邊界：沿用既有 repair orb 生命周期，不新增資源、背包、最大生命或持久化；不影響 bounty、連殺與 overdrive。
+- 驗證：滿血拾取加分且只結算一次；受傷拾取只回血不加 overflow 分；node --check、selfCheck 與滿血 salvage 功能畫面煙霧測試通過。
+
 1. 對齊 HUD 與核心狀態：開始、升級、死亡、重開都只走一套流程。
 2. 補上 dash（Space／觸控）與短暫無敵，讓移動策略不只是在繞圈。
 3. 用原生 JS 做語法檢查、快速啟動測試與一輪瀏覽器煙霧測試；修正溢位、重複事件與手機觸控問題。
