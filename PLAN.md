@@ -83,6 +83,15 @@
 - 呈現：使用與 scrap／超頻核心可辨識的紅橙修復 orb 與拾取粒子，HUD／Canvas 清楚反映 Hull 回復。
 - 邊界：沿用既有 orb 吸附、生命週期與碰撞流程，不新增背包、治療技能、最大生命提升或外部資源；既有 scrap、overdrive、分數與敵人上限不變。
 - 驗證：brute／elite 擊殺能掉落修復碎片，crawler／rusher 不掉落；受傷拾取可回復且封頂 maxHp；與其他 orb 同時存在時不遺失 XP／效果；node --check game.js、selfCheck 與對應拾取畫面煙霧測試通過。
+
+### 增量 11／WAVE BOUNTY（V0.0.10，本輪）
+
+- 觸發：每次開始新波次時建立一個可見的擊殺目標與分數賞金；目標為 `5 + wave * 2`，賞金為 `120 + wave * 40`。
+- 行為：每擊殺一名敵人累計 bounty 進度；達標只派發一次賞金並鎖定完成狀態；下一波或重開局重置進度與賞金。
+- 呈現：沿用 mission rail 現有 objectiveText／objectiveProgress／threatIndex，顯示目標、進度、賞金與 LOW／HIGH／CRITICAL 威脅。
+- 邊界：不新增敵人類型、碰撞或資源系統；賞金只改分數，不影響 XP、掉落、連殺與敵人上限。
+- 驗證：擊殺能推進 bounty；達標只加一次分；進入下一波重置；DOM 進度與威脅字樣同步；node --check、selfCheck 與 bounty 功能畫面煙霧測試通過。
+
 1. 對齊 HUD 與核心狀態：開始、升級、死亡、重開都只走一套流程。
 2. 補上 dash（Space／觸控）與短暫無敵，讓移動策略不只是在繞圈。
 3. 用原生 JS 做語法檢查、快速啟動測試與一輪瀏覽器煙霧測試；修正溢位、重複事件與手機觸控問題。

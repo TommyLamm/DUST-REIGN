@@ -90,3 +90,14 @@ REPAIR SCRAP 生存增量：
 - 更新架構資料契約，維持零依賴與既有 orb 吸附流程。
 
 畫面：screenshots/v0.0.9-repair-scrap.png
+
+## V0.0.10 — 2026-09-09
+
+WAVE BOUNTY 增量：
+
+- 每波建立擊殺目標與一次性分數賞金；達標後只結算一次，下一波重新計算。
+- Mission rail 同步顯示目標、進度、賞金與 LOW／HIGH／CRITICAL 威脅級別。
+- 不新增敵型、碰撞或資源系統；賞金不改 XP、掉落、連殺或敵人上限。
+- `selfCheck()` 驗證一次性派獎與換波重置；完成畫面截圖保留 mission rail 的實際進度。
+
+畫面：screenshots/v0.0.10-wave-bounty.png

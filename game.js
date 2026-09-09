@@ -101,6 +101,10 @@
       kills: 0,
       wave: 1,
       waveTime: 0,
+      bountyTarget: 7,
+      bountyKills: 0,
+      bountyReward: 160,
+      bountyClaimed: false,
       spawnTimer: 0.5,
       banner: 1.8,
       shake: 0,
@@ -218,6 +222,9 @@
     var finalWave = first(['#finalWave', '[data-final-wave]']);
     var finalScore = first(['#finalScore', '[data-final-score]']);
     var finalBest = first(['#finalBest', '[data-final-best]']);
+    var objectiveText = first(['#objectiveText', '[data-objective-text]', '.objective-text']);
+    var objectiveProgress = first(['#objectiveProgress', '[data-objective-progress]', '.objective-progress']);
+    var threatIndex = first(['#threatIndex', '[data-threat-index]', '.threat-index']);
 
     return {
       root: root,
@@ -244,6 +251,9 @@
       finalWave: finalWave,
       finalScore: finalScore,
       finalBest: finalBest,
+      objectiveText: objectiveText,
+      objectiveProgress: objectiveProgress,
+      threatIndex: threatIndex,
       createdCanvas: createdCanvas,
       createdOverlay: createdOverlay,
       width: 960,
@@ -547,6 +557,16 @@
     state.combo = state.comboTimer > 0 ? Math.min(MAX_COMBO, state.combo + 1) : 1;
     state.comboTimer = COMBO_WINDOW;
     state.score += Math.round(baseScore * (1 + (state.combo - 1) * 0.25));
+    if (!state.bountyClaimed && state.bountyTarget > 0) {
+      state.bountyKills += 1;
+      if (state.bountyKills >= state.bountyTarget) {
+        state.bountyClaimed = true;
+        state.score += state.bountyReward;
+        state.banner = Math.max(state.banner, 2.1);
+        if (ui && ui.statusText) ui.statusText.textContent = 'BOUNTY CLEAR +' + state.bountyReward + ' SCORE';
+        spawnParticles(e.x, e.y, '#f0cf88', 12, 180, 3);
+      }
+    }
     state.orbs.push({ kind: 'scrap', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
     if (elite || e.kind === 'brute') state.orbs.push({ kind: 'repair', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 85, vy: (Math.random() - 0.5) * 85, r: 10, value: 0, life: 22 });
     if (elite) state.orbs.push({ kind: 'overdrive', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 95, vy: (Math.random() - 0.5) * 95, r: 11, value: 0, life: 18 });
@@ -578,6 +598,10 @@
     if (state.waveTime >= WAVE_LENGTH) {
       state.waveTime -= WAVE_LENGTH;
       state.wave += 1;
+      state.bountyTarget = 5 + state.wave * 2;
+      state.bountyKills = 0;
+      state.bountyReward = 120 + state.wave * 40;
+      state.bountyClaimed = false;
       state.banner = 2.3;
       spawnParticles(p.x, p.y, '#e0a84e', 24, 230, 3);
       for (var wi = 0; wi < Math.min(3, 1 + Math.floor(state.wave / 4)); wi += 1) spawnEnemy();
@@ -982,6 +1006,9 @@
     setText(ui.score, String(state.score).padStart(6, '0'));
     setText(ui.best, String(state.bestScore).padStart(6, '0'));
     setText(ui.kills, state.kills + ' HOSTILES');
+    if (ui.objectiveText) ui.objectiveText.textContent = state.bountyClaimed ? 'BOUNTY SECURED — HOLD THE DRYLINE.' : 'DROP ' + state.bountyTarget + ' HOSTILES FOR +' + state.bountyReward + ' SCORE.';
+    if (ui.objectiveProgress) ui.objectiveProgress.style.width = (state.bountyClaimed ? 100 : clamp(state.bountyKills / state.bountyTarget, 0, 1) * 100) + '%';
+    if (ui.threatIndex) ui.threatIndex.textContent = state.wave >= 5 ? 'CRITICAL' : state.wave >= 3 ? 'HIGH' : 'LOW';
     if (ui.healthFill) ui.healthFill.style.width = (clamp(state.player.hp / state.player.maxHp, 0, 1) * 100) + '%';
     if (ui.xpFill) ui.xpFill.style.width = (clamp(state.xp / state.xpNext, 0, 1) * 100) + '%';
     if (ui.healthFill && ui.healthFill.parentElement) ui.healthFill.parentElement.setAttribute('aria-valuenow', String(Math.ceil(state.player.hp)));
@@ -1056,6 +1083,10 @@
     var healed;
     var capped;
     var repairStatus;
+    var bountyScore;
+    var secondBountyScore;
+    var bountyClaimed;
+    var waveReset;
     state = test;
     try {
       test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
@@ -1088,15 +1119,41 @@
       test.orbs = [{ kind: 'repair', x: test.player.x, y: test.player.y, vx: 0, vy: 0, r: 10, value: 0, life: 22 }];
       update(0.016);
       capped = test.player.hp;
+      test.score = 0;
+      test.combo = 0;
+      test.comboTimer = 0;
+      test.bountyTarget = 1;
+      test.bountyKills = 0;
+      test.bountyReward = 37;
+      test.bountyClaimed = false;
+      test.enemies = [];
+      test.orbs = [];
+      test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+      killEnemy(0);
+      bountyScore = test.score;
+      bountyClaimed = test.bountyClaimed;
+      test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+      killEnemy(0);
+      secondBountyScore = test.score;
+      test.wave = 1;
+      test.waveTime = WAVE_LENGTH;
+      test.spawnTimer = 999;
+      test.bountyTarget = 1;
+      test.bountyKills = 1;
+      test.bountyReward = 37;
+      test.bountyClaimed = true;
+      update(0.016);
+      waveReset = test.wave === 2 && test.bountyTarget === 9 && test.bountyKills === 0 && test.bountyReward === 200 && !test.bountyClaimed;
     } finally {
       state = previous;
       ui = previousUi;
       input.mouse.down = previousMouseDown;
       input.keys = previousKeys;
     }
-    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap' };
+    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || !waveReset) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward' };
   }
+
 
   var api = {
     init: init,
