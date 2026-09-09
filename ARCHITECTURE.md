@@ -204,7 +204,7 @@ window.LunaGame.selfCheck()
 - **Runtime module**：`LunaGame`（`game.js`）
 - **Repository URL**：未設定（目前為本地 Git 專案）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.0.13（2026-09-09）
+- **Current changelog baseline**：V0.0.14（2026-09-09）
 - **Page build label**：`BUILD 0.1.0`（`index.html` 目前顯示值）
 - **Date of last architecture update**：2026-09-09
 
@@ -220,6 +220,7 @@ window.LunaGame.selfCheck()
 - **SCAV RADIO / run log**：沿用 `#runLog` 顯示 wave、bounty、repair 事件，最新在頂端且最多保留 5 筆，不做跨局保存。
 - **Repair Scrap / Hull**：重型或精英額外掉落的 `repair` orb；拾取最多回復 18 HP，滿 Hull 時改給 12 分，且不超過玩家 `maxHp`、不增加 XP。
 - **Overdrive / Overclock**：拾取精英核心後持續 6 秒；射擊冷卻乘以 0.62、傷害乘以 1.5。
+- **Storm Clock / Storm Front**：每波最後 5 秒進入的波末風暴狀態；生成間隔縮短至 0.72 倍，右側 mission rail 倒數同步切換為 STORM FRONT。
 - **HUD**（Heads-Up Display）：畫面上的生命、XP、波次、分數與效果提示。
 - **DPR**（Device Pixel Ratio）：用來讓 Canvas 在高密度螢幕保持清晰的縮放比例。
 - **DOM**（Document Object Model）：`index.html` 提供、由 `updateDomUi()` 同步的 HTML 節點。

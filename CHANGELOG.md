@@ -131,3 +131,14 @@ SCAV RADIO 增量：
 - 沿用既有 DOM／CSS，不新增後端、儲存或事件匯流排。
 
 畫面：screenshots/v0.0.13-scav-radio.png
+
+## V0.0.14 — 2026-09-09
+
+STORM CLOCK 增量：
+
+- 每波最後 5 秒進入 STORM FRONT，敵人生成間隔乘以 0.72，提升波末壓力峰值。
+- mission rail 新增 STORM CLOCK 倒數（`STORM FRONT 05s` / `NEXT FRONT 30s`）。
+- 換波後倒數重置為 30s；selfCheck 擴充 storm clock 與波末壓力驗證。
+- 不改波次長度、敵人生命、掉落或升級；維持零依賴與純前端架構。
+
+畫面：screenshots/v0.0.14-storm-clock.png

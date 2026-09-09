@@ -20,6 +20,8 @@
   var REPAIR_HEAL = 18;
   var BOUNTY_SURGE_DURATION = 3;
   var REPAIR_OVERFLOW_SCORE = 12;
+  var STORM_FRONT_SECONDS = 5;
+  var STORM_SPAWN_FACTOR = 0.72;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -69,6 +71,9 @@
     return dx * dx + dy * dy;
   }
 
+  function isStormFront() {
+    return !!state && state.waveTime >= WAVE_LENGTH - STORM_FRONT_SECONDS;
+  }
   function readBestScore() {
     try {
       if (typeof window === 'undefined' || !window.localStorage) return 0;
@@ -242,6 +247,7 @@
     var objectiveText = first(['#objectiveText', '[data-objective-text]', '.objective-text']);
     var objectiveProgress = first(['#objectiveProgress', '[data-objective-progress]', '.objective-progress']);
     var threatIndex = first(['#threatIndex', '[data-threat-index]', '.threat-index']);
+    var waveTimer = first(['#waveTimer', '[data-wave-timer]', '.wave-timer']);
     var runLog = first(['#runLog', '[data-run-log]', '.run-log']);
 
     return {
@@ -272,6 +278,7 @@
       objectiveText: objectiveText,
       objectiveProgress: objectiveProgress,
       threatIndex: threatIndex,
+      waveTimer: waveTimer,
       runLog: runLog,
       createdCanvas: createdCanvas,
       createdOverlay: createdOverlay,
@@ -649,7 +656,7 @@
     var enemyCap = Math.min(95, 5 + state.wave * 4);
     if (state.spawnTimer <= 0 && state.enemies.length < enemyCap) {
       spawnEnemy();
-      state.spawnTimer = Math.max(0.24, 1.08 - state.wave * 0.045) * (0.78 + Math.random() * 0.38);
+      state.spawnTimer = Math.max(0.24, 1.08 - state.wave * 0.045) * (0.78 + Math.random() * 0.38) * (isStormFront() ? STORM_SPAWN_FACTOR : 1);
     }
 
     for (var bi = state.bullets.length - 1; bi >= 0; bi -= 1) {
@@ -1040,6 +1047,10 @@
     if (ui.objectiveText) ui.objectiveText.textContent = state.bountyClaimed ? 'BOUNTY SECURED — HOLD THE DRYLINE.' : 'DROP ' + state.bountyTarget + ' HOSTILES FOR +' + state.bountyReward + ' SCORE.';
     if (ui.objectiveProgress) ui.objectiveProgress.style.width = (state.bountyClaimed ? 100 : clamp(state.bountyKills / state.bountyTarget, 0, 1) * 100) + '%';
     if (ui.threatIndex) ui.threatIndex.textContent = state.wave >= 5 ? 'CRITICAL' : state.wave >= 3 ? 'HIGH' : 'LOW';
+    if (ui.waveTimer) {
+      var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - state.waveTime));
+      ui.waveTimer.textContent = (isStormFront() ? 'STORM FRONT ' : 'NEXT FRONT ') + String(seconds).padStart(2, '0') + 's';
+    }
     if (ui.healthFill) ui.healthFill.style.width = (clamp(state.player.hp / state.player.maxHp, 0, 1) * 100) + '%';
     if (ui.xpFill) ui.xpFill.style.width = (clamp(state.xp / state.xpNext, 0, 1) * 100) + '%';
     if (ui.healthFill && ui.healthFill.parentElement) ui.healthFill.parentElement.setAttribute('aria-valuenow', String(Math.ceil(state.player.hp)));
@@ -1123,6 +1134,7 @@
     var bountySurge;
     var retainedSurge;
     var waveReset;
+    var stormClock;
     state = test;
     try {
       test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
@@ -1187,6 +1199,10 @@
       test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
       killEnemy(0);
       retainedSurge = test.player.overdrive;
+      test.waveTime = WAVE_LENGTH - STORM_FRONT_SECONDS - 0.01;
+      stormClock = !isStormFront();
+      test.waveTime = WAVE_LENGTH - STORM_FRONT_SECONDS;
+      stormClock = stormClock && isStormFront();
       test.wave = 1;
       test.waveTime = WAVE_LENGTH;
       test.spawnTimer = 999;
@@ -1202,8 +1218,8 @@
       input.mouse.down = previousMouseDown;
       input.keys = previousKeys;
     }
-    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !waveReset) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair' };
+    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !stormClock || !waveReset) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure' };
   }
 
 
