@@ -10,6 +10,7 @@
 
   var TAU = Math.PI * 2;
   var WAVE_LENGTH = 30;
+  var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
     { id: 'quick-hands', title: 'QUICK HANDS', text: 'Fire 18% faster', apply: function (s) { s.player.fireRate *= 0.82; } },
@@ -58,6 +59,23 @@
     return dx * dx + dy * dy;
   }
 
+  function readBestScore() {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return 0;
+      return Math.max(0, Number(window.localStorage.getItem(BEST_SCORE_KEY)) || 0);
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function writeBestScore(score) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(BEST_SCORE_KEY, String(score));
+    } catch (error) {
+      // Private browsing and file URLs can deny storage; the run still works without it.
+    }
+  }
+
   function makeState(width, height) {
     return {
       width: width || 960,
@@ -69,6 +87,7 @@
       xp: 0,
       xpNext: 100,
       score: 0,
+      bestScore: readBestScore(),
       kills: 0,
       wave: 1,
       waveTime: 0,
@@ -183,8 +202,10 @@
     var xpFill = first(['#xpFill', '#xp-fill', '[data-xp-fill]', '.xp-fill']);
     var runState = first(['#runState', '[data-run-state]', '.run-state']);
     var statusText = first(['#hudStatusText', '[data-status-text]', '.status-text']);
+    var best = first(['#hudBest', '[data-best-score]', '.best-score']);
     var finalWave = first(['#finalWave', '[data-final-wave]']);
     var finalScore = first(['#finalScore', '[data-final-score]']);
+    var finalBest = first(['#finalBest', '[data-final-best]']);
 
     return {
       root: root,
@@ -207,8 +228,10 @@
       xpFill: xpFill,
       runState: runState,
       statusText: statusText,
+      best: best,
       finalWave: finalWave,
       finalScore: finalScore,
+      finalBest: finalBest,
       createdCanvas: createdCanvas,
       createdOverlay: createdOverlay,
       width: 960,
@@ -494,6 +517,12 @@
     state.shake = Math.max(state.shake, e.kind === 'brute' ? 7 : 3);
   }
 
+  function recordBestScore() {
+    if (!state || state.score <= state.bestScore) return;
+    state.bestScore = state.score;
+    writeBestScore(state.bestScore);
+  }
+
   function update(dt) {
     if (!state || state.over || state.paused) return;
     var p = state.player;
@@ -596,6 +625,7 @@
         if (p.hp <= 0) {
           p.hp = 0;
           state.over = true;
+          recordBestScore();
           input.mouse.down = false;
           if (ui.gameOver) ui.gameOver.hidden = false;
         }
@@ -820,6 +850,7 @@
     setText(ui.level, String(state.level).padStart(2, '0'));
     setText(ui.wave, String(state.wave).padStart(2, '0'));
     setText(ui.score, String(state.score).padStart(6, '0'));
+    setText(ui.best, String(state.bestScore).padStart(6, '0'));
     setText(ui.kills, state.kills + ' HOSTILES');
     if (ui.healthFill) ui.healthFill.style.width = (clamp(state.player.hp / state.player.maxHp, 0, 1) * 100) + '%';
     if (ui.xpFill) ui.xpFill.style.width = (clamp(state.xp / state.xpNext, 0, 1) * 100) + '%';
@@ -828,6 +859,7 @@
     if (ui.gameOver) ui.gameOver.hidden = !state.over;
     if (ui.finalWave) ui.finalWave.textContent = String(state.wave).padStart(2, '0');
     if (ui.finalScore) ui.finalScore.textContent = String(state.score).padStart(6, '0');
+    if (ui.finalBest) ui.finalBest.textContent = String(state.bestScore).padStart(6, '0');
     if (ui.runState && state.over) ui.runState.textContent = 'SIGNAL LOST';
     else if (ui.runState && !ui.startScreen) ui.runState.textContent = 'LIVE';
     if (ui.statusText && state.over) ui.statusText.textContent = 'SIGNAL LOST — PRESS R TO REDEPLOY';

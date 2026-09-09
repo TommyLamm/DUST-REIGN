@@ -257,6 +257,10 @@ h1 {
   letter-spacing: 0.12em;
 }
 
+.signal-readout--best strong {
+  color: var(--amber);
+}
+
 .signal-dot,
 .arena-state i,
 .feed-dot {
@@ -729,9 +733,9 @@ h1 {
 
 .result-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  width: min(420px, 100%);
+  width: min(560px, 100%);
   margin: 28px 0;
   background: var(--line);
 }
@@ -1184,6 +1188,10 @@ h1 {
     display: none;
   }
 
+  .topbar-meta .signal-readout:nth-child(2) {
+    display: none;
+  }
+
   .game-layout {
     display: block;
   }
@@ -1268,6 +1276,11 @@ h1 {
   .overlay-foot {
     margin-top: 25px;
     font-size: 7px;
+  }
+
+  .result-grid {
+    grid-template-columns: 1fr;
+    width: min(280px, 100%);
   }
 
   .upgrade-panel {
