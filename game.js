@@ -10,6 +10,8 @@
 
   var TAU = Math.PI * 2;
   var WAVE_LENGTH = 30;
+  var COMBO_WINDOW = 4;
+  var MAX_COMBO = 8;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -87,6 +89,8 @@
       xp: 0,
       xpNext: 100,
       score: 0,
+      combo: 0,
+      comboTimer: 0,
       bestScore: readBestScore(),
       kills: 0,
       wave: 1,
@@ -515,7 +519,10 @@
     state.enemies.splice(index, 1);
     state.kills += 1;
     var elite = e.kind === 'elite';
-    state.score += elite ? 180 : e.kind === 'brute' ? 90 : e.kind === 'rusher' ? 35 : 20;
+    var baseScore = elite ? 180 : e.kind === 'brute' ? 90 : e.kind === 'rusher' ? 35 : 20;
+    state.combo = state.comboTimer > 0 ? Math.min(MAX_COMBO, state.combo + 1) : 1;
+    state.comboTimer = COMBO_WINDOW;
+    state.score += Math.round(baseScore * (1 + (state.combo - 1) * 0.25));
     state.orbs.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
     spawnParticles(e.x, e.y, e.color, elite ? 26 : e.kind === 'brute' ? 22 : 11, elite ? 260 : e.kind === 'brute' ? 220 : 150, elite ? 5 : e.kind === 'brute' ? 5 : 3);
     state.shake = Math.max(state.shake, elite ? 10 : e.kind === 'brute' ? 7 : 3);
@@ -537,6 +544,8 @@
     p.cooldown = Math.max(0, p.cooldown - dt);
     p.dashCooldown = Math.max(0, p.dashCooldown - dt);
     p.invulnerable = Math.max(0, p.invulnerable - dt);
+    state.comboTimer = Math.max(0, state.comboTimer - dt);
+    if (state.comboTimer === 0) state.combo = 0;
 
     if (state.waveTime >= WAVE_LENGTH) {
       state.waveTime -= WAVE_LENGTH;
@@ -791,6 +800,18 @@
     ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = 'rgba(233,217,185,.75)';
     ctx.fillText('KILLS ' + state.kills + '   SCORE ' + state.score, ui.width - 20, 39);
+    if (state.combo > 0) {
+      ctx.textAlign = 'left';
+      ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#75d1b0';
+      ctx.fillText('CHAIN x' + state.combo, 20, 124);
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, 145, 148, 4);
+      ctx.fillStyle = '#75d1b0'; ctx.fillRect(20, 145, 148 * state.comboTimer / COMBO_WINDOW, 4);
+      ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = 'rgba(233,217,185,.75)';
+      ctx.fillText('KEEP THE SIGNAL HOT', 20, 155);
+    }
+    ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(ui.width - 145, 58, 125, 4);
     ctx.fillStyle = '#d49a55'; ctx.fillRect(ui.width - 145, 58, 125 * clamp(state.waveTime / WAVE_LENGTH, 0, 1), 4);
     ctx.restore();
@@ -932,8 +953,16 @@
 
   function selfCheck() {
     var test = makeState(320, 240);
-    if (test.player.hp !== test.player.maxHp || UPGRADES.length < 3 || test.enemies.length !== 0) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold' };
+    var previous = state;
+    state = test;
+    test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+    killEnemy(0);
+    var firstScore = test.score;
+    test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+    killEnemy(0);
+    state = previous;
+    if (test.player.hp !== test.player.maxHp || UPGRADES.length < 3 || test.combo !== 2 || firstScore !== 20 || test.score !== 45) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window' };
   }
 
   var api = {
