@@ -14,6 +14,9 @@
   var MAX_COMBO = 8;
   var DASH_PULSE_DURATION = 0.24;
   var DASH_PULSE_RADIUS = 88;
+  var OVERDRIVE_DURATION = 6;
+  var OVERDRIVE_COOLDOWN = 0.62;
+  var OVERDRIVE_DAMAGE = 1.5;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -117,7 +120,8 @@
         aim: 0,
         invulnerable: 0,
         dashCooldown: 0,
-        dashPulse: 0
+        dashPulse: 0,
+        overdrive: 0
       },
       bullets: [],
       enemies: [],
@@ -440,11 +444,11 @@
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       r: p.bulletSize,
-      damage: p.damage,
+      damage: p.damage * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1),
       life: 1.25,
       trail: []
     });
-    p.cooldown = p.fireRate;
+    p.cooldown = p.fireRate * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1);
     spawnParticles(p.x + Math.cos(angle) * 24, p.y + Math.sin(angle) * 24, '#f7d48a', 4, 90, 2);
     state.shake = Math.max(state.shake, 2.5);
   }
@@ -542,7 +546,8 @@
     state.combo = state.comboTimer > 0 ? Math.min(MAX_COMBO, state.combo + 1) : 1;
     state.comboTimer = COMBO_WINDOW;
     state.score += Math.round(baseScore * (1 + (state.combo - 1) * 0.25));
-    state.orbs.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
+    state.orbs.push({ kind: 'scrap', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
+    if (elite) state.orbs.push({ kind: 'overdrive', x: e.x, y: e.y, vx: (Math.random() - 0.5) * 95, vy: (Math.random() - 0.5) * 95, r: 11, value: 0, life: 18 });
     spawnParticles(e.x, e.y, e.color, elite ? 26 : e.kind === 'brute' ? 22 : 11, elite ? 260 : e.kind === 'brute' ? 220 : 150, elite ? 5 : e.kind === 'brute' ? 5 : 3);
     state.shake = Math.max(state.shake, elite ? 10 : e.kind === 'brute' ? 7 : 3);
   }
@@ -564,6 +569,7 @@
     p.dashCooldown = Math.max(0, p.dashCooldown - dt);
     p.invulnerable = Math.max(0, p.invulnerable - dt);
     p.dashPulse = Math.max(0, p.dashPulse - dt);
+    p.overdrive = Math.max(0, p.overdrive - dt);
     state.comboTimer = Math.max(0, state.comboTimer - dt);
     if (state.comboTimer === 0) state.combo = 0;
 
@@ -633,8 +639,13 @@
       orb.y += orb.vy * dt;
       orb.life -= dt;
       if (od < p.r + orb.r + 5) {
-        addXp(orb.value);
-        spawnParticles(orb.x, orb.y, '#75d1b0', 6, 90, 2);
+        if (orb.kind === 'overdrive') {
+          p.overdrive = OVERDRIVE_DURATION;
+          spawnParticles(orb.x, orb.y, '#f0cf88', 14, 160, 3);
+        } else {
+          addXp(orb.value);
+          spawnParticles(orb.x, orb.y, '#75d1b0', 6, 90, 2);
+        }
         state.orbs.splice(oi, 1);
       } else if (orb.life <= 0) state.orbs.splice(oi, 1);
     }
@@ -713,16 +724,27 @@
   }
 
   function drawOrb(ctx, orb) {
+    var power = orb.kind === 'overdrive';
+    var color = power ? '#f0cf88' : '#75d1b0';
     var pulse = 1 + Math.sin((orb.life * 5) + orb.x) * 0.12;
     ctx.save();
     ctx.globalAlpha = 0.2;
-    ctx.fillStyle = '#75d1b0';
+    ctx.fillStyle = color;
     ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.r * 2.8 * pulse, 0, TAU); ctx.fill();
     ctx.globalAlpha = 1;
-    ctx.fillStyle = '#75d1b0';
-    ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.r * pulse, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#d5f4d8';
-    ctx.beginPath(); ctx.arc(orb.x - 2, orb.y - 2, 2, 0, TAU); ctx.fill();
+    if (power) {
+      ctx.translate(orb.x, orb.y);
+      ctx.rotate(orb.life * 1.8);
+      ctx.fillStyle = color;
+      ctx.fillRect(-orb.r * pulse, -orb.r * pulse, orb.r * 2 * pulse, orb.r * 2 * pulse);
+      ctx.fillStyle = '#fff1b5';
+      ctx.fillRect(-2, -2, 4, 4);
+    } else {
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.r * pulse, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#d5f4d8';
+      ctx.beginPath(); ctx.arc(orb.x - 2, orb.y - 2, 2, 0, TAU); ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -843,6 +865,17 @@
       ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
       ctx.fillStyle = 'rgba(233,217,185,.75)';
       ctx.fillText('KEEP THE SIGNAL HOT', 20, 155);
+    }
+    if (p.overdrive > 0) {
+      ctx.textAlign = 'left';
+      ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#f0cf88';
+      ctx.fillText('OVERCLOCK ' + p.overdrive.toFixed(1) + 's', 20, 176);
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, 197, 148, 4);
+      ctx.fillStyle = '#f0cf88'; ctx.fillRect(20, 197, 148 * p.overdrive / OVERDRIVE_DURATION, 4);
+      ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = 'rgba(233,217,185,.75)';
+      ctx.fillText('DAMAGE +50% / COOLDOWN -38%', 20, 207);
     }
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(ui.width - 145, 58, 125, 4);
@@ -1006,8 +1039,8 @@
     test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
     killEnemy(0);
     state = previous;
-    if (test.player.hp !== test.player.maxHp || UPGRADES.length < 3 || test.combo !== 2 || firstScore !== 20 || test.score !== 45) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window' };
+    if (test.player.hp !== test.player.maxHp || test.player.overdrive !== 0 || UPGRADES.length < 3 || test.combo !== 2 || firstScore !== 20 || test.score !== 45) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core' };
   }
 
   var api = {
