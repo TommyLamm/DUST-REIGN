@@ -61,3 +61,12 @@
 - 玩家周圍加入擴散護環，讓無敵與攻擊窗口更容易讀取。
 
 畫面：screenshots/v0.0.6-dash-pulse.png
+## V0.0.7 — 2026-09-09
+
+安全暫停增量：
+
+- 已開始的戰鬥可用 P 或 Esc 暫停／恢復，暫停期間停止敵人、子彈與計時更新。
+- Canvas 顯示 SIGNAL PAUSED 與恢復提示，頂部狀態同步顯示 PAUSED。
+- 開始、升級與死亡畫面不會被暫停快捷鍵誤切換。
+
+畫面：screenshots/v0.0.7-safe-pause.png

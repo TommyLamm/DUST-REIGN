@@ -296,6 +296,7 @@
       if (key === 'w' || key === 'a' || key === 's' || key === 'd' || key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright' || key === ' ') event.preventDefault();
       input.keys.add(key);
       if (key === ' ' && !event.repeat) dash();
+      if ((key === 'p' || key === 'escape') && !event.repeat) togglePause();
       if (state && state.paused && ui.startScreen && !ui.startScreen.hidden && key === 'enter') beginRun();
       if (state && state.over && key === 'r') restart();
       if (state && state.paused && (key === '1' || key === '2' || key === '3')) chooseUpgrade(Number(key) - 1);
@@ -340,6 +341,13 @@
     if (ui.runState) ui.runState.textContent = 'LIVE';
     if (ui.statusText) ui.statusText.textContent = 'SIGNAL LIVE — KEEP MOVING';
     if (ui.canvas && ui.canvas.focus) ui.canvas.focus();
+  }
+
+  function togglePause() {
+    if (!state || state.over || state.upgradeChoices.length || (ui.startScreen && !ui.startScreen.hidden)) return;
+    state.paused = !state.paused;
+    if (ui.runState) ui.runState.textContent = state.paused ? 'PAUSED' : 'LIVE';
+    if (ui.statusText) ui.statusText.textContent = state.paused ? 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME' : 'SIGNAL LIVE — KEEP MOVING';
   }
 
   function restart() {
@@ -850,6 +858,18 @@
       ctx.fillStyle = '#f0cf88';
       ctx.font = '700 26px ui-monospace, SFMono-Regular, Consolas, monospace';
       ctx.fillText('WAVE ' + String(state.wave).padStart(2, '0'), ui.width / 2, ui.height * .2);
+      ctx.restore();
+    }
+    if (state.paused && !state.over && !state.upgradeChoices.length && (!ui.startScreen || ui.startScreen.hidden)) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(8,7,7,.74)'; ctx.fillRect(0, 0, ui.width, ui.height);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f0cf88';
+      ctx.font = '700 34px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillText('SIGNAL PAUSED', ui.width / 2, ui.height * .42);
+      ctx.fillStyle = '#75d1b0';
+      ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillText('PRESS P OR ESC TO RESUME', ui.width / 2, ui.height * .53);
       ctx.restore();
     }
     if (state.over) {
