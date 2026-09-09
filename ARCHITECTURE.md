@@ -60,7 +60,7 @@
 
 | 區域 | 主要函式 | 責任 |
 | --- | --- | --- |
-| DOM／尺寸 | `setupDom`, `resize`, `updateDomUi` | 找到或建立 Canvas／overlay，處理 DPR、尺寸與 HUD／ARIA 更新 |
+| DOM／尺寸 | `setupDom`, `resize`, `updateDomUi`, `logEvent` | 找到或建立 Canvas／overlay，處理 DPR、尺寸、HUD／ARIA 與 SCAV RADIO 更新 |
 | 輸入 | `bindInput`, `pointerPosition`, `beginRun`, `togglePause` | 鍵盤、滑鼠／指標、觸控按鈕與焦點生命週期 |
 | 模擬 | `update`, `spawnEnemy`, `spawnParticles` | 時間、移動、生成、子彈、敵人、粒子與限制 |
 | 戰鬥／進程 | `shoot`, `dash`, `killEnemy`, `addXp`, `chooseUpgrade` | 傷害、接觸碰撞、衝刺脈衝、scrap／repair／overdrive 掉落、連殺、升級與死亡 |
@@ -109,8 +109,8 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 
 1. `frame(timestamp)` 將時間差 `dt` 限制在最多 `0.05s`，呼叫 `update(dt)`。
 2. `update` 在 `paused` 或 `over` 時直接返回；否則更新波次計時、玩家輸入／瞄準／射擊、敵人生成、子彈碰撞、Orb 吸附／拾取、敵人追擊／接觸傷害與粒子。
-3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、surge overdrive、scrap／repair／overdrive 掉落與特效；生命歸零時記錄最高分並顯示死亡畫面。
-4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；bounty claim 顯示 surge 狀態，repair 拾取後回饋 Hull 回復或 overflow 分數狀態文字。
+3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、surge overdrive、scrap／repair／overdrive 掉落與特效，並把 bounty 事件寫入 SCAV RADIO；生命歸零時記錄最高分並顯示死亡畫面。
+4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；`logEvent` 將 wave／bounty／repair 事件插入既有 run log，`restart()` 清掉動態事件，bounty claim 顯示 surge 狀態。
 5. `draw` 依背景 → Orb → 子彈 → 敵人 → 粒子 → 玩家 → Canvas HUD → overlay 的順序繪製，再排程下一幀。
 
 ### 3.5 DOM 合約與公開 API
@@ -120,7 +120,7 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 - Canvas：`#gameCanvas`。
 - HUD：`#hudHealth`、`#hudXp`、`#hudXpMax`、`#hudLevel`、`#hudWave`、`#hudScore`、`#hudKills`、`#healthFill`、`#xpFill`、`#hudBest`。
 - 狀態／畫面：`#runState`、`#hudStatusText`、`#startScreen`、`#startBtn`、`#gameOverScreen`、`#finalWave`、`#finalScore`、`#finalBest`、`#restartBtn`。
-- 任務側欄：`#objectiveText`、`#objectiveProgress`、`#threatIndex`；由 `updateDomUi()` 顯示當波 bounty 與威脅。
+- 任務側欄：`#objectiveText`、`#objectiveProgress`、`#threatIndex`、`#runLog`；由 `updateDomUi()` 顯示當波 bounty／威脅，`logEvent()` 保留最新 5 筆事件。
 - 升級：`#upgradePanel`、`#upgradeChoices`；按鈕使用 `data-upgrade-index` 供事件委派。
 - 觸控：`#touchUp`、`#touchLeft`、`#touchDown`、`#touchRight`、`#touchShoot`、`#touchDash`。
 
@@ -204,7 +204,7 @@ window.LunaGame.selfCheck()
 - **Runtime module**：`LunaGame`（`game.js`）
 - **Repository URL**：未設定（目前為本地 Git 專案）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.0.12（2026-09-09）
+- **Current changelog baseline**：V0.0.13（2026-09-09）
 - **Page build label**：`BUILD 0.1.0`（`index.html` 目前顯示值）
 - **Date of last architecture update**：2026-09-09
 
@@ -217,6 +217,7 @@ window.LunaGame.selfCheck()
 - **Chain**：4 秒連殺窗口內的連殺層數，最多 8 層。
 - **Bounty / Wave Bounty**：每波的擊殺目標與一次性分數賞金；達標後鎖定 `bountyClaimed`，換波重設。
 - **Bounty Surge**：賞金達標時沿用 `player.overdrive` 的 3 秒短暫火力提升；已有更長超頻時只保留較長值。
+- **SCAV RADIO / run log**：沿用 `#runLog` 顯示 wave、bounty、repair 事件，最新在頂端且最多保留 5 筆，不做跨局保存。
 - **Repair Scrap / Hull**：重型或精英額外掉落的 `repair` orb；拾取最多回復 18 HP，滿 Hull 時改給 12 分，且不超過玩家 `maxHp`、不增加 XP。
 - **Overdrive / Overclock**：拾取精英核心後持續 6 秒；射擊冷卻乘以 0.62、傷害乘以 1.5。
 - **HUD**（Heads-Up Display）：畫面上的生命、XP、波次、分數與效果提示。

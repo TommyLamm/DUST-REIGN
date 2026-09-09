@@ -121,3 +121,13 @@ SALVAGE OVERFLOW 增量：
 - selfCheck 補上滿血轉分與受傷零 overflow 分驗證。
 
 畫面：screenshots/v0.0.12-salvage-overflow.png
+
+## V0.0.13 — 2026-09-09
+
+SCAV RADIO 增量：
+
+- bounty 達標、波次推進、repair 回復與滿血 overflow 會寫入右側事件欄。
+- 最新事件插到頂端並限制 5 筆，含當局時間戳；重開只清除動態事件，找不到 run log 時遊戲仍可運作。
+- 沿用既有 DOM／CSS，不新增後端、儲存或事件匯流排。
+
+畫面：screenshots/v0.0.13-scav-radio.png

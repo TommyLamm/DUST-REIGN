@@ -156,6 +156,21 @@
     if (node) node.textContent = String(value);
   }
 
+  function logEvent(message) {
+    if (!state || !ui || !ui.runLog || typeof document === 'undefined') return;
+    var elapsed = Math.max(0, Math.floor((state.wave - 1) * WAVE_LENGTH + state.waveTime));
+    var item = document.createElement('li');
+    item.className = 'run-log-entry';
+    var time = document.createElement('time');
+    var copy = document.createElement('span');
+    time.textContent = String(Math.floor(elapsed / 60)).padStart(2, '0') + ':' + String(elapsed % 60).padStart(2, '0');
+    copy.textContent = message;
+    item.appendChild(time);
+    item.appendChild(copy);
+    ui.runLog.insertBefore(item, ui.runLog.firstChild);
+    while (ui.runLog.children.length > 5) ui.runLog.removeChild(ui.runLog.lastElementChild);
+  }
+
   function setupDom(options) {
     options = options || {};
     var root = options.root || first(['[data-luna-game]', '#game-root', '.game-root', '.game-container', '.game-shell']);
@@ -227,6 +242,7 @@
     var objectiveText = first(['#objectiveText', '[data-objective-text]', '.objective-text']);
     var objectiveProgress = first(['#objectiveProgress', '[data-objective-progress]', '.objective-progress']);
     var threatIndex = first(['#threatIndex', '[data-threat-index]', '.threat-index']);
+    var runLog = first(['#runLog', '[data-run-log]', '.run-log']);
 
     return {
       root: root,
@@ -256,6 +272,7 @@
       objectiveText: objectiveText,
       objectiveProgress: objectiveProgress,
       threatIndex: threatIndex,
+      runLog: runLog,
       createdCanvas: createdCanvas,
       createdOverlay: createdOverlay,
       width: 960,
@@ -376,6 +393,7 @@
     input.mouse.y = ui.height / 2;
     input.mouse.down = false;
     input.touchMode = false;
+    if (ui.runLog) qa('.run-log-entry', ui.runLog).forEach(function (item) { item.parentNode.removeChild(item); });
     ui.overlay.hidden = true;
     if (ui.startScreen) ui.startScreen.hidden = true;
     if (ui.gameOver) ui.gameOver.hidden = true;
@@ -568,6 +586,7 @@
         state.player.overdrive = surgeDuration;
         state.banner = Math.max(state.banner, 2.1);
         if (ui && ui.statusText) ui.statusText.textContent = 'BOUNTY CLEAR +' + state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's';
+        logEvent('BOUNTY SECURED // SURGE ONLINE');
         spawnParticles(e.x, e.y, '#f0cf88', 12, 180, 3);
       }
     }
@@ -606,6 +625,7 @@
       state.bountyKills = 0;
       state.bountyReward = 120 + state.wave * 40;
       state.bountyClaimed = false;
+      logEvent('WAVE ' + String(state.wave).padStart(2, '0') + ' // BOUNTY RESET');
       state.banner = 2.3;
       spawnParticles(p.x, p.y, '#e0a84e', 24, 230, 3);
       for (var wi = 0; wi < Math.min(3, 1 + Math.floor(state.wave / 4)); wi += 1) spawnEnemy();
@@ -677,9 +697,11 @@
           p.hp += healed;
           if (healed > 0) {
             if (ui.statusText) ui.statusText.textContent = 'REPAIR SCRAP +' + Math.round(healed) + ' HULL';
+            logEvent('REPAIR SCRAP +' + Math.round(healed) + ' HULL');
           } else {
             state.score += REPAIR_OVERFLOW_SCORE;
             if (ui.statusText) ui.statusText.textContent = 'REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE';
+            logEvent('REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE');
           }
           spawnParticles(orb.x, orb.y, '#ed6842', 12, 145, 3);
         } else {
