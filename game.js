@@ -18,6 +18,7 @@
   var OVERDRIVE_COOLDOWN = 0.62;
   var OVERDRIVE_DAMAGE = 1.5;
   var REPAIR_HEAL = 18;
+  var BOUNTY_SURGE_DURATION = 3;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -562,8 +563,10 @@
       if (state.bountyKills >= state.bountyTarget) {
         state.bountyClaimed = true;
         state.score += state.bountyReward;
+        var surgeDuration = Math.max(state.player.overdrive, BOUNTY_SURGE_DURATION);
+        state.player.overdrive = surgeDuration;
         state.banner = Math.max(state.banner, 2.1);
-        if (ui && ui.statusText) ui.statusText.textContent = 'BOUNTY CLEAR +' + state.bountyReward + ' SCORE';
+        if (ui && ui.statusText) ui.statusText.textContent = 'BOUNTY CLEAR +' + state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's';
         spawnParticles(e.x, e.y, '#f0cf88', 12, 180, 3);
       }
     }
@@ -1086,6 +1089,8 @@
     var bountyScore;
     var secondBountyScore;
     var bountyClaimed;
+    var bountySurge;
+    var retainedSurge;
     var waveReset;
     state = test;
     try {
@@ -1131,10 +1136,19 @@
       test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
       killEnemy(0);
       bountyScore = test.score;
+      bountySurge = test.player.overdrive;
       bountyClaimed = test.bountyClaimed;
       test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
       killEnemy(0);
       secondBountyScore = test.score;
+      test.player.overdrive = 5;
+      test.bountyTarget = 1;
+      test.bountyKills = 0;
+      test.bountyReward = 0;
+      test.bountyClaimed = false;
+      test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
+      killEnemy(0);
+      retainedSurge = test.player.overdrive;
       test.wave = 1;
       test.waveTime = WAVE_LENGTH;
       test.spawnTimer = 999;
@@ -1150,8 +1164,8 @@
       input.mouse.down = previousMouseDown;
       input.keys = previousKeys;
     }
-    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || !waveReset) throw new Error('LunaGame self-check failed');
-    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward' };
+    if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !waveReset) throw new Error('LunaGame self-check failed');
+    return { ok: true, upgrades: UPGRADES.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive' };
   }
 
 

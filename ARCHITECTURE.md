@@ -82,11 +82,11 @@
 - 敵人：`crawler`、`rusher`、`brute`；第 3 波起才有封頂 14% 機率的 `elite`。
 - 擊殺：普通敵人依種類給 20／35／90 分，精英給 180 分；4 秒內連殺每層提高該次擊殺分數 25%，最多 8 層。
 - **掉落**：`scrap` orb 提供 XP；`brute` 與 `elite` 額外掉落 `repair` orb，拾取最多回復 18 HP 且不提供 XP；精英另額外掉落 `overdrive` orb。Orb 在 165px 內被玩家吸附。
-- **賞金**：每波目標為 `5 + wave * 2` 名敵人，賞金為 `120 + wave * 40` 分；`killEnemy` 達標只結算一次，換波重設。
+- **賞金**：每波目標為 `5 + wave * 2` 名敵人，賞金為 `120 + wave * 40` 分；`killEnemy` 達標只結算一次，並以 `Math.max(player.overdrive, BOUNTY_SURGE_DURATION)` 啟動短暫 surge，換波重設 bounty。
 - 升級：從 6 個固定升級中隨機選 3 個，選取後直接 mutates 玩家欄位。
 - 效能上限：敵人數量上限為 `min(95, 5 + wave * 4)`，粒子最多 700 個。
 
-主要平衡常數：`WAVE_LENGTH = 30s`、`COMBO_WINDOW = 4s`、`DASH_PULSE_DURATION = 0.24s`、`DASH_PULSE_RADIUS = 88px`、`OVERDRIVE_DURATION = 6s`、`REPAIR_HEAL = 18 HP`。
+主要平衡常數：`WAVE_LENGTH = 30s`、`COMBO_WINDOW = 4s`、`DASH_PULSE_DURATION = 0.24s`、`DASH_PULSE_RADIUS = 88px`、`OVERDRIVE_DURATION = 6s`、`BOUNTY_SURGE_DURATION = 3s`、`REPAIR_HEAL = 18 HP`。
 
 ### 3.4 更新／繪製流程與狀態轉移
 
@@ -109,8 +109,8 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 
 1. `frame(timestamp)` 將時間差 `dt` 限制在最多 `0.05s`，呼叫 `update(dt)`。
 2. `update` 在 `paused` 或 `over` 時直接返回；否則更新波次計時、玩家輸入／瞄準／射擊、敵人生成、子彈碰撞、Orb 吸附／拾取、敵人追擊／接觸傷害與粒子。
-3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、scrap／repair／overdrive 掉落與特效；生命歸零時記錄最高分並顯示死亡畫面。
-4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；repair 拾取後回饋 Hull 回復狀態文字。
+3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、surge overdrive、scrap／repair／overdrive 掉落與特效；生命歸零時記錄最高分並顯示死亡畫面。
+4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；bounty claim 顯示 surge 狀態，repair 拾取後回饋 Hull 回復狀態文字。
 5. `draw` 依背景 → Orb → 子彈 → 敵人 → 粒子 → 玩家 → Canvas HUD → overlay 的順序繪製，再排程下一幀。
 
 ### 3.5 DOM 合約與公開 API
@@ -184,7 +184,7 @@ node --check game.js
 
 ```javascript
 window.LunaGame.selfCheck()
-// { ok: true, upgrades: 6, controls: ..., combo: ..., overdrive: ..., repair: ..., bounty: ... }
+// { ok: true, upgrades: 6, controls: ..., combo: ..., overdrive: ..., repair: ..., bounty: ..., surge: ... }
 ```
 
 `selfCheck()` 覆蓋基本擊殺、連殺分數、升級清單與初始效果；目前沒有 Jest、Playwright 或其他測試框架。手動 smoke test 應至少確認：開始／重開、WASD／方向鍵移動、滑鼠按住射擊、Space／觸控 Dash、升級三選一、P／Esc 暫停、死亡結算、高分保留與窄螢幕觸控操作。
@@ -204,7 +204,7 @@ window.LunaGame.selfCheck()
 - **Runtime module**：`LunaGame`（`game.js`）
 - **Repository URL**：未設定（目前為本地 Git 專案）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.0.10（2026-09-09）
+- **Current changelog baseline**：V0.0.11（2026-09-09）
 - **Page build label**：`BUILD 0.1.0`（`index.html` 目前顯示值）
 - **Date of last architecture update**：2026-09-09
 
@@ -216,6 +216,7 @@ window.LunaGame.selfCheck()
 - **Orb**：戰場掉落物；`scrap` 給 XP，`repair` 最多回復 18 HP，`overdrive` 啟動精英超頻效果。
 - **Chain**：4 秒連殺窗口內的連殺層數，最多 8 層。
 - **Bounty / Wave Bounty**：每波的擊殺目標與一次性分數賞金；達標後鎖定 `bountyClaimed`，換波重設。
+- **Bounty Surge**：賞金達標時沿用 `player.overdrive` 的 3 秒短暫火力提升；已有更長超頻時只保留較長值。
 - **Repair Scrap / Hull**：重型或精英額外掉落的 `repair` orb；拾取立即回復最多 18 HP，且不超過玩家 `maxHp`、不增加 XP。
 - **Overdrive / Overclock**：拾取精英核心後持續 6 秒；射擊冷卻乘以 0.62、傷害乘以 1.5。
 - **HUD**（Heads-Up Display）：畫面上的生命、XP、波次、分數與效果提示。

@@ -101,3 +101,13 @@ WAVE BOUNTY 增量：
 - `selfCheck()` 驗證一次性派獎與換波重置；完成畫面截圖保留 mission rail 的實際進度。
 
 畫面：screenshots/v0.0.10-wave-bounty.png
+
+## V0.0.11 — 2026-09-09
+
+BOUNTY SURGE 增量：
+
+- bounty 達標除一次性分數外啟動 3 秒 OVERDRIVE；已有更長超頻時保留原倒數。
+- HUD 沿用 OVERCLOCK 進度條，狀態文字追加 SURGE 秒數，讓完成賞金有即時火力回報。
+- selfCheck 補上 3 秒啟動與較長超頻保留驗證；不改 XP、掉落、敵型或依賴。
+
+畫面：screenshots/v0.0.11-bounty-surge.png
