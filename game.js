@@ -12,6 +12,8 @@
   var WAVE_LENGTH = 30;
   var COMBO_WINDOW = 4;
   var MAX_COMBO = 8;
+  var DASH_PULSE_DURATION = 0.24;
+  var DASH_PULSE_RADIUS = 88;
   var BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
@@ -114,7 +116,8 @@
         xpMult: 1,
         aim: 0,
         invulnerable: 0,
-        dashCooldown: 0
+        dashCooldown: 0,
+        dashPulse: 0
       },
       bullets: [],
       enemies: [],
@@ -453,6 +456,14 @@
     p.y = clamp(p.y + (dy / length) * 140, p.r, ui.height - p.r);
     p.dashCooldown = 2.2;
     p.invulnerable = Math.max(p.invulnerable, 0.32);
+    p.dashPulse = DASH_PULSE_DURATION;
+    for (var di = state.enemies.length - 1; di >= 0; di -= 1) {
+      var enemy = state.enemies[di];
+      if (dist2(p.x, p.y, enemy.x, enemy.y) > DASH_PULSE_RADIUS * DASH_PULSE_RADIUS) continue;
+      enemy.hp -= p.damage * 0.8;
+      spawnParticles(enemy.x, enemy.y, '#75d1b0', 7, 110, 2);
+      if (enemy.hp <= 0) killEnemy(di);
+    }
     state.shake = Math.max(state.shake, 5);
     spawnParticles(p.x, p.y, '#75d1b0', 16, 180, 3);
   }
@@ -544,6 +555,7 @@
     p.cooldown = Math.max(0, p.cooldown - dt);
     p.dashCooldown = Math.max(0, p.dashCooldown - dt);
     p.invulnerable = Math.max(0, p.invulnerable - dt);
+    p.dashPulse = Math.max(0, p.dashPulse - dt);
     state.comboTimer = Math.max(0, state.comboTimer - dt);
     if (state.comboTimer === 0) state.combo = 0;
 
@@ -754,6 +766,19 @@
     var p = state.player;
     ctx.save();
     ctx.translate(p.x, p.y);
+    if (p.dashPulse > 0) {
+      var pulseProgress = 1 - p.dashPulse / DASH_PULSE_DURATION;
+      ctx.save();
+      ctx.globalAlpha = clamp(p.dashPulse / DASH_PULSE_DURATION, 0, 1) * 0.85;
+      ctx.strokeStyle = '#75d1b0';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#75d1b0';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(0, 0, p.r + 12 + pulseProgress * DASH_PULSE_RADIUS, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.rotate(p.aim);
     ctx.globalAlpha = p.invulnerable > 0 && Math.floor(p.invulnerable * 18) % 2 ? 0.45 : 1;
     ctx.shadowColor = '#75d1b0';
