@@ -28,7 +28,8 @@
   var listeners = [];
   var input = {
     keys: new Set(),
-    mouse: { x: 480, y: 320, down: false }
+    mouse: { x: 480, y: 320, down: false },
+    touchMode: false
   };
 
   function q(selector, root) {
@@ -273,6 +274,7 @@
     on(ui.canvas, 'pointermove', pointerPosition);
     on(ui.canvas, 'pointerdown', function (event) {
       pointerPosition(event);
+      if (event.pointerType === 'touch') input.touchMode = true;
       if (ui.canvas.focus) ui.canvas.focus();
       if (state && state.over) { restart(); return; }
       if (event.button === undefined || event.button === 0) input.mouse.down = true;
@@ -287,18 +289,18 @@
     Object.keys(touchKeys).forEach(function (id) {
       var button = document.getElementById(id);
       if (!button) return;
-      on(button, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.keys.add(touchKeys[id]); });
+      on(button, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; input.keys.add(touchKeys[id]); });
       on(button, 'pointerup', function () { input.keys.delete(touchKeys[id]); });
       on(button, 'pointercancel', function () { input.keys.delete(touchKeys[id]); });
     });
     var touchShoot = document.getElementById('touchShoot');
     if (touchShoot) {
-      on(touchShoot, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.mouse.down = true; });
+      on(touchShoot, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; input.mouse.down = true; });
       on(touchShoot, 'pointerup', function () { input.mouse.down = false; });
       on(touchShoot, 'pointercancel', function () { input.mouse.down = false; });
     }
     var touchDash = document.getElementById('touchDash');
-    if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); beginRun(); dash(); });
+    if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; dash(); });
   }
 
   function beginRun() {
@@ -318,6 +320,7 @@
     input.mouse.x = ui.width / 2 + 100;
     input.mouse.y = ui.height / 2;
     input.mouse.down = false;
+    input.touchMode = false;
     ui.overlay.hidden = true;
     if (ui.startScreen) ui.startScreen.hidden = true;
     if (ui.gameOver) ui.gameOver.hidden = true;
@@ -371,9 +374,22 @@
   function shoot() {
     var p = state.player;
     if (p.cooldown > 0) return;
-    var dx = input.mouse.x - p.x;
-    var dy = input.mouse.y - p.y;
-    var length = Math.hypot(dx, dy) || 1;
+    var aimX = input.mouse.x;
+    var aimY = input.mouse.y;
+    if (input.touchMode && state.enemies.length) {
+      // ponytail: linear nearest-target scan; the enemy cap keeps it cheap, use a spatial hash only if mobile scale grows.
+      var nearest = state.enemies[0];
+      var nearestDistance = dist2(p.x, p.y, nearest.x, nearest.y);
+      for (var ni = 1; ni < state.enemies.length; ni += 1) {
+        var candidate = state.enemies[ni];
+        var candidateDistance = dist2(p.x, p.y, candidate.x, candidate.y);
+        if (candidateDistance < nearestDistance) { nearest = candidate; nearestDistance = candidateDistance; }
+      }
+      aimX = nearest.x;
+      aimY = nearest.y;
+    }
+    var dx = aimX - p.x;
+    var dy = aimY - p.y;
     var angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.035;
     p.aim = Math.atan2(dy, dx);
     var speed = p.bulletSpeed;
