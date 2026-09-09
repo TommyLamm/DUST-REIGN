@@ -360,9 +360,12 @@
     var x = side === 0 ? -margin : side === 1 ? ui.width + margin : Math.random() * ui.width;
     var y = side === 2 ? -margin : side === 3 ? ui.height + margin : Math.random() * ui.height;
     var roll = Math.random();
-    var kind = roll < 0.16 + Math.min(0.1, state.wave * 0.012) ? 'rusher' : roll > 0.87 ? 'brute' : 'crawler';
+    var eliteChance = state.wave >= 3 ? Math.min(0.045 + (state.wave - 3) * 0.012, 0.14) : 0;
+    var kind = Math.random() < eliteChance ? 'elite' : (roll < 0.16 + Math.min(0.1, state.wave * 0.012) ? 'rusher' : roll > 0.87 ? 'brute' : 'crawler');
     var e;
-    if (kind === 'brute') {
+    if (kind === 'elite') {
+      e = { kind: kind, x: x, y: y, r: 19, hp: 190 + state.wave * 24, maxHp: 190 + state.wave * 24, speed: 43 + state.wave * 1.8, damage: 20 + state.wave * 1.3, color: '#75d1b0', touchCooldown: 0, phase: Math.random() * TAU };
+    } else if (kind === 'brute') {
       e = { kind: kind, x: x, y: y, r: 23, hp: 125 + state.wave * 16, maxHp: 125 + state.wave * 16, speed: 32 + state.wave * 1.4, damage: 25 + state.wave * 1.6, color: '#bd573f', touchCooldown: 0, phase: Math.random() * TAU };
     } else if (kind === 'rusher') {
       e = { kind: kind, x: x, y: y, r: 10, hp: 26 + state.wave * 5, maxHp: 26 + state.wave * 5, speed: 91 + state.wave * 3.2, damage: 9 + state.wave * 0.8, color: '#e1a644', touchCooldown: 0, phase: Math.random() * TAU };
@@ -511,10 +514,11 @@
     if (!e) return;
     state.enemies.splice(index, 1);
     state.kills += 1;
-    state.score += e.kind === 'brute' ? 90 : e.kind === 'rusher' ? 35 : 20;
-    state.orbs.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: 7, value: e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
-    spawnParticles(e.x, e.y, e.color, e.kind === 'brute' ? 22 : 11, e.kind === 'brute' ? 220 : 150, e.kind === 'brute' ? 5 : 3);
-    state.shake = Math.max(state.shake, e.kind === 'brute' ? 7 : 3);
+    var elite = e.kind === 'elite';
+    state.score += elite ? 180 : e.kind === 'brute' ? 90 : e.kind === 'rusher' ? 35 : 20;
+    state.orbs.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, r: elite ? 9 : 7, value: elite ? 40 : e.kind === 'brute' ? 34 : e.kind === 'rusher' ? 13 : 10, life: 28 });
+    spawnParticles(e.x, e.y, e.color, elite ? 26 : e.kind === 'brute' ? 22 : 11, elite ? 260 : e.kind === 'brute' ? 220 : 150, elite ? 5 : e.kind === 'brute' ? 5 : 3);
+    state.shake = Math.max(state.shake, elite ? 10 : e.kind === 'brute' ? 7 : 3);
   }
 
   function recordBestScore() {
@@ -611,7 +615,7 @@
       var dx = p.x - e.x;
       var dy = p.y - e.y;
       var d = Math.hypot(dx, dy) || 1;
-      var speed = e.speed * (e.kind === 'rusher' ? 1 + Math.sin(state.waveTime * 5 + e.phase) * 0.08 : 1);
+      var speed = e.speed * (e.kind === 'rusher' ? 1 + Math.sin(state.waveTime * 5 + e.phase) * 0.08 : e.kind === 'elite' ? 1 + Math.sin(state.waveTime * 3 + e.phase) * 0.12 : 1);
       e.x += (dx / d) * speed * dt;
       e.y += (dy / d) * speed * dt;
       e.touchCooldown = Math.max(0, e.touchCooldown - dt);
@@ -700,9 +704,23 @@
     var bob = Math.sin(state.waveTime * 6 + e.phase) * (e.kind === 'rusher' ? 2 : 1);
     ctx.translate(0, bob);
     ctx.shadowColor = e.color;
-    ctx.shadowBlur = e.kind === 'rusher' ? 10 : 5;
+    ctx.shadowBlur = e.kind === 'rusher' ? 10 : e.kind === 'elite' ? 15 : 5;
     ctx.fillStyle = e.color;
-    if (e.kind === 'brute') {
+    if (e.kind === 'elite') {
+      ctx.strokeStyle = 'rgba(210, 241, 205, .85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, e.r + 7, 0, TAU); ctx.stroke();
+      ctx.beginPath();
+      for (var si = 0; si < 8; si += 1) {
+        var sa = (si / 8) * TAU;
+        var sr = si % 2 ? e.r * 0.7 : e.r;
+        if (!si) ctx.moveTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+        else ctx.lineTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#24433e'; ctx.beginPath(); ctx.arc(2, 0, e.r * .45, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#f5d17b'; ctx.fillRect(e.r * .22, -2, 5, 4);
+    } else if (e.kind === 'brute') {
       ctx.beginPath();
       ctx.moveTo(e.r, 0); ctx.lineTo(e.r * .45, e.r * .82); ctx.lineTo(-e.r * .65, e.r * .74); ctx.lineTo(-e.r, 0); ctx.lineTo(-e.r * .65, -e.r * .74); ctx.lineTo(e.r * .45, -e.r * .82); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#452d2a'; ctx.fillRect(-e.r * .55, -4, e.r * .9, 8);
