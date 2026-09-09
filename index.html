@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#10110e" />
+    <meta
+      name="description"
+      content="DUST//REIGN — a wasteland roguelike shooter"
+    />
+    <title>DUST//REIGN — Wasteland Run</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="game.js" defer></script>
+  </head>
+  <body>
+    <div class="game-root">
+      <div class="game-frame">
+        <header class="topbar" aria-label="Game header">
+          <div class="brand-lockup">
+            <span class="brand-rail" aria-hidden="true"></span>
+            <div>
+              <p class="eyebrow">WASTELAND SHOOTER <span>/</span> RUN 001</p>
+              <h1>DUST<span>//</span>REIGN</h1>
+            </div>
+          </div>
+          <div class="topbar-meta" aria-label="Signal status">
+            <div class="signal-readout">
+              <span class="meta-label">COMMS</span>
+              <strong id="commsStatus">OPEN</strong>
+            </div>
+            <div class="signal-readout">
+              <span class="meta-label">WIND</span>
+              <strong id="windStatus">NW 18</strong>
+            </div>
+            <span class="signal-dot" aria-hidden="true"></span>
+          </div>
+        </header>
+
+        <main class="game-layout">
+          <section class="arena-card" aria-label="Wasteland arena">
+            <div class="arena-header">
+              <span>SECTOR 09 <b aria-hidden="true">//</b> THE DRYLINE</span>
+              <span class="arena-state"><i aria-hidden="true"></i><span id="runState">STANDBY</span></span>
+            </div>
+
+            <div id="canvasStage" class="canvas-stage">
+              <canvas
+                id="gameCanvas"
+                width="1280"
+                height="720"
+                tabindex="0"
+                aria-label="Wasteland combat arena"
+              ></canvas>
+
+              <div class="arena-vignette" aria-hidden="true"></div>
+              <div class="scanline" aria-hidden="true"></div>
+              <div class="reticle reticle--left" aria-hidden="true"></div>
+              <div class="reticle reticle--right" aria-hidden="true"></div>
+
+              <div id="hud" class="hud" aria-live="polite">
+                <div class="hud-top">
+                  <div class="metric metric--wave">
+                    <span class="metric-label">WAVE</span>
+                    <strong id="hudWave" data-wave="">01</strong>
+                    <small id="hudWaveLabel">SCAVENGER HOUR</small>
+                  </div>
+                  <div class="metric metric--score">
+                    <span class="metric-label">SCORE</span>
+                    <strong id="hudScore" data-score="">000000</strong>
+                    <small id="hudKills">0 HOSTILES</small>
+                  </div>
+                  <div class="metric metric--level">
+                    <span class="metric-label">RIG LVL</span>
+                    <strong id="hudLevel" data-level="">01</strong>
+                    <small>KEEP MOVING</small>
+                  </div>
+                </div>
+
+                <div class="hud-bottom">
+                  <div class="resource-block resource-block--health">
+                    <div class="resource-label">
+                      <span>HULL INTEGRITY</span>
+                      <strong><span id="hudHealth" data-health="">100</span><em>%</em></strong>
+                    </div>
+                    <div id="healthBar" class="meter meter--health" role="progressbar" aria-label="Hull integrity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                      <span id="healthFill" style="width: 100%"></span>
+                    </div>
+                  </div>
+                  <div class="resource-block resource-block--xp">
+                    <div class="resource-label">
+                      <span>SCRAP MEMORY</span>
+                      <strong><span id="hudXp" data-xp="">0 / 100</span><span id="hudXpMax" hidden>100</span></strong>
+                    </div>
+                    <div id="xpBar" class="meter meter--xp" role="progressbar" aria-label="Scrap memory" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                      <span id="xpFill" style="width: 0%"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hud-alert" id="hudStatus">
+                  <span class="alert-mark" aria-hidden="true">!</span>
+                  <span id="hudStatusText">SIGNAL LOCKED — PRESS ENTER TO DEPLOY</span>
+                </div>
+              </div>
+
+              <div id="startScreen" class="overlay overlay--start" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+                <div class="overlay-inner">
+                  <div class="overlay-stamp">ARCHIVE 09 <span>//</span> ACTIVE</div>
+                  <p class="overlay-kicker">THE LAST LIGHT IS A MUZZLE FLASH</p>
+                  <h2 id="startTitle">MAKE YOUR<br /><span>OWN COVER.</span></h2>
+                  <p class="overlay-copy">
+                    Outrun the dust. Outshoot the things that live in it.<br />
+                    Every run writes a new map in the bones of the old world.
+                  </p>
+                  <button id="startBtn" class="action-button action-button--primary" data-start type="button">
+                    <span>ENTER THE DUST</span><b aria-hidden="true">↗</b>
+                  </button>
+                  <div class="overlay-foot">
+                    <span>RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT</span>
+                    <span>BUILD 0.1.0</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="gameOverScreen" class="overlay overlay--gameover" data-game-over role="dialog" aria-modal="true" aria-labelledby="gameOverTitle" hidden>
+                <div class="overlay-inner">
+                  <div class="overlay-stamp overlay-stamp--danger">SIGNAL LOST <span>//</span> RUN ENDED</div>
+                  <p class="overlay-kicker">THE DRYLINE ALWAYS COLLECTS</p>
+                  <h2 id="gameOverTitle">THE DUST<br /><span>TAKES ALL.</span></h2>
+                  <div class="result-grid">
+                    <div><span>WAVE REACHED</span><strong id="finalWave">--</strong></div>
+                    <div><span>SCRAP SCORE</span><strong id="finalScore">000000</strong></div>
+                  </div>
+                  <button id="restartBtn" class="action-button action-button--primary" data-restart type="button">
+                    <span>RUN IT BACK</span><b aria-hidden="true">↻</b>
+                  </button>
+                  <div class="overlay-foot"><span>NOTHING OUT THERE STAYS DEAD</span><span>ESC / EXIT</span></div>
+                </div>
+              </div>
+
+              <section id="upgradePanel" class="upgrade-panel" data-upgrade-overlay role="dialog" aria-modal="true" aria-labelledby="upgradeTitle" hidden>
+                <div class="upgrade-head">
+                  <div>
+                    <p class="overlay-kicker">SALVAGE CACHE / CHOOSE ONE</p>
+                    <h2 id="upgradeTitle">MAKE THE RIG <span>MEANER.</span></h2>
+                  </div>
+                  <div class="upgrade-count"><span>DECISION WINDOW</span><strong id="upgradeTimer">--</strong></div>
+                </div>
+                <div id="upgradeChoices" class="upgrade-choices" data-upgrade-options>
+                  <button id="upgradeChoice1" class="upgrade-card" type="button" data-upgrade="iron-heart">
+                    <span class="upgrade-index">A</span>
+                    <span class="upgrade-copy"><strong>IRON HEART</strong><small>+20 MAX HULL</small></span>
+                    <span class="upgrade-arrow" aria-hidden="true">↗</span>
+                  </button>
+                  <button id="upgradeChoice2" class="upgrade-card" type="button" data-upgrade="hot-chamber">
+                    <span class="upgrade-index">B</span>
+                    <span class="upgrade-copy"><strong>HOT CHAMBER</strong><small>+18% FIRE RATE</small></span>
+                    <span class="upgrade-arrow" aria-hidden="true">↗</span>
+                  </button>
+                  <button id="upgradeChoice3" class="upgrade-card" type="button" data-upgrade="scatter-shot">
+                    <span class="upgrade-index">C</span>
+                    <span class="upgrade-copy"><strong>SCATTER SHOT</strong><small>+1 PROJECTILE</small></span>
+                    <span class="upgrade-arrow" aria-hidden="true">↗</span>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <div class="arena-footer">
+              <div class="feed-line"><span class="feed-dot" aria-hidden="true"></span><span id="feedText">DUST LEVEL: RISING / VISIBILITY: POOR</span></div>
+              <div class="footer-coordinates"><span>34° 11' N</span><span>109° 32' W</span></div>
+            </div>
+          </section>
+
+          <aside class="mission-rail" aria-label="Run details and controls">
+            <section class="rail-card rail-card--objective">
+              <div class="rail-heading"><span>FIELD NOTE 01</span><span class="rail-code">[A]</span></div>
+              <p class="rail-title">STAY ALIVE.<br /><span>GET LOUD.</span></p>
+              <p id="objectiveText" class="rail-copy">Clear each wave before the storm swallows the signal.</p>
+              <div class="objective-rule"><span id="objectiveProgress" style="width: 12%"></span></div>
+              <div class="objective-meta"><span>THREAT INDEX</span><strong id="threatIndex">LOW</strong></div>
+            </section>
+
+            <section class="rail-card rail-card--log">
+              <div class="rail-heading"><span>SCAV RADIO</span><span class="rail-code">LIVE</span></div>
+              <ul id="runLog" class="run-log" aria-live="polite">
+                <li><time>00:00</time><span>Signal found under the salt.</span></li>
+                <li><time>00:04</time><span>Something heard the engine.</span></li>
+                <li><time>00:09</time><span>Keep the barrel warm.</span></li>
+              </ul>
+            </section>
+
+            <section class="rail-card controls-card">
+              <div class="rail-heading"><span>HAND CONTROL</span><span class="rail-code">READY</span></div>
+              <div class="key-row"><span class="key key--wide">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="key-caption">MOVE</span></div>
+              <div class="key-row"><span class="key key--mouse">LMB</span><span class="key-caption">AIM / FIRE</span></div>
+              <div class="key-row"><span class="key key--wide">SPACE</span><span class="key-caption">DASH</span></div>
+              <p class="controls-note">Tip: keep moving when the red dust starts to climb.</p>
+            </section>
+
+            <div class="rail-signoff"><span>NO GODS</span><i aria-hidden="true">×</i><span>NO MAPS</span></div>
+          </aside>
+        </main>
+
+        <div id="touchControls" class="touch-controls" aria-label="Touch controls">
+          <div class="touch-pad" aria-label="Movement">
+            <button id="touchUp" class="touch-button touch-button--up" type="button" data-action="move-up" aria-label="Move up">▲</button>
+            <button id="touchLeft" class="touch-button touch-button--left" type="button" data-action="move-left" aria-label="Move left">◀</button>
+            <button id="touchDown" class="touch-button touch-button--down" type="button" data-action="move-down" aria-label="Move down">▼</button>
+            <button id="touchRight" class="touch-button touch-button--right" type="button" data-action="move-right" aria-label="Move right">▶</button>
+            <span class="touch-cross" aria-hidden="true">+</span>
+          </div>
+          <div class="touch-actions">
+            <button id="touchDash" class="touch-button touch-button--dash" type="button" data-action="dash" aria-label="Dash">DASH</button>
+            <button id="touchShoot" class="touch-button touch-button--fire" type="button" data-action="shoot" aria-label="Fire">FIRE</button>
+          </div>
+        </div>
+
+        <footer class="system-footer">
+          <span>© DRYLINE ARCHIVE / ALL SIGNALS UNVERIFIED</span>
+          <span id="systemClock">--:--:-- LOCAL</span>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
