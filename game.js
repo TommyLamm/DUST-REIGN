@@ -40,6 +40,8 @@
   var started = false;
   var terrain = [];
   var listeners = [];
+  var resizeObserver = null;
+  var firePointers = new Set();
   var input = {
     keys: new Set(),
     mouse: { x: 480, y: 320, down: false },
@@ -310,10 +312,11 @@
 
   function resize() {
     var rect = ui.canvas.getBoundingClientRect();
-    var width = Math.max(320, Math.round(rect.width || ui.canvas.clientWidth || ui.canvas.width || window.innerWidth || 960));
-    var height = Math.max(240, Math.round(rect.height || ui.canvas.clientHeight || ui.canvas.height || window.innerHeight || 640));
+    var width = Math.max(1, Math.round(rect.width || ui.canvas.clientWidth || ui.canvas.width || window.innerWidth || 960));
+    var height = Math.max(1, Math.round(rect.height || ui.canvas.clientHeight || ui.canvas.height || window.innerHeight || 640));
     var dpr = Math.min(2, window.devicePixelRatio || 1);
     var changed = width !== ui.width || height !== ui.height;
+    if (!changed && dpr === ui.dpr && terrain.length) return;
     ui.width = width;
     ui.height = height;
     ui.dpr = dpr;
@@ -353,34 +356,61 @@
       if (event.pointerType === 'touch') input.touchMode = true;
       if (ui.canvas.focus) ui.canvas.focus();
       if (state && state.over) { restart(); return; }
-      if (event.button === undefined || event.button === 0) input.mouse.down = true;
+      if (event.button === undefined || event.button === 0) {
+        firePointers.add(event.pointerId);
+        input.mouse.down = true;
+      }
       if (ui.canvas.setPointerCapture && event.pointerId !== undefined) ui.canvas.setPointerCapture(event.pointerId);
     });
-    on(window, 'pointerup', function () { input.mouse.down = false; });
-    on(window, 'blur', function () { input.keys.clear(); input.mouse.down = false; });
+    function releaseFire(event) {
+      firePointers.delete(event.pointerId);
+      input.mouse.down = firePointers.size > 0;
+    }
+    on(window, 'pointerup', releaseFire);
+    on(window, 'pointercancel', releaseFire);
+    on(window, 'blur', function () { input.keys.clear(); firePointers.clear(); input.mouse.down = false; });
     on(window, 'resize', resize);
+    if (window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(ui.canvas);
+    }
+    var pauseButton = document.getElementById('pauseBtn');
+    if (pauseButton) on(pauseButton, 'click', togglePause);
     if (ui.restart) on(ui.restart, 'click', restart);
     if (ui.startButton) on(ui.startButton, 'click', beginRun);
     var touchKeys = { touchUp: 'w', touchLeft: 'a', touchDown: 's', touchRight: 'd' };
     Object.keys(touchKeys).forEach(function (id) {
       var button = document.getElementById(id);
       if (!button) return;
-      on(button, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; input.keys.add(touchKeys[id]); });
+      on(button, 'pointerdown', function (event) {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        input.touchMode = true;
+        input.keys.add(touchKeys[id]);
+      });
       on(button, 'pointerup', function () { input.keys.delete(touchKeys[id]); });
       on(button, 'pointercancel', function () { input.keys.delete(touchKeys[id]); });
+      on(button, 'lostpointercapture', function () { input.keys.delete(touchKeys[id]); });
     });
     var touchShoot = document.getElementById('touchShoot');
     if (touchShoot) {
-      on(touchShoot, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; input.mouse.down = true; });
-      on(touchShoot, 'pointerup', function () { input.mouse.down = false; });
-      on(touchShoot, 'pointercancel', function () { input.mouse.down = false; });
+      on(touchShoot, 'pointerdown', function (event) {
+        event.preventDefault();
+        touchShoot.setPointerCapture(event.pointerId);
+        input.touchMode = true;
+        firePointers.add(event.pointerId);
+        input.mouse.down = true;
+      });
+      on(touchShoot, 'pointerup', releaseFire);
+      on(touchShoot, 'pointercancel', releaseFire);
+      on(touchShoot, 'lostpointercapture', releaseFire);
     }
     var touchDash = document.getElementById('touchDash');
-    if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); beginRun(); input.touchMode = true; dash(); });
+    if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); input.touchMode = true; dash(); });
   }
 
   function beginRun() {
-    if (!state || state.over) return;
+    if (!state || state.over || state.upgradeChoices.length) return;
     state.paused = false;
     if (ui.startScreen) ui.startScreen.hidden = true;
     if (ui.runState) ui.runState.textContent = 'LIVE';
@@ -393,6 +423,7 @@
     state.paused = !state.paused;
     if (ui.runState) ui.runState.textContent = state.paused ? 'PAUSED' : 'LIVE';
     if (ui.statusText) ui.statusText.textContent = state.paused ? 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME' : 'SIGNAL LIVE — KEEP MOVING';
+    updateDomUi();
   }
 
   function restart() {
@@ -403,6 +434,8 @@
     input.mouse.x = ui.width / 2 + 100;
     input.mouse.y = ui.height / 2;
     input.mouse.down = false;
+    firePointers.clear();
+    input.keys.clear();
     input.touchMode = false;
     if (ui.runLog) qa('.run-log-entry', ui.runLog).forEach(function (item) { item.parentNode.removeChild(item); });
     ui.overlay.hidden = true;
@@ -980,11 +1013,11 @@
       ctx.fillStyle = 'rgba(8,7,7,.74)'; ctx.fillRect(0, 0, ui.width, ui.height);
       ctx.textAlign = 'center';
       ctx.fillStyle = '#f0cf88';
-      ctx.font = '700 34px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.font = '700 ' + Math.min(34, ui.width / 9) + 'px ui-monospace, SFMono-Regular, Consolas, monospace';
       ctx.fillText('SIGNAL PAUSED', ui.width / 2, ui.height * .42);
       ctx.fillStyle = '#75d1b0';
       ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, monospace';
-      ctx.fillText('PRESS P OR ESC TO RESUME', ui.width / 2, ui.height * .53);
+      ctx.fillText(document.getElementById('pauseBtn') ? 'PRESS RESUME TO CONTINUE' : 'PRESS P OR ESC TO RESUME', ui.width / 2, ui.height * .53, ui.width - 24);
       ctx.restore();
     }
     if (state.over) {
@@ -1043,6 +1076,12 @@
 
   function updateDomUi() {
     if (!state || !ui) return;
+    var pauseButton = document.getElementById('pauseBtn');
+    if (pauseButton) {
+      pauseButton.disabled = state.over || state.upgradeChoices.length > 0 || Boolean(ui.startScreen && !ui.startScreen.hidden);
+      pauseButton.textContent = state.paused && !pauseButton.disabled ? 'RESUME' : 'PAUSE';
+      pauseButton.setAttribute('aria-label', state.paused && !pauseButton.disabled ? 'Resume game' : 'Pause game');
+    }
     setText(ui.health, Math.ceil(state.player.hp));
     setText(ui.xp, state.xp);
     setText(ui.xpMax, state.xpNext);
@@ -1100,11 +1139,11 @@
   }
 
   function pause() {
-    if (state && !state.over) state.paused = true;
+    if (state && !state.over) { state.paused = true; updateDomUi(); }
   }
 
   function resume() {
-    if (state && !state.over && !state.upgradeChoices.length) state.paused = false;
+    if (state && !state.over && !state.upgradeChoices.length) { state.paused = false; updateDomUi(); }
   }
 
   function destroy() {
@@ -1112,6 +1151,11 @@
     if (raf) window.cancelAnimationFrame(raf);
     raf = 0;
     listeners.splice(0).forEach(function (remove) { remove(); });
+    if (resizeObserver) resizeObserver.disconnect();
+    resizeObserver = null;
+    firePointers.clear();
+    input.keys.clear();
+    input.mouse.down = false;
     if (ui && ui.createdOverlay && ui.overlay.parentNode) ui.overlay.parentNode.removeChild(ui.overlay);
     if (ui && ui.createdCanvas && ui.canvas.parentNode) ui.canvas.parentNode.removeChild(ui.canvas);
     ui = null;

@@ -56,7 +56,7 @@
 ### 3.1 靜態頁面與呈現層
 
 - **`index.html`**：宣告 `#gameCanvas`、HUD 數值／進度條、開始畫面、死亡畫面、升級選項、任務側欄與觸控控制。
-- **`styles.css`**：提供 DUST//REIGN 的鏽橙／琥珀／薄荷綠終端機風格；處理 `720px`、`900px` 等響應式版面，以及 `prefers-reduced-motion`。
+- **`styles.css`**：提供 DUST//REIGN 的鏽橙／琥珀／薄荷綠終端機風格；外框固定為 iframe 的 `100dvh`，flex／grid 子項可縮小至可用空間；戰場使用 size container，開始／死亡／升級面板依實際寬高縮排，禁止頁面及面板捲動。`900px` 以下或 coarse pointer 顯示獨立觸控列，低高度時切換單列控制；UHD 額外放大面板、HUD 與文字，並支援 safe-area 及 `prefers-reduced-motion`。
 - **技術**：原生 HTML、CSS、Canvas 2D；只引用同目錄的 `styles.css` 與 `game.js`。
 
 ### 3.2 遊戲 runtime（`game.js`）
@@ -124,6 +124,7 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 
 - Canvas：`#gameCanvas`。
 - HUD：`#hudHealth`、`#hudXp`、`#hudXpMax`、`#hudLevel`、`#hudWave`、`#hudScore`、`#hudKills`、`#healthFill`、`#xpFill`、`#hudBest`。
+- 暫停按鈕：`#pauseBtn`；開始、升級及死亡時停用，暫停時顯示 RESUME，支援觸控。
 - 狀態／畫面：`#runState`、`#hudStatusText`、`#startScreen`、`#startBtn`、`#gameOverScreen`、`#finalWave`、`#finalScore`、`#finalBest`、`#restartBtn`。
 - 任務側欄：`#objectiveText`、`#objectiveProgress`、`#threatIndex`、`#runLog`；由 `updateDomUi()` 顯示當波 bounty／威脅，`logEvent()` 保留最新 5 筆事件。
 - 升級：`#upgradePanel`、`#upgradeChoices`；按鈕使用 `data-upgrade-index` 供事件委派。
@@ -138,6 +139,8 @@ window.LunaGame.destroy()      // 取消 RAF、移除 listeners 與 runtime 建�
 window.LunaGame.getState()
 window.LunaGame.selfCheck()
 ```
+
+觸控移動及 FIRE 使用 Pointer Capture，放開／取消／失去 capture 都釋放該輸入；各射擊 pointer 獨立追蹤，放開移動手指不會停止 FIRE。觸控控制不跳過開始或升級對話框；按開始後才進入主要玩法。`restart()` 清空按鍵及射擊 pointer，避免黏住輸入。Canvas 邏輯寬高跟隨實際 CSS 尺寸，DPR 上限維持 2。
 
 頁面載入完成時會自動 `init()`；重複呼叫不會建立第二個 animation loop。`destroy()` 不會刪除原本由頁面提供的 DOM，只清理 runtime 自己建立的元素。
 
@@ -155,7 +158,7 @@ window.LunaGame.selfCheck()
 沒有第三方 API、網路請求、登入、付款、分析 SDK 或外部素材服務。`game.js` 只使用瀏覽器原生能力：
 
 - Canvas 2D context、`requestAnimationFrame`／`cancelAnimationFrame`。
-- DOM query／事件、Keyboard／Pointer Events、`devicePixelRatio` 與 `resize`。
+- DOM query／事件、Keyboard／Pointer Events、`devicePixelRatio`、`resize` 與 `ResizeObserver`（觀察 Canvas 尺寸，`destroy()` 時斷開）。
 - `localStorage`（僅本機最高分）。
 
 ## 6. 部署與基礎設施（Deployment & Infrastructure）
@@ -167,7 +170,7 @@ window.LunaGame.selfCheck()
 
 ### Playroom Release 合約
 
-- 固定遊戲 ID：`dust-reign`；首次交付版本 `0.1.0`，對應 tag `v0.1.0`。本版 manifest 只宣告 `desktop`，現有觸控控制尚未完成手機主要玩法驗收。
+- 固定遊戲 ID：`dust-reign`；已發布版本 `0.1.0`／tag `v0.1.0` 保持不變；目前工作版本為 `0.1.1`，本次修改尚未建立 tag 或 Release。支援裝置與本次驗收見 `game.json` 及 `RELEASE.md`。
 - 接入規格與打包／驗證工具固定在平台 commit `3728de1c50d4b0263f9f5f279d33d5d205a385fa`。
 - `node scripts/stage-release.mjs` 只複製 `game.json`、`index.html`、`styles.css`、`game.js`、`cover.png` 到 `output/release/<version>/game/`。來源 symlink 不接受，既有 staging 目錄不覆寫；輸出資料夾被 Git 忽略。
 - CI 使用 Node 24，在隔離 `.release-tools/playroom/` checkout 執行 `npm ci --ignore-scripts`，再執行平台 `game:pack` 及 `game:validate`；完整驗證失敗則不建立 Release。ZIP 在 staging 目錄外，五個成品檔案直接位於 ZIP 根目錄。
@@ -219,8 +222,8 @@ window.LunaGame.selfCheck()
 - **Runtime module**：`LunaGame`（`game.js`）
 - **Repository URL**：https://github.com/TommyLamm/DUST-REIGN （公開）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.1.0（2026-10-04）
-- **Page build label**：`BUILD 0.1.0`（`index.html` 目前顯示值）
+- **Current changelog baseline**：V0.1.1（2026-10-04）
+- **Page build label**：`BUILD 0.1.1`（`index.html` 目前顯示值）
 - **Date of last architecture update**：2026-10-04
 
 ## 11. 詞彙／縮寫（Glossary / Acronyms）
