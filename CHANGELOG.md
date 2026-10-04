@@ -1,5 +1,15 @@
 # DUST//REIGN 版本紀錄
 
+## V0.1.0 — 2026-10-04
+
+首次 Playroom 靜態成品交付：
+
+- 固定遊戲 ID `dust-reign`，建立完整 manifest 與實際遊玩封面。
+- 建立白名單 staging、版本一致性檢查和 GitHub Release workflow。
+- 使用平台 commit `3728de1c50d4b0263f9f5f279d33d5d205a385fa` 打包並完整驗證 ZIP；CI 驗證通過才建立 Release。
+- 最高分寫入 `dust-reign:best-score:v1`，相容讀取舊 `dustReignBestScore`，保留既有玩法與資料。
+- 支援裝置宣告為 `desktop`；詳細驗收及限制見 `RELEASE.md`。
+
 ## V0.0.1 — 2026-09-09
 
 首個可玩的 MVP 垂直切片：

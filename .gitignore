@@ -1,1 +1,5 @@
 .codegraph/
+output/
+.playwright-cli/
+.release-tools/
+game.zip

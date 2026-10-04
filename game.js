@@ -22,7 +22,8 @@
   var REPAIR_OVERFLOW_SCORE = 12;
   var STORM_FRONT_SECONDS = 5;
   var STORM_SPAWN_FACTOR = 0.72;
-  var BEST_SCORE_KEY = 'dustReignBestScore';
+  var BEST_SCORE_KEY = 'dust-reign:best-score:v1';
+  var LEGACY_BEST_SCORE_KEY = 'dustReignBestScore';
   var UPGRADES = [
     { id: 'overcharge', title: 'OVERCHARGE', text: '+8 weapon damage', apply: function (s) { s.player.damage += 8; } },
     { id: 'quick-hands', title: 'QUICK HANDS', text: 'Fire 18% faster', apply: function (s) { s.player.fireRate *= 0.82; } },
@@ -77,7 +78,10 @@
   function readBestScore() {
     try {
       if (typeof window === 'undefined' || !window.localStorage) return 0;
-      return Math.max(0, Number(window.localStorage.getItem(BEST_SCORE_KEY)) || 0);
+      // Keep the original score readable without deleting or rewriting old saves.
+      var current = Number(window.localStorage.getItem(BEST_SCORE_KEY)) || 0;
+      var legacy = Number(window.localStorage.getItem(LEGACY_BEST_SCORE_KEY)) || 0;
+      return Math.max(0, isFinite(current) ? current : 0, isFinite(legacy) ? legacy : 0);
     } catch (error) {
       return 0;
     }
@@ -906,30 +910,33 @@
     ctx.save();
     ctx.font = '700 12px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = '#e9d9b9';
-    ctx.fillText('WASTELAND // RUN', 20, 18);
-    ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
-    ctx.fillStyle = 'rgba(233,217,185,.72)';
-    ctx.fillText('WASD MOVE   MOUSE AIM + HOLD FIRE', 20, 36);
+    // The full page supplies these metrics in HTML; keep Canvas metrics for fallback hosts.
+    if (!ui.health || !ui.xp || !ui.wave || !ui.score) {
+      ctx.fillStyle = '#e9d9b9';
+      ctx.fillText('WASTELAND // RUN', 20, 18);
+      ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = 'rgba(233,217,185,.72)';
+      ctx.fillText('WASD MOVE   MOUSE AIM + HOLD FIRE', 20, 36);
 
-    var barX = 20;
-    var barY = 60;
-    var barW = Math.min(220, ui.width * .35);
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(barX, barY, barW, 8);
-    ctx.fillStyle = '#df6b4f'; ctx.fillRect(barX, barY, barW * clamp(p.hp / p.maxHp, 0, 1), 8);
-    ctx.fillStyle = '#e9d9b9'; ctx.fillText('HP ' + Math.ceil(p.hp) + ' / ' + Math.ceil(p.maxHp), barX, barY + 13);
-    barY += 31;
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(barX, barY, barW, 5);
-    ctx.fillStyle = '#75d1b0'; ctx.fillRect(barX, barY, barW * clamp(state.xp / state.xpNext, 0, 1), 5);
-    ctx.fillStyle = 'rgba(233,217,185,.8)'; ctx.fillText('LV ' + state.level + '   SCRAP ' + state.xp + ' / ' + state.xpNext, barX, barY + 10);
+      var barX = 20;
+      var barY = 60;
+      var barW = Math.min(220, ui.width * .35);
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(barX, barY, barW, 8);
+      ctx.fillStyle = '#df6b4f'; ctx.fillRect(barX, barY, barW * clamp(p.hp / p.maxHp, 0, 1), 8);
+      ctx.fillStyle = '#e9d9b9'; ctx.fillText('HP ' + Math.ceil(p.hp) + ' / ' + Math.ceil(p.maxHp), barX, barY + 13);
+      barY += 31;
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(barX, barY, barW, 5);
+      ctx.fillStyle = '#75d1b0'; ctx.fillRect(barX, barY, barW * clamp(state.xp / state.xpNext, 0, 1), 5);
+      ctx.fillStyle = 'rgba(233,217,185,.8)'; ctx.fillText('LV ' + state.level + '   SCRAP ' + state.xp + ' / ' + state.xpNext, barX, barY + 10);
 
-    ctx.textAlign = 'right';
-    ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
-    ctx.fillStyle = '#f0cf88';
-    ctx.fillText('WAVE ' + String(state.wave).padStart(2, '0'), ui.width - 20, 20);
-    ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
-    ctx.fillStyle = 'rgba(233,217,185,.75)';
-    ctx.fillText('KILLS ' + state.kills + '   SCORE ' + state.score, ui.width - 20, 39);
+      ctx.textAlign = 'right';
+      ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#f0cf88';
+      ctx.fillText('WAVE ' + String(state.wave).padStart(2, '0'), ui.width - 20, 20);
+      ctx.font = '11px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = 'rgba(233,217,185,.75)';
+      ctx.fillText('KILLS ' + state.kills + '   SCORE ' + state.score, ui.width - 20, 39);
+    }
     if (state.combo > 0) {
       ctx.textAlign = 'left';
       ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';

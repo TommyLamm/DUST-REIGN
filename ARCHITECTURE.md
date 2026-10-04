@@ -9,6 +9,11 @@
 ├── index.html          # 靜態頁面外殼、HUD、開始／死亡／升級畫面、觸控按鈕
 ├── styles.css          # 視覺系統、版面、響應式斷點、焦點與 reduced-motion 規則
 ├── game.js             # 遊戲 runtime：狀態、輸入、模擬、碰撞、Canvas 繪製、DOM 同步
+├── game.json           # Playroom manifest：固定 ID dust-reign、交付版本及支援裝置
+├── cover.png           # 真實瀏覽器遊玩截圖，用於平台封面
+├── scripts/stage-release.mjs # 零依賴成品白名單與 tag／manifest 一致性檢查
+├── .github/workflows/release.yml # 固定平台 commit 打包、完整驗證後建立 Release
+├── RELEASE.md          # 當前 Release 說明、驗收結果與相容性限制
 ├── PLAN.md             # 目標、增量計畫與驗收條件
 ├── CHANGELOG.md        # 版本與畫面留痕
 ├── screenshots/        # 版本截圖；僅供文件／驗收，不是 runtime 素材
@@ -110,7 +115,7 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 1. `frame(timestamp)` 將時間差 `dt` 限制在最多 `0.05s`，呼叫 `update(dt)`。
 2. `update` 在 `paused` 或 `over` 時直接返回；否則更新波次計時、玩家輸入／瞄準／射擊、敵人生成、子彈碰撞、Orb 吸附／拾取、敵人追擊／接觸傷害與粒子。
 3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、surge overdrive、scrap／repair／overdrive 掉落與特效，並把 bounty 事件寫入 SCAV RADIO；生命歸零時記錄最高分並顯示死亡畫面。
-4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；`logEvent` 將 wave／bounty／repair 事件插入既有 run log，`restart()` 清掉動態事件，bounty claim 顯示 surge 狀態。
+4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；`logEvent` 將 wave／bounty／repair 事件插入既有 run log，`restart()` 清掉動態事件，bounty claim 顯示 surge 狀態。正式頁面提供 health／xp／wave／score 節點時，Canvas 不重複畫基本數值；連殺及超頻仍繪於 Canvas，缺少 HTML HUD 的 fallback host 保留基本 Canvas HUD。
 5. `draw` 依背景 → Orb → 子彈 → 敵人 → 粒子 → 玩家 → Canvas HUD → overlay 的順序繪製，再排程下一幀。
 
 ### 3.5 DOM 合約與公開 API
@@ -140,7 +145,7 @@ window.LunaGame.selfCheck()
 
 | 名稱 | 類型 | 用途 | 邊界 |
 | --- | --- | --- | --- |
-| `dustReignBestScore` | Browser `localStorage` number-as-string | 保存本機最高分，於死亡時計算並在 HUD／結算畫面顯示 | 只在目前瀏覽器／來源有效；讀寫例外會回退為 0，不阻塞遊戲 |
+| `dust-reign:best-score:v1` | Browser `localStorage` number-as-string | 保存本機最高分，於死亡時計算並在 HUD／結算畫面顯示 | 讀取與舊 `dustReignBestScore` 的較大有效值；僅寫新 key，不刪除或重寫舊資料。只在目前瀏覽器／來源有效，平台與本機來源間不會自動搬移分數；儲存拒絕不阻塞遊戲 |
 | 其餘遊戲狀態 | JavaScript 記憶體物件 | 單局玩家、敵人、子彈、掉落、粒子與升級 | 重整或 `restart()` 後不保留；沒有帳號同步 |
 
 沒有資料庫、快取、訊息佇列、檔案儲存或伺服器 session。
@@ -156,9 +161,19 @@ window.LunaGame.selfCheck()
 ## 6. 部署與基礎設施（Deployment & Infrastructure）
 
 - **入口**：`index.html`；同目錄的 `styles.css` 與 `game.js` 必須一併提供。
-- **部署模型**：任一靜態檔案伺服器或靜態 hosting；目前未指定雲端供應商、CI/CD、監控或 logging 平台。
+- **部署模型**：任一靜態檔案伺服器或 Playroom 靜態遊戲來源。GitHub tag workflow 提供 Release ZIP，不呼叫平台管理 API。
 - **本地啟動**：可直接雙擊 `index.html`；也可從專案根目錄啟動任一靜態伺服器。HTTP(S) 來源對瀏覽器儲存與快取行為較一致。
-- **建置**：無編譯、打包、環境變數或 runtime service；發布內容就是這些靜態檔案。
+- **建置**：無編譯、bundler、環境變數或 runtime service；發布內容就是這些靜態檔案，由 release 工具整理並打包 ZIP。
+
+### Playroom Release 合約
+
+- 固定遊戲 ID：`dust-reign`；首次交付版本 `0.1.0`，對應 tag `v0.1.0`。本版 manifest 只宣告 `desktop`，現有觸控控制尚未完成手機主要玩法驗收。
+- 接入規格與打包／驗證工具固定在平台 commit `3728de1c50d4b0263f9f5f279d33d5d205a385fa`。
+- `node scripts/stage-release.mjs` 只複製 `game.json`、`index.html`、`styles.css`、`game.js`、`cover.png` 到 `output/release/<version>/game/`。來源 symlink 不接受，既有 staging 目錄不覆寫；輸出資料夾被 Git 忽略。
+- CI 使用 Node 24，在隔離 `.release-tools/playroom/` checkout 執行 `npm ci --ignore-scripts`，再執行平台 `game:pack` 及 `game:validate`；完整驗證失敗則不建立 Release。ZIP 在 staging 目錄外，五個成品檔案直接位於 ZIP 根目錄。
+- tag 必須與 manifest 一致；`gh release create` 不更新既有 Release。後續交付需增加版本並保留舊 tag／Release。
+- 真實瀏覽器驗收採不同 port 的跨來源父頁及遊戲，sandbox 為 `allow-scripts allow-same-origin allow-pointer-lock`，allow 為 `fullscreen; autoplay; gamepad`，與固定平台 commit 的 iframe 一致。版本子目錄與預覽子目錄均需測試。
+- 遊戲未使用音效、全螢幕或外部服務。實測範圍與尚未完成的驗收見 `RELEASE.md`；GitHub Release 不代表已在 Playroom 上架。
 
 ## 7. 安全與可及性考量（Security Considerations）
 
@@ -202,11 +217,11 @@ window.LunaGame.selfCheck()
 
 - **Project name**：DUST//REIGN — Wasteland Run
 - **Runtime module**：`LunaGame`（`game.js`）
-- **Repository URL**：未設定（目前為本地 Git 專案）
+- **Repository URL**：https://github.com/TommyLamm/DUST-REIGN （公開）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.0.14（2026-09-09）
+- **Current changelog baseline**：V0.1.0（2026-10-04）
 - **Page build label**：`BUILD 0.1.0`（`index.html` 目前顯示值）
-- **Date of last architecture update**：2026-09-09
+- **Date of last architecture update**：2026-10-04
 
 ## 11. 詞彙／縮寫（Glossary / Acronyms）
 

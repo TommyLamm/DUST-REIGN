@@ -1,0 +1,48 @@
+name: Release game
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+concurrency:
+  group: game-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check syntax and stage allowlisted assets
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --check game.js
+          node --check scripts/stage-release.mjs
+          node scripts/stage-release.mjs
+      - name: Checkout pinned Playroom validation tools
+        uses: actions/checkout@v4
+        with:
+          repository: TommyLamm/playroom-platform
+          ref: 3728de1c50d4b0263f9f5f279d33d5d205a385fa
+          path: .release-tools/playroom
+          persist-credentials: false
+      - name: Install validation dependencies
+        working-directory: .release-tools/playroom
+        run: npm ci --ignore-scripts
+      - name: Pack and fully validate ZIP before creating Release
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        working-directory: .release-tools/playroom
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          npm run game:pack -- "$GITHUB_WORKSPACE/output/release/$VERSION/game" "$GITHUB_WORKSPACE/game.zip"
+          npm run game:validate -- "$GITHUB_WORKSPACE/game.zip"
+      - name: Publish unique release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" game.zip --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
