@@ -771,6 +771,22 @@ h1 {
   letter-spacing: 0.06em;
 }
 
+.save-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  margin: 0 auto clamp(8px, 1.5cqh, 16px);
+  background: rgba(117, 209, 176, 0.12);
+  border: 1px solid rgba(117, 209, 176, 0.4);
+  color: #75d1b0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .upgrade-panel {
   display: flex;
   flex-direction: column;

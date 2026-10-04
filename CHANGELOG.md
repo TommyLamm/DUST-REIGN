@@ -1,5 +1,15 @@
 # DUST//REIGN 版本紀錄
 
+## V0.1.2 — 2026-10-05
+
+Playroom 平台排行榜與成績 SDK 接入：
+
+- 依平台最新規格引入 `playroom-sdk.js`，追蹤平台 `main` 分支最新規範與驗證工具。
+- `game.json` 宣告 `leaderboard`（ID `dust-reign-score`，以整數分數降序排序）。
+- 遊戲開始時呼叫 `Playroom.startRun()` 建立平台局次；結算死亡時呼叫 `Playroom.finishRun({ runId, score })`。
+- 訪客、診斷預覽、離線或平台連線異常時不阻礙核心遊玩；僅在正式提交成功後顯示已保存標記。
+- 升級 GitHub Actions Release workflow 追蹤平台 `main` 分支打包與完整 ZIP 驗證工具。
+
 ## V0.1.1 — 2026-10-04
 
 - 修復頁面與開始／死亡／升級面板捲軸；版面依 iframe 寬高配置，不再靠最小高度或手機固定橫向比例撐開。

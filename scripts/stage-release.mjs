@@ -8,7 +8,8 @@ if (process.env.RELEASE_TAG && process.env.RELEASE_TAG !== `v${manifest.version}
   throw new Error('Tag and manifest version differ');
 }
 const output = path.join(root, 'output', 'release', manifest.version, 'game');
-const files = ['game.json', 'index.html', 'styles.css', 'game.js', 'cover.png'];
+const staged = path.join(root, 'output', 'game');
+const files = ['game.json', 'index.html', 'styles.css', 'game.js', 'playroom-sdk.js', 'cover.png'];
 // A fresh allowlisted directory keeps repository metadata and secrets out of the ZIP.
 if (fs.existsSync(output)) throw new Error(`Staging directory already exists: ${output}`);
 for (const name of files) {
@@ -16,4 +17,7 @@ for (const name of files) {
 }
 fs.mkdirSync(output, { recursive: true });
 for (const name of files) fs.copyFileSync(path.join(root, name), path.join(output, name));
+fs.rmSync(staged, { recursive: true, force: true });
+fs.mkdirSync(staged, { recursive: true });
+for (const name of files) fs.copyFileSync(path.join(root, name), path.join(staged, name));
 console.log(output);

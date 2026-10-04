@@ -9,7 +9,8 @@
 ├── index.html          # 靜態頁面外殼、HUD、開始／死亡／升級畫面、觸控按鈕
 ├── styles.css          # 視覺系統、版面、響應式斷點、焦點與 reduced-motion 規則
 ├── game.js             # 遊戲 runtime：狀態、輸入、模擬、碰撞、Canvas 繪製、DOM 同步
-├── game.json           # Playroom manifest：固定 ID dust-reign、交付版本及支援裝置
+├── playroom-sdk.js     # Playroom 成績與局次 SDK（零依賴 ES 模組）
+├── game.json           # Playroom manifest：固定 ID dust-reign、交付版本、支援裝置與排行榜
 ├── cover.png           # 真實瀏覽器遊玩截圖，用於平台封面
 ├── scripts/stage-release.mjs # 零依賴成品白名單與 tag／manifest 一致性檢查
 ├── .github/workflows/release.yml # 固定平台 commit 打包、完整驗證後建立 Release
@@ -125,7 +126,7 @@ STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
 - Canvas：`#gameCanvas`。
 - HUD：`#hudHealth`、`#hudXp`、`#hudXpMax`、`#hudLevel`、`#hudWave`、`#hudScore`、`#hudKills`、`#healthFill`、`#xpFill`、`#hudBest`。
 - 暫停按鈕：`#pauseBtn`；開始、升級及死亡時停用，暫停時顯示 RESUME，支援觸控。
-- 狀態／畫面：`#runState`、`#hudStatusText`、`#startScreen`、`#startBtn`、`#gameOverScreen`、`#finalWave`、`#finalScore`、`#finalBest`、`#restartBtn`。
+- 狀態／畫面：`#runState`、`#hudStatusText`、`#startScreen`、`#startBtn`、`#gameOverScreen`、`#finalWave`、`#finalScore`、`#finalBest`、`#accountSaveBadge`、`#restartBtn`。
 - 任務側欄：`#objectiveText`、`#objectiveProgress`、`#threatIndex`、`#runLog`；由 `updateDomUi()` 顯示當波 bounty／威脅，`logEvent()` 保留最新 5 筆事件。
 - 升級：`#upgradePanel`、`#upgradeChoices`；按鈕使用 `data-upgrade-index` 供事件委派。
 - 觸控：`#touchUp`、`#touchLeft`、`#touchDown`、`#touchRight`、`#touchShoot`、`#touchDash`。
@@ -160,6 +161,7 @@ window.LunaGame.selfCheck()
 - Canvas 2D context、`requestAnimationFrame`／`cancelAnimationFrame`。
 - DOM query／事件、Keyboard／Pointer Events、`devicePixelRatio`、`resize` 與 `ResizeObserver`（觀察 Canvas 尺寸，`destroy()` 時斷開）。
 - `localStorage`（僅本機最高分）。
+- `playroom-sdk.js`：透過動態 import 載入 Playroom SDK，於開始局次呼叫 `Playroom.startRun()`、死亡結算時呼叫 `Playroom.finishRun({ runId, score })`；訪客、預覽與離線時不阻塞主要玩法。
 
 ## 6. 部署與基礎設施（Deployment & Infrastructure）
 
@@ -170,10 +172,10 @@ window.LunaGame.selfCheck()
 
 ### Playroom Release 合約
 
-- 固定遊戲 ID：`dust-reign`；已發布版本 `0.1.0`／tag `v0.1.0` 保持不變；目前工作版本為 `0.1.1`，本次修改尚未建立 tag 或 Release。支援裝置與本次驗收見 `game.json` 及 `RELEASE.md`。
-- 接入規格與打包／驗證工具固定在平台 commit `3728de1c50d4b0263f9f5f279d33d5d205a385fa`。
-- `node scripts/stage-release.mjs` 只複製 `game.json`、`index.html`、`styles.css`、`game.js`、`cover.png` 到 `output/release/<version>/game/`。來源 symlink 不接受，既有 staging 目錄不覆寫；輸出資料夾被 Git 忽略。
-- CI 使用 Node 24，在隔離 `.release-tools/playroom/` checkout 執行 `npm ci --ignore-scripts`，再執行平台 `game:pack` 及 `game:validate`；完整驗證失敗則不建立 Release。ZIP 在 staging 目錄外，五個成品檔案直接位於 ZIP 根目錄。
+- 固定遊戲 ID：`dust-reign`；已發布版本 `0.1.0`／`0.1.1` 保持不變；當前版本為 `0.1.2`（對應 tag `v0.1.2`）。排行榜宣告 `dust-reign-score`（desc，0 至 9007199254740991，單位「分」）。支援裝置與本次驗收見 `game.json` 及 `RELEASE.md`。
+- 接入規格、SDK、打包與驗證工具追蹤平台 `main` 分支最新版本。
+- `node scripts/stage-release.mjs` 複製 `game.json`、`index.html`、`styles.css`、`game.js`、`playroom-sdk.js`、`cover.png` 至 `output/release/<version>/game/` 與 `output/game/`。來源 symlink 不接受，既有 staging 目錄不覆寫；輸出資料夾被 Git 忽略。
+- CI 使用 Node 24，下載平台 `main` 分支執行 `npm ci`，再執行平台 `game:pack` 及 `game:validate`；完整驗證失敗則不建立 Release。ZIP 在 staging 目錄外，六個成品檔案直接位於 ZIP 根目錄。
 - tag 必須與 manifest 一致；`gh release create` 不更新既有 Release。後續交付需增加版本並保留舊 tag／Release。
 - 真實瀏覽器驗收採不同 port 的跨來源父頁及遊戲，sandbox 為 `allow-scripts allow-same-origin allow-pointer-lock`，allow 為 `fullscreen; autoplay; gamepad`，與固定平台 commit 的 iframe 一致。版本子目錄與預覽子目錄均需測試。
 - 遊戲未使用音效、全螢幕或外部服務。實測範圍與尚未完成的驗收見 `RELEASE.md`；GitHub Release 不代表已在 Playroom 上架。
@@ -222,9 +224,9 @@ window.LunaGame.selfCheck()
 - **Runtime module**：`LunaGame`（`game.js`）
 - **Repository URL**：https://github.com/TommyLamm/DUST-REIGN （公開）
 - **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.1.1（2026-10-04）
-- **Page build label**：`BUILD 0.1.1`（`index.html` 目前顯示值）
-- **Date of last architecture update**：2026-10-04
+- **Current changelog baseline**：V0.1.2（2026-10-05）
+- **Page build label**：`BUILD 0.1.2`（`index.html` 目前顯示值）
+- **Date of last architecture update**：2026-10-05
 
 ## 11. 詞彙／縮寫（Glossary / Acronyms）
 

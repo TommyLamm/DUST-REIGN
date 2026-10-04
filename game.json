@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "廢土 roguelike 射擊遊戲。躲避敵群、收集 scrap、選擇升級，完成波次賞金並在風暴中存活。",
   "author": "TommyLam",
   "entry": "index.html",
@@ -12,9 +12,16 @@
     "roguelike",
     "生存"
   ],
-  "instructions": "點擊 ENTER THE DUST 開始。桌面：WASD／方向鍵移動，滑鼠瞄準並按住左鍵射擊，Space 衝刺；P／Esc 或 PAUSE／RESUME 暫停或恢復。手機：按住方向按鈕移動，按住 FIRE 自動瞄準最近敵人，可同時移動與射擊；點按 DASH 衝刺。收集 scrap 後點選升級（桌面亦可按 1／2／3）。死亡後點擊 RUN IT BACK 重開（桌面亦可按 R）。最高分保存在本機瀏覽器。",
+  "instructions": "點擊 ENTER THE DUST 開始。桌面：WASD／方向鍵移動，滑鼠瞄準並按住左鍵射擊，Space 衝刺；P／Esc 或 PAUSE／RESUME 暫停或恢復。手機：按住方向按鈕移動，按住 FIRE 自動瞄準最近敵人，可同時移動與射擊；點按 DASH 衝刺。收集 scrap 後點選升級（桌面亦可按 1／2／3）。死亡後點擊 RUN IT BACK 重開（桌面亦可按 R）。最高分保存在本機瀏覽器，平台登入後成績自動提交至排行榜。",
   "devices": [
     "desktop",
     "mobile"
-  ]
+  ],
+  "leaderboard": {
+    "id": "dust-reign-score",
+    "order": "desc",
+    "unit": "分",
+    "minScore": 0,
+    "maxScore": 9007199254740991
+  }
 }

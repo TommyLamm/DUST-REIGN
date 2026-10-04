@@ -47,6 +47,69 @@
     mouse: { x: 480, y: 320, down: false },
     touchMode: false
   };
+  var Playroom = null;
+  var playroomPromise = null;
+  var accountRun = null;
+  var accountRunSaved = false;
+
+  if (typeof window !== 'undefined') {
+    try {
+      playroomPromise = import('./playroom-sdk.js')
+        .then(function (mod) {
+          Playroom = (mod && mod.Playroom) || null;
+          return Playroom;
+        })
+        .catch(function () {
+          Playroom = null;
+          return null;
+        });
+    } catch (e) {
+      Playroom = null;
+      playroomPromise = Promise.resolve(null);
+    }
+  } else {
+    playroomPromise = Promise.resolve(null);
+  }
+
+  function startAccountRun() {
+    accountRunSaved = false;
+    if (playroomPromise) {
+      return playroomPromise
+        .then(function (sdk) {
+          if (sdk && typeof sdk.startRun === 'function') {
+            return sdk.startRun().catch(function () { return null; });
+          }
+          return null;
+        })
+        .catch(function () { return null; });
+    }
+    return Promise.resolve(null);
+  }
+
+  function finishAccountRun() {
+    if (!state || !accountRun) return;
+    var currentRun = accountRun;
+    accountRun = null;
+    var finalScore = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(state.score || 0)));
+    currentRun
+      .then(function (run) {
+        if (!run || !run.runId) return null;
+        return playroomPromise.then(function (sdk) {
+          if (!sdk || typeof sdk.finishRun !== 'function') return null;
+          return sdk.finishRun({ runId: run.runId, score: finalScore });
+        });
+      })
+      .then(function (result) {
+        if (result && result.saved === true) {
+          accountRunSaved = true;
+          updateDomUi();
+          logEvent('PLAYROOM // SCORE SAVED');
+        }
+      })
+      .catch(function () {
+        // Platform or network failure must not block gameplay
+      });
+  }
 
   function q(selector, root) {
     return (root || document).querySelector(selector);
@@ -255,6 +318,7 @@
     var threatIndex = first(['#threatIndex', '[data-threat-index]', '.threat-index']);
     var waveTimer = first(['#waveTimer', '[data-wave-timer]', '.wave-timer']);
     var runLog = first(['#runLog', '[data-run-log]', '.run-log']);
+    var accountSaveBadge = first(['#accountSaveBadge', '[data-account-save-badge]'], gameOver);
 
     return {
       root: root,
@@ -286,6 +350,7 @@
       threatIndex: threatIndex,
       waveTimer: waveTimer,
       runLog: runLog,
+      accountSaveBadge: accountSaveBadge,
       createdCanvas: createdCanvas,
       createdOverlay: createdOverlay,
       width: 960,
@@ -412,6 +477,8 @@
   function beginRun() {
     if (!state || state.over || state.upgradeChoices.length) return;
     state.paused = false;
+    accountRun = startAccountRun();
+    accountRunSaved = false;
     if (ui.startScreen) ui.startScreen.hidden = true;
     if (ui.runState) ui.runState.textContent = 'LIVE';
     if (ui.statusText) ui.statusText.textContent = 'SIGNAL LIVE — KEEP MOVING';
@@ -437,6 +504,8 @@
     firePointers.clear();
     input.keys.clear();
     input.touchMode = false;
+    accountRun = startAccountRun();
+    accountRunSaved = false;
     if (ui.runLog) qa('.run-log-entry', ui.runLog).forEach(function (item) { item.parentNode.removeChild(item); });
     ui.overlay.hidden = true;
     if (ui.startScreen) ui.startScreen.hidden = true;
@@ -647,6 +716,16 @@
     writeBestScore(state.bestScore);
   }
 
+  function triggerGameOver() {
+    if (!state || state.over) return;
+    state.player.hp = 0;
+    state.over = true;
+    recordBestScore();
+    finishAccountRun();
+    input.mouse.down = false;
+    if (ui.gameOver) ui.gameOver.hidden = false;
+  }
+
   function update(dt) {
     if (!state || state.over || state.paused) return;
     var p = state.player;
@@ -772,15 +851,10 @@
         state.shake = Math.max(state.shake, 10);
         state.hurtFlash = 0.55;
         spawnParticles(p.x, p.y, '#df6b4f', 10, 160, 3);
-        if (p.hp <= 0) {
-          p.hp = 0;
-          state.over = true;
-          recordBestScore();
-          input.mouse.down = false;
-          if (ui.gameOver) ui.gameOver.hidden = false;
-        }
+        if (p.hp <= 0) triggerGameOver();
       }
     }
+    if (p.hp <= 0 && !state.over) triggerGameOver();
 
     for (var pi = state.particles.length - 1; pi >= 0; pi -= 1) {
       var part = state.particles[pi];
@@ -1105,6 +1179,7 @@
     if (ui.finalWave) ui.finalWave.textContent = String(state.wave).padStart(2, '0');
     if (ui.finalScore) ui.finalScore.textContent = String(state.score).padStart(6, '0');
     if (ui.finalBest) ui.finalBest.textContent = String(state.bestScore).padStart(6, '0');
+    if (ui.accountSaveBadge) ui.accountSaveBadge.hidden = !state.over || !accountRunSaved;
     if (ui.runState && state.over) ui.runState.textContent = 'SIGNAL LOST';
     else if (ui.runState && !ui.startScreen) ui.runState.textContent = 'LIVE';
     if (ui.statusText && state.over) ui.statusText.textContent = 'SIGNAL LOST — PRESS R TO REDEPLOY';
@@ -1127,6 +1202,7 @@
     resize();
     state = makeState(ui.width, ui.height);
     state.paused = Boolean(ui.startScreen && !ui.startScreen.hidden);
+    if (!state.paused) accountRun = startAccountRun();
     input.mouse.x = ui.width / 2 + 100;
     input.mouse.y = ui.height / 2;
     bindInput();
@@ -1148,6 +1224,8 @@
 
   function destroy() {
     started = false;
+    accountRun = null;
+    accountRunSaved = false;
     if (raf) window.cancelAnimationFrame(raf);
     raf = 0;
     listeners.splice(0).forEach(function (remove) { remove(); });
@@ -1281,6 +1359,8 @@
     resume: resume,
     destroy: destroy,
     getState: function () { return state; },
+    getPlayroom: function () { return Playroom; },
+    triggerGameOver: triggerGameOver,
     selfCheck: selfCheck
   };
 

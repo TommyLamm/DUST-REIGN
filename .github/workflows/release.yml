@@ -8,11 +8,21 @@ permissions:
 concurrency:
   group: game-release-${{ github.ref }}
   cancel-in-progress: false
+env:
+  GAME_DIR: output/game
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      PLATFORM_DIR: ${{ runner.temp }}/playroom-platform-tools
+      GAME_ZIP: ${{ runner.temp }}/playroom-release/game.zip
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -21,28 +31,36 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           node --check game.js
+          node --check playroom-sdk.js
           node --check scripts/stage-release.mjs
           node scripts/stage-release.mjs
-      - name: Checkout pinned Playroom validation tools
-        uses: actions/checkout@v4
-        with:
-          repository: TommyLamm/playroom-platform
-          ref: 3728de1c50d4b0263f9f5f279d33d5d205a385fa
-          path: .release-tools/playroom
-          persist-credentials: false
-      - name: Install validation dependencies
-        working-directory: .release-tools/playroom
-        run: npm ci --ignore-scripts
-      - name: Pack and fully validate ZIP before creating Release
+      - name: Check release version and resolve artifact directory
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        working-directory: .release-tools/playroom
         run: |
-          VERSION="${RELEASE_TAG#v}"
-          npm run game:pack -- "$GITHUB_WORKSPACE/output/release/$VERSION/game" "$GITHUB_WORKSPACE/game.zip"
-          npm run game:validate -- "$GITHUB_WORKSPACE/game.zip"
-      - name: Publish unique release asset
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const workspace = path.resolve(process.env.GITHUB_WORKSPACE);
+          const root = path.resolve(workspace, process.env.GAME_DIR);
+          if (!root.startsWith(workspace + path.sep)) throw Error('GAME_DIR must be a directory inside the game repository');
+          const m = JSON.parse(fs.readFileSync(path.join(root, 'game.json'), 'utf8'));
+          if ('v' + m.version !== process.env.RELEASE_TAG) throw Error('Tag and manifest version differ');
+          if (/[\r\n]/.test(root)) throw Error('Invalid GAME_DIR');
+          fs.appendFileSync(process.env.GITHUB_ENV, `GAME_PATH=${root}\n`);
+          JS
+      - name: Install latest Playroom validation tools
+        run: |
+          git clone --depth 1 --branch main --single-branch https://github.com/TommyLamm/playroom-platform.git "$PLATFORM_DIR"
+          npm ci --prefix "$PLATFORM_DIR"
+      - name: Pack and fully validate release ZIP
+        working-directory: ${{ env.PLATFORM_DIR }}
+        run: |
+          npm run game:pack -- "$GAME_PATH" "$GAME_ZIP"
+          npm run game:validate -- "$GAME_ZIP"
+      - name: Publish release asset
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" game.zip --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
+          RELEASE_REPO: ${{ github.repository }}
+        run: gh release create "$RELEASE_TAG" "$GAME_ZIP" --repo "$RELEASE_REPO" --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
