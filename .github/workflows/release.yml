@@ -13,9 +13,6 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      PLATFORM_DIR: ${{ runner.temp }}/playroom-platform-tools
-      GAME_ZIP: ${{ runner.temp }}/playroom-release/game.zip
     defaults:
       run:
         shell: bash
@@ -51,11 +48,14 @@ jobs:
           JS
       - name: Install latest Playroom validation tools
         run: |
+          PLATFORM_DIR="$RUNNER_TEMP/playroom-platform-tools"
           git clone --depth 1 --branch main --single-branch https://github.com/TommyLamm/playroom-platform.git "$PLATFORM_DIR"
           npm ci --prefix "$PLATFORM_DIR"
       - name: Pack and fully validate release ZIP
-        working-directory: ${{ env.PLATFORM_DIR }}
         run: |
+          PLATFORM_DIR="$RUNNER_TEMP/playroom-platform-tools"
+          GAME_ZIP="$RUNNER_TEMP/playroom-release/game.zip"
+          cd "$PLATFORM_DIR"
           npm run game:pack -- "$GAME_PATH" "$GAME_ZIP"
           npm run game:validate -- "$GAME_ZIP"
       - name: Publish release asset
@@ -63,4 +63,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_REPO: ${{ github.repository }}
-        run: gh release create "$RELEASE_TAG" "$GAME_ZIP" --repo "$RELEASE_REPO" --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
+        run: |
+          GAME_ZIP="$RUNNER_TEMP/playroom-release/game.zip"
+          gh release create "$RELEASE_TAG" "$GAME_ZIP" --repo "$RELEASE_REPO" --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
