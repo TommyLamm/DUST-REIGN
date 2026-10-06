@@ -35,6 +35,7 @@
             <span class="meta-label">BEST</span>
             <strong id="hudBest">000000</strong>
           </div>
+          <button id="audioBtn" class="pause-button" type="button" aria-label="Toggle Audio">AUDIO [ON]</button>
           <button id="pauseBtn" class="pause-button" type="button" aria-label="Pause game" disabled>PAUSE</button>
         </div>
       </header>
@@ -65,6 +66,7 @@
                   <span class="metric-label">SCORE</span>
                   <strong id="hudScore" data-score="">000000</strong>
                   <small id="hudKills">0 HOSTILES</small>
+                  <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
                 </div>
                 <div class="metric metric--level">
                   <span class="metric-label">RIG LVL</span>
@@ -94,6 +96,16 @@
                     <span id="xpFill" style="width: 0%"></span>
                   </div>
                 </div>
+                <div class="resource-block resource-block--energy">
+                  <div class="resource-label">
+                    <span>BATTERY</span>
+                    <strong><span id="hudEnergy" data-energy="">50</span><em>%</em></strong>
+                  </div>
+                  <div id="meterEnergy" class="meter meter--energy" role="progressbar" aria-label="Battery energy"
+                    aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+                    <span id="energyFill" style="width: 50%"></span>
+                  </div>
+                </div>
               </div>
 
               <div class="hud-alert" id="hudStatus">
@@ -116,6 +128,7 @@
                   <span>ENTER THE DUST</span><b aria-hidden="true">↗</b>
                 </button>
                 <div class="overlay-foot">
+                  <span class="overlay-foot-controls">TOUCH: D-PAD + FIRE (AUTO-AIM) · DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A</span>
                   <span>RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT</span>
                   <span>BUILD 0.1.2</span>
                 </div>
@@ -133,6 +146,9 @@
                   <div><span>SCRAP SCORE</span><strong id="finalScore">000000</strong></div>
                   <div><span>BEST RUN</span><strong id="finalBest">000000</strong></div>
                 </div>
+                <div id="newRecordStamp" class="new-record-stamp" hidden>
+                  <span>NEW RECORD</span> <small>//</small> <span>SECTOR TOP</span>
+                </div>
                 <div id="accountSaveBadge" class="save-badge" hidden>
                   <span aria-hidden="true">✓</span>
                   <span>RECORDED TO PLAYROOM</span>
@@ -140,7 +156,7 @@
                 <button id="restartBtn" class="action-button action-button--primary" data-restart type="button">
                   <span>RUN IT BACK</span><b aria-hidden="true">↻</b>
                 </button>
-                <div class="overlay-foot"><span>NOTHING OUT THERE STAYS DEAD</span><span>ESC / EXIT</span></div>
+                <div class="overlay-foot"><span>NOTHING OUT THERE STAYS DEAD</span><span>PRESS R OR CLICK RUN IT BACK</span></div>
               </div>
             </div>
 
@@ -150,25 +166,218 @@
                 <div>
                   <p class="overlay-kicker">SALVAGE CACHE / CHOOSE ONE</p>
                   <h2 id="upgradeTitle">MAKE THE RIG <span>MEANER.</span></h2>
+                  <p class="upgrade-hint">COMBAT PAUSED — PICK 1 CARD (OR PRESS 1–3)</p>
                 </div>
-                <div class="upgrade-count"><span>DECISION WINDOW</span><strong id="upgradeTimer">--</strong></div>
+                <div class="upgrade-count"><span>DECISION WINDOW</span><strong id="upgradeTimer">COMBAT PAUSED — PICK ONE</strong></div>
               </div>
               <div id="upgradeChoices" class="upgrade-choices" data-upgrade-options>
                 <button id="upgradeChoice1" class="upgrade-card" type="button" data-upgrade="iron-heart">
-                  <span class="upgrade-index">A</span>
+                  <span class="upgrade-index">1</span>
                   <span class="upgrade-copy"><strong>IRON HEART</strong><small>+20 MAX HULL</small></span>
                   <span class="upgrade-arrow" aria-hidden="true">↗</span>
                 </button>
                 <button id="upgradeChoice2" class="upgrade-card" type="button" data-upgrade="hot-chamber">
-                  <span class="upgrade-index">B</span>
+                  <span class="upgrade-index">2</span>
                   <span class="upgrade-copy"><strong>HOT CHAMBER</strong><small>+18% FIRE RATE</small></span>
                   <span class="upgrade-arrow" aria-hidden="true">↗</span>
                 </button>
                 <button id="upgradeChoice3" class="upgrade-card" type="button" data-upgrade="scatter-shot">
-                  <span class="upgrade-index">C</span>
+                  <span class="upgrade-index">3</span>
                   <span class="upgrade-copy"><strong>SCATTER SHOT</strong><small>+1 PROJECTILE</small></span>
                   <span class="upgrade-arrow" aria-hidden="true">↗</span>
                 </button>
+              </div>
+            </section>
+
+            <section id="pauseModal" class="overlay overlay--pause" role="dialog" aria-modal="true"
+              aria-labelledby="pauseTitle" hidden>
+              <div class="overlay-inner pause-modal-inner">
+                <div class="pause-head">
+                  <div class="overlay-stamp">RIG DIAGNOSTICS <span>//</span> STANDBY</div>
+                  <h2 id="pauseTitle">RIG DIAGNOSTICS<br /><span>// STANDBY</span></h2>
+                  <p class="overlay-kicker">COMBAT SIGNAL SUSPENDED · SYSTEM TERMINAL ACTIVE</p>
+                </div>
+
+                <nav class="pause-tabs" role="tablist" aria-label="Pause Menu Categories">
+                  <button id="tabBtnSystem" class="pause-tab is-active" type="button" role="tab" aria-selected="true"
+                    aria-controls="panelSystem">SYSTEM</button>
+                  <button id="tabBtnBuild" class="pause-tab" type="button" role="tab" aria-selected="false"
+                    aria-controls="panelBuild">RIG BUILD</button>
+                  <button id="tabBtnControls" class="pause-tab" type="button" role="tab" aria-selected="false"
+                    aria-controls="panelControls">CONTROLS</button>
+                </nav>
+
+                <div class="pause-tab-content">
+                  <!-- Tab 1: System Settings -->
+                  <div id="panelSystem" class="pause-tab-panel is-active" role="tabpanel"
+                    aria-labelledby="tabBtnSystem">
+                    <div class="settings-list">
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">MASTER AUDIO VOLUME</span>
+                          <small class="setting-desc">SYNTHESIZER & SOUND FX OUTPUT GAIN</small>
+                        </div>
+                        <div class="setting-controls">
+                          <input type="range" id="settingMasterVolume" class="setting-slider" min="0" max="100"
+                            value="80" aria-label="Master volume" />
+                          <span id="volumeValue" class="setting-value">80%</span>
+                        </div>
+                      </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">AUDIO STATUS</span>
+                          <small class="setting-desc">MUTE ALL PROCEDURAL SOUND WAVES</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleAudioMute" class="pause-setting-btn">MUTE: OFF</button>
+                        </div>
+                      </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">HAPTIC FEEDBACK</span>
+                          <small class="setting-desc">DEVICE VIBRATION ON DASH, HITS & DETONATIONS</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleHaptics" class="pause-setting-btn">HAPTICS: ENABLED</button>
+                        </div>
+                      </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">REDUCED MOTION</span>
+                          <small class="setting-desc">DISABLE SHAKE, HITSTOP & HIGH CONTRAST FLASHES</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleMotionReduction" class="pause-setting-btn">MOTION: STANDARD</button>
+                        </div>
+                      </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">HIGH CONTRAST / GLYPHS</span>
+                          <small class="setting-desc">DUAL-LAYER OUTLINES & GEOMETRIC HOSTILE IDENTIFIERS</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleHighContrast" class="pause-setting-btn">CONTRAST: STANDARD</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Tab 2: Rig Build Inspector -->
+                  <div id="panelBuild" class="pause-tab-panel" role="tabpanel" aria-labelledby="tabBtnBuild" hidden>
+                    <div class="build-inspector">
+                      <div class="build-stats-col">
+                        <div class="build-col-title">CORE SPECS TELEMETRY</div>
+                        <div class="build-stats-grid">
+                          <div class="build-stat-card">
+                            <span class="stat-name">FIRE RATE</span>
+                            <strong id="statFireRate">5.6 RPS</strong>
+                          </div>
+                          <div class="build-stat-card">
+                            <span class="stat-name">BULLET DAMAGE</span>
+                            <strong id="statDamage">26 DMG</strong>
+                          </div>
+                          <div class="build-stat-card">
+                            <span class="stat-name">CRIT PROTOCOL</span>
+                            <strong id="statCrit">1.75x AMBUSH</strong>
+                          </div>
+                          <div class="build-stat-card">
+                            <span class="stat-name">BALLISTICS</span>
+                            <strong id="statBallistics">PIERCE 0 / RICO 0</strong>
+                          </div>
+                          <div class="build-stat-card">
+                            <span class="stat-name">RIG THRUST</span>
+                            <strong id="statSpeed">235 PX/S</strong>
+                          </div>
+                          <div class="build-stat-card">
+                            <span class="stat-name">MAGNET REACH</span>
+                            <strong id="statMagnet">165 PX</strong>
+                          </div>
+                        </div>
+
+                        <div class="build-col-title">DYNAMIC PASSIVE TRAITS</div>
+                        <div class="build-tags" id="buildPassiveTags">
+                          <!-- dynamic passive badges -->
+                        </div>
+                      </div>
+
+                      <div class="build-chips-col">
+                        <div class="build-col-title">INSTALLED MOD CHIPS (<span id="installedChipsCount">0</span>)</div>
+                        <div id="installedChipsList" class="installed-chips-list">
+                          <!-- dynamic chip cards -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Tab 3: Controls Matrix -->
+                  <div id="panelControls" class="pause-tab-panel" role="tabpanel" aria-labelledby="tabBtnControls" hidden>
+                    <div class="controls-matrix">
+                      <div class="controls-matrix-head">
+                        <span>ACTION</span>
+                        <span>KEYBOARD / MOUSE</span>
+                        <span>GAMEPAD</span>
+                        <span>TOUCHPAD</span>
+                      </div>
+                      <div class="controls-matrix-body">
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">MOVE RIG</span>
+                          <span class="matrix-key">W A S D / ARROWS</span>
+                          <span class="matrix-key">L-STICK / D-PAD</span>
+                          <span class="matrix-key">FLOATING JOYSTICK</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">AIM / LOOK</span>
+                          <span class="matrix-key">MOUSE POINTER</span>
+                          <span class="matrix-key">R-STICK (360°)</span>
+                          <span class="matrix-key">AUTO-AIM TARGET</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">FIRE WEAPON</span>
+                          <span class="matrix-key">LMB (HOLD)</span>
+                          <span class="matrix-key">RT / RB</span>
+                          <span class="matrix-key">FIRE BUTTON</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">EMP BLAST</span>
+                          <span class="matrix-key">Q / E / RMB</span>
+                          <span class="matrix-key">LB / B BUTTON</span>
+                          <span class="matrix-key">EMP BUTTON</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">THRUSTER DASH</span>
+                          <span class="matrix-key">SPACEBAR / SHIFT</span>
+                          <span class="matrix-key">LT / A BUTTON</span>
+                          <span class="matrix-key">DASH BUTTON</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">PAUSE / RESUME</span>
+                          <span class="matrix-key">ESC / P</span>
+                          <span class="matrix-key">START / MENU</span>
+                          <span class="matrix-key">TOPBAR PAUSE</span>
+                        </div>
+                        <div class="controls-matrix-row">
+                          <span class="matrix-action">SELECT UPGRADE</span>
+                          <span class="matrix-key">KEYS 1, 2, 3</span>
+                          <span class="matrix-key">X / Y / B (OR A)</span>
+                          <span class="matrix-key">TAP UPGRADE CARD</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pause-actions">
+                  <button id="pauseResumeBtn" class="action-button action-button--primary" type="button">
+                    <span>RESUME COMBAT</span><b aria-hidden="true">▶</b>
+                  </button>
+                  <button id="pauseAbandonBtn" class="action-button action-button--danger" type="button">
+                    <span>ABANDON RUN</span><b aria-hidden="true">⚠</b>
+                  </button>
+                </div>
               </div>
             </section>
           </div>
@@ -207,6 +416,8 @@
                 class="key">S</span><span class="key">D</span><span class="key-caption">MOVE</span></div>
             <div class="key-row"><span class="key key--mouse">LMB</span><span class="key-caption">AIM / FIRE</span>
             </div>
+            <div class="key-row"><span class="key">Q</span><span class="key">E</span><span
+                class="key key--mouse">RMB</span><span class="key-caption">EMP BLAST</span></div>
             <div class="key-row"><span class="key key--wide">SPACE</span><span class="key-caption">DASH</span></div>
             <p class="controls-note">Tip: keep moving when the red dust starts to climb. Touch FIRE locks the nearest
               signal.</p>
@@ -217,22 +428,19 @@
       </main>
 
       <div id="touchControls" class="touch-controls" aria-label="Touch controls">
-        <div class="touch-pad" aria-label="Movement">
-          <button id="touchUp" class="touch-button touch-button--up" type="button" data-action="move-up"
-            aria-label="Move up">▲</button>
-          <button id="touchLeft" class="touch-button touch-button--left" type="button" data-action="move-left"
-            aria-label="Move left">◀</button>
-          <button id="touchDown" class="touch-button touch-button--down" type="button" data-action="move-down"
-            aria-label="Move down">▼</button>
-          <button id="touchRight" class="touch-button touch-button--right" type="button" data-action="move-right"
-            aria-label="Move right">▶</button>
-          <span class="touch-cross" aria-hidden="true">+</span>
+        <div id="touchJoystickZone" class="touch-joystick-zone" aria-label="Movement analog stick">
+          <div id="joystickBase" class="joystick-base">
+            <div id="joystickThumb" class="joystick-thumb"></div>
+          </div>
+          <span class="joystick-guide" aria-hidden="true">MOVE</span>
         </div>
         <div class="touch-actions">
+          <button id="touchSpecial" class="touch-button touch-button--special" type="button" data-action="special"
+            aria-label="EMP Blast">EMP</button>
           <button id="touchDash" class="touch-button touch-button--dash" type="button" data-action="dash"
             aria-label="Dash">DASH</button>
           <button id="touchShoot" class="touch-button touch-button--fire" type="button" data-action="shoot"
-            aria-label="Fire">FIRE</button>
+            aria-label="Fire (auto-aim nearest)">FIRE</button>
         </div>
       </div>
 

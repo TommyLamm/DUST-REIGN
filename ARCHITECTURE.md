@@ -1,247 +1,216 @@
 # Architecture Overview — DUST//REIGN
 
-這份文件是給開發者與 coding agent 使用的活架構說明；程式碼與瀏覽器實際行為是最終真相。格式參考 [ARCHITECTURE.md template](https://architecture.md/)。目前專案是一個零依賴、單頁、純瀏覽器 Canvas roguelike 射擊遊戲，沒有後端或建置流程。
+本文件為系統現狀規格說明書（Present-tense Specification）與開發導航地圖，旨在協助開發者與 Coding Agent 快速掌握專案架構並精準定位功能修改路徑。程式碼與執行環境為最終真相。
+
+專案為單頁、零建置依賴、純瀏覽器 Canvas 2D roguelike 射擊遊戲。
+
+---
 
 ## 1. 專案結構（Project Structure）
 
 ```text
 .
-├── index.html          # 靜態頁面外殼、HUD、開始／死亡／升級畫面、觸控按鈕
-├── styles.css          # 視覺系統、版面、響應式斷點、焦點與 reduced-motion 規則
-├── game.js             # 遊戲 runtime：狀態、輸入、模擬、碰撞、Canvas 繪製、DOM 同步
-├── playroom-sdk.js     # Playroom 成績與局次 SDK（零依賴 ES 模組）
-├── game.json           # Playroom manifest：固定 ID dust-reign、交付版本、支援裝置與排行榜
-├── cover.png           # 真實瀏覽器遊玩截圖，用於平台封面
-├── scripts/stage-release.mjs # 零依賴成品白名單與 tag／manifest 一致性檢查
-├── .github/workflows/release.yml # 固定平台 commit 打包、完整驗證後建立 Release
-├── RELEASE.md          # 當前 Release 說明、驗收結果與相容性限制
-├── PLAN.md             # 目標、增量計畫與驗收條件
-├── CHANGELOG.md        # 版本與畫面留痕
-├── screenshots/        # 版本截圖；僅供文件／驗收，不是 runtime 素材
-├── AGENTS.md           # repository-level agent 規範
-└── ARCHITECTURE.md     # 本文件
+├── index.html                # 靜態頁面結構、HUD 介面、對話框與觸控按鈕
+├── styles.css                # 視覺風格、排版版面、響應式斷點與減動效規則
+├── game.js                   # 遊戲 Runtime：狀態管理、輸入、碰撞、模擬與 Canvas 繪製
+├── playroom-sdk.js           # Playroom 平台成績與局次 SDK（零依賴 ES 模組）
+├── game.json                 # Playroom 遊戲清單（Manifest：定義 ID、版本與排行榜）
+├── cover.png                 # 平台展示封面圖
+├── scripts/stage-release.mjs # 發布成品白名單（上述 6 檔）與 Manifest 一致性驗證腳本
+├── .github/workflows/        # CI 發布工作流程
+├── AGENTS.md                 # 專案規範與 Agent 指令
+└── ARCHITECTURE.md           # 本架構與導航文件
 ```
 
-沒有 `package.json`、`node_modules`、bundler、外部素材目錄或伺服器程式。`.codegraph/` 若存在，是本地程式索引工具的產物，不是遊戲執行依賴。
+專案不依賴打包工具、外部套件或外部 CDN。正式發布成品為根目錄 6 個核心檔案。
 
-## 2. 高階系統圖（High-Level System Diagram）
+---
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│ Browser                                                    │
-│                                                            │
-│  index.html ── loads ── styles.css                         │
-│      │                    (layout / visual presentation)   │
-│      └─────────────── loads ── game.js                    │
-│                                  │                         │
-│   keyboard / pointer / touch ────┼──> input buffer         │
-│                                  │                         │
-│   requestAnimationFrame ─────────┼──> update(dt)            │
-│                                  │       │                  │
-│                                  │       ├─ state mutation  │
-│                                  │       ├─ collisions      │
-│                                  │       ├─ waves / XP      │
-│                                  │       └─ game-over       │
-│                                  │                          │
-│                                  ├──> draw() ──> Canvas 2D  │
-│                                  └──> updateDomUi() ─> HUD  │
-│                                                            │
-│   localStorage <──── read/write best score only             │
-└────────────────────────────────────────────────────────────┘
-```
+## 2. 功能修改導航地圖（Feature Navigation Matrix）
 
-所有資料都在同一個頁面記憶體內流動。`game.js` 是唯一的遊戲狀態擁有者；`index.html` 提供可選的 DOM 節點，`styles.css` 不參與遊戲規則。
-
-## 3. 核心元件（Core Components）
-
-### 3.1 靜態頁面與呈現層
-
-- **`index.html`**：宣告 `#gameCanvas`、HUD 數值／進度條、開始畫面、死亡畫面、升級選項、任務側欄與觸控控制。
-- **`styles.css`**：提供 DUST//REIGN 的鏽橙／琥珀／薄荷綠終端機風格；外框固定為 iframe 的 `100dvh`，flex／grid 子項可縮小至可用空間；戰場使用 size container，開始／死亡／升級面板依實際寬高縮排，禁止頁面及面板捲動。`900px` 以下或 coarse pointer 顯示獨立觸控列，低高度時切換單列控制；UHD 額外放大面板、HUD 與文字，並支援 safe-area 及 `prefers-reduced-motion`。
-- **技術**：原生 HTML、CSS、Canvas 2D；只引用同目錄的 `styles.css` 與 `game.js`。
-
-### 3.2 遊戲 runtime（`game.js`）
-
-檔案使用嚴格模式 IIFE，並將少量公開操作掛到 `window.LunaGame`。內部函式依責任分成幾組：
-
-| 區域 | 主要函式 | 責任 |
-| --- | --- | --- |
-| DOM／尺寸 | `setupDom`, `resize`, `updateDomUi`, `logEvent` | 找到或建立 Canvas／overlay，處理 DPR、尺寸、HUD／ARIA 與 SCAV RADIO 更新 |
-| 輸入 | `bindInput`, `pointerPosition`, `beginRun`, `togglePause` | 鍵盤、滑鼠／指標、觸控按鈕與焦點生命週期 |
-| 模擬 | `update`, `spawnEnemy`, `spawnParticles` | 時間、移動、生成、子彈、敵人、粒子與限制 |
-| 戰鬥／進程 | `shoot`, `dash`, `killEnemy`, `addXp`, `chooseUpgrade` | 傷害、接觸碰撞、衝刺脈衝、scrap／repair／overdrive 掉落、連殺、升級與死亡 |
-| 繪製 | `drawBackground`, `drawOrb`, `drawEnemy`, `drawPlayer`, `drawHud`, `drawOverlay`, `draw` | 以 Canvas 2D 繪出戰場、實體、HUD 與狀態提示 |
-| 生命週期／診斷 | `init`, `restart`, `pause`, `resume`, `destroy`, `selfCheck` | 啟動、重開、外部暫停／恢復、清理與最小自我檢查 |
-
-### 3.3 狀態與資料模型
-
-`makeState(width, height)` 建立單一可變 `state` 物件。主要欄位如下：
-
-- **回合狀態**：`paused`、`over`、`level`、`xp`／`xpNext`、`score`、`bestScore`、`kills`、`wave`、`waveTime`、`bountyTarget`、`bountyKills`、`bountyReward`、`bountyClaimed`。
-- **效果計時**：`spawnTimer`、`banner`、`shake`、`hurtFlash`、`combo`／`comboTimer`。
-- **玩家**：位置／半徑、速度、生命、傷害、射速、子彈速度／大小、經驗倍率、瞄準角度、無敵、Dash 冷卻／脈衝、Overdrive 倒數。
-- **集合**：`bullets`、`enemies`、`orbs`、`particles`、`upgradeChoices`。
-- **外部輸入**另存於 `input`：按下的鍵集合、滑鼠座標／按住狀態、`touchMode`。
-
-實體規則集中在 `game.js`：
-
-- 敵人：`crawler`、`rusher`、`brute`；第 3 波起才有封頂 14% 機率的 `elite`。
-- 擊殺：普通敵人依種類給 20／35／90 分，精英給 180 分；4 秒內連殺每層提高該次擊殺分數 25%，最多 8 層。
-- **掉落**：`scrap` orb 提供 XP；`brute` 與 `elite` 額外掉落 `repair` orb，拾取最多回復 18 HP，滿 Hull 時轉為 12 分且不提供 XP；精英另額外掉落 `overdrive` orb。Orb 在 165px 內被玩家吸附。
-- **賞金**：每波目標為 `5 + wave * 2` 名敵人，賞金為 `120 + wave * 40` 分；`killEnemy` 達標只結算一次，並以 `Math.max(player.overdrive, BOUNTY_SURGE_DURATION)` 啟動短暫 surge，換波重設 bounty。
-- 升級：從 6 個固定升級中隨機選 3 個，選取後直接 mutates 玩家欄位。
-- 效能上限：敵人數量上限為 `min(95, 5 + wave * 4)`，粒子最多 700 個。
-
-主要平衡常數：`WAVE_LENGTH = 30s`、`COMBO_WINDOW = 4s`、`DASH_PULSE_DURATION = 0.24s`、`DASH_PULSE_RADIUS = 88px`、`OVERDRIVE_DURATION = 6s`、`BOUNTY_SURGE_DURATION = 3s`、`REPAIR_HEAL = 18 HP`、`REPAIR_OVERFLOW_SCORE = 12`。
-
-### 3.4 更新／繪製流程與狀態轉移
-
-```text
-DOM ready / LunaGame.init()
-        │ 建立 state、綁定 listeners、先生成 3 個敵人
-        ▼
-STANDBY ── Enter／開始按鈕／觸控操作 ──> LIVE
-                                            │
-                         P／Esc <───────────┴───────────> PAUSED
-                                            │                 ▲
-                 XP 達標：暫停 + 三選一 ────┘                 │ 選取升級
-                                            │                 │
-                         生命歸零 ──────────┴──────> GAME OVER
-                                                        │
-                                      R／點擊／重開按鈕 ──┘
-```
-
-每個 animation frame：
-
-1. `frame(timestamp)` 將時間差 `dt` 限制在最多 `0.05s`，呼叫 `update(dt)`。
-2. `update` 在 `paused` 或 `over` 時直接返回；否則更新波次計時、玩家輸入／瞄準／射擊、敵人生成、子彈碰撞、Orb 吸附／拾取、敵人追擊／接觸傷害與粒子。
-3. `killEnemy` 統一處理分數、連殺、每波 bounty 一次性結算、surge overdrive、scrap／repair／overdrive 掉落與特效，並把 bounty 事件寫入 SCAV RADIO；生命歸零時記錄最高分並顯示死亡畫面。
-4. `updateDomUi` 同步 HTML HUD 與 progressbar 的 `aria-valuenow`，並同步 mission rail 的 bounty 文字、進度條與威脅等級；`logEvent` 將 wave／bounty／repair 事件插入既有 run log，`restart()` 清掉動態事件，bounty claim 顯示 surge 狀態。正式頁面提供 health／xp／wave／score 節點時，Canvas 不重複畫基本數值；連殺及超頻仍繪於 Canvas，缺少 HTML HUD 的 fallback host 保留基本 Canvas HUD。
-5. `draw` 依背景 → Orb → 子彈 → 敵人 → 粒子 → 玩家 → Canvas HUD → overlay 的順序繪製，再排程下一幀。
-
-### 3.5 DOM 合約與公開 API
-
-`setupDom(options)` 優先尋找現有節點；至少需要可取得 2D context 的 Canvas。缺少 Canvas 或升級 overlay 時會建立 fallback。正式頁面使用以下節點：
-
-- Canvas：`#gameCanvas`。
-- HUD：`#hudHealth`、`#hudXp`、`#hudXpMax`、`#hudLevel`、`#hudWave`、`#hudScore`、`#hudKills`、`#healthFill`、`#xpFill`、`#hudBest`。
-- 暫停按鈕：`#pauseBtn`；開始、升級及死亡時停用，暫停時顯示 RESUME，支援觸控。
-- 狀態／畫面：`#runState`、`#hudStatusText`、`#startScreen`、`#startBtn`、`#gameOverScreen`、`#finalWave`、`#finalScore`、`#finalBest`、`#accountSaveBadge`、`#restartBtn`。
-- 任務側欄：`#objectiveText`、`#objectiveProgress`、`#threatIndex`、`#runLog`；由 `updateDomUi()` 顯示當波 bounty／威脅，`logEvent()` 保留最新 5 筆事件。
-- 升級：`#upgradePanel`、`#upgradeChoices`；按鈕使用 `data-upgrade-index` 供事件委派。
-- 觸控：`#touchUp`、`#touchLeft`、`#touchDown`、`#touchRight`、`#touchShoot`、`#touchDash`。
-
-```javascript
-window.LunaGame.init(options) // idempotent；options 可含 root、canvas
-window.LunaGame.restart()
-window.LunaGame.pause()
-window.LunaGame.resume()       // 升級選擇或死亡時不恢復
-window.LunaGame.destroy()      // 取消 RAF、移除 listeners 與 runtime 建立的節點
-window.LunaGame.getState()
-window.LunaGame.selfCheck()
-```
-
-觸控移動及 FIRE 使用 Pointer Capture，放開／取消／失去 capture 都釋放該輸入；各射擊 pointer 獨立追蹤，放開移動手指不會停止 FIRE。觸控控制不跳過開始或升級對話框；按開始後才進入主要玩法。`restart()` 清空按鍵及射擊 pointer，避免黏住輸入。Canvas 邏輯寬高跟隨實際 CSS 尺寸，DPR 上限維持 2。
-
-頁面載入完成時會自動 `init()`；重複呼叫不會建立第二個 animation loop。`destroy()` 不會刪除原本由頁面提供的 DOM，只清理 runtime 自己建立的元素。
-
-## 4. 資料儲存（Data Stores）
-
-| 名稱 | 類型 | 用途 | 邊界 |
+| 核心系統 | 主要檔案 | 關鍵函式 / 選擇器 | 規格與修改定位說明 |
 | --- | --- | --- | --- |
-| `dust-reign:best-score:v1` | Browser `localStorage` number-as-string | 保存本機最高分，於死亡時計算並在 HUD／結算畫面顯示 | 讀取與舊 `dustReignBestScore` 的較大有效值；僅寫新 key，不刪除或重寫舊資料。只在目前瀏覽器／來源有效，平台與本機來源間不會自動搬移分數；儲存拒絕不阻塞遊戲 |
-| 其餘遊戲狀態 | JavaScript 記憶體物件 | 單局玩家、敵人、子彈、掉落、粒子與升級 | 重整或 `restart()` 後不保留；沒有帳號同步 |
+| **敵人與首領體系** | `game.js` | `spawnEnemy`, `spawnTitan`, `drawEnemy`, `fireArtillery` | 6 種敵型（crawler, rusher, brute, elite, artillery, titan）。Elite 第 3 波生成；Artillery 第 2 波起生成（HP 85+wave*12，預判玩家落點開火，1.2s 延遲引爆並留 2s 熔岩燃燒區）；Titan 於第 5/10 波第 8 秒生成（雙階段：P1 雙聯電漿彈，P2 半血狂暴釋放氣爆擊退、8 向彈幕與召喚 Rusher）。 |
+| **主動技能 (EMP)** | `game.js`, `styles.css`, `index.html` | `triggerEmp`, `AudioFX.emp`, `#meterEnergy`, `#touchSpecial` | 次要戰術技能：消耗 50 電池能量（上限 100，自然回充 +2/s，拾取 Scrap +3.5，暴擊 +4.0）。引爆 140px 青藍震波，瓦解範圍內敵彈、造成 35 傷害、減速 70% 癱瘓 2.2s。支援滑鼠右鍵、Q/E 鍵、手把 LB/B 鍵與觸控按鈕 `#touchSpecial`。 |
+| **戰鬥反饋與擦彈** | `game.js` | `update`, `drawEnemy`, `AudioFX.critHit`, `AudioFX.graze` | 命中觸發閃白環、定向火花與微震；Dash 伏擊 (0.6s 內) 或 High Caliber 觸發暴擊（1.75x / 2.2x 傷害、金屬撞擊音與金色火花）。Graze 擦彈機制：敵彈近身掠過玩家半徑 18px 內給予 +15 分數、噴射金黃火花與 `AudioFX.graze()`。 |
+| **戰鬥遙測與儀式** | `game.js`, `styles.css` | `state.stats`, `triggerGameOver`, `drawOverlay`, `.new-record-stamp` | 全局戰鬥遙測統計（開火數、命中數、累積傷害、暴擊、核心引爆、擦彈、最大連殺）。結算時渲染 4 格工業儀表板與 0.55s CRT 斷電坍縮動畫；破紀錄時展示金框落印 `#newRecordStamp`。 |
+| **擊殺與連殺** | `game.js` | `killEnemy`, `draw`, `AudioFX.kill` | 基礎分數：crawler 20 / rusher 35 / artillery 60 / brute 90 / elite 180 / titan 800。Combo 連殺上限 8 層（每層 +25% 分數，4s 有效窗口，階梯升調音效）。依敵型等級觸發 2.5~16 級震屏與 `killRing` 擴散環。 |
+| **彈道與光學** | `game.js` | `draw`, `shoot`, `update` | 零 `shadowBlur` 開銷；雙層線段（外光暈與高亮內芯）繪製流體軌跡；Rail Slug 穿透衝擊環與逆向金屬火花；Ricochet 牆面彈跳扇形火花與貼壁光斑 (`opticalFlashes`)；Titan 電漿彈橙紅光暈。 |
+| **衝刺與動能** | `game.js` | `dash`, `drawPlayer`, `addDecal` | Dash 賦予 0.32s 無敵位移 (CD 2.2s)；擊殺回充冷卻（每次 0.65s，上限 1.3s）；起點剪影殘影 (`dashTrail`)、落點雙色脈衝環與地面煞車貼花。 |
+| **掉落物與資源** | `game.js` | `drawOrb`, `update`, `spawnOrb` | 165px 磁吸。Scrap（圓形，連殺提供 XP 加成）；Repair（方鑽加號，回復 18 HP，滿血溢出轉 12 分）；Overdrive（雙層方環，賦予 6s 爆發：冷卻 -38%、傷害 +50%）。高對比模式下中心帶幾何識別符號。 |
+| **升級構築卡池** | `game.js` | `UPGRADES`, `addXp`, `renderUpgradePanel`, `chooseUpgrade` | 12 張三分類升級卡（OFFENSE / DEFENSE / TACTICAL），抽卡保底 $\ge$ 1 張 OFFENSE。升級門檻 `xpNext * 1.24 + 28`。支援鍵盤 1/2/3 與手把 X/Y/B 快捷選卡。 |
+| **動態環境與核心** | `game.js`, `styles.css` | `isStormFront`, `drawBackground`, `explodeCore`, `drawDecals` | 每波最後 5s 風暴前線（生成間隔 *0.72、流體沙塵線、無傷擊殺 3 敵達成風暴破曉者獎勵）；第 8~16 秒隨機生成不穩定核心（HP 30，擊破引發 130px 爆炸，90 敵傷 / 15 誤傷）；64 個 GC-Free 地表焦痕池。 |
+| **音訊與觸覺** | `game.js`, `styles.css` | `AudioFX`, `triggerHaptic`, `#audioBtn` | Web Audio API 15 種程序合成音效；M 鍵與按鈕切換靜音；低血量 (<35%) 1400Hz 低通濾波與雙跳心跳；安全封裝 Vibration API（Dash、受傷、Elite、EMP、Titan 狂暴震動；靜音與減動效自動抑制）。 |
+| **手感物理** | `game.js` | `state.hitstop`, `shoot`, `drawPlayer`, `drawCasings` | Hitstop 頓幀（Titan 55ms, Elite 45ms, Brute 25ms, Combo 20ms, Dash/EMP 30~35ms）；開火產生 1.4px 逆向推力、槍管 3.5px 縮進；36 顆 GC-Free 側後方拋殼池。 |
+| **輸入控制** | `game.js`, `styles.css` | `bindInput`, `pollGamepad`, `#touchJoystickZone`, `#touchSpecial` | 鍵盤 WASD/方向鍵移動、滑鼠開火、空白鍵衝刺、Q/E/右鍵施放 EMP；懸浮動態搖桿（Floating Origin 手指動態錨定、360° 映射）；Gamepad API 雙搖桿與按鈕映射。 |
+| **暫停與設定** | `game.js`, `index.html`, `styles.css` | `#pauseModal`, `togglePause`, `switchPauseTab`, `updateSettingsUi` | 暫停選單（`#pauseModal`）提供 3 分頁：`SYSTEM`（音量、靜音、震動、減動效、高對比）、`RIG BUILD`（武器構築數值與晶片）、`CONTROLS`（操作鍵位表）。底部支援放棄單局與繼續戰鬥。 |
+| **無障礙與視覺強化** | `game.js`, `styles.css` | `isHighContrast`, `.game-root.is-high-contrast` | 高對比模式：HUD 高飽和邊框；敵人雙層黑白高對比描邊與頭頂敵型符號（▲, ⚡, ■, ⬡, ★, ☠）；掉落物幾何標記。Reduced Motion 模式全面歸零震屏與 Hitstop，平滑弱化受擊閃爍。 |
+| **構築檢視** | `game.js`, `styles.css` | `state.acquiredUpgrades`, `renderBuildInspector`, `.build-inspector` | 記錄單局已選升級；即時計算 RPS、DMG、暴擊率、穿透數、機甲速度、磁吸半徑；動態顯示被動特質標籤（Shockwave, Tesla, Reactive, High-Caliber）與已安裝晶片。 |
+| **HUD 與介面** | `game.js`, `index.html`, `styles.css` | `updateDomUi`, `logEvent`, `#meterEnergy` | 即時同步生命、經驗、電池能量、等級、波次、分數、擊殺數；SCAV RADIO 最新 5 筆日誌；極窄螢幕 (<=360px) 單行 HUD 與 100dvh 無捲軸適配。 |
+| **平台整合** | `playroom-sdk.js`, `game.js` | `startAccountRun`, `finishAccountRun`, `isReducedMotion` | Playroom SDK 異步載入、開局 `startRun()` 與結算 `finishRun()` 上傳排行榜；沙盒降級運行；榜單規則與局次驗證一致性保證。 |
 
-沒有資料庫、快取、訊息佇列、檔案儲存或伺服器 session。
+---
 
-## 5. 外部整合／API（External Integrations / APIs）
+## 3. 高階架構與狀態機（Architecture & State Machine）
 
-沒有第三方 API、網路請求、登入、付款、分析 SDK 或外部素材服務。`game.js` 只使用瀏覽器原生能力：
-
-- Canvas 2D context、`requestAnimationFrame`／`cancelAnimationFrame`。
-- DOM query／事件、Keyboard／Pointer Events、`devicePixelRatio`、`resize` 與 `ResizeObserver`（觀察 Canvas 尺寸，`destroy()` 時斷開）。
-- `localStorage`（僅本機最高分）。
-- `playroom-sdk.js`：透過動態 import 載入 Playroom SDK，於開始局次呼叫 `Playroom.startRun()`、死亡結算時呼叫 `Playroom.finishRun({ runId, score })`；訪客、預覽與離線時不阻塞主要玩法。
-
-## 6. 部署與基礎設施（Deployment & Infrastructure）
-
-- **入口**：`index.html`；同目錄的 `styles.css` 與 `game.js` 必須一併提供。
-- **部署模型**：任一靜態檔案伺服器或 Playroom 靜態遊戲來源。GitHub tag workflow 提供 Release ZIP，不呼叫平台管理 API。
-- **本地啟動**：可直接雙擊 `index.html`；也可從專案根目錄啟動任一靜態伺服器。HTTP(S) 來源對瀏覽器儲存與快取行為較一致。
-- **建置**：無編譯、bundler、環境變數或 runtime service；發布內容就是這些靜態檔案，由 release 工具整理並打包 ZIP。
-
-### Playroom Release 合約
-
-- 固定遊戲 ID：`dust-reign`；已發布版本 `0.1.0`／`0.1.1` 保持不變；當前版本為 `0.1.2`（對應 tag `v0.1.2`）。排行榜宣告 `dust-reign-score`（desc，0 至 9007199254740991，單位「分」）。支援裝置與本次驗收見 `game.json` 及 `RELEASE.md`。
-- 接入規格、SDK、打包與驗證工具追蹤平台 `main` 分支最新版本。
-- `node scripts/stage-release.mjs` 複製 `game.json`、`index.html`、`styles.css`、`game.js`、`playroom-sdk.js`、`cover.png` 至 `output/release/<version>/game/` 與 `output/game/`。來源 symlink 不接受，既有 staging 目錄不覆寫；輸出資料夾被 Git 忽略。
-- CI 使用 Node 24，下載平台 `main` 分支執行 `npm ci`，再執行平台 `game:pack` 及 `game:validate`；完整驗證失敗則不建立 Release。ZIP 在 staging 目錄外，六個成品檔案直接位於 ZIP 根目錄。
-- tag 必須與 manifest 一致；`gh release create` 不更新既有 Release。後續交付需增加版本並保留舊 tag／Release。
-- 真實瀏覽器驗收採不同 port 的跨來源父頁及遊戲，sandbox 為 `allow-scripts allow-same-origin allow-pointer-lock`，allow 為 `fullscreen; autoplay; gamepad`，與固定平台 commit 的 iframe 一致。版本子目錄與預覽子目錄均需測試。
-- 遊戲未使用音效、全螢幕或外部服務。實測範圍與尚未完成的驗收見 `RELEASE.md`；GitHub Release 不代表已在 Playroom 上架。
-
-## 7. 安全與可及性考量（Security Considerations）
-
-- 沒有遠端信任邊界、帳號或敏感資料；localStorage 的分數可被使用者自行修改，不能當作排行榜或安全憑證。
-- 升級文字目前來自程式內固定常數；若未來改成外部／使用者輸入，應移除未消毒的 `innerHTML` 路徑並改用安全文字節點／白名單。
-- Canvas 有 `aria-label`，HUD 使用 `aria-live`，生命／XP meter 使用 progressbar 語意；開始、死亡、升級畫面使用 dialog 標記。
-- Canvas 可聚焦，支援鍵盤、滑鼠／指標與觸控控制；CSS 提供 `:focus-visible` 與 `prefers-reduced-motion`。
-- 目前沒有 focus trap、完整螢幕閱讀器遊戲狀態描述或 CSP／安全標頭；若遊戲成為公開服務，再由 hosting 層補上 headers 與更完整的非 Canvas 狀態出口。
-
-## 8. 開發與測試環境（Development & Testing Environment）
-
-### 啟動
-
-不需安裝依賴：直接開啟 `index.html`，或使用任一靜態伺服器預覽。
-
-### 最小檢查
+### 3.1 系統資料流
 
 ```text
-node --check game.js
+瀏覽器 / Iframe 沙盒
+  ├── index.html ── 載入 HUD 結構、對話框、虛擬搖桿 DOM
+  ├── styles.css  ── CRT 風格、響應式斷點、Reduced Motion 樣式
+  └── game.js     ── 單一引擎 Runtime
+        ├── 輸入輪詢 (Keyboard / PointerCapture / Gamepad API)
+        ├── requestAnimationFrame (固定上限 dt = 0.05s)
+        │     ├─ update(dt) : 位移、碰撞、風暴計時、數值模擬
+        │     ├─ draw() : Canvas 2D 畫布 12 層分層繪製
+        │     └─ updateDomUi() : 同步 HTML HUD 與 ARIA 狀態
+        └── 外部存儲 : LocalStorage (本地最高分/偏好) & playroom-sdk.js (平台排行榜)
 ```
 
-在瀏覽器載入頁面後，於 DevTools 執行：
+### 3.2 遊戲狀態機
+
+```text
+[ STANDBY ] ── Enter / 開始按鈕 / 觸控點擊 ──> [ LIVE ]
+                                                │
+             P 鍵 / Esc / 暫停按鈕 <───────────┼───────────> [ PAUSED ]
+                                                │                  ▲
+          升級 XP 達標（自動暫停 + 彈出面板）───┘                  │ 快捷鍵/點擊選卡
+                                                │                  │
+                             玩家生命歸零 ──────┴──────> [ GAME OVER ]
+                                                                │
+                                        R 鍵 / 重開按鈕 ────────┘
+```
+
+---
+
+## 4. 核心狀態與資料模型（Core State & Data Model）
+
+### 4.1 狀態物件結構（`makeState(width, height)`）
+
+單局運行數據封裝於單一 `state` 物件：
+
+| 模組 | 關鍵欄位 | 規格說明 |
+| --- | --- | --- |
+| **運作旗標** | `running`, `paused`, `over`, `bossSpawned`, `deathSequenceTimer`, `isNewRecord` | 遊戲運行/暫停/結算狀態；首領生成標記；CRT 斷電坍縮倒數 (0.55s)；歷史新高標記。 |
+| **波次與分數** | `level`, `xp`, `xpNext`, `score`, `kills`, `wave`, `waveTime` | 等級與升級門檻 (`xpNext * 1.24 + 28`)；分數、擊殺數；波次計時（30s/波，第 5/10 波 8s 生成 Titan）。 |
+| **賞金任務** | `bountyTarget`, `bountyKills`, `bountyReward`, `bountyClaimed` | 當波目標擊殺數 (`5 + wave * 2`)；達成獎勵 (`120 + wave * 40` 分與 3s Surge 超頻）。 |
+| **反饋與打擊** | `hitstop`, `shake`, `hurtFlash`, `hurtBorder`, `levelPulse`, `statusTimer` | 頓幀凍結倒數；震屏強度；受傷淡紅遮罩與紅內框；升級光環；廣播秒數。 |
+| **動態環境** | `stormAlerted`, `bannerText`, `stormKills`, `stormHurt`, `coreSpawned` | 風暴警報標記；廣播文字；風暴期擊殺與受傷追蹤；不穩定核心刷新旗標。 |
+| **玩家實體 (`player`)** | `x`, `y`, `r`, `hp`, `maxHp`, `energy`, `maxEnergy`, `speed`, `invulnerable`, `damage`, `fireRate`, `recoil`, `dashCooldown`, `dashPulse`, `dashRefund`, `dashTrail`, `dashAmbushTimer`, `overdrive`, `magnetRadius` | 機甲半徑 (15px)；生命 (100)；電池能量 (50/100，+2/s 回充)；速度 (235px/s)；無敵秒數；傷害 (26)；冷卻 (0.18s)；Dash 冷卻 (2.2s) 與回充；殘影與伏擊計時；超頻秒數 (6s)；磁吸半徑 (165px)。 |
+| **升級特性標記** | `pierce`, `bounces`, `shockwaveDash`, `teslaCoil`, `reactiveArmor`, `highCaliber`, `acquiredUpgrades` | 貫穿次數、跳彈次數、衝刺震波、拾取電弧、受擊反甲、重口徑暴擊；已選卡片清單陣列。 |
+| **戰鬥遙測 (`stats`)** | `shotsFired`, `shotsHit`, `damageDealt`, `crits`, `coresDetonated`, `grazes`, `maxCombo` | 單局射擊數、命中數、累積傷害、暴擊次數、核心引爆、擦彈次數與最大連殺數。 |
+| **實體陣列池** | `bullets`, `enemyBullets`, `enemies`, `artilleryTargets`, `opticalFlashes`, `volatileCores`, `orbs`, `particles`, `shockRings`, `lightningArcs`, `casings`, `decals` | 子彈、敵彈、敵人、迫擊砲目標區、光斑、核心、掉落物、粒子（上限 700）、震波環、電弧；36 顆彈殼池；64 個焦痕池。 |
+
+### 4.2 核心常數與升級卡池
 
 ```javascript
-window.LunaGame.selfCheck()
-// { ok: true, upgrades: 6, controls: ..., combo: ..., overdrive: ..., repair: ..., bounty: ..., surge: ..., overflow: ... }
+const WAVE_LENGTH = 30;           // 每波長度 30 秒
+const STORM_FRONT_SECONDS = 5;    // 每波末 5 秒為風暴前線
+const STORM_SPAWN_FACTOR = 0.72;  // 風暴前線生成間隔乘率
+const COMBO_WINDOW = 4;           // 連殺有效窗口 4 秒
+const MAX_COMBO = 8;              // 連殺上限 8 層（每層 +25% 分數、+10% Scrap XP）
+const OVERDRIVE_DURATION = 6;     // 精英超頻 6 秒（冷卻 -38%，傷害 +50%）
 ```
 
-`selfCheck()` 覆蓋基本擊殺、連殺分數、升級清單與初始效果；目前沒有 Jest、Playwright 或其他測試框架。手動 smoke test 應至少確認：開始／重開、WASD／方向鍵移動、滑鼠按住射擊、Space／觸控 Dash、升級三選一、P／Esc 暫停、死亡結算、高分保留與窄螢幕觸控操作。
+- **三選一升級卡池（`UPGRADES`，12 張，保底 $\ge$ 1 張 OFFENSE）**：
+  - **OFFENSE**：`rapid-fire` (射速冷卻 *0.82)、`scatter-shot` (傷害 +8)、`hot-load` (子彈速度 +180、半徑 +1)、`rail-slug` (貫穿 1 敵 / 餘傷 70%)、`ricochet` (跳彈 1 次 / 速度 90%)、`high-caliber` (暴擊倍率 2.2x / 20% 平射暴擊率)。
+  - **DEFENSE**：`heavy-plating` (生命上限 +25 並回復 40 HP)、`reactive-armor` (受傷釋放 75px / 30 傷害防衛脈衝)。
+  - **TACTICAL**：`overdrive-injector` (Overdrive +2.5s 並觸發 3.5s Surge)、`magnet-core` (磁吸 +65px 與 Scrap XP *1.25)、`shockwave-dash` (衝刺半徑 125px / 2x 擊退)、`tesla-coil` (拾取 Orb 電弧攻擊最近 2 敵 22 傷)。
 
-## 9. 未來考量／路線圖（Future Considerations / Roadmap）
+### 4.3 儲存與平台契約
 
-目前 `PLAN.md` 的原則是先維持核心循環與零依賴：
+- **本地 LocalStorage**（封裝於 `try-catch` 確保沙盒容錯）：
+  - `dust-reign:best-score:v1`：歷史最高分。
+  - `dust_reign_audio_muted`：音效靜音偏好（`"true"` / `"false"`）。
+  - `dust_reign_master_volume`：主音量設定（0~100，預設 80）。
+  - `dust_reign_haptics_enabled`：觸覺反饋震動開關（預設 true）。
+  - `dust_reign_motion_reduction`：動態減敏開關（未設定時回退系統 `prefers-reduced-motion`）。
+  - `dust_reign_high_contrast`：高對比無障礙模式開關（預設 false）。
+- **Playroom 排行榜**：榜單 ID 為 `dust-reign-score`，透過 `playroom-sdk.js` 呼叫 `startRun()` 與 `finishRun({ runId, score })`。
 
-- 沒有明確效能問題前，不拆分 `game.js`、不引入框架／建置工具，也不新增事件匯流排或狀態管理套件。
-- 若敵人上限或粒子上限提高後碰撞成本成為瓶頸，再考慮空間索引；目前子彈碰撞與觸控最近目標都是小上限下的線性掃描。
-- 若 UI 狀態消費者增加，再抽出更明確的 view-model／事件邊界；現在由 `updateDomUi()` 集中同步已足夠。
-- 只有在留存或營運需求被驗證後，才評估帳號、雲端排行榜、分析、多人、完整地圖／劇情或後端服務。
+---
 
-## 10. 專案識別（Project Identification）
+## 5. 渲染管線與回饋機制（Rendering Pipeline & Feedback）
 
-- **Project name**：DUST//REIGN — Wasteland Run
-- **Runtime module**：`LunaGame`（`game.js`）
-- **Repository URL**：https://github.com/TommyLamm/DUST-REIGN （公開）
-- **Primary contact/team**：未指定
-- **Current changelog baseline**：V0.1.2（2026-10-05）
-- **Page build label**：`BUILD 0.1.2`（`index.html` 目前顯示值）
-- **Date of last architecture update**：2026-10-05
+### 5.1 繪製層次順序
 
-## 11. 詞彙／縮寫（Glossary / Acronyms）
+`draw()` 依序繪製 12 個圖層：
 
-- **Run**：一次從開始到死亡／重開的單局。
-- **Wave**：每 30 秒推進一次的敵人難度與生成階段。
-- **Scrap / XP**：敵人掉落的經驗資源；達標會觸發升級選擇。
-- **Orb**：戰場掉落物；`scrap` 給 XP，`repair` 最多回復 18 HP，`overdrive` 啟動精英超頻效果。
-- **Chain**：4 秒連殺窗口內的連殺層數，最多 8 層。
-- **Bounty / Wave Bounty**：每波的擊殺目標與一次性分數賞金；達標後鎖定 `bountyClaimed`，換波重設。
-- **Bounty Surge**：賞金達標時沿用 `player.overdrive` 的 3 秒短暫火力提升；已有更長超頻時只保留較長值。
-- **SCAV RADIO / run log**：沿用 `#runLog` 顯示 wave、bounty、repair 事件，最新在頂端且最多保留 5 筆，不做跨局保存。
-- **Repair Scrap / Hull**：重型或精英額外掉落的 `repair` orb；拾取最多回復 18 HP，滿 Hull 時改給 12 分，且不超過玩家 `maxHp`、不增加 XP。
-- **Overdrive / Overclock**：拾取精英核心後持續 6 秒；射擊冷卻乘以 0.62、傷害乘以 1.5。
-- **Storm Clock / Storm Front**：每波最後 5 秒進入的波末風暴狀態；生成間隔縮短至 0.72 倍，右側 mission rail 倒數同步切換為 STORM FRONT。
-- **HUD**（Heads-Up Display）：畫面上的生命、XP、波次、分數與效果提示。
-- **DPR**（Device Pixel Ratio）：用來讓 Canvas 在高密度螢幕保持清晰的縮放比例。
-- **DOM**（Document Object Model）：`index.html` 提供、由 `updateDomUi()` 同步的 HTML 節點。
-- **IIFE**（Immediately Invoked Function Expression）：`game.js` 的封裝方式，避免污染全域；僅公開 `window.LunaGame`。
+```text
+ 1. 背景層 (drawBackground)       : 滾動網格、隨機碎屑地形、風暴 35° 流體沙塵線
+ 2. 焦痕層 (drawDecals)           : 64 個 GC-Free 地表焦痕貼花池，12~18s 衰減
+ 3. 彈殼層 (drawCasings)          : 36 顆旋轉黃銅彈殼池，淡出衰減
+ 4. 資源層 (drawOrb)              : 掉落物幾何圖形 (Scrap 圓形 / Repair 方鑽 / Overdrive 雙環)
+ 5. 子彈層                        : 雙層流體光學軌跡線、Rail Slug 衝擊環、跳彈貼壁光斑 (opticalFlashes)
+ 6. 迫擊砲區與敵彈衝擊環          : 迫擊砲 46px 預警圈與熔岩燃燒區、精英電漿彈、EMP 衝擊環、電弧
+ 7. 敵人實體 (drawEnemy)          : 深色描邊、Elite 旋轉齒環、Rusher 預警殘影、Artillery 六邊形底座
+ 8. 不穩定核心 (drawCores)        : 能量石旋轉多邊形與血條
+ 9. 粒子特效                      : 命中、擊殺、爆炸、擦彈方塊粒子（重力與阻力模擬）
+10. 玩家實體 (drawPlayer)         : Dash 剪影殘影、雙色脈衝環、船體後座力縮進、砲口菱形火花
+11. 擊殺擴散環 (killRing)        : 8~60px 擊殺擴散光環（薄荷綠至琥珀色）
+12. 遮罩與 HUD (drawHud/Overlay) : 低血量心跳紅暈、受傷紅框、橫幅廣播、暫停/結算遮罩
+```
+
+### 5.2 打擊感反饋規則
+
+- **Hitstop 頓幀**：關鍵擊殺與多目標打擊凍結 `update`（Titan 55ms, Elite 45ms, Brute 25ms, Combo 20ms, Dash/EMP 30~35ms），保留畫面震動。
+- **後座力與拋殼**：射擊時玩家逆向後退 1.4px，槍管內縮 3.5px，側後方拋出帶旋轉動態彈殼。
+- **Reduced Motion 降級**：系統減動效開啟時，震屏與 Hitstop 歸零，停用 Dash 剪影，縮短受擊閃白至 0.06s，受傷紅閃平滑淡出。
+
+---
+
+## 6. DOM 合約與公開 API（DOM Contracts & Public API）
+
+### 6.1 核心 DOM 節點
+
+- **畫布**：`#gameCanvas`
+- **頂部 HUD**：生命 `#health` / `#healthFill`、經驗 `#xp` / `#xpMax` / `#xpFill`、電池能量 `#hudEnergy` / `#meterEnergy` / `#energyFill`、等級 `#level`、波次 `#wave`、分數 `#score`、擊殺 `#kills`、歷史最高 `#hudBest`、廣播 `#hudStatusText`
+- **任務側欄**：賞金目標 `#objectiveText`、賞金進度 `#objectiveProgress`、威脅等級 `#threatIndex`、風暴倒數 `#waveTimer`、日誌 `#runLog`
+- **對話框與面板**：
+  - 開始畫面 `#startScreen` (`#startBtn`)
+  - 死亡畫面 `#gameOver` (`#restartButton`, `#runTelemetry`, `#newRecordStamp`)
+  - 升級面板 `#upgradeOverlay` (`#upgradeChoices`)
+  - 控制按鈕：音效切換 `#audioBtn`、暫停按鈕 `#pauseBtn`
+  - 暫停診斷面板 `#pauseModal`：頁籤切換（`#tabBtnSystem`, `#tabBtnBuild`, `#tabBtnControls`）、設定控制項（`#settingMasterVolume`, `#toggleAudioMute`, `#toggleHaptics`, `#toggleMotionReduction`, `#toggleHighContrast`）、機體檢視（`#buildStatsGrid`, `#buildTags`, `#installedChipsList`）、按鈕（`#pauseResumeBtn`, `#pauseAbandonBtn`）
+- **觸控按鍵**：懸浮動態搖桿 `#touchJoystickZone` (`#joystickBase`, `#joystickThumb`, `.joystick-guide`)、開火 `#touchShoot`、衝刺 `#touchDash`、戰術技能 `#touchSpecial`
+
+### 6.2 公開 API（`window.LunaGame`）
+
+```javascript
+window.LunaGame = {
+  init(options): api,          // 冪等初始化，可自訂 { root, canvas }
+  restart(): void,             // 重置狀態並啟動新單局
+  pause(): void,               // 暫停遊戲運行
+  resume(): void,              // 恢復遊戲運行
+  destroy(): void,             // 停止 RAF、解綁事件、釋放資源
+  getState(): object,          // 取得內部單一 state 參照
+  getPlayroom(): object|null,  // 取得 Playroom SDK 實例
+  getAudio(): object,          // 取得 AudioFX 程序合成器
+  triggerGameOver(): void,     // 手動觸發死亡結算
+  selfCheck(): object          // 執行內部邏輯無介面自動檢驗
+};
+```
+
+---
+
+## 7. 開發與驗證指南（Development & Verification）
+
+專案為純靜態架構，無須建置步驟，可直接開啟 `index.html` 或透過靜態伺服器預覽。
+
+```bash
+# 1. 語法正確性檢驗（無報錯方可提交）
+node --check game.js
+
+# 2. 內部核心邏輯自檢（Node 或瀏覽器 Console 執行）
+# window.LunaGame.selfCheck() 自動驗證項目：
+# - 基礎擊殺分數計算與 Combo 乘率爬音（crawler, rusher, artillery, brute, elite）
+# - Brute / Elite 掉落物生成與滿血溢出分數轉換
+# - 賞金達成獎勵分與 3s Surge 超頻觸發
+# - 波末 5s 風暴前線狀態切換與換波重設
+# - Dash 脈衝擊殺冷卻回充與上限控制
+# - 連殺 Scrap XP 乘率加成
+# - Rusher 衝刺段速度與冷卻觸發
+# - Artillery 迫擊砲擊殺分數 (60) 與掉落判定
+# - 近身彈幕擦彈 Graze 機制判定（加分 +15 與計數增加）
+```

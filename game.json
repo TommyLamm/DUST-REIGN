@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "廢土 roguelike 射擊遊戲。躲避敵群、收集 scrap、選擇升級，完成波次賞金並在風暴中存活。",
   "author": "TommyLam",
   "entry": "index.html",
