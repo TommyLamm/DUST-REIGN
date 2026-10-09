@@ -19,6 +19,25 @@
   transform: translateY(1px);
 }
 .pause-button:disabled { opacity: 0.4; cursor: default; }
+.lang-button {
+  min-width: 68px;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+}
+.lang-button .is-active {
+  color: var(--amber);
+  font-weight: 700;
+}
+.lang-button .is-inactive {
+  color: var(--muted);
+  font-weight: 400;
+}
+.lang-button .lang-opt {
+  transition: color 0.15s ease;
+}
+.lang-button:hover .lang-opt.is-inactive {
+  color: var(--dust);
+}
 .topbar-meta { gap: clamp(8px, 2vw, 28px); }
 .brand-lockup, .brand-lockup > div { min-width: 0; }
 .hud-top { grid-template-columns: 1fr 1.4fr 0.8fr; width: min(590px, 100%); }

@@ -7,6 +7,8 @@ import { initCodexPanel } from './codex-panel.js';
 import { initInterludePanel } from './interlude-panel.js';
 import { initLoadoutPanel } from './loadout-panel.js';
 
+var gameOverFitKey = '';
+
 export function setupDom(options) {
   options = options || {};
   var root = options.root || first(['[data-luna-game]', '#game-root', '.game-root', '.game-container', '.game-shell']);
@@ -83,6 +85,7 @@ export function setupDom(options) {
   var runLog = first(['#runLog', '[data-run-log]', '.run-log']);
   var accountSaveBadge = first(['#accountSaveBadge', '[data-account-save-badge]'], gameOver);
   var audioBtn = first(['#audioBtn', '[data-audio-btn]', '.audio-button']);
+  var langBtn = first(['#langBtn', '[data-lang-btn]', '.lang-button']);
   var hudChain = first(['#hudChain', '[data-hud-chain]', '.hud-chain-badge']);
   var hudEnergy = first(['#hudEnergy', '[data-energy]']);
   var meterEnergy = first(['#meterEnergy']);
@@ -119,6 +122,7 @@ export function setupDom(options) {
   var settingVisualQuality = first(['#settingVisualQuality'], pauseModal || document);
   var toggleTips = first(['#toggleTips'], pauseModal || document);
   var resetTips = first(['#resetTips'], pauseModal || document);
+  var toggleLanguage = first(['#toggleLanguage'], pauseModal || document);
   var pauseResumeBtn = first(['#pauseResumeBtn'], pauseModal || document);
   var pauseAbandonBtn = first(['#pauseAbandonBtn'], pauseModal || document);
   var pauseTabIndicator = first(['#pauseTabIndicator', '.pause-tab-indicator'], pauseModal || document);
@@ -194,6 +198,7 @@ export function setupDom(options) {
     runLog: runLog,
     accountSaveBadge: accountSaveBadge,
     audioBtn: audioBtn,
+    langBtn: langBtn,
     hudChain: hudChain,
     pauseModal: pauseModal,
     tabBtnSystem: tabBtnSystem,
@@ -211,6 +216,7 @@ export function setupDom(options) {
     settingVisualQuality: settingVisualQuality,
     toggleTips: toggleTips,
     resetTips: resetTips,
+    toggleLanguage: toggleLanguage,
     pauseResumeBtn: pauseResumeBtn,
     pauseAbandonBtn: pauseAbandonBtn,
     pauseTabIndicator: pauseTabIndicator,
@@ -258,4 +264,48 @@ export function resize() {
   rt.state.height = height;
   rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r, width - rt.state.player.r);
   rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r, height - rt.state.player.r);
+  fitGameOverOverlay();
+}
+
+export function fitGameOverOverlay() {
+  var overlay = rt.ui && rt.ui.gameOver;
+  var inner;
+  var style;
+  var availW;
+  var availH;
+  var scale;
+  var key;
+  var hiddenCount;
+  var i;
+  if (!overlay || typeof overlay.querySelector !== 'function' || typeof getComputedStyle !== 'function') return;
+  inner = overlay.querySelector('.overlay-inner');
+  if (overlay.hidden) {
+    gameOverFitKey = '';
+    if (overlay.style) overlay.style.placeItems = '';
+    if (inner && inner.style && inner.style.transform) inner.style.transform = '';
+    return;
+  }
+  if (!inner || !inner.style) return;
+  style = getComputedStyle(overlay);
+  availW = overlay.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
+  availH = overlay.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
+  if (!(availW > 8) || !(availH > 8)) return;
+  hiddenCount = 0;
+  for (i = 0; i < inner.children.length; i += 1) {
+    if (inner.children[i].hidden) hiddenCount += 1;
+  }
+  key = Math.round(availW) + 'x' + Math.round(availH) + ':' + hiddenCount + ':' + inner.childElementCount + ':' + inner.offsetHeight + ':' + (inner.textContent || '').length;
+  if (key === gameOverFitKey) return;
+  scale = 1;
+  if (inner.offsetHeight > availH - 4) scale = Math.min(scale, (availH - 4) / inner.offsetHeight);
+  if (inner.offsetWidth > availW - 4) scale = Math.min(scale, (availW - 4) / inner.offsetWidth);
+  gameOverFitKey = key;
+  if (scale < 0.995) {
+    overlay.style.placeItems = 'start center';
+    inner.style.transformOrigin = 'top center';
+    inner.style.transform = 'scale(' + String(Math.round(scale * 1000) / 1000) + ')';
+  } else {
+    overlay.style.placeItems = '';
+    inner.style.transform = '';
+  }
 }

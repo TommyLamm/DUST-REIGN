@@ -17,8 +17,11 @@ import { update } from '../systems/update.js';
 import { cycleWeaponMode, shoot } from '../systems/weapons.js';
 import { updateDomUi } from '../ui/hud.js';
 import { renderBuildInspector } from '../ui/pause-menu.js';
+import { getLanguage, setLanguage } from '../core/i18n.js';
 
 export function selfCheck() {
+  var previousLang = getLanguage();
+  setLanguage('en');
   var test = makeState(320, 240);
   var previous = rt.state;
   var previousUi = rt.ui;
@@ -842,6 +845,7 @@ export function selfCheck() {
     rt.ui = previousUi;
     rt.input.mouse.down = previousMouseDown;
     rt.input.keys = previousKeys;
+    setLanguage(previousLang);
   }
   if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !stormClock || !waveReset || artilleryScore !== 60 || !grazeOk || !justDashOk || !barrelKickOk || !barrelShootOk || !stormWindOk || !coreTitanOk || !barrelTitanOk || !weaponCycleOk || !breacherShootOk || !vanguardSlowOk || !vanguardShootOk || !arcChainOk || !fusionMatrixOk || !fusionExecOk || !buildInspectorUiOk || !eliteAffixSystemOk || !titanComponentsSystemOk || !conductionSpireSystemOk || !combatRankTelemetryOk) throw new Error('LunaGame self-check failed');
   return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '10 fusions, prerequisites verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified' };

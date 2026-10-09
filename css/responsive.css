@@ -478,3 +478,11 @@ html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::aft
     font-size: 7px;
   }
 }
+
+@media (max-width: 360px) {
+  .lang-button {
+    min-width: 58px;
+    padding: 3px 5px;
+    font-size: 9px;
+  }
+}

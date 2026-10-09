@@ -2,8 +2,8 @@ import { readBestScoreV2, readDaily, readLegacyBestScore, writeMeta } from '../c
 import { on } from '../core/utils.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { RIGS, getRig } from '../data/rigs.js';
-import { peekRunUnlocks, resolveSelection } from '../systems/meta.js';
 import { closeCodex, cycleCodexTab, isCodexOpen, openCodex } from './codex-panel.js';
+import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 
 var WEAPONS = [
   { id: 'standard', name: 'STANDARD', rate: '0.18s', pattern: 'DIRECT', line: 'Steady rifle. Stay mobile.' },
@@ -89,43 +89,81 @@ function refresh() {
   pick = resolveSelection();
   meta = pick.meta;
   lockedDaily = !!(pick.rule && pick.mode === 'daily');
+  var zh = isChinese();
   for (i = 0; i < rigButtons.length; i += 1) {
     rig = RIGS[i];
     var locked = meta.unlockedRigs.indexOf(rig.id) === -1;
     var selected = rig.id === pick.rigId;
     setPressed(rigButtons[i], selected, locked || lockedDaily);
     rigButtons[i].classList.toggle('is-locked', locked && !selected);
+    var rigTitle = rigButtons[i].querySelector('strong');
+    if (rigTitle) rigTitle.textContent = zh ? tRigName(rig.id) : rig.name;
     var detail = rigButtons[i].querySelector('small');
-    if (detail) detail.textContent = locked && !lockedDaily ? rig.req : (lockedDaily && selected ? 'DAILY LOCK' : rig.blurb);
+    if (detail) {
+      detail.textContent = locked && !lockedDaily
+        ? (zh ? tRigReq(rig) : rig.req)
+        : (lockedDaily && selected ? (zh ? '每日鎖定' : 'DAILY LOCK') : (zh ? tRigBlurb(rig.id) : rig.blurb));
+    }
   }
   for (i = 0; i < weaponButtons.length; i += 1) {
     weapon = WEAPONS[i];
     setPressed(weaponButtons[i], weapon.id === pick.weaponId, lockedDaily);
+    var wTitle = weaponButtons[i].querySelector('strong');
+    if (wTitle) wTitle.textContent = zh ? tWeaponName(weapon.id) : weapon.name;
+    var wRatePattern = weaponButtons[i].querySelector('small:not(.loadout-line)');
+    if (wRatePattern) {
+      var rText = weapon.rate;
+      if (zh) rText = rText.replace('BURST', '連發').replace('CHARGE', '充能').replace('FAST', '極速');
+      wRatePattern.textContent = rText + ' · ' + (zh ? tWeaponPattern(weapon.id) : weapon.pattern);
+    }
+    var wLine = weaponButtons[i].querySelector('.loadout-line');
+    if (wLine) wLine.textContent = zh ? tWeaponLine(weapon.id) : weapon.line;
   }
   setPressed(heatDown, false, lockedDaily);
   setPressed(heatUp, false, lockedDaily);
   heatDown.tabIndex = 0;
   heatUp.tabIndex = 0;
   heatValue.tabIndex = 0;
-  heatValue.textContent = 'HEAT ' + pick.heat + ' ' + formatMult(pick.heat);
+  heatValue.textContent = (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' ' + formatMult(pick.heat);
   heatValue.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
   setPressed(modeStandard, pick.mode !== 'daily', false);
   setPressed(modeDaily, pick.mode === 'daily', false);
   modeStandard.tabIndex = pick.mode !== 'daily' ? 0 : -1;
   modeDaily.tabIndex = pick.mode === 'daily' ? 0 : -1;
+  modeStandard.textContent = zh ? '標準模式' : 'STANDARD';
+  modeDaily.textContent = zh ? '每日挑戰' : 'DAILY';
   if (pick.rule) {
     saved = readDaily();
     best = saved.date === pick.dateKey ? saved.best : 0;
     runs = saved.date === pick.dateKey ? saved.runs : 0;
-    ruleText = pick.rule.title + ' — ' + pick.rule.summary + ' Lock ' + pick.rigId.toUpperCase() + ' / ' + pick.weaponId.toUpperCase() + ' / HEAT ' + pick.heat + '. ' + routeText(pick.rule) + '. TODAY BEST ' + padScore(best) + ' · RUNS ' + runs;
+    if (zh) {
+      ruleText = tDailyTitle(pick.rule.id) + ' — ' + tDailySummary(pick.rule.id) + ' 鎖定 ' + tRigName(pick.rigId) + ' / ' + tWeaponName(pick.weaponId) + ' / 熱度 ' + pick.heat + '。' + routeText(pick.rule) + '。今日最佳 ' + padScore(best) + ' · 出擊 ' + runs;
+    } else {
+      ruleText = pick.rule.title + ' — ' + pick.rule.summary + ' Lock ' + pick.rigId.toUpperCase() + ' / ' + pick.weaponId.toUpperCase() + ' / HEAT ' + pick.heat + '. ' + routeText(pick.rule) + '. TODAY BEST ' + padScore(best) + ' · RUNS ' + runs;
+    }
   } else {
-    ruleText = 'STANDARD RUN';
+    ruleText = zh ? '標準出擊' : 'STANDARD RUN';
   }
   if (ruleNode.textContent !== ruleText) ruleNode.textContent = ruleText;
-  var scores = 'BEST ' + padScore(readBestScoreV2()) + '   LEGACY BEST ' + padScore(readLegacyBestScore());
+  var scores = (zh ? '最佳分數 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '歷史最佳 ' : 'LEGACY BEST ') + padScore(readLegacyBestScore());
   if (scoreNode.textContent !== scores) scoreNode.textContent = scores;
-  status = pick.rigId.toUpperCase() + ' · ' + pick.weaponId.toUpperCase() + ' · HEAT ' + pick.heat + ' · ' + formatMult(pick.heat) + ' · REROLLS ' + rerollCount(pick);
+  status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase()) + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase()) + ' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat) + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);
   if (statusNode.textContent !== status) statusNode.textContent = status;
+
+  var kicker = document.querySelector('#loadoutPanel .loadout-kicker');
+  if (kicker) kicker.textContent = zh ? '出擊配置' : 'LOADOUT';
+  var rigLabel = document.querySelector('#loadoutPanel [data-loadout-row="rig"] .loadout-label');
+  if (rigLabel) rigLabel.textContent = zh ? '機體' : 'RIG';
+  var weaponLabel = document.querySelector('#loadoutPanel [data-loadout-row="weapon"] .loadout-label');
+  if (weaponLabel) weaponLabel.textContent = zh ? '武器' : 'WEAPON';
+  var heatLabel = document.querySelector('#loadoutPanel [data-loadout-row="heat"] .loadout-label');
+  if (heatLabel) heatLabel.textContent = zh ? '熱度' : 'HEAT';
+  var modeLabel = document.querySelector('#loadoutPanel [data-loadout-row="mode"] .loadout-label');
+  if (modeLabel) modeLabel.textContent = zh ? '模式' : 'MODE';
+  var hintNode = document.querySelector('#loadoutPanel .loadout-hint');
+  if (hintNode) hintNode.textContent = zh ? '方向鍵 選擇 · TAB 切換 · ENTER 開始' : 'ARROWS SELECT · TAB MOVES · ENTER STARTS';
+  var codexOpenBtn = document.getElementById('codexOpenBtn');
+  if (codexOpenBtn) codexOpenBtn.textContent = zh ? '檔案庫' : 'CODEX';
 }
 
 function chooseRig(id) {
@@ -365,7 +403,7 @@ function syncUnlockBanner() {
   unlockSig = sig;
   host.hidden = false;
   while (host.firstChild) host.removeChild(host.firstChild);
-  host.appendChild(el('p', 'run-unlocks-kicker', 'UNLOCKED'));
+  host.appendChild(el('p', 'run-unlocks-kicker', isChinese() ? '已解鎖' : 'UNLOCKED'));
   for (i = 0; i < list.length; i += 1) host.appendChild(el('p', 'run-unlocks-line', list[i].label));
 }
 
@@ -535,3 +573,7 @@ export function updateLoadoutPanel() {
   if (!screen || !screen.hidden) refresh();
   syncUnlockBanner();
 }
+
+onLanguageChange(function () {
+  if (built) refresh();
+});

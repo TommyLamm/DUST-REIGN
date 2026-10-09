@@ -50,6 +50,7 @@
             <strong id="hudBest">000000</strong>
           </div>
           <button id="audioBtn" class="pause-button" type="button" aria-label="Toggle Audio">AUDIO [ON]</button>
+          <button id="langBtn" class="pause-button lang-button" type="button" aria-label="切換語言 / Toggle Language"><span class="lang-opt is-inactive">ENG</span> / <span class="lang-opt is-active">繁中</span></button>
           <button id="pauseBtn" class="pause-button" type="button" aria-label="Pause game" disabled>PAUSE</button>
         </div>
       </header>
@@ -321,6 +322,16 @@
                         <div class="setting-controls">
                           <button type="button" id="toggleTips" class="pause-setting-btn">TIPS: ON</button>
                           <button type="button" id="resetTips" class="pause-setting-btn">RESET TIPS</button>
+                        </div>
+                      </div>
+
+                      <div class="setting-row" id="settingLanguageRow">
+                        <div class="setting-meta">
+                          <span class="setting-label" id="settingLanguageLabel">LANGUAGE</span>
+                          <small class="setting-desc" id="settingLanguageDesc">INTERFACE LANGUAGE / 介面語言</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleLanguage" class="pause-setting-btn">ENG / 繁中</button>
                         </div>
                       </div>
                     </div>

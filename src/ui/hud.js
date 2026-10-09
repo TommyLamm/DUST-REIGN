@@ -12,6 +12,8 @@ import { updateInterludePanel } from './interlude-panel.js';
 import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
 import { updateTips } from './tips.js';
+import { fitGameOverOverlay } from './dom.js';
+import { isChinese, onLanguageChange, tLog, tRankTitle } from '../core/i18n.js';
 
 var shownScore = null;
 var scoreState = null;
@@ -178,9 +180,9 @@ function syncChain() {
     el.hidden = false;
     if (el.classList) el.classList.remove('is-break');
     if (rt.state.combo > 1) {
-      el.textContent = 'CHAIN x' + rt.state.combo + (rt.state.grazeCombo > 0 ? ' [GRAZE ' + rt.state.grazeCombo + ']' : '');
+      el.textContent = (isChinese() ? '連擊 x' : 'CHAIN x') + rt.state.combo + (rt.state.grazeCombo > 0 ? (isChinese() ? ' [擦彈 ' : ' [GRAZE ') + rt.state.grazeCombo + ']' : '');
     } else {
-      el.textContent = 'GRAZE x' + rt.state.grazeCombo;
+      el.textContent = (isChinese() ? '擦彈 x' : 'GRAZE x') + rt.state.grazeCombo;
     }
     var heat = Math.min(8, Math.max(rt.state.combo || 0, rt.state.grazeCombo || 0));
     if (el.setAttribute) el.setAttribute('data-heat', String(heat));
@@ -249,15 +251,16 @@ function syncComms() {
     if (comms) rt.ui.commsStatus = comms;
     if (wind) rt.ui.windStatus = wind;
   }
-  var commsText = 'LIVE';
-  if (rt.ui.startScreen && !rt.ui.startScreen.hidden) commsText = 'OPEN';
-  else if (rt.state.over) commsText = 'LOST';
-  else if (rt.state.paused) commsText = 'HOLD';
-  else if (isStormFront()) commsText = 'STATIC';
+  var zh = isChinese();
+  var commsText = zh ? '即時' : 'LIVE';
+  if (rt.ui.startScreen && !rt.ui.startScreen.hidden) commsText = zh ? '開放' : 'OPEN';
+  else if (rt.state.over) commsText = zh ? '中斷' : 'LOST';
+  else if (rt.state.paused) commsText = zh ? '保留' : 'HOLD';
+  else if (isStormFront()) commsText = zh ? '雜訊' : 'STATIC';
   var sector = 'dusk';
   try { sector = sectorForWave(rt.state.wave); } catch (e) { sector = 'dusk'; }
   var windText = sector === 'night' ? 'N 11' : sector === 'rust' ? 'SW 27' : 'NW 18';
-  if (isStormFront()) windText = 'GUST 44';
+  if (isStormFront()) windText = zh ? '陣風 44' : 'GUST 44';
   setTypeText(comms, commsText);
   setTypeText(wind, windText);
 }
@@ -366,13 +369,19 @@ function writeBreakdown(values) {
 function ensureBreakdown() {
   if (typeof document === 'undefined' || !rt.ui || !rt.ui.gameOver) return null;
   var host = document.getElementById('scoreBreakdown');
-  if (host) return host;
+  var labels = isChinese()
+    ? ['擊殺', '波次', '首領', '戰法', '合約', '撤離']
+    : ['KILLS', 'WAVES', 'BOSSES', 'STYLE', 'CONTRACTS', 'EXTRACTION'];
+  if (host) {
+    var spans = host.querySelectorAll('span');
+    for (var j = 0; j < spans.length && j < labels.length; j += 1) spans[j].textContent = labels[j];
+    return host;
+  }
   var grid = rt.ui.gameOver.querySelector && rt.ui.gameOver.querySelector('.result-grid');
   if (!grid || !grid.parentNode) return null;
   host = document.createElement('div');
   host.id = 'scoreBreakdown';
   host.className = 'result-grid score-breakdown';
-  var labels = ['KILLS', 'WAVES', 'BOSSES', 'STYLE', 'CONTRACTS', 'EXTRACTION'];
   var i;
   for (i = 0; i < labels.length; i += 1) {
     var cell = document.createElement('div');
@@ -420,7 +429,7 @@ function syncScoreBreakdown() {
   if (!rt.state || !rt.state.over || !rt.ui || !rt.ui.gameOver) return;
   if (rt.ui.gameOver.hidden) return;
   var values = breakdownBuckets(rt.state.scoreBreakdown);
-  var key = values.join('|');
+  var key = values.join('|') + '|' + (isChinese() ? 'zh' : 'en');
   if (!ensureBreakdown()) return;
   if (breakdownRoll.key === key) return;
   breakdownRoll.key = key;
@@ -499,7 +508,7 @@ export function logEvent(message) {
   var time = document.createElement('time');
   var copy = document.createElement('span');
   time.textContent = String(Math.floor(elapsed / 60)).padStart(2, '0') + ':' + String(elapsed % 60).padStart(2, '0');
-  copy.textContent = message;
+  copy.textContent = tLog(message);
   item.appendChild(time);
   item.appendChild(copy);
   rt.ui.runLog.insertBefore(item, rt.ui.runLog.firstChild);
@@ -516,11 +525,12 @@ function actRoman(act) {
 export function updateDomUi() {
   if (!rt.state || !rt.ui) return;
   updateAudioBtn();
+  var zh = isChinese();
   var pauseButton = typeof document !== 'undefined' ? document.getElementById('pauseBtn') : null;
   if (pauseButton) {
     pauseButton.disabled = rt.state.over || rt.state.upgradeChoices.length > 0 || Boolean(rt.ui.startScreen && !rt.ui.startScreen.hidden);
-    pauseButton.textContent = rt.state.paused && !pauseButton.disabled ? 'RESUME' : 'PAUSE';
-    pauseButton.setAttribute('aria-label', rt.state.paused && !pauseButton.disabled ? 'Resume game' : 'Pause game');
+    pauseButton.textContent = rt.state.paused && !pauseButton.disabled ? (zh ? '繼續' : 'RESUME') : (zh ? '暫停' : 'PAUSE');
+    pauseButton.setAttribute('aria-label', rt.state.paused && !pauseButton.disabled ? (zh ? '繼續遊戲' : 'Resume game') : (zh ? '暫停遊戲' : 'Pause game'));
   }
   setText(rt.ui.health, Math.ceil(rt.state.player.hp));
   pulse(rt.ui.health, 'hp', Math.ceil(rt.state.player.hp));
@@ -528,17 +538,27 @@ export function updateDomUi() {
   setText(rt.ui.xpMax, rt.state.xpNext);
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
-  setText(rt.ui.wave, 'ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0'));
+  setText(rt.ui.wave, zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
   pulse(rt.ui.wave, 'wave', rt.state.wave);
   syncScore();
   setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
-  setText(rt.ui.kills, rt.state.kills + ' HOSTILES');
-  if (rt.ui.objectiveText) rt.ui.objectiveText.textContent = rt.state.bountyClaimed ? 'BOUNTY SECURED — HOLD THE DRYLINE.' : 'DROP ' + rt.state.bountyTarget + ' HOSTILES FOR +' + rt.state.bountyReward + ' SCORE.';
+  setText(rt.ui.kills, rt.state.kills + (zh ? ' 敵機' : ' HOSTILES'));
+  if (rt.ui.objectiveText) {
+    rt.ui.objectiveText.textContent = rt.state.bountyClaimed
+      ? (zh ? '懸賞已完成 — 堅守乾線邊境。' : 'BOUNTY SECURED — HOLD THE DRYLINE.')
+      : (zh ? ('擊殺 ' + rt.state.bountyTarget + ' 個目標獲取 +' + rt.state.bountyReward + ' 分數。') : ('DROP ' + rt.state.bountyTarget + ' HOSTILES FOR +' + rt.state.bountyReward + ' SCORE.'));
+  }
   if (rt.ui.objectiveProgress) rt.ui.objectiveProgress.style.width = (rt.state.bountyClaimed ? 100 : clamp(rt.state.bountyKills / rt.state.bountyTarget, 0, 1) * 100) + '%';
-  if (rt.ui.threatIndex) rt.ui.threatIndex.textContent = rt.state.wave >= 5 ? 'CRITICAL' : rt.state.wave >= 3 ? 'HIGH' : 'LOW';
+  if (rt.ui.threatIndex) {
+    rt.ui.threatIndex.textContent = zh
+      ? (rt.state.wave >= 5 ? '危急' : rt.state.wave >= 3 ? '高度' : '低度')
+      : (rt.state.wave >= 5 ? 'CRITICAL' : rt.state.wave >= 3 ? 'HIGH' : 'LOW');
+  }
   if (rt.ui.waveTimer) {
     var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
-    rt.ui.waveTimer.textContent = (isStormFront() ? 'STORM FRONT ' : 'NEXT FRONT ') + String(seconds).padStart(2, '0') + 's';
+    var storm = isStormFront();
+    var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
+    rt.ui.waveTimer.textContent = prefix + String(seconds).padStart(2, '0') + 's';
   }
   syncHealth();
   if (rt.ui.healthFill && rt.ui.healthFill.parentElement) rt.ui.healthFill.parentElement.setAttribute('aria-valuenow', String(Math.ceil(rt.state.player.hp)));
@@ -597,7 +617,7 @@ export function updateDomUi() {
       rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'S' || rank.letter === 'S+');
     }
     if (rt.ui.combatRankTitle) {
-      rt.ui.combatRankTitle.textContent = rank.title;
+      rt.ui.combatRankTitle.textContent = zh ? tRankTitle(rank.title) : rank.title;
     }
 
     syncScoreBreakdown();
@@ -615,17 +635,26 @@ export function updateDomUi() {
       if (tel) {
         var accPct = Math.round(acc * 100);
         tel.innerHTML =
-          '<div><span>ACCURACY</span><strong>' + accPct + '% <small>(' + stats.shotsHit + '/' + stats.shotsFired + ')</small></strong></div>' +
-          '<div><span>CRITS</span><strong>' + stats.crits + '</strong></div>' +
-          '<div><span>GRAZES</span><strong>' + stats.grazes + '</strong></div>' +
-          '<div><span>CORES DETONATED</span><strong>' + stats.coresDetonated + '</strong></div>' +
-          '<div><span>MAX COMBO</span><strong>x' + stats.maxCombo + '</strong></div>' +
-          '<div><span>DAMAGE DEALT</span><strong>' + stats.damageDealt + '</strong></div>';
+          '<div><span>' + (zh ? '命中率' : 'ACCURACY') + '</span><strong>' + accPct + '% <small>(' + stats.shotsHit + '/' + stats.shotsFired + ')</small></strong></div>' +
+          '<div><span>' + (zh ? '暴擊次數' : 'CRITS') + '</span><strong>' + stats.crits + '</strong></div>' +
+          '<div><span>' + (zh ? '擦彈次數' : 'GRAZES') + '</span><strong>' + stats.grazes + '</strong></div>' +
+          '<div><span>' + (zh ? '引爆核心' : 'CORES DETONATED') + '</span><strong>' + stats.coresDetonated + '</strong></div>' +
+          '<div><span>' + (zh ? '最高連擊' : 'MAX COMBO') + '</span><strong>x' + stats.maxCombo + '</strong></div>' +
+          '<div><span>' + (zh ? '總傷害量' : 'DAMAGE DEALT') + '</span><strong>' + stats.damageDealt + '</strong></div>';
       }
     }
   }
   if (rt.ui.accountSaveBadge) rt.ui.accountSaveBadge.hidden = !rt.state.over || !rt.accountRunSaved;
-  if (rt.ui.runState && rt.state.over) rt.ui.runState.textContent = 'SIGNAL LOST';
-  else if (rt.ui.runState && !rt.ui.startScreen) rt.ui.runState.textContent = 'LIVE';
-  if (rt.ui.statusText && rt.state.over) rt.ui.statusText.textContent = 'SIGNAL LOST — PRESS R TO REDEPLOY';
+  fitGameOverOverlay();
+  if (rt.ui.runState && rt.state.over) rt.ui.runState.textContent = zh ? '中斷' : 'SIGNAL LOST';
+  else if (rt.ui.runState && !rt.ui.startScreen) rt.ui.runState.textContent = zh ? '即時' : 'LIVE';
+  if (rt.ui.statusText && rt.state.over) rt.ui.statusText.textContent = zh ? '訊號中斷 — 按 R 重新部署' : 'SIGNAL LOST — PRESS R TO REDEPLOY';
+}
+
+if (typeof onLanguageChange === 'function') {
+  onLanguageChange(function () {
+    breakdownRoll.key = '';
+    ensureBreakdown();
+    updateDomUi();
+  });
 }

@@ -19,9 +19,9 @@
   --glow-gold: rgba(255, 211, 107, 0.5);
   --glow-void: rgba(181, 95, 230, 0.45);
   --sector-tint: #3a2a1e;
-  --display: "Arial Narrow", "Bahnschrift SemiCondensed", Impact, sans-serif;
-  --body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --mono: "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  --display: "Arial Narrow", "Bahnschrift SemiCondensed", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", Impact, sans-serif;
+  --body: "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", monospace;
 }
 
 * {

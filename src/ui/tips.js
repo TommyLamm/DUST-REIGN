@@ -2,6 +2,7 @@ import { rt } from '../core/runtime.js';
 import { readTipsEnabled, readTipsSeen, writeTipsSeen } from '../core/meta-store.js';
 import { syncDashHeatClock } from '../systems/abilities.js';
 import { takeRunUnlocks } from '../systems/meta.js';
+import { isChinese, onLanguageChange, tMutatorBlurb, tMutatorName, tTip } from '../core/i18n.js';
 
 var TIP_MS = 4000;
 var GAP_MS = 20000;
@@ -69,27 +70,18 @@ function moveShootText() {
 
 function mutatorText() {
   var m = rt.state && rt.state.mutator;
-  if (!m) return 'MUTATOR IS LIVE THIS WAVE · READ THE BANNER';
-  if (typeof m === 'string') return 'MUTATOR // ' + m;
-  var name = m.name || m.title || m.id || 'MUTATOR';
-  var blurb = m.text || m.desc || m.summary || '';
+  var zh = isChinese();
+  if (!m) return zh ? '本波次變異因子已生效 · 注意戰況橫幅' : 'MUTATOR IS LIVE THIS WAVE · READ THE BANNER';
+  var mid = typeof m === 'object' ? m.id : m;
+  var name = (zh ? tMutatorName(mid) : null) || m.name || m.title || m.id || (zh ? '變異因子' : 'MUTATOR');
+  var blurb = (zh ? tMutatorBlurb(mid) : null) || m.text || m.desc || m.summary || '';
   if (blurb) return name + ' // ' + blurb;
-  return 'MUTATOR // ' + name;
+  return (zh ? '變異因子 // ' : 'MUTATOR // ') + name;
 }
 
 function tipText(id) {
-  if (id === 'move-shoot') return moveShootText();
-  if (id === 'dash') return 'DASH THROUGH A THREAT · A SHORT INVULNERABLE BURST';
-  if (id === 'just-dash') return 'JUST DASH · HUG A THREAT TO REFUND COOLDOWN AND GUARANTEE CRITS';
-  if (id === 'graze') return 'GRAZE SCORES AND CHARGES · 5 GRAZES TRIGGER OVERDRIVE';
-  if (id === 'barrel') return 'SHOOT A BARREL OR DASH-KICK IT INTO THE PACK';
-  if (id === 'emp') return 'EMP CLEARS SHOTS AND STUNS · A SPIRE IN THE BLAST RESONATES';
-  if (id === 'core-boss') return 'CORE BLASTS HIT A BOSS FOR 350';
-  if (id === 'contract') return 'CONTRACTS ARE OPTIONAL · THE REWARD PAYS ON COMPLETION';
   if (id === 'mutator') return mutatorText();
-  if (id === 'fusion') return 'COMPLETES A FUSION · THAT CHIP JOINS THE RIG';
-  if (id === 'route') return 'PICK A ROUTE · THEN AN ARMORY UPGRADE FOR THE NEXT ACT';
-  return '';
+  return tTip(id, inputKind());
 }
 
 function canScan() {
@@ -190,7 +182,7 @@ function syncDashHeatHud() {
     read.className = 'dash-heat-readout';
     var name = document.createElement('span');
     name.className = 'dash-heat-label';
-    name.textContent = 'DASH HEAT';
+    name.textContent = isChinese() ? '衝刺過熱' : 'DASH HEAT';
     var marks = document.createElement('span');
     marks.className = 'dash-heat';
     marks.appendChild(document.createElement('i'));
@@ -200,6 +192,8 @@ function syncDashHeatHud() {
     read.appendChild(marks);
     hud.appendChild(read);
   }
+  var nameEl = read.querySelector('.dash-heat-label');
+  if (nameEl) nameEl.textContent = isChinese() ? '衝刺過熱' : 'DASH HEAT';
   if (read.getAttribute('data-heat') !== heatLabel) read.setAttribute('data-heat', heatLabel);
   read.hidden = !(heat > 0);
 }
@@ -207,10 +201,10 @@ function syncDashHeatHud() {
 function showUnlocks(toast, unlocks) {
   var labels = [];
   var i;
-  for (i = 0; i < unlocks.length; i += 1) labels.push(unlocks[i].label || unlocks[i].id || 'UNLOCK');
+  for (i = 0; i < unlocks.length; i += 1) labels.push(unlocks[i].label || unlocks[i].id || (isChinese() ? '解鎖' : 'UNLOCK'));
   toast.setAttribute('aria-live', 'polite');
   toast.setAttribute('role', 'status');
-  toast.textContent = 'UNLOCKED // ' + labels.join(' · ');
+  toast.textContent = (isChinese() ? '已解鎖 // ' : 'UNLOCKED // ') + labels.join(' · ');
   toast.hidden = false;
 }
 
@@ -250,4 +244,21 @@ export function updateTips() {
     active = { id: id, until: t + TIP_MS };
     if (toast) showTip(toast, id);
   }
+}
+
+export function refreshTipLanguage() {
+  if (typeof document === 'undefined') return;
+  var toast = tipNode();
+  if (toast && !toast.hidden && active && active.id && active.id !== 'unlock') {
+    showTip(toast, active.id);
+  }
+  var read = document.getElementById('dashHeatReadout');
+  if (read) {
+    var nameEl = read.querySelector('.dash-heat-label');
+    if (nameEl) nameEl.textContent = isChinese() ? '衝刺過熱' : 'DASH HEAT';
+  }
+}
+
+if (typeof onLanguageChange === 'function') {
+  onLanguageChange(refreshTipLanguage);
 }

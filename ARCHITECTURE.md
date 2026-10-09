@@ -29,6 +29,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
+| `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
 | `src/core/meta-store.js` | 局外存檔、v2 最高分、每日成績與提示紀錄的 `localStorage` 入口。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
@@ -118,6 +119,7 @@ index.html → src/main.js → init()
 | 畫質分級 | `src/core/settings.js`、`src/render/quality.js`、`src/ui/pause-menu.js`、`src/input/keyboard-pointer.js`、`src/ui/dom.js` |
 | 頁面、HUD 與 iframe／觸控版面 | `index.html`、`src/ui/dom.js`、`src/ui/hud.js`、`css/animations.css`、`css/layout-fit.css`、`css/touch.css`、`css/responsive.css`、`css/loadout.css`、`css/codex.css`、`css/interlude.css`、`css/contracts.css` |
 | 音訊、觸覺、減動效與高對比 | `src/audio/audio-fx.js`、`src/core/settings.js`、`src/ui/pause-menu.js`、`css/high-contrast.css`、`css/animations.css` 及對應 render 模組 |
+| 介面語言與多語言本地化 | `src/core/i18n.js`、`src/ui/dom.js`、`src/ui/pause-menu.js`、`src/input/keyboard-pointer.js`、`index.html` |
 | 帳號成績與平台交付 | `src/platform/playroom.js`、`game.json`、`scripts/stage-release.mjs`、`.github/workflows/release.yml` |
 
 ## 5. 資料與外部契約
@@ -145,6 +147,7 @@ index.html → src/main.js → init()
 | 音量與靜音 | `src/audio/audio-fx.js` 定義 key、格式與預設值。 |
 | 觸覺、減動效與高對比 | `src/core/settings.js` 定義 key、格式與回退行為。 |
 | 畫質分級 | `src/core/settings.js` 的 `dust_reign_visual_quality`（`auto`、`high`、`medium`、`low`；未設定或無法辨識時為 `auto`）。有效等級、自動降級與預算由 `src/render/quality.js` 提供。 |
+| 介面語言 | `src/core/i18n.js` 的 `dust_reign_lang`（`'zh'`、`'en'`；預設為 `'zh'`，無 storage 時回退 `'zh'`）。 |
 
 調整 key 或資料格式時必須處理既有儲存相容性；本機最高分與帳號成績是兩套獨立資料。
 

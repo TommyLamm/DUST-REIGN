@@ -5,6 +5,7 @@ import { clamp } from '../core/utils.js';
 import { tickHudPresentation } from '../ui/hud.js';
 import { PALETTE } from './palette.js';
 import { drawGlow } from './sprites.js';
+import { isChinese, tBanner } from '../core/i18n.js';
 
 var titanLag = 1;
 var titanRef = null;
@@ -72,11 +73,30 @@ function drawTitanBar(ctx, titan) {
   ctx.lineWidth = 1.5;
   ctx.strokeRect(barX - 6, barY - 14, barW + 12, barH + 20);
 
-  ctx.font = '900 10px ui-monospace, SFMono-Regular, Consolas, monospace';
+  ctx.font = '900 10px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = enraged ? '#ff4d2e' : '#f5d58f';
-  var bossTitle = (titan.bossName || 'TITAN') + ' // ' + (enraged && titan.kind === 'titan' ? 'ENRAGED' : (titan.bossSubtitle || 'APEX THREAT'));
+  var zh = isChinese();
+  var rawName = titan.bossName || 'TITAN';
+  var rawSub = (enraged && titan.kind === 'titan') ? 'ENRAGED' : (titan.bossSubtitle || 'APEX THREAT');
+  var bName = rawName;
+  var bSub = rawSub;
+  if (zh) {
+    if (rawName === 'TITAN') bName = '泰坦';
+    else if (rawName === 'DREADNOUGHT') bName = '無畏巨艦';
+    else if (rawName === 'STORM SOVEREIGN') bName = '風暴領主';
+
+    if (rawSub === 'ENRAGED') bSub = '暴怒';
+    else if (rawSub === 'APEX THREAT') bSub = '終極威脅';
+    else if (rawSub === 'OVERDRIVE') bSub = '超載運轉';
+    else if (rawSub === 'DOUBLE RAM') bSub = '雙重衝撞';
+    else if (rawSub === 'CHARGE') bSub = '衝能突進';
+    else if (rawSub === 'EYE') bSub = '風暴之眼';
+    else if (rawSub === 'TWIN SPIRES') bSub = '雙生尖塔';
+    else if (rawSub === 'GALE') bSub = '烈風狂嘯';
+  }
+  var bossTitle = bName + ' // ' + bSub;
   ctx.fillText(bossTitle, barX, barY - 11);
   ctx.textAlign = 'right';
   ctx.fillText(Math.ceil(titan.hp) + ' / ' + titan.maxHp, barX + barW, barY - 11);
@@ -96,7 +116,8 @@ function drawTitanBar(ctx, titan) {
 }
 
 function drawWaveBanner(ctx) {
-  var text = rt.state.bannerText || ('WAVE ' + String(rt.state.wave).padStart(2, '0'));
+  var zh = isChinese();
+  var text = rt.state.bannerText ? tBanner(rt.state.bannerText) : (zh ? ('第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('WAVE ' + String(rt.state.wave).padStart(2, '0')));
   var alpha = clamp(Math.min(rt.state.banner, 0.85), 0, 1);
   var cx = rt.ui.width / 2;
   var y = Math.max(96, Math.min(rt.ui.height * 0.36, rt.ui.height * 0.28 + 36));
@@ -105,7 +126,7 @@ function drawWaveBanner(ctx) {
   ctx.globalAlpha = alpha;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = '700 ' + fontSize + 'px ui-monospace, SFMono-Regular, Consolas, monospace';
+  ctx.font = '700 ' + fontSize + 'px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
   var textW = Math.min(rt.ui.width - 40, ctx.measureText(text).width + 56);
   var boxH = fontSize + 22;
   var boxX = cx - textW / 2;
@@ -204,15 +225,19 @@ export function drawOverlay(ctx) {
   if (rt.state.paused && !rt.state.over && (!rt.state.upgradeChoices || !rt.state.upgradeChoices.length) && (!rt.ui.startScreen || rt.ui.startScreen.hidden)) {
     var hasPauseModal = typeof document !== 'undefined' && Boolean(document.getElementById('pauseModal'));
     if (!hasPauseModal) {
+      var zhPause = isChinese();
       ctx.save();
       ctx.fillStyle = 'rgba(8,7,7,.74)'; ctx.fillRect(0, 0, rt.ui.width, rt.ui.height);
       ctx.textAlign = 'center';
       ctx.fillStyle = '#f0cf88';
-      ctx.font = '700 ' + Math.min(34, rt.ui.width / 9) + 'px ui-monospace, SFMono-Regular, Consolas, monospace';
-      ctx.fillText('SIGNAL PAUSED', rt.ui.width / 2, rt.ui.height * .42);
+      ctx.font = '700 ' + Math.min(34, rt.ui.width / 9) + 'px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
+      ctx.fillText(zhPause ? '戰鬥已暫停' : 'SIGNAL PAUSED', rt.ui.width / 2, rt.ui.height * .42);
       ctx.fillStyle = '#75d1b0';
-      ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, monospace';
-      ctx.fillText(document.getElementById('pauseBtn') ? 'PRESS RESUME TO CONTINUE' : 'PRESS P OR ESC TO RESUME', rt.ui.width / 2, rt.ui.height * .53, rt.ui.width - 24);
+      ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
+      var resumePrompt = document.getElementById('pauseBtn')
+        ? (zhPause ? '點擊繼續以回到戰鬥' : 'PRESS RESUME TO CONTINUE')
+        : (zhPause ? '按 P 或 ESC 繼續戰鬥' : 'PRESS P OR ESC TO RESUME');
+      ctx.fillText(resumePrompt, rt.ui.width / 2, rt.ui.height * .53, rt.ui.width - 24);
       ctx.restore();
     }
   }
@@ -257,17 +282,21 @@ export function drawOverlay(ctx) {
       return;
     }
     deathGhost = 0;
+    var zhOver = isChinese();
     ctx.save();
     ctx.fillStyle = 'rgba(8,7,7,.74)'; ctx.fillRect(0, 0, rt.ui.width, rt.ui.height);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#df6b4f';
-    ctx.font = '700 34px ui-monospace, SFMono-Regular, Consolas, monospace';
-    ctx.fillText('RUN ENDED', rt.ui.width / 2, rt.ui.height * .39);
+    ctx.font = '700 34px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
+    ctx.fillText(zhOver ? '出擊結束' : 'RUN ENDED', rt.ui.width / 2, rt.ui.height * .39);
     ctx.fillStyle = '#e9d9b9';
-    ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, monospace';
-    ctx.fillText('WAVE ' + rt.state.wave + '  //  SCORE ' + rt.state.score + '  //  KILLS ' + rt.state.kills, rt.ui.width / 2, rt.ui.height * .47);
+    ctx.font = '14px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
+    var overSummary = zhOver
+      ? ('第 ' + rt.state.wave + ' 波  //  分數 ' + rt.state.score + '  //  擊殺 ' + rt.state.kills)
+      : ('WAVE ' + rt.state.wave + '  //  SCORE ' + rt.state.score + '  //  KILLS ' + rt.state.kills);
+    ctx.fillText(overSummary, rt.ui.width / 2, rt.ui.height * .47);
     ctx.fillStyle = '#75d1b0';
-    ctx.fillText('PRESS R OR CLICK TO RESTART', rt.ui.width / 2, rt.ui.height * .56);
+    ctx.fillText(zhOver ? '按 R 或點擊再次出擊' : 'PRESS R OR CLICK TO RESTART', rt.ui.width / 2, rt.ui.height * .56);
     ctx.restore();
   }
 }

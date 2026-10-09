@@ -12,6 +12,7 @@
 - 計分集中到 `addScore`，結算顯示分數明細。評級改為 B 30000、A 90000、S 220000 或撤離；S+ 為撤離且 Heat ≥ 2。
 - 操作：Shift 或 Space 衝刺；Q、E 或右鍵 EMP；升級為 1／2／3 選卡、R 重抽、B 放逐、X 跳過。手機 EMP 可拖曳落點，FIRE 使用黏性鎖定。手把可累積持續開火，遊玩中 D-pad 可移動。
 - 首次遊玩有情境提示，可在暫停選單關閉或重設。
+- 新增繁體中文本地化與 ENG / 繁中 即時切換按鈕：頂部狀態欄與暫停選單提供雙語切換按鈕，支援動態響應切換、全升級、融合、機體、武器、契約、變異、路線、成就、敵軍單位與首領狀態 Canvas 文字本地化；存檔鍵使用 `dust_reign_lang` 獨立命名空間。
 - 新增 `dust-reign:meta:v1`、`dust-reign:best-score:v2`、`dust-reign:daily:v1`、`dust-reign:tips:v1`、`dust-reign:tips-enabled:v1`。舊的 `dust-reign:best-score:v1` 與 `dustReignBestScore` 只讀不刪，也不再被新分數覆寫。`dust_reign_visual_quality` 維持不變。
 
 ## V0.3.0 — 2026-10-08

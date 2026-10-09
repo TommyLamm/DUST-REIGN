@@ -8,6 +8,7 @@
 import { AudioFX } from './audio/audio-fx.js';
 import { rt } from './core/runtime.js';
 import { isHighContrast, isReducedMotion } from './core/settings.js';
+import { getLanguage, setLanguage, toggleLanguage, syncStaticHtml } from './core/i18n.js';
 import { makeState } from './core/state.js';
 import { FUSION_CHIPS } from './data/upgrades.js';
 import { selfCheck } from './dev/self-check.js';
@@ -50,6 +51,7 @@ function init(options) {
   if (rt.ui && rt.ui.root) {
     rt.ui.root.classList.toggle('is-high-contrast', isHighContrast());
   }
+  syncStaticHtml(getLanguage());
   updateSettingsUi();
   rt.state = makeState(960, 640);
   resize();
@@ -108,6 +110,9 @@ var api = {
   getPlayroom: getPlayroom,
   getAudio: function () { return AudioFX; },
   getFusionChips: function () { return FUSION_CHIPS; },
+  getLanguage: getLanguage,
+  setLanguage: setLanguage,
+  toggleLanguage: toggleLanguage,
   triggerGameOver: triggerGameOver,
   selfCheck: selfCheck
 };

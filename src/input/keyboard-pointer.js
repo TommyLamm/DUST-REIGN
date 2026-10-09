@@ -10,6 +10,7 @@ import { resize } from '../ui/dom.js';
 import { logEvent } from '../ui/hud.js';
 import { getCurrentPauseTab, handleAbandonClick, switchPauseTab, updateAudioBtn, updateSettingsUi } from '../ui/pause-menu.js';
 import { readTipsEnabled, resetTipsSeen, writeTipsEnabled } from '../core/meta-store.js';
+import { setLanguage, toggleLanguage } from '../core/i18n.js';
 import { onTipsReset, updateTips } from '../ui/tips.js';
 
 function pointerPosition(event) {
@@ -134,6 +135,18 @@ export function bindInput() {
   var pauseButton = document.getElementById('pauseBtn');
   if (pauseButton) on(pauseButton, 'click', togglePause);
   if (rt.ui.audioBtn) on(rt.ui.audioBtn, 'click', function () { AudioFX.toggleMute(); updateAudioBtn(); });
+  if (rt.ui.langBtn) {
+    on(rt.ui.langBtn, 'click', function (event) {
+      var target = event && event.target;
+      var opt = target && ((target.classList && target.classList.contains('lang-opt')) ? target : (target.closest && target.closest('.lang-opt')));
+      if (opt && opt.textContent) {
+        var txt = opt.textContent.trim();
+        if (txt === 'ENG') { setLanguage('en'); return; }
+        if (txt === '繁中') { setLanguage('zh'); return; }
+      }
+      toggleLanguage();
+    });
+  }
   if (rt.ui.restart) on(rt.ui.restart, 'click', restart);
   if (rt.ui.startButton) on(rt.ui.startButton, 'click', beginRun);
 
@@ -166,6 +179,7 @@ export function bindInput() {
       updateSettingsUi();
     });
   }
+  if (rt.ui.toggleLanguage) on(rt.ui.toggleLanguage, 'click', function () { toggleLanguage(); });
   if (rt.ui.pauseResumeBtn) on(rt.ui.pauseResumeBtn, 'click', togglePause);
   if (rt.ui.pauseAbandonBtn) on(rt.ui.pauseAbandonBtn, 'click', handleAbandonClick);
 

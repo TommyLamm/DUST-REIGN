@@ -7,6 +7,7 @@ import { getHeatModifiers } from '../data/heat.js';
 import { FUSION_CHIPS, UPGRADES, toPropName } from '../data/upgrades.js';
 import { triggerGameOver } from '../systems/flow.js';
 import { breacherPelletCount } from '../systems/weapons.js';
+import { isChinese, onLanguageChange, tCategory, tChassisDesc, tContractName, tFusionText, tFusionTitle, tMutatorName, tPassiveName, tRouteName, tUpgradeText, tUpgradeTitle, tWeaponName } from '../core/i18n.js';
 
 var currentPauseTab = 'system';
 var abandonConfirmTimer = 0;
@@ -20,7 +21,7 @@ export function resetAbandonConfirm() {
   abandonConfirmTimer = 0;
   var btn = (rt.ui && rt.ui.pauseAbandonBtn) || (typeof document !== 'undefined' && document.getElementById('pauseAbandonBtn'));
   if (btn) {
-    btn.innerHTML = '<span>ABANDON RUN</span><b aria-hidden="true">⚠</b>';
+    btn.innerHTML = (isChinese() ? '<span>放棄出擊</span>' : '<span>ABANDON RUN</span>') + '<b aria-hidden="true">⚠</b>';
     btn.classList.remove('is-confirming');
   }
 }
@@ -38,7 +39,7 @@ export function handleAbandonClick() {
     abandonTimerId = setTimeout(resetAbandonConfirm, 4000);
     var btn = (rt.ui && rt.ui.pauseAbandonBtn) || (typeof document !== 'undefined' && document.getElementById('pauseAbandonBtn'));
     if (btn) {
-      btn.innerHTML = '<span>CONFIRM ABANDON?</span><b aria-hidden="true">⚠</b>';
+      btn.innerHTML = (isChinese() ? '<span>確認放棄出擊？</span>' : '<span>CONFIRM ABANDON?</span>') + '<b aria-hidden="true">⚠</b>';
       btn.classList.add('is-confirming');
     }
   }
@@ -90,13 +91,14 @@ function placePauseIndicator(tabName) {
 export function updateAudioBtn() {
   var btn = (rt.ui && rt.ui.audioBtn) || (typeof document !== 'undefined' && document.getElementById('audioBtn'));
   var muted = AudioFX.isMuted();
+  var zh = isChinese();
   if (btn) {
-    btn.textContent = muted ? 'AUDIO [OFF]' : 'AUDIO [ON]';
-    btn.setAttribute('aria-label', muted ? 'Turn audio on' : 'Turn audio off');
+    btn.textContent = muted ? (zh ? '音效 [關閉]' : 'AUDIO [OFF]') : (zh ? '音效 [開啟]' : 'AUDIO [ON]');
+    btn.setAttribute('aria-label', muted ? (zh ? '開啟音效' : 'Turn audio on') : (zh ? '關閉音效' : 'Turn audio off'));
   }
   var modalMuteBtn = (rt.ui && rt.ui.toggleAudioMute) || (typeof document !== 'undefined' && document.getElementById('toggleAudioMute'));
   if (modalMuteBtn) {
-    modalMuteBtn.textContent = muted ? 'MUTE: ON' : 'MUTE: OFF';
+    modalMuteBtn.textContent = muted ? (zh ? '靜音: 開啟' : 'MUTE: ON') : (zh ? '靜音: 關閉' : 'MUTE: OFF');
     if (muted) modalMuteBtn.classList.add('is-active');
     else modalMuteBtn.classList.remove('is-active');
   }
@@ -104,6 +106,7 @@ export function updateAudioBtn() {
 
 export function updateSettingsUi() {
   if (!rt.ui) return;
+  var zh = isChinese();
   if (rt.ui.settingMasterVolume) {
     rt.ui.settingMasterVolume.value = String(AudioFX.getMasterVolume());
   }
@@ -113,39 +116,46 @@ export function updateSettingsUi() {
   updateAudioBtn();
   if (rt.ui.toggleHaptics) {
     var hOn = isHapticsEnabled();
-    rt.ui.toggleHaptics.textContent = hOn ? 'HAPTICS: ENABLED' : 'HAPTICS: DISABLED';
+    rt.ui.toggleHaptics.textContent = hOn ? (zh ? '觸覺回饋: 已啟用' : 'HAPTICS: ENABLED') : (zh ? '觸覺回饋: 已停用' : 'HAPTICS: DISABLED');
     if (hOn) rt.ui.toggleHaptics.classList.add('is-active');
     else rt.ui.toggleHaptics.classList.remove('is-active');
   }
   if (rt.ui.toggleMotionReduction) {
     var mReduced = isReducedMotion();
-    rt.ui.toggleMotionReduction.textContent = mReduced ? 'MOTION: REDUCED' : 'MOTION: STANDARD';
+    rt.ui.toggleMotionReduction.textContent = mReduced ? (zh ? '動態效果: 已減少' : 'MOTION: REDUCED') : (zh ? '動態效果: 標準' : 'MOTION: STANDARD');
     if (mReduced) rt.ui.toggleMotionReduction.classList.add('is-active');
     else rt.ui.toggleMotionReduction.classList.remove('is-active');
   }
   if (rt.ui.toggleHighContrast) {
     var hc = isHighContrast();
-    rt.ui.toggleHighContrast.textContent = hc ? 'CONTRAST: HIGH' : 'CONTRAST: STANDARD';
+    rt.ui.toggleHighContrast.textContent = hc ? (zh ? '對比度: 高' : 'CONTRAST: HIGH') : (zh ? '對比度: 標準' : 'CONTRAST: STANDARD');
     if (hc) rt.ui.toggleHighContrast.classList.add('is-active');
     else rt.ui.toggleHighContrast.classList.remove('is-active');
   }
   if (rt.ui.settingVisualQuality) {
     var q = getVisualQuality();
-    var qLabel = 'QUALITY: AUTO';
-    if (q === 'high') qLabel = 'QUALITY: HIGH';
-    else if (q === 'medium') qLabel = 'QUALITY: MEDIUM';
-    else if (q === 'low') qLabel = 'QUALITY: LOW';
+    var qLabel;
+    if (zh) {
+      qLabel = '畫質: ' + (q === 'high' ? '高' : q === 'medium' ? '中' : q === 'low' ? '低' : '自動');
+    } else {
+      qLabel = 'QUALITY: ' + (q === 'high' ? 'HIGH' : q === 'medium' ? 'MEDIUM' : q === 'low' ? 'LOW' : 'AUTO');
+    }
     rt.ui.settingVisualQuality.textContent = qLabel;
     if (q !== 'auto') rt.ui.settingVisualQuality.classList.add('is-active');
     else rt.ui.settingVisualQuality.classList.remove('is-active');
   }
   var tipsOn = readTipsEnabled();
   if (rt.ui.toggleTips) {
-    rt.ui.toggleTips.textContent = tipsOn ? 'TIPS: ON' : 'TIPS: OFF';
+    rt.ui.toggleTips.textContent = tipsOn ? (zh ? '戰場提示: 開啟' : 'TIPS: ON') : (zh ? '戰場提示: 關閉' : 'TIPS: OFF');
     if (tipsOn) rt.ui.toggleTips.classList.add('is-active');
     else rt.ui.toggleTips.classList.remove('is-active');
   }
-  if (rt.ui.resetTips) rt.ui.resetTips.textContent = 'RESET TIPS';
+  if (rt.ui.toggleLanguage) {
+    rt.ui.toggleLanguage.textContent = zh ? '語言: 繁中' : 'LANGUAGE: ENG';
+    if (zh) rt.ui.toggleLanguage.classList.add('is-active');
+    else rt.ui.toggleLanguage.classList.remove('is-active');
+  }
+  if (rt.ui.resetTips) rt.ui.resetTips.textContent = zh ? '重設提示' : 'RESET TIPS';
   if (typeof document !== 'undefined' && document.documentElement) {
     document.documentElement.classList.toggle('reduced-motion', isReducedMotion());
   }
@@ -162,6 +172,8 @@ export function renderBuildInspector() {
 
   var mode = (p.weaponMode || 'standard').toLowerCase();
 
+  var zh = isChinese();
+
   // 1. Weapon chassis selector buttons highlight & description
   if (rt.ui.chassisSelector) {
     var btns = rt.ui.chassisSelector.querySelectorAll('.chassis-btn');
@@ -172,28 +184,33 @@ export function renderBuildInspector() {
       btns[bi].disabled = true;
       btns[bi].setAttribute('aria-pressed', isActive ? 'true' : 'false');
       btns[bi].setAttribute('aria-disabled', 'true');
+      btns[bi].textContent = zh ? tWeaponName(btnMode) : (btnMode === 'arc-welder' ? 'ARC-WELDER' : btnMode.toUpperCase());
     }
   }
   if (rt.ui.chassisDesc) {
-    var desc = 'STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS';
-    if (mode === 'breacher') {
-      desc = 'PULSE BREACHER SHOTGUN // 5-PELLET CONE & POINT-BLANK BREACH';
-    } else if (mode === 'vanguard') {
-      desc = 'VANGUARD RAIL CHARGER // CHARGED BEAM & PENETRATION BLAST';
-    } else if (mode === 'arc-welder') {
-      desc = 'INDUCTION ARC WELDER // ULTRA HIGH-FREQUENCY VOLTAIC STREAM';
+    if (zh) {
+      rt.ui.chassisDesc.textContent = tChassisDesc(mode) + '  ·  專精 M' + (p.mastery || 0);
+    } else {
+      var desc = 'STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS';
+      if (mode === 'breacher') {
+        desc = 'PULSE BREACHER SHOTGUN // 5-PELLET CONE & POINT-BLANK BREACH';
+      } else if (mode === 'vanguard') {
+        desc = 'VANGUARD RAIL CHARGER // CHARGED BEAM & PENETRATION BLAST';
+      } else if (mode === 'arc-welder') {
+        desc = 'INDUCTION ARC WELDER // ULTRA HIGH-FREQUENCY VOLTAIC STREAM';
+      }
+      rt.ui.chassisDesc.textContent = desc + '  ·  MASTERY M' + (p.mastery || 0);
     }
-    rt.ui.chassisDesc.textContent = desc + '  ·  MASTERY M' + (p.mastery || 0);
   }
 
   // 2. Core specs telemetry according to weapon chassis
   if (rt.ui.statFireRate) {
-    var surge = p.overdrive > 0 ? ' (SURGE)' : '';
+    var surge = p.overdrive > 0 ? (zh ? ' (湧浪)' : ' (SURGE)') : '';
     if (mode === 'breacher') {
       var pellets = breacherPelletCount(p);
       rt.ui.statFireRate.textContent = pellets === 5 ? ('2.3 RPS (x5)' + surge) : ('2.3 RPS (x' + pellets + ')' + surge);
     } else if (mode === 'vanguard') {
-      rt.ui.statFireRate.textContent = '1.8 RPS (CHARGE)' + surge;
+      rt.ui.statFireRate.textContent = (zh ? '1.8 RPS (充能)' : '1.8 RPS (CHARGE)') + surge;
     } else if (mode === 'arc-welder') {
       rt.ui.statFireRate.textContent = '12.5 RPS' + surge;
     } else {
@@ -206,37 +223,40 @@ export function renderBuildInspector() {
     var od = p.overdrive > 0;
     var odDmgMult = od ? OVERDRIVE_DAMAGE : 1;
     var odLabel = od ? ' (+50%)' : '';
+    var dmgSuffix = zh ? ' 傷害' : ' DMG';
     if (mode === 'breacher') {
       var pelletCount = breacherPelletCount(p);
       var bDmg = Math.max(1, Math.round(p.damage * 0.42 * odDmgMult));
-      rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + ' DMG' + odLabel;
+      rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + dmgSuffix + odLabel;
     } else if (mode === 'vanguard') {
       var vDmg = Math.round(p.damage * 3.4 * odDmgMult);
-      rt.ui.statDamage.textContent = vDmg + ' DMG [RAIL]' + odLabel;
+      rt.ui.statDamage.textContent = vDmg + (zh ? ' 傷害 [軌道貫穿]' : ' DMG [RAIL]') + odLabel;
     } else if (mode === 'arc-welder') {
       var aDmg = Math.max(1, Math.round(p.damage * 0.32 * odDmgMult));
-      rt.ui.statDamage.textContent = aDmg + ' DMG [BEAM]' + odLabel;
+      rt.ui.statDamage.textContent = aDmg + (zh ? ' 傷害 [電弧光束]' : ' DMG [BEAM]') + odLabel;
     } else {
       var dmg = p.damage;
       if (od) dmg = Math.round(dmg * OVERDRIVE_DAMAGE);
-      rt.ui.statDamage.textContent = dmg + ' DMG' + odLabel;
+      rt.ui.statDamage.textContent = dmg + dmgSuffix + odLabel;
     }
   }
   if (rt.ui.statCrit) {
-    rt.ui.statCrit.textContent = p.highCaliber ? '2.2x [20% FLAT CRIT]' : '1.75x [AMBUSH CRIT]';
+    rt.ui.statCrit.textContent = p.highCaliber
+      ? (zh ? '2.2x [20% 固定暴擊]' : '2.2x [20% FLAT CRIT]')
+      : (zh ? '1.75x [突襲暴擊]' : '1.75x [AMBUSH CRIT]');
   }
   if (rt.ui.statBallistics) {
     if (mode === 'vanguard') {
-      rt.ui.statBallistics.textContent = 'PIERCE 99+ / RICO ' + (p.bounces || 0);
+      rt.ui.statBallistics.textContent = (zh ? '貫穿 99+ / 彈跳 ' : 'PIERCE 99+ / RICO ') + (p.bounces || 0);
     } else {
-      rt.ui.statBallistics.textContent = 'PIERCE ' + (p.pierce || 0) + ' / RICO ' + (p.bounces || 0);
+      rt.ui.statBallistics.textContent = (zh ? '貫穿 ' : 'PIERCE ') + (p.pierce || 0) + (zh ? ' / 彈跳 ' : ' / RICO ') + (p.bounces || 0);
     }
   }
   if (rt.ui.statSpeed) {
-    rt.ui.statSpeed.textContent = Math.round(p.speed) + ' PX/S';
+    rt.ui.statSpeed.textContent = Math.round(p.speed) + (zh ? ' 像素/秒' : ' PX/S');
   }
   if (rt.ui.statMagnet) {
-    rt.ui.statMagnet.textContent = Math.round(p.magnetRadius || 165) + ' PX';
+    rt.ui.statMagnet.textContent = Math.round(p.magnetRadius || 165) + (zh ? ' 像素' : ' PX');
   }
 
   // 3. Dynamic passive traits
@@ -248,9 +268,11 @@ export function renderBuildInspector() {
       { name: 'HIGH CALIBER', active: Boolean(p.highCaliber) }
     ];
     rt.ui.buildPassiveTags.innerHTML = traits.map(function (t) {
+      var status = t.active ? (zh ? '● 已連線' : '● ONLINE') : (zh ? '○ 已離線' : '○ OFFLINE');
+      var name = zh ? tPassiveName(t.name) : t.name;
       return '<div class="passive-tag ' + (t.active ? 'is-active' : 'is-inactive') + '">' +
-        '<span class="tag-status">' + (t.active ? '● ONLINE' : '○ OFFLINE') + '</span>' +
-        '<strong class="tag-name">' + t.name + '</strong>' +
+        '<span class="tag-status">' + status + '</span>' +
+        '<strong class="tag-name">' + name + '</strong>' +
         '</div>';
     }).join('');
   }
@@ -262,7 +284,9 @@ export function renderBuildInspector() {
   }
   if (rt.ui.installedChipsList) {
     if (chips.length === 0) {
-      rt.ui.installedChipsList.innerHTML = '<div class="chips-empty">[ NO MOD CHIPS INSTALLED — SALVAGE REQUIRED ]</div>';
+      rt.ui.installedChipsList.innerHTML = zh
+        ? '<div class="chips-empty">[ 未安裝改裝晶片 — 需搜刮貯藏箱 ]</div>'
+        : '<div class="chips-empty">[ NO MOD CHIPS INSTALLED — SALVAGE REQUIRED ]</div>';
     } else {
       var grouped = [];
       var seen = {};
@@ -285,14 +309,18 @@ export function renderBuildInspector() {
         else if (cat === 'FUSION') catClass = 'chip-card--fusion';
         var inactive = !!(c.weapon && c.weapon !== mode);
         var cap = c.maxStacks ? (' ' + entry.count + '/' + c.maxStacks) : (entry.count > 1 ? (' ×' + entry.count) : '');
+        var catDisplay = zh ? tCategory(cat) : cat;
+        var titleDisplay = zh ? tUpgradeTitle(c) : (c.title || '');
+        var textDisplay = zh ? tUpgradeText(c) : (c.text || '');
+        var inactText = zh ? '未啟用' : 'INACTIVE';
         return '<div class="chip-card ' + catClass + (inactive ? ' is-inactive' : '') + '">' +
           '<div class="chip-strip">' +
-          '<span class="chip-cat">[' + cat + ']</span>' +
+          '<span class="chip-cat">[' + catDisplay + ']</span>' +
           '<span class="chip-id">' + (c.id || '') + cap + '</span>' +
-          (inactive ? '<span class="chip-inactive">INACTIVE</span>' : '') +
+          (inactive ? '<span class="chip-inactive">' + inactText + '</span>' : '') +
           '</div>' +
-          '<strong class="chip-title">' + (c.title || '') + '</strong>' +
-          '<p class="chip-text">' + (c.text || '') + '</p>' +
+          '<strong class="chip-title">' + titleDisplay + '</strong>' +
+          '<p class="chip-text">' + textDisplay + '</p>' +
           '</div>';
       }).join('');
     }
@@ -319,12 +347,18 @@ export function renderBuildInspector() {
     var hasA = hasCard(fc.required[0]);
     var hasB = hasCard(fc.required[1]);
     var isReady = !isUnlocked && hasA && hasB;
-    var nameA = getUpgradeName(fc.required[0]);
-    var nameB = getUpgradeName(fc.required[1]);
+    var nameA = zh ? tUpgradeTitle(fc.required[0]) : getUpgradeName(fc.required[0]);
+    var nameB = zh ? tUpgradeTitle(fc.required[1]) : getUpgradeName(fc.required[1]);
 
     var cardClass = 'fusion-matrix-card ' + (isUnlocked ? 'is-unlocked' : (isReady ? 'is-ready' : 'is-locked'));
-    var badgeText = isUnlocked ? '● ONLINE' : (isReady ? '★ READY FOR SYNTHESIS' : ('○ LOCKED [需要 ' + nameA + ' + ' + nameB + ']'));
-    var protoLabel = isUnlocked ? 'CORE RESONANCE' : (isReady ? 'RESONANCE READY' : 'OFFLINE');
+    var badgeText = isUnlocked
+      ? (zh ? '● 已連線' : '● ONLINE')
+      : (isReady
+        ? (zh ? '★ 融合就緒' : '★ READY FOR SYNTHESIS')
+        : (zh ? ('○ 未解鎖 [需要 ' + nameA + ' + ' + nameB + ']') : ('○ LOCKED [REQUIRES ' + nameA + ' + ' + nameB + ']')));
+    var protoLabel = isUnlocked
+      ? (zh ? '核心共鳴' : 'CORE RESONANCE')
+      : (isReady ? (zh ? '共鳴就緒' : 'RESONANCE READY') : (zh ? '離線' : 'OFFLINE'));
 
     var reqsHtml = '<div class="fusion-reqs">' +
       '<span class="fusion-req ' + (hasA ? 'is-met' : 'is-missing') + '">' + (hasA ? '✓ ' : '○ ') + nameA + '</span>' +
@@ -332,14 +366,17 @@ export function renderBuildInspector() {
       '<span class="fusion-req ' + (hasB ? 'is-met' : 'is-missing') + '">' + (hasB ? '✓ ' : '○ ') + nameB + '</span>' +
       '</div>';
 
+    var fTitle = tFusionTitle(fc);
+    var fText = tFusionText(fc);
+
     return '<div class="' + cardClass + '">' +
       '<div class="fusion-card-head">' +
       '<span class="fusion-badge">' + badgeText + '</span>' +
       '<span class="fusion-proto">' + protoLabel + '</span>' +
       '</div>' +
-      '<strong class="fusion-title">' + (fc.title || '') + '</strong>' +
+      '<strong class="fusion-title">' + fTitle + '</strong>' +
       reqsHtml +
-      '<p class="fusion-desc">' + (fc.text || '') + '</p>' +
+      '<p class="fusion-desc">' + fText + '</p>' +
       '</div>';
   }).join('');
 
@@ -371,24 +408,28 @@ function renderRunSummary(p) {
     node.className = 'build-run-summary';
     rt.ui.panelBuild.appendChild(node);
   }
+  var zh = isChinese();
   var heat = getHeatModifiers(rt.state.heat || 0);
   var contract = rt.state.contract;
   var contractText = '—';
   if (contract) {
-    contractText = runLabel(contract);
+    contractText = zh ? (tContractName(contract.id) || runLabel(contract)) : runLabel(contract);
     if (typeof contract.progress === 'number' && typeof contract.goal === 'number') {
       contractText += ' ' + contract.progress + '/' + contract.goal;
     }
   }
+  var routeVal = rt.state.route ? (zh ? tRouteName(rt.state.route.id) : runLabel(rt.state.route)) : '—';
+  var mutatorVal = rt.state.mutator ? (zh ? tMutatorName(rt.state.mutator.id) : runLabel(rt.state.mutator)) : '—';
+  var weaponVal = (zh ? tWeaponName(p.weaponMode || 'standard') : (p.weaponMode || 'standard').toUpperCase()) + ' · M' + (p.mastery || 0);
   var rows = [
-    ['ACT', String(rt.state.act || 1) + ' · ' + String(rt.state.sector || 'dusk').toUpperCase()],
-    ['HEAT', 'H' + heat.heat + ' · SCORE ×' + heat.scoreMultiplier.toFixed(2)],
-    ['ROUTE', runLabel(rt.state.route)],
-    ['MUTATOR', runLabel(rt.state.mutator)],
-    ['CONTRACT', contractText],
-    ['WEAPON', (p.weaponMode || 'standard').toUpperCase() + ' · M' + (p.mastery || 0)]
+    [zh ? '幕次' : 'ACT', String(rt.state.act || 1) + ' · ' + String(rt.state.sector || 'dusk').toUpperCase()],
+    [zh ? '熱度' : 'HEAT', 'H' + heat.heat + ' · ' + (zh ? '分數 ' : 'SCORE ') + '×' + heat.scoreMultiplier.toFixed(2)],
+    [zh ? '路線' : 'ROUTE', routeVal],
+    [zh ? '變異' : 'MUTATOR', mutatorVal],
+    [zh ? '合約' : 'CONTRACT', contractText],
+    [zh ? '機底' : 'WEAPON', weaponVal]
   ];
-  node.innerHTML = '<div class="build-col-title">RUN</div>' + rows.map(function (row) {
+  node.innerHTML = '<div class="build-col-title">' + (zh ? '局次總覽' : 'RUN') + '</div>' + rows.map(function (row) {
     return '<div class="run-summary-row"><span>' + row[0] + '</span><strong>' + row[1] + '</strong></div>';
   }).join('');
 }
@@ -396,3 +437,8 @@ function renderRunSummary(p) {
 export function getCurrentPauseTab() {
   return currentPauseTab;
 }
+
+onLanguageChange(function () {
+  updateSettingsUi();
+  if (currentPauseTab === 'build') renderBuildInspector();
+});

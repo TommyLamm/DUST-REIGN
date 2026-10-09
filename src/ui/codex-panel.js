@@ -3,6 +3,7 @@ import { on } from '../core/utils.js';
 import { enemyProfile } from '../data/enemies.js';
 import { FUSION_CHIPS } from '../data/upgrades.js';
 import { listAchievements } from '../systems/meta.js';
+import { isChinese, onLanguageChange, tAchievementDetail, tAchievementReward, tAchievementTitle, tEnemyName, tFusionTitle, tUpgradeTitle } from '../core/i18n.js';
 
 var TABS = ['achievements', 'enemies', 'fusions', 'stats'];
 var PROFILED = { crawler: 1, rusher: 1, brute: 1, artillery: 1, elite: 1, titan: 1 };
@@ -62,25 +63,30 @@ function card(title, detail, extra) {
 function unknownCard() {
   var node = el('article', 'codex-card is-unknown');
   node.appendChild(el('span', 'codex-silhouette', ''));
-  node.appendChild(el('strong', 'codex-card-title', 'UNKNOWN'));
+  node.appendChild(el('strong', 'codex-card-title', isChinese() ? '未知' : 'UNKNOWN'));
   return node;
 }
 
 function paintAchievements(body, meta) {
   var rows = listAchievements(meta);
+  var zh = isChinese();
   var i;
   var row;
   var extra;
   for (i = 0; i < rows.length; i += 1) {
     row = rows[i];
     extra = row.unlocked ? shortTime(row.unlockedAt) : (row.progress + ' / ' + row.goal);
-    if (row.reward && !row.unlocked) extra += ' · ' + row.reward;
-    body.appendChild(card(row.title, row.detail, extra));
+    var rew = zh ? tAchievementReward(row.id) : row.reward;
+    if (rew && !row.unlocked) extra += ' · ' + rew;
+    var t = zh ? tAchievementTitle(row.id) : row.title;
+    var d = zh ? tAchievementDetail(row.id) : row.detail;
+    body.appendChild(card(t, d, extra));
   }
 }
 
 function paintEnemies(body, meta) {
   var seen = meta.stats.seenEnemies || [];
+  var zh = isChinese();
   var known = {};
   var i;
   var entry;
@@ -93,20 +99,21 @@ function paintEnemies(body, meta) {
       body.appendChild(unknownCard());
       continue;
     }
-    detail = entry.boss ? 'BOSS' : 'HOSTILE';
+    detail = entry.boss ? (zh ? '首領' : 'BOSS') : (zh ? '敵機' : 'HOSTILE');
     if (PROFILED[entry.id]) {
       profile = enemyProfile(entry.id, 1);
       detail += ' · HP ' + Math.round(profile.hp) + ' · R ' + profile.r;
     }
-    body.appendChild(card(entry.name, detail, ''));
+    body.appendChild(card(zh ? tEnemyName(entry.id) : entry.name, detail, ''));
   }
   for (i = 0; i < seen.length; i += 1) {
-    if (!known[seen[i]]) body.appendChild(card(String(seen[i]).toUpperCase(), 'HOSTILE', ''));
+    if (!known[seen[i]]) body.appendChild(card(zh ? tEnemyName(seen[i]) : String(seen[i]).toUpperCase(), zh ? '敵機' : 'HOSTILE', ''));
   }
 }
 
 function paintFusions(body, meta) {
   var seen = meta.stats.fusionsSeen || [];
+  var zh = isChinese();
   var i;
   var chip;
   var slots = Math.max(10, FUSION_CHIPS.length);
@@ -116,7 +123,8 @@ function paintFusions(body, meta) {
       body.appendChild(unknownCard());
       continue;
     }
-    body.appendChild(card(chip.title, (chip.required || []).join(' + '), 'SEEN'));
+    var reqs = (chip.required || []).map(function (rid) { return tUpgradeTitle(rid); }).join(' + ');
+    body.appendChild(card(tFusionTitle(chip), reqs, zh ? '已記錄' : 'SEEN'));
   }
   for (i = FUSION_CHIPS.length; i < slots; i += 1) body.appendChild(unknownCard());
 }
@@ -124,21 +132,24 @@ function paintFusions(body, meta) {
 function paintStats(body, meta) {
   var stats = meta.stats;
   var bosses = stats.bossKills || {};
+  var zh = isChinese();
   var kind;
   var bossText = [];
-  body.appendChild(card('RUNS', String(stats.runs), ''));
-  body.appendChild(card('KILLS', String(stats.kills), ''));
-  body.appendChild(card('JUST DASHES', String(stats.justDashes), ''));
-  body.appendChild(card('CONTRACTS', String(stats.contracts), ''));
-  body.appendChild(card('EXTRACTIONS', String(stats.extractions), ''));
-  body.appendChild(card('BEST WAVE', String(stats.bestWave), ''));
-  body.appendChild(card('PLAY TIME', formatDuration(stats.playTimeSec), ''));
-  body.appendChild(card('FUSIONS SEEN', String((stats.fusionsSeen || []).length), ''));
-  body.appendChild(card('ENEMIES SEEN', String((stats.seenEnemies || []).length), ''));
+  body.appendChild(card(zh ? '出擊次數' : 'RUNS', String(stats.runs), ''));
+  body.appendChild(card(zh ? '擊殺總數' : 'KILLS', String(stats.kills), ''));
+  body.appendChild(card(zh ? '精準衝刺' : 'JUST DASHES', String(stats.justDashes), ''));
+  body.appendChild(card(zh ? '達成合約' : 'CONTRACTS', String(stats.contracts), ''));
+  body.appendChild(card(zh ? '成功撤離' : 'EXTRACTIONS', String(stats.extractions), ''));
+  body.appendChild(card(zh ? '最高波次' : 'BEST WAVE', String(stats.bestWave), ''));
+  body.appendChild(card(zh ? '遊玩時間' : 'PLAY TIME', formatDuration(stats.playTimeSec), ''));
+  body.appendChild(card(zh ? '已發現融合' : 'FUSIONS SEEN', String((stats.fusionsSeen || []).length), ''));
+  body.appendChild(card(zh ? '已遭遇敵機' : 'ENEMIES SEEN', String((stats.seenEnemies || []).length), ''));
   for (kind in bosses) {
-    if (Object.prototype.hasOwnProperty.call(bosses, kind)) bossText.push(kind + ' ' + bosses[kind]);
+    if (Object.prototype.hasOwnProperty.call(bosses, kind)) {
+      bossText.push((zh ? tEnemyName(kind) : kind) + ' ' + bosses[kind]);
+    }
   }
-  body.appendChild(card('BOSSES', bossText.length ? bossText.join(' · ') : 'NONE', ''));
+  body.appendChild(card(zh ? '擊敗首領' : 'BOSSES', bossText.length ? bossText.join(' · ') : (zh ? '無' : 'NONE'), ''));
 }
 
 function paint() {
@@ -149,14 +160,29 @@ function paint() {
   var i;
   if (!built) return;
   meta = readMeta();
-  sig = tab + '|' + JSON.stringify(meta.achievements) + '|' + JSON.stringify(meta.stats);
+  var zh = isChinese();
+  sig = tab + '|' + (zh ? 'zh' : 'en') + '|' + JSON.stringify(meta.achievements) + '|' + JSON.stringify(meta.stats);
   tabs = document.querySelectorAll('#codexPanel [data-codex-tab]');
+  var TAB_NAMES = {
+    achievements: { zh: '成就', en: 'ACHIEVEMENTS' },
+    enemies: { zh: '敵機', en: 'ENEMIES' },
+    fusions: { zh: '融合', en: 'FUSIONS' },
+    stats: { zh: '數據', en: 'STATS' }
+  };
   for (i = 0; i < tabs.length; i += 1) {
-    var selected = tabs[i].getAttribute('data-codex-tab') === tab;
+    var tid = tabs[i].getAttribute('data-codex-tab');
+    var selected = tid === tab;
     tabs[i].setAttribute('aria-selected', selected ? 'true' : 'false');
     tabs[i].tabIndex = selected ? 0 : -1;
     tabs[i].classList.toggle('is-selected', selected);
+    if (TAB_NAMES[tid]) tabs[i].textContent = zh ? TAB_NAMES[tid].zh : TAB_NAMES[tid].en;
   }
+  var kicker = document.querySelector('#codexPanel .codex-kicker');
+  if (kicker) kicker.textContent = zh ? '資料庫' : 'ARCHIVE';
+  var codexTitle = document.getElementById('codexTitle');
+  if (codexTitle) codexTitle.textContent = zh ? '檔案庫' : 'CODEX';
+  var closeBtn = document.getElementById('codexCloseBtn');
+  if (closeBtn) closeBtn.textContent = zh ? '關閉' : 'CLOSE';
   if (sig === painted) return;
   painted = sig;
   body = document.getElementById('codexBody');
@@ -316,3 +342,7 @@ export function updateCodexPanel() {
   }
   paint();
 }
+
+onLanguageChange(function () {
+  if (open) paint();
+});

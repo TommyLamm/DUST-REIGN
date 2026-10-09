@@ -1,16 +1,29 @@
-/* Start-screen loadout. Scrolls inside the arena so a phone portrait iframe is not clipped. */
+/* Start-screen loadout. Short frames can still pan the card; the bar itself stays hidden. */
 
 .overlay.overlay--start {
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none;
   place-items: start center;
+  padding: clamp(6px, 1.2cqh, 12px);
   -webkit-overflow-scrolling: touch;
+}
+
+.overlay.overlay--start::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .overlay--start .overlay-inner {
   width: min(640px, 100%);
-  margin: 8px auto;
-  padding: 12px 14px 16px;
+  margin: 0 auto;
+  padding: 10px 14px 12px;
+}
+
+.overlay--start .overlay-foot {
+  margin-top: 8px;
+  padding-top: 8px;
 }
 
 .overlay--start h2 {
@@ -38,9 +51,9 @@
 #loadoutPanel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--dust);
   font-family: var(--mono);
 }

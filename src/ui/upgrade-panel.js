@@ -3,6 +3,7 @@ import { isReducedMotion } from '../core/settings.js';
 import { stackCount } from '../data/upgrades.js';
 import { beginBanish, cancelBanish, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
 import { first, qa } from '../core/utils.js';
+import { isChinese, onLanguageChange, tCategory, tFusionTitle, tRarity, tUpgradeText, tUpgradeTitle } from '../core/i18n.js';
 
 var hideTimer = 0;
 var dealTimers = [];
@@ -73,15 +74,16 @@ function paintUpgradeButton(button, upgrade, index, reroll) {
   button.classList.remove('is-picked', 'is-discarded', 'is-dealing', 'is-reroll');
   button.hidden = false;
   button.dataset.upgradeIndex = String(index);
+  var zh = isChinese();
   var catNode = button.querySelector('.upgrade-cat');
   if (!catNode) {
     catNode = document.createElement('span');
     catNode.className = 'upgrade-cat';
     button.insertBefore(catNode, button.firstChild);
   }
-  catNode.innerHTML = ICONS[cat] + '<span class="upgrade-cat-label">' + cat.toUpperCase() + '</span>';
+  catNode.innerHTML = ICONS[cat] + '<span class="upgrade-cat-label">' + (zh ? tCategory(cat) : cat.toUpperCase()) + '</span>';
   var rarityNode = ensureNode(button, 'upgrade-rarity');
-  rarityNode.textContent = String(rarity).toUpperCase();
+  rarityNode.textContent = zh ? tRarity(rarity) : String(rarity).toUpperCase();
   var stackNode = ensureNode(button, 'upgrade-stack');
   if (upgrade.maxStacks && upgrade.category !== 'FUSION') {
     var owned = stackCount(rt.state, upgrade.id);
@@ -95,7 +97,7 @@ function paintUpgradeButton(button, upgrade, index, reroll) {
   var completesNode = ensureNode(button, 'upgrade-completes');
   if (completes) {
     completesNode.hidden = false;
-    completesNode.textContent = 'COMPLETES: ' + completes;
+    completesNode.textContent = (zh ? '可完成融合: ' : 'COMPLETES: ') + tFusionTitle(completes);
   } else {
     completesNode.hidden = true;
     completesNode.textContent = '';
@@ -118,8 +120,8 @@ function paintUpgradeButton(button, upgrade, index, reroll) {
     small = document.createElement('small');
     button.appendChild(small);
   }
-  strong.textContent = upgrade.title;
-  small.textContent = upgrade.text;
+  strong.textContent = zh ? tUpgradeTitle(upgrade) : upgrade.title;
+  small.textContent = zh ? tUpgradeText(upgrade) : upgrade.text;
   if (reroll && !motionOffSafe()) button.classList.add('is-reroll');
   if (!motionOffSafe()) {
     button.style.setProperty('--deal-delay', (index * 60) + 'ms');
@@ -134,6 +136,7 @@ function renderControlRow() {
   if (typeof document === 'undefined' || !rt.state) return;
   var row = document.getElementById('upgradeControlRow');
   if (!row) return;
+  var zh = isChinese();
   var rerolls = rt.state.rerolls || 0;
   var banishes = rt.state.banishes || 0;
   var picking = !!rt.state.banishPicking;
@@ -142,29 +145,29 @@ function renderControlRow() {
   reroll.type = 'button';
   reroll.className = 'upgrade-action';
   reroll.id = 'upgradeRerollBtn';
-  reroll.textContent = 'REROLL (' + rerolls + ')';
+  reroll.textContent = (zh ? '重骰 (' : 'REROLL (') + rerolls + ')';
   reroll.disabled = rerolls <= 0;
-  reroll.setAttribute('aria-label', 'Reroll the three cards. ' + rerolls + ' remaining.');
+  reroll.setAttribute('aria-label', (zh ? '重骰三張卡片。剩餘 ' : 'Reroll the three cards. ') + rerolls + (zh ? ' 次。' : ' remaining.'));
   reroll.addEventListener('click', function () { rerollUpgrades(); });
   var banish = document.createElement('button');
   banish.type = 'button';
   banish.className = 'upgrade-action' + (picking ? ' is-armed' : '');
   banish.id = 'upgradeBanishBtn';
-  banish.textContent = picking ? 'CANCEL BANISH' : ('BANISH (' + banishes + ')');
+  banish.textContent = picking ? (zh ? '取消放逐' : 'CANCEL BANISH') : ((zh ? '放逐 (' : 'BANISH (') + banishes + ')');
   banish.disabled = banishes <= 0 && !picking;
   banish.setAttribute('aria-pressed', picking ? 'true' : 'false');
-  banish.setAttribute('aria-label', picking ? 'Cancel banish selection' : 'Banish one card. ' + banishes + ' remaining.');
+  banish.setAttribute('aria-label', picking ? (zh ? '取消放逐選擇' : 'Cancel banish selection') : ((zh ? '放逐一張卡片。剩餘 ' : 'Banish one card. ') + banishes + (zh ? ' 次。' : ' remaining.')));
   banish.addEventListener('click', function () { beginBanish(); });
   var skip = document.createElement('button');
   skip.type = 'button';
   skip.className = 'upgrade-action upgrade-action--skip';
   skip.id = 'upgradeSkipBtn';
-  skip.textContent = 'SKIP';
-  skip.setAttribute('aria-label', 'Skip the card. Heal 10 and gain 100 score.');
+  skip.textContent = zh ? '跳過' : 'SKIP';
+  skip.setAttribute('aria-label', zh ? '跳過強化。修復 10 點裝甲並獲得 100 分。' : 'Skip the card. Heal 10 and gain 100 score.');
   skip.addEventListener('click', function () { skipUpgrade(); });
   var hint = document.createElement('p');
   hint.className = 'upgrade-control-hint';
-  hint.textContent = picking ? 'SELECT A CARD TO BANISH · ESC CANCELS' : '1–3 PICK · R REROLL · B BANISH · X SKIP';
+  hint.textContent = picking ? (zh ? '選擇要放逐的卡片 · 按 ESC 取消' : 'SELECT A CARD TO BANISH · ESC CANCELS') : (zh ? '數字鍵 1–3 選擇 · R 重骰 · B 放逐 · X 跳過' : '1–3 PICK · R REROLL · B BANISH · X SKIP');
   row.appendChild(reroll);
   row.appendChild(banish);
   row.appendChild(skip);
@@ -202,10 +205,11 @@ export function renderUpgradePanel(options) {
   if (!rt.ui || !rt.ui.overlay || !rt.ui.optionsNode || !rt.state) return;
   var choices = rt.state.upgradeChoices || [];
   var reroll = !!(options && options.reroll);
+  var zh = isChinese();
   var title = first(['[data-upgrade-title]', '.upgrade-title', 'h2', 'h3'], rt.ui.overlay);
-  if (title) title.textContent = 'CHOOSE YOUR EDGE';
+  if (title) title.innerHTML = zh ? '強化機體，<span>兇悍進化。</span>' : 'MAKE THE RIG <span>MEANER.</span>';
   var hint = first(['.upgrade-hint'], rt.ui.overlay);
-  if (hint) hint.textContent = 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP';
+  if (hint) hint.textContent = zh ? '戰鬥已暫停 — 挑選 1 張卡片 (或按 1–3)' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP';
   if (rt.ui.overlay.classList) rt.ui.overlay.classList.toggle('is-banish-mode', !!rt.state.banishPicking);
   cancelUpgradeHide();
   clearDealTimers();
@@ -277,3 +281,9 @@ export function updateUpgradeSelectionUi() {
     }
   }
 }
+
+onLanguageChange(function () {
+  if (rt.ui && rt.ui.overlay && !rt.ui.overlay.hidden && rt.state && rt.state.upgradeChoices && rt.state.upgradeChoices.length) {
+    renderUpgradePanel();
+  }
+});

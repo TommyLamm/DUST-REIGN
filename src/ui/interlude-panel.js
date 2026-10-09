@@ -1,5 +1,6 @@
 import { rt } from '../core/runtime.js';
 import { backInterlude, chooseInterlude, confirmExtract, confirmPushDeeper, nudgeInterlude, tickInterlude } from '../systems/interlude.js';
+import { isChinese, onLanguageChange, tRouteName, tRouteReward, tRouteRule, tUpgradeText, tUpgradeTitle, tWeaponLine, tWeaponName } from '../core/i18n.js';
 
 var bound = false;
 var lastSig = '';
@@ -20,7 +21,7 @@ function panelSig() {
   var i;
   var options = il.options || [];
   for (i = 0; i < options.length; i += 1) ids += (options[i].id || '') + ',';
-  return il.step + '|' + (il.selected || 0) + '|' + ids + '|' + (il.title || '') + '|' + (il.extractBonus || 0) + '|' + Math.floor(state.score || 0);
+  return il.step + '|' + (il.selected || 0) + '|' + ids + '|' + (il.title || '') + '|' + (il.extractBonus || 0) + '|' + Math.floor(state.score || 0) + '|' + (isChinese() ? 'zh' : 'en');
 }
 
 function syncOutcomeTitle() {
@@ -28,23 +29,35 @@ function syncOutcomeTitle() {
   var title = document.getElementById('gameOverTitle');
   if (!title) return;
   if (defaultTitle == null) defaultTitle = title.innerHTML;
-  if (rt.state && rt.state.over && rt.state.extracted) title.innerHTML = 'EXTRACTED<br /><span>RUN SECURED.</span>';
+  var zh = isChinese();
+  if (rt.state && rt.state.over && rt.state.extracted) title.innerHTML = zh ? '已撤離<br /><span>出擊順利完成。</span>' : 'EXTRACTED<br /><span>RUN SECURED.</span>';
   else title.innerHTML = defaultTitle;
 }
 
 function fillCards(parent, options, selected, onPick) {
   var grid = el('div', 'interlude-grid');
+  var zh = isChinese();
   var i;
   for (i = 0; i < options.length; i += 1) {
     (function (index, option) {
+      var name = option.name;
+      var rule = option.rule;
+      var detail = option.detail;
+      var reward = option.reward;
+      if (zh && option.id) {
+        name = tRouteName(option.id) || tUpgradeTitle(option) || tWeaponName(option.id) || name;
+        rule = tRouteRule(option.id) || tUpgradeText(option) || rule;
+        detail = tUpgradeText(option) || tWeaponLine(option.id) || detail;
+        reward = tRouteReward(option.id) || reward;
+      }
       var card = el('button', 'interlude-card' + (index === selected ? ' is-selected' : '') + (option.sector ? ' is-' + option.sector : ''));
       card.type = 'button';
-      card.setAttribute('aria-label', option.name + '. ' + (option.rule || option.detail || ''));
+      card.setAttribute('aria-label', name + '. ' + (rule || detail || ''));
       card.appendChild(el('span', 'interlude-index', String(index + 1)));
-      card.appendChild(el('strong', 'interlude-name', option.name));
-      if (option.rule) card.appendChild(el('p', 'interlude-rule', option.rule));
-      if (option.detail && !option.rule) card.appendChild(el('p', 'interlude-rule', option.detail));
-      if (option.reward) card.appendChild(el('em', 'interlude-reward', option.reward));
+      card.appendChild(el('strong', 'interlude-name', name));
+      if (rule) card.appendChild(el('p', 'interlude-rule', rule));
+      if (detail && !rule) card.appendChild(el('p', 'interlude-rule', detail));
+      if (reward) card.appendChild(el('em', 'interlude-reward', reward));
       if (option.sector) card.appendChild(el('i', 'interlude-sector interlude-sector--' + option.sector, option.sector.toUpperCase()));
       card.addEventListener('click', function () { onPick(index); });
       grid.appendChild(card);
@@ -57,20 +70,21 @@ function renderInterlude(panel, il) {
   panel.replaceChildren();
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
+  var zh = isChinese();
   var shell = el('div', 'interlude-shell');
-  var kicker = 'INTERLUDE';
-  var heading = 'CHOOSE A ROAD';
-  var hint = '1–3 OR CLICK · ARROWS TO MOVE · ENTER TO CONFIRM';
+  var kicker = zh ? '幕間整備' : 'INTERLUDE';
+  var heading = zh ? '選擇前進道路' : 'CHOOSE A ROAD';
+  var hint = zh ? '1–4 或點擊 · 方向鍵移動 · ENTER 確認' : '1–3 OR CLICK · ARROWS TO MOVE · ENTER TO CONFIRM';
   if (il.step === 'armory') {
-    kicker = 'ARMORY';
-    heading = 'SERVICE THE RIG';
+    kicker = zh ? '軍械庫' : 'ARMORY';
+    heading = zh ? '檢修機體' : 'SERVICE THE RIG';
   } else if (il.step === 'weapon') {
-    kicker = 'ARMORY';
-    heading = 'MAIN WEAPON';
-    hint = 'CARDS STAY ON THE RIG';
+    kicker = zh ? '軍械庫' : 'ARMORY';
+    heading = zh ? '主武器選擇' : 'MAIN WEAPON';
+    hint = zh ? '卡片將保留在機體上' : 'CARDS STAY ON THE RIG';
   } else if (il.step === 'title') {
-    kicker = 'NEXT SECTOR';
-    heading = il.title || 'NEXT ACT';
+    kicker = zh ? '下一區段' : 'NEXT SECTOR';
+    heading = il.title || (zh ? '下一幕' : 'NEXT ACT');
     hint = '';
   }
   shell.appendChild(el('p', 'interlude-kicker', kicker));
@@ -79,11 +93,11 @@ function renderInterlude(panel, il) {
   shell.appendChild(title);
   panel.setAttribute('aria-labelledby', 'interludeTitle');
   if (il.step === 'title') {
-    shell.appendChild(el('p', 'interlude-hint', 'HOLD POSITION'));
+    shell.appendChild(el('p', 'interlude-hint', zh ? '保持警戒' : 'HOLD POSITION'));
   } else {
     fillCards(shell, il.options || [], il.selected || 0, function (index) { chooseInterlude(index); });
     if (il.step === 'weapon') {
-      var back = el('button', 'interlude-back', 'BACK');
+      var back = el('button', 'interlude-back', zh ? '返回' : 'BACK');
       back.type = 'button';
       back.addEventListener('click', function () { backInterlude(); });
       shell.appendChild(back);
@@ -99,33 +113,34 @@ function renderExtract(panel, il) {
   panel.replaceChildren();
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
+  var zh = isChinese();
   var shell = el('div', 'extract-shell');
-  shell.appendChild(el('p', 'interlude-kicker', 'BLACK GLASS CLEARED'));
-  var title = el('h2', 'interlude-title', 'THE GATE IS OPEN');
+  shell.appendChild(el('p', 'interlude-kicker', zh ? '黑玻璃區段肅清' : 'BLACK GLASS CLEARED'));
+  var title = el('h2', 'interlude-title', zh ? '撤離通道已開啟' : 'THE GATE IS OPEN');
   title.id = 'extractTitle';
   shell.appendChild(title);
   panel.setAttribute('aria-labelledby', 'extractTitle');
   var score = el('p', 'extract-score');
-  score.appendChild(el('span', null, 'RUN SCORE'));
+  score.appendChild(el('span', null, zh ? '出擊分數' : 'RUN SCORE'));
   score.appendChild(el('strong', null, String(Math.round((rt.state && rt.state.score) || 0))));
   shell.appendChild(score);
   var bonus = el('p', 'extract-bonus');
-  bonus.appendChild(el('span', null, 'EXTRACT BONUS'));
+  bonus.appendChild(el('span', null, zh ? '撤離獎勵' : 'EXTRACT BONUS'));
   bonus.appendChild(el('strong', null, '+' + String(il.extractBonus || 0)));
   shell.appendChild(bonus);
   var row = el('div', 'extract-actions');
-  var extractBtn = el('button', 'extract-action extract-action--go' + ((il.selected || 0) === 0 ? ' is-selected' : ''), 'EXTRACT');
+  var extractBtn = el('button', 'extract-action extract-action--go' + ((il.selected || 0) === 0 ? ' is-selected' : ''), zh ? '立即撤離' : 'EXTRACT');
   extractBtn.type = 'button';
-  extractBtn.setAttribute('aria-label', 'Extract and file this run');
+  extractBtn.setAttribute('aria-label', zh ? '撤離並結算本次出擊' : 'Extract and file this run');
   extractBtn.addEventListener('click', function () { confirmExtract(); });
-  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : ''), 'PUSH DEEPER');
+  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : ''), zh ? '深入戰區' : 'PUSH DEEPER');
   pushBtn.type = 'button';
-  pushBtn.setAttribute('aria-label', 'Push deeper into overtime. Death pays half the extract bonus.');
+  pushBtn.setAttribute('aria-label', zh ? '深入延長戰區。若陣亡僅發放一半撤離獎勵。' : 'Push deeper into overtime. Death pays half the extract bonus.');
   pushBtn.addEventListener('click', function () { confirmPushDeeper(); });
   row.appendChild(extractBtn);
   row.appendChild(pushBtn);
   shell.appendChild(row);
-  shell.appendChild(el('p', 'extract-note', 'PUSH DEEPER: if you die, the extract bonus pays 50%.'));
+  shell.appendChild(el('p', 'extract-note', zh ? '深入戰區: 若在此戰死，撤離獎勵僅發放 50%。' : 'PUSH DEEPER: if you die, the extract bonus pays 50%.'));
   panel.appendChild(shell);
   var selected = shell.querySelector('.is-selected');
   if (selected && selected.focus) selected.focus();
@@ -218,3 +233,10 @@ export function updateInterludePanel() {
   if (showExtract && extract) renderExtract(extract, il);
   else if (interlude) renderInterlude(interlude, il);
 }
+
+onLanguageChange(function () {
+  if (rt.state && rt.state.interlude) {
+    lastSig = '';
+    updateInterludePanel();
+  }
+});
