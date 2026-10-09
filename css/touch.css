@@ -1,0 +1,99 @@
+/* Touch Analog Joystick */
+.touch-joystick-zone {
+  position: relative;
+  width: clamp(120px, 32vw, 160px);
+  height: clamp(62px, 14vh, 78px);
+  background: rgba(16, 17, 14, 0.75);
+  border: 1px solid var(--line);
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+.joystick-base {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(232, 224, 198, 0.35);
+  background: radial-gradient(circle, rgba(150, 186, 160, 0.15) 0%, rgba(24, 26, 21, 0.65) 75%);
+  pointer-events: none;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+  opacity: 0.7;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.joystick-base::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from -2deg, rgba(232, 224, 198, 0.7) 0deg 4deg, transparent 4deg 90deg);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 61% 70%, transparent 73%);
+  mask: radial-gradient(circle, transparent 58%, #000 61% 70%, transparent 73%);
+  pointer-events: none;
+}
+
+.joystick-base.is-active {
+  opacity: 1;
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(232, 185, 78, 0.4), inset 0 0 8px rgba(232, 185, 78, 0.2);
+}
+
+.joystick-base.is-active .joystick-thumb {
+  box-shadow: 0 0 14px var(--glow-gold), 0 0 4px #fff;
+}
+
+.joystick-thumb {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  left: 50%;
+  top: 50%;
+  margin-left: -14px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: var(--amber);
+  border: 2px solid var(--bone);
+  box-shadow: 0 0 8px rgba(232, 185, 78, 0.7);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.joystick-guide {
+  position: absolute;
+  bottom: 3px;
+  left: 6px;
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.touch-actions .touch-button {
+  position: relative;
+  --ring: var(--amber);
+}
+
+.touch-button--dash { --ring: var(--mint); }
+.touch-button--special { --ring: #5be7ff; }
+.touch-button--fire { --ring: var(--amber); }
+
+.touch-actions .touch-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(from -90deg, var(--ring) calc(var(--cd, 0) * 1turn), transparent 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}

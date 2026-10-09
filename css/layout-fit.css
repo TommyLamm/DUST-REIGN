@@ -1,0 +1,35 @@
+/* Fit the available iframe, including short desktop and phone landscape frames. */
+.pause-button {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--slate);
+  color: var(--amber);
+  font: 10px var(--mono);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.pause-button:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: rgba(48, 52, 42, 0.92);
+}
+.pause-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.pause-button:disabled { opacity: 0.4; cursor: default; }
+.topbar-meta { gap: clamp(8px, 2vw, 28px); }
+.brand-lockup, .brand-lockup > div { min-width: 0; }
+.hud-top { grid-template-columns: 1fr 1.4fr 0.8fr; width: min(590px, 100%); }
+.metric { min-width: 0; }
+.hud-bottom { grid-template-columns: minmax(110px, 1.2fr) minmax(110px, 1.1fr) minmax(90px, 0.9fr); width: min(720px, 100%); }
+.resource-label { gap: 4px; font-size: 9px; }
+.resource-label strong { white-space: nowrap; }
+.result-grid > div { min-width: 0; padding: 10px 8px; }
+.result-grid strong { font-size: clamp(12px, 3cqw, 21px); overflow-wrap: anywhere; }
+.result-grid span { font-size: 8px; }
+.overlay-copy { font-size: clamp(11px, 2cqh, 14px); }
+.overlay-foot { flex-wrap: wrap; gap: 6px; }
+.upgrade-card { min-width: 0; min-height: clamp(64px, 22cqh, 132px); }
+#upgradeChoices .upgrade-choice { min-width: 0 !important; min-height: 64px !important; }

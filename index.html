@@ -7,8 +7,18 @@
   <meta name="theme-color" content="#10110e" />
   <meta name="description" content="DUST//REIGN — a wasteland roguelike shooter" />
   <title>DUST//REIGN — Wasteland Run</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="game.js" defer></script>
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/hud.css" />
+  <link rel="stylesheet" href="css/overlays.css" />
+  <link rel="stylesheet" href="css/upgrades.css" />
+  <link rel="stylesheet" href="css/mission-rail.css" />
+  <link rel="stylesheet" href="css/layout-fit.css" />
+  <link rel="stylesheet" href="css/pause-menu.css" />
+  <link rel="stylesheet" href="css/touch.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/high-contrast.css" />
+  <script type="module" src="src/main.js"></script>
 </head>
 
 <body>
@@ -47,7 +57,7 @@
             <span class="arena-state"><i aria-hidden="true"></i><span id="runState">STANDBY</span></span>
           </div>
 
-          <div id="canvasStage" class="canvas-stage">
+          <div id="canvasStage" class="canvas-stage" data-sector="dusk" data-storm="0" data-quality="auto">
             <canvas id="gameCanvas" width="1280" height="720" tabindex="0" aria-label="Wasteland combat arena"></canvas>
 
             <div class="arena-vignette" aria-hidden="true"></div>
@@ -55,7 +65,7 @@
             <div class="reticle reticle--left" aria-hidden="true"></div>
             <div class="reticle reticle--right" aria-hidden="true"></div>
 
-            <div id="hud" class="hud" aria-live="polite">
+            <div id="hud" class="hud">
               <div class="hud-top">
                 <div class="metric metric--wave">
                   <span class="metric-label">WAVE</span>
@@ -66,7 +76,6 @@
                   <span class="metric-label">SCORE</span>
                   <strong id="hudScore" data-score="">000000</strong>
                   <small id="hudKills">0 HOSTILES</small>
-                  <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
                 </div>
                 <div class="metric metric--level">
                   <span class="metric-label">RIG LVL</span>
@@ -74,6 +83,8 @@
                   <small>KEEP MOVING</small>
                 </div>
               </div>
+
+              <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
 
               <div class="hud-bottom">
                 <div class="resource-block resource-block--health">
@@ -83,6 +94,7 @@
                   </div>
                   <div id="healthBar" class="meter meter--health" role="progressbar" aria-label="Hull integrity"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                    <span id="healthLag" class="meter-lag" style="width: 100%"></span>
                     <span id="healthFill" style="width: 100%"></span>
                   </div>
                 </div>
@@ -100,6 +112,7 @@
                   <div class="resource-label">
                     <span>BATTERY</span>
                     <strong><span id="hudEnergy" data-energy="">50</span><em>%</em></strong>
+                    <span id="empReady" class="emp-ready" hidden>EMP READY</span>
                   </div>
                   <div id="meterEnergy" class="meter meter--energy" role="progressbar" aria-label="Battery energy"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
@@ -145,6 +158,19 @@
                   <div><span>WAVE REACHED</span><strong id="finalWave">--</strong></div>
                   <div><span>SCRAP SCORE</span><strong id="finalScore">000000</strong></div>
                   <div><span>BEST RUN</span><strong id="finalBest">000000</strong></div>
+                </div>
+                <div class="run-telemetry-grid">
+                  <div><span>ACCURACY</span><strong id="telAccuracy">0%</strong></div>
+                  <div><span>MAX COMBO</span><strong id="telMaxCombo">x0</strong></div>
+                  <div><span>GRAZES</span><strong id="telGrazes">0</strong></div>
+                  <div><span>TOTAL DMG</span><strong id="telDamage">0</strong></div>
+                </div>
+                <div id="combatRankStamp" class="combat-rank-stamp">
+                  <div class="rank-stamp-box">
+                    <span class="rank-stamp-kicker">SECTOR EVALUATION</span>
+                    <strong id="combatRankLetter" class="rank-letter rank-letter--s">S</strong>
+                    <span id="combatRankTitle" class="rank-title">APEX SCAVENGER</span>
+                  </div>
                 </div>
                 <div id="newRecordStamp" class="new-record-stamp" hidden>
                   <span>NEW RECORD</span> <small>//</small> <span>SECTOR TOP</span>
@@ -198,7 +224,8 @@
                   <p class="overlay-kicker">COMBAT SIGNAL SUSPENDED · SYSTEM TERMINAL ACTIVE</p>
                 </div>
 
-                <nav class="pause-tabs" role="tablist" aria-label="Pause Menu Categories">
+                <nav class="pause-tabs" data-tab="system" role="tablist" aria-label="Pause Menu Categories">
+                  <span id="pauseTabIndicator" class="pause-tab-indicator" aria-hidden="true"></span>
                   <button id="tabBtnSystem" class="pause-tab is-active" type="button" role="tab" aria-selected="true"
                     aria-controls="panelSystem">SYSTEM</button>
                   <button id="tabBtnBuild" class="pause-tab" type="button" role="tab" aria-selected="false"
@@ -263,6 +290,16 @@
                           <button type="button" id="toggleHighContrast" class="pause-setting-btn">CONTRAST: STANDARD</button>
                         </div>
                       </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">VISUAL QUALITY</span>
+                          <small class="setting-desc">RENDER TIER, LIGHTING AND EFFECT BUDGET</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="settingVisualQuality" class="pause-setting-btn">QUALITY: AUTO</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -270,6 +307,15 @@
                   <div id="panelBuild" class="pause-tab-panel" role="tabpanel" aria-labelledby="tabBtnBuild" hidden>
                     <div class="build-inspector">
                       <div class="build-stats-col">
+                        <div class="build-col-title">WEAPON CHASSIS SELECTION</div>
+                        <div class="chassis-selector" id="chassisSelector">
+                          <button type="button" class="chassis-btn is-active" data-mode="standard">STANDARD</button>
+                          <button type="button" class="chassis-btn" data-mode="breacher">BREACHER</button>
+                          <button type="button" class="chassis-btn" data-mode="vanguard">VANGUARD</button>
+                          <button type="button" class="chassis-btn" data-mode="arc-welder">ARC-WELDER</button>
+                        </div>
+                        <div id="chassisDesc" class="chassis-desc">STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS</div>
+
                         <div class="build-col-title">CORE SPECS TELEMETRY</div>
                         <div class="build-stats-grid">
                           <div class="build-stat-card">
@@ -308,6 +354,11 @@
                         <div class="build-col-title">INSTALLED MOD CHIPS (<span id="installedChipsCount">0</span>)</div>
                         <div id="installedChipsList" class="installed-chips-list">
                           <!-- dynamic chip cards -->
+                        </div>
+
+                        <div class="build-col-title" style="margin-top: 14px;">FUSION RESONANCE MATRIX (<span id="activeFusionsCount">0</span>/6 ONLINE)</div>
+                        <div id="fusionMatrixList" class="fusion-matrix-list">
+                          <!-- dynamic fusion cards -->
                         </div>
                       </div>
                     </div>

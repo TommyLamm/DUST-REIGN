@@ -1,0 +1,171 @@
+/* High Contrast Accessibility Mode */
+.game-root.is-high-contrast {
+  --bone: #ffffff;
+  --dust: #f4f4f4;
+  --muted: #c8c8c8;
+  --line: rgba(255, 255, 255, 0.45);
+  --line-strong: rgba(255, 255, 255, 0.85);
+}
+
+.game-root.is-high-contrast .meter {
+  border: 2px solid #ffffff !important;
+}
+
+.game-root.is-high-contrast .meter--health > span {
+  background: #ff3322 !important;
+}
+
+.game-root.is-high-contrast .meter--xp > span {
+  background: #ffcc00 !important;
+}
+
+.game-root.is-high-contrast .meter--energy > span {
+  background: #00ffff !important;
+}
+
+.game-root.is-high-contrast .touch-button {
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .overlay-inner {
+  border: 2px solid #ffffff !important;
+  border-left: 6px solid #ffffff !important;
+}
+
+.game-root.is-high-contrast .new-record-stamp {
+  border: 4px solid #ffffff !important;
+  color: #ffffff !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  box-shadow: 0 0 0 2px #000000, 0 0 22px #ffffff !important;
+}
+
+.game-root.is-high-contrast .run-telemetry-grid {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+}
+
+.game-root.is-high-contrast .run-telemetry-grid > div {
+  background: #000000 !important;
+  border: 1px solid #ffffff !important;
+}
+
+.game-root.is-high-contrast .run-telemetry-grid span {
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .run-telemetry-grid strong {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .combat-rank-stamp {
+  transform: none !important;
+  animation: none !important;
+}
+
+.game-root.is-high-contrast .rank-stamp-box {
+  border: 3px solid #ffffff !important;
+  outline: 1px solid #ffffff !important;
+  outline-offset: -4px !important;
+  background: #000000 !important;
+  box-shadow: 0 0 0 2px #000000, 0 0 18px #ffffff !important;
+}
+
+.game-root.is-high-contrast .rank-stamp-kicker {
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .rank-letter {
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .rank-letter.rank-letter--s {
+  color: #ffff00 !important;
+}
+
+.game-root.is-high-contrast .rank-letter.rank-letter--a {
+  color: #55ff55 !important;
+}
+
+.game-root.is-high-contrast .rank-letter.rank-letter--b {
+  color: #ffaa00 !important;
+}
+
+.game-root.is-high-contrast .rank-letter.rank-letter--c {
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .rank-title {
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .brand-lockup h1,
+.game-root.is-high-contrast .metric--wave.is-storm::before,
+.game-root.is-high-contrast .rank-letter.rank-letter--s::before,
+.game-root.is-high-contrast .hud-chain-badge.is-break,
+.game-root.is-high-contrast #startTitle,
+.game-root.is-high-contrast .overlay::before {
+  animation: none !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast #healthLag {
+  background: #ffffff !important;
+}
+
+.game-root.is-high-contrast .meter--health > #healthFill {
+  background: #ff3322 !important;
+}
+
+.game-root.is-high-contrast .hud > .hud-chain-badge {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.game-root.is-high-contrast .hud.is-storm .metric,
+.game-root.is-high-contrast .metric--wave.is-storm {
+  border-color: #ff4422 !important;
+  box-shadow: none !important;
+}
+
+.game-root.is-high-contrast .emp-ready {
+  color: #000000 !important;
+  background: #00ffff !important;
+  box-shadow: none !important;
+}
+
+.game-root.is-high-contrast .upgrade-card:hover,
+.game-root.is-high-contrast .upgrade-card:focus-visible,
+.game-root.is-high-contrast .upgrade-card.is-gamepad-selected,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice:hover,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice:focus-visible,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.is-gamepad-selected {
+  transform: none !important;
+}
+
+.game-root.is-high-contrast .upgrade-choice--offense,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.upgrade-choice--offense {
+  border-top-color: #ffcc00 !important;
+}
+
+.game-root.is-high-contrast .upgrade-choice--defense,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.upgrade-choice--defense {
+  border-top-color: #ff3322 !important;
+}
+
+.game-root.is-high-contrast .upgrade-choice--tactical,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.upgrade-choice--tactical {
+  border-top-color: #55ff55 !important;
+}
+
+.game-root.is-high-contrast .upgrade-choice--fusion,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.upgrade-choice--fusion,
+.game-root.is-high-contrast .upgrade-card.is-fusion-chip,
+.game-root.is-high-contrast #upgradeChoices .upgrade-choice.is-fusion-chip {
+  border-color: #ffff00 !important;
+  border-top-color: #ffff00 !important;
+}

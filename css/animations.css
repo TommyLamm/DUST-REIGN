@@ -1,0 +1,387 @@
+/* Shared motion. Durations live on :root so reduced-motion can collapse them.
+   responsive.css (loaded after this file) also zeroes animation-duration. */
+
+:root {
+  --dur-glitch: 4.6s;
+  --dur-pulse: 0.28s;
+  --dur-flip: 0.34s;
+  --dur-type: 1.15s;
+  --dur-caret: 0.9s;
+  --dur-hazard: 9s;
+  --dur-sweep: 2.8s;
+  --dur-deal: 0.42s;
+  --dur-pick: 0.22s;
+  --dur-stamp: 0.45s;
+  --dur-record-gap: 0.25s;
+  --dur-break: 0.32s;
+  --dur-pop: 0.7s;
+  --dur-hull: 0.22s;
+  --dur-critical: 0.85s;
+  --dur-emp: 1.2s;
+  --dur-sand: 0.9s;
+  --dur-holo: 3.6s;
+  --dur-gold: 7s;
+  --dur-tab: 0.18s;
+  --dur-shake: 0.32s;
+  --dur-ink: 0.35s;
+}
+
+@keyframes brandGlitch {
+  0%, 92%, 100% {
+    text-shadow: none;
+    transform: none;
+  }
+  93% {
+    text-shadow: -2px 0 rgba(255, 70, 48, 0.8), 2px 0 rgba(80, 220, 255, 0.75);
+    transform: translateX(-1px);
+  }
+  95% {
+    text-shadow: 2px 0 rgba(255, 70, 48, 0.75), -2px 0 rgba(80, 220, 255, 0.8);
+    transform: translateX(1px);
+  }
+}
+
+@keyframes valuePulse {
+  0% { filter: brightness(1); }
+  35% { filter: brightness(1.7); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes digitFlip {
+  0% { transform: rotateX(0deg); filter: brightness(1); }
+  45% { transform: rotateX(-88deg); filter: brightness(1.8); }
+  55% { transform: rotateX(88deg); filter: brightness(1.5); }
+  100% { transform: rotateX(0deg); filter: brightness(1); }
+}
+
+@keyframes caretBlink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes titleReveal {
+  0% { clip-path: inset(0 100% 52% 0); }
+  46% { clip-path: inset(0 0 52% 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes hazardScroll {
+  from { background-position: 0 0; }
+  to { background-position: 48px 0; }
+}
+
+@keyframes btnSweep {
+  0%, 55% { transform: translateX(-130%); }
+  78%, 100% { transform: translateX(130%); }
+}
+
+@keyframes hullShake {
+  0%, 100% { transform: skewX(-12deg) translateX(0); }
+  25% { transform: skewX(-12deg) translateX(-2px); }
+  55% { transform: skewX(-12deg) translateX(2px); }
+  80% { transform: skewX(-12deg) translateX(-1px); }
+}
+
+@keyframes hullPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.55); }
+}
+
+@keyframes empReady {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-tech); }
+  50% { box-shadow: 0 0 16px var(--glow-tech); }
+}
+
+@keyframes sandDrift {
+  from { background-position: 0 0; }
+  to { background-position: 28px 0; }
+}
+
+@keyframes scorePop {
+  0% { opacity: 0; transform: translateY(4px); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+
+@keyframes chainBreak {
+  0% { opacity: 1; transform: skewX(-10deg) rotate(-4deg); filter: none; }
+  40% { opacity: 0.8; transform: skewX(-18deg) rotate(-7deg) translateX(5px); }
+  100% { opacity: 0; transform: skewX(8deg) rotate(5deg) translateY(12px) scale(0.84); filter: blur(1px); }
+}
+
+@keyframes cardDeal {
+  0% { opacity: 0; transform: translateY(26px) rotateX(-55deg) scale(0.94); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes cardPick {
+  0% { transform: scale(1); filter: brightness(1); }
+  40% { transform: scale(1.05); filter: brightness(1.85); }
+  100% { transform: scale(1.03); filter: brightness(1.15); }
+}
+
+@keyframes cardSink {
+  to { opacity: 0; transform: translateY(22px) scale(0.94); }
+}
+
+@keyframes holoShift {
+  from { background-position: 0% 40%, 0 0; }
+  to { background-position: 180% 60%, 0 0; }
+}
+
+@keyframes goldSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes inkPop {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.9; transform: scale(1.05); }
+  100% { opacity: 0.75; transform: scale(1); }
+}
+
+@keyframes rankShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  45% { transform: translate(2px, -1px); }
+  70% { transform: translate(-1px, -1px); }
+}
+
+.brand-lockup h1 {
+  animation: brandGlitch var(--dur-glitch) steps(1, end) infinite;
+}
+
+.is-pulse {
+  animation: valuePulse var(--dur-pulse) ease-out;
+}
+
+#hudWave.is-flip {
+  animation: digitFlip var(--dur-flip) ease;
+  transform-origin: center bottom;
+}
+
+.overlay--start .overlay-kicker::after {
+  content: "▌";
+  margin-left: 4px;
+  color: var(--amber);
+  animation: caretBlink var(--dur-caret) steps(1, end) infinite;
+}
+
+#startTitle {
+  animation: titleReveal var(--dur-type) steps(16, end) both;
+}
+
+.overlay::before {
+  animation: hazardScroll var(--dur-hazard) linear infinite;
+}
+
+.action-button--primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.42) 50%, transparent 68%);
+  transform: translateX(-130%);
+  animation: btnSweep var(--dur-sweep) ease-in-out infinite;
+  pointer-events: none;
+}
+
+.action-button--primary:active {
+  transform: translateY(3px);
+  filter: brightness(0.9);
+}
+
+.meter--health.is-hurt {
+  animation: hullShake var(--dur-hull) linear;
+}
+
+.meter--health.is-critical > #healthFill {
+  animation: hullPulse var(--dur-critical) ease-in-out infinite;
+}
+
+.meter--energy.is-ready,
+.touch-button--special.is-ready {
+  animation: empReady var(--dur-emp) ease-in-out infinite;
+}
+
+.metric--wave.is-storm::before {
+  animation: sandDrift var(--dur-sand) linear infinite;
+}
+
+.score-pop {
+  animation: scorePop var(--dur-pop) ease-out forwards;
+}
+
+.hud-chain-badge.is-break {
+  animation: chainBreak var(--dur-break) ease forwards;
+}
+
+.signal-readout strong.is-typing::after {
+  content: "▌";
+  margin-left: 2px;
+  color: var(--amber);
+  animation: caretBlink var(--dur-caret) steps(1, end) infinite;
+}
+
+.upgrade-card.is-dealing,
+#upgradeChoices .upgrade-choice.is-dealing,
+#upgradeChoices .upgrade-choice.is-fusion-chip.is-dealing {
+  animation: cardDeal var(--dur-deal) cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  animation-delay: var(--deal-delay, 0ms) !important;
+}
+
+.upgrade-card.is-picked,
+#upgradeChoices .upgrade-choice.is-picked,
+#upgradeChoices .upgrade-choice.is-fusion-chip.is-picked {
+  animation: cardPick var(--dur-pick) ease forwards !important;
+  z-index: 3;
+}
+
+.upgrade-card.is-discarded,
+#upgradeChoices .upgrade-choice.is-discarded,
+#upgradeChoices .upgrade-choice.is-fusion-chip.is-discarded {
+  animation: cardSink var(--dur-pick) ease forwards !important;
+  pointer-events: none;
+}
+
+.upgrade-card.is-fusion-chip,
+#upgradeChoices .upgrade-choice.is-fusion-chip {
+  animation: fusion-chip-pulse 2.2s ease-in-out infinite alternate, holoShift var(--dur-holo) linear infinite;
+}
+
+.upgrade-choices {
+  perspective: 900px;
+}
+
+#upgradeChoices .upgrade-choice:hover,
+#upgradeChoices .upgrade-choice:focus-visible,
+#upgradeChoices .upgrade-choice.is-gamepad-selected,
+.upgrade-card:hover,
+.upgrade-card:focus-visible,
+.upgrade-card.is-gamepad-selected {
+  transform: translateY(-6px) rotateX(6deg) rotateY(-7deg);
+}
+
+#upgradeChoices .upgrade-choice.is-fusion-chip:hover,
+#upgradeChoices .upgrade-choice.is-fusion-chip:focus-visible,
+#upgradeChoices .upgrade-choice.is-fusion-chip.is-gamepad-selected,
+.upgrade-card.is-fusion-chip:hover,
+.upgrade-card.is-fusion-chip.is-gamepad-selected {
+  transform: translateY(-7px) rotateX(5deg) rotateY(-6deg);
+}
+
+.new-record-stamp {
+  animation-delay: var(--dur-record-gap);
+}
+
+.rank-letter.rank-letter--s::before {
+  content: "";
+  position: absolute;
+  inset: -8px -16px;
+  border: 1px dashed rgba(255, 215, 0, 0.55);
+  border-radius: 50%;
+  animation: goldSpin var(--dur-gold) linear infinite;
+  pointer-events: none;
+}
+
+.rank-stamp-box::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  width: 22px;
+  height: 16px;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(237, 104, 66, 0.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 68% 62%, rgba(232, 185, 78, 0.8) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 48% 80%, rgba(16, 17, 14, 0.9) 0 1.5px, transparent 2.5px);
+  opacity: 0;
+  animation: inkPop var(--dur-ink) ease-out 0.16s forwards;
+  pointer-events: none;
+}
+
+.canvas-stage.is-rank-slam {
+  animation: rankShake var(--dur-shake) linear;
+}
+
+.pause-tab-indicator {
+  transition: transform var(--dur-tab) ease, width var(--dur-tab) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-lockup h1,
+  #startTitle,
+  .overlay::before,
+  .overlay--start .overlay-kicker::after,
+  .action-button--primary::after,
+  .meter--health.is-hurt,
+  .meter--health.is-critical > #healthFill,
+  .meter--energy.is-ready,
+  .touch-button--special.is-ready,
+  .metric--wave.is-storm::before,
+  .hud-chain-badge.is-break,
+  .signal-readout strong.is-typing::after,
+  .upgrade-card.is-dealing,
+  #upgradeChoices .upgrade-choice.is-dealing,
+  .upgrade-card.is-picked,
+  #upgradeChoices .upgrade-choice.is-picked,
+  .upgrade-card.is-discarded,
+  #upgradeChoices .upgrade-choice.is-discarded,
+  .rank-letter.rank-letter--s::before,
+  .canvas-stage.is-rank-slam,
+  .is-pulse,
+  #hudWave.is-flip {
+    animation: none !important;
+  }
+
+  #upgradeChoices .upgrade-choice:hover,
+  #upgradeChoices .upgrade-choice:focus-visible,
+  #upgradeChoices .upgrade-choice.is-gamepad-selected,
+  .upgrade-card:hover,
+  .upgrade-card:focus-visible,
+  .upgrade-card.is-gamepad-selected,
+  .upgrade-card.is-fusion-chip:hover,
+  #upgradeChoices .upgrade-choice.is-fusion-chip:hover {
+    transform: none !important;
+  }
+}
+
+html.reduced-motion .brand-lockup h1,
+html.reduced-motion #startTitle,
+html.reduced-motion .overlay::before,
+html.reduced-motion .overlay--start .overlay-kicker::after,
+html.reduced-motion .action-button--primary::after,
+html.reduced-motion .meter--health.is-hurt,
+html.reduced-motion .meter--health.is-critical > #healthFill,
+html.reduced-motion .meter--energy.is-ready,
+html.reduced-motion .touch-button--special.is-ready,
+html.reduced-motion .metric--wave.is-storm::before,
+html.reduced-motion .hud-chain-badge.is-break,
+html.reduced-motion .signal-readout strong.is-typing::after,
+html.reduced-motion .upgrade-card.is-dealing,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-dealing,
+html.reduced-motion .upgrade-card.is-picked,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-picked,
+html.reduced-motion .upgrade-card.is-discarded,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-discarded,
+html.reduced-motion .rank-letter.rank-letter--s::before,
+html.reduced-motion .canvas-stage.is-rank-slam,
+html.reduced-motion .is-pulse,
+html.reduced-motion #hudWave.is-flip {
+  animation: none !important;
+}
+
+html.reduced-motion #upgradeChoices .upgrade-choice:hover,
+html.reduced-motion #upgradeChoices .upgrade-choice:focus-visible,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-gamepad-selected,
+html.reduced-motion .upgrade-card:hover,
+html.reduced-motion .upgrade-card:focus-visible,
+html.reduced-motion .upgrade-card.is-gamepad-selected,
+html.reduced-motion .upgrade-card.is-fusion-chip:hover,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-fusion-chip:hover {
+  transform: none !important;
+}

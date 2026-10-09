@@ -23,13 +23,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Check syntax and stage allowlisted assets
+      - name: Check syntax, run self-check and stage allowlisted assets
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          node --check game.js
+          find src -name '*.js' -print0 | xargs -0 -n 1 node --check
           node --check playroom-sdk.js
           node --check scripts/stage-release.mjs
+          node --check scripts/self-check.mjs
+          node scripts/self-check.mjs
           node scripts/stage-release.mjs
       - name: Check release version and resolve artifact directory
         env:

@@ -1,0 +1,514 @@
+import { COMBO_WINDOW, WAVE_LENGTH } from '../config.js';
+import { rt } from '../core/runtime.js';
+import { isReducedMotion } from '../core/settings.js';
+import { clamp, setText } from '../core/utils.js';
+import { sectorForWave } from '../render/palette.js';
+import { getQuality } from '../render/quality.js';
+import { calculateCombatRank, isStormFront } from '../systems/flow.js';
+import { updateAudioBtn } from './pause-menu.js';
+
+var shownScore = null;
+var scoreState = null;
+var scoreClock = 0;
+var lastScoreTarget = null;
+var popEl = null;
+var popValue = 0;
+var popAt = 0;
+var popTimer = 0;
+var hpLagShown = null;
+var dashMax = 2.2;
+var prevDash = 0;
+var shootMax = 0.18;
+var chainWasHot = false;
+var chainBreakUntil = 0;
+var typeJobs = [];
+var telRoll = { key: '', busy: false, raf: 0 };
+var slamKey = '';
+var lastSector = '';
+var lastStorm = '';
+var lastQuality = '';
+
+function motionOff() {
+  try { return isReducedMotion(); } catch (e) { return false; }
+}
+
+function byId(id) {
+  if (typeof document === 'undefined') return null;
+  return document.getElementById(id);
+}
+
+function pulse(el, key, value) {
+  if (!el || !el.classList || motionOff()) return;
+  var next = String(value);
+  if (el._pulseKey != null && el._pulseKey !== next) {
+    el.classList.remove('is-pulse');
+    if (key === 'wave') el.classList.remove('is-flip');
+    void el.offsetWidth;
+    el.classList.add('is-pulse');
+    if (key === 'wave') el.classList.add('is-flip');
+  }
+  el._pulseKey = next;
+}
+
+function popScore(delta) {
+  if (!delta || typeof document === 'undefined' || motionOff()) return;
+  var host = rt.ui && rt.ui.score && rt.ui.score.parentElement;
+  if (!host || !host.appendChild) return;
+  var now = Date.now();
+  if (!popEl || !popEl.parentNode || now - popAt > 280) {
+    popEl = document.createElement('span');
+    popEl.className = 'score-pop';
+    host.appendChild(popEl);
+    popValue = 0;
+    popAt = now;
+    if (popTimer) clearTimeout(popTimer);
+    popTimer = setTimeout(function () {
+      popTimer = 0;
+      if (popEl && popEl.parentNode) popEl.parentNode.removeChild(popEl);
+      popEl = null;
+    }, 720);
+  }
+  popValue += delta;
+  popEl.textContent = '+' + popValue;
+}
+
+function syncScore() {
+  var target = Math.max(0, Math.round(rt.state.score || 0));
+  if (scoreState !== rt.state) {
+    scoreState = rt.state;
+    shownScore = target;
+    lastScoreTarget = target;
+  }
+  var now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+  if (shownScore == null || typeof document === 'undefined' || motionOff() || target < shownScore) {
+    if (lastScoreTarget != null && target > lastScoreTarget) popScore(target - lastScoreTarget);
+    shownScore = target;
+  } else if (shownScore < target) {
+    if (lastScoreTarget != null && target > lastScoreTarget) popScore(target - lastScoreTarget);
+    var dt = scoreClock ? Math.min(0.05, (now - scoreClock) / 1000) : 0.016;
+    shownScore = Math.min(target, shownScore + Math.max(1, (target - shownScore) * Math.min(1, dt * 9)));
+  }
+  scoreClock = now;
+  lastScoreTarget = target;
+  setText(rt.ui.score, String(Math.round(shownScore)).padStart(6, '0'));
+  pulse(rt.ui.score, 'score', target);
+}
+
+function syncHealth() {
+  var p = rt.state.player;
+  if (!p) return;
+  var ratio = clamp(p.hp / (p.maxHp || 1), 0, 1);
+  var pct = ratio * 100;
+  if (rt.ui.healthFill && rt.ui.healthFill.style) rt.ui.healthFill.style.width = pct + '%';
+  var lag = rt.ui.healthLag || byId('healthLag');
+  if (lag && lag.style) {
+    var snap = hpLagShown == null || pct >= hpLagShown - 0.2 || motionOff();
+    if (Math.abs((lag._target == null ? -1 : lag._target) - pct) > 0.05 || snap !== lag._snap) {
+      lag.style.transition = snap ? 'none' : 'width 480ms linear 80ms';
+      lag.style.width = pct + '%';
+      lag._target = pct;
+      lag._snap = snap;
+    }
+    hpLagShown = pct;
+  }
+  var bar = (rt.ui.healthFill && rt.ui.healthFill.parentElement) || byId('healthBar');
+  if (bar && bar.classList) {
+    var hurt = bar._hp != null && pct < bar._hp - 0.4;
+    bar.classList.toggle('is-critical', ratio > 0 && ratio <= 0.3);
+    if (hurt && !motionOff()) {
+      bar.classList.remove('is-hurt');
+      void bar.offsetWidth;
+      bar.classList.add('is-hurt');
+    }
+    bar._hp = pct;
+  }
+}
+
+function setCd(el, value) {
+  if (!el || !el.style || !el.style.setProperty) return;
+  var v = clamp(value, 0, 1).toFixed(3);
+  if (el.dataset && el.dataset.cd === v) return;
+  if (el.dataset) el.dataset.cd = v;
+  el.style.setProperty('--cd', v);
+}
+
+function syncCooldowns() {
+  var p = rt.state.player;
+  if (!p) return;
+  if ((p.dashCooldown || 0) > prevDash + 0.01) dashMax = p.dashCooldown;
+  prevDash = p.dashCooldown || 0;
+  if ((p.cooldown || 0) <= 0) shootMax = Math.max(0.05, p.fireRate || 0.18);
+  else if (p.cooldown > shootMax) shootMax = p.cooldown;
+  var shoot = rt.ui.touchShoot || byId('touchShoot');
+  var dash = rt.ui.touchDash || byId('touchDash');
+  if (rt.ui) {
+    if (shoot) rt.ui.touchShoot = shoot;
+    if (dash) rt.ui.touchDash = dash;
+  }
+  setCd(shoot, shootMax > 0 ? (p.cooldown || 0) / shootMax : 0);
+  setCd(dash, dashMax > 0 ? (p.dashCooldown || 0) / dashMax : 0);
+  var energy = p.energy || 0;
+  setCd(rt.ui.touchSpecial, energy >= 50 ? 0 : 1 - (energy / 50));
+  var ready = energy >= 50;
+  if (rt.ui.meterEnergy && rt.ui.meterEnergy.classList) rt.ui.meterEnergy.classList.toggle('is-ready', ready);
+  var badge = rt.ui.empReady || byId('empReady');
+  if (badge) badge.hidden = !ready;
+  if (rt.ui && badge) rt.ui.empReady = badge;
+}
+
+function syncChain() {
+  var el = rt.ui.hudChain;
+  if (!el) return;
+  if (rt.state.over) {
+    el.hidden = true;
+    if (el.classList) el.classList.remove('is-break');
+    chainWasHot = false;
+    chainBreakUntil = 0;
+    return;
+  }
+  var hot = rt.state.combo > 1 || rt.state.grazeCombo > 0;
+  var now = rt.renderTime || 0;
+  if (hot) {
+    el.hidden = false;
+    if (el.classList) el.classList.remove('is-break');
+    if (rt.state.combo > 1) {
+      el.textContent = 'CHAIN x' + rt.state.combo + (rt.state.grazeCombo > 0 ? ' [GRAZE ' + rt.state.grazeCombo + ']' : '');
+    } else {
+      el.textContent = 'GRAZE x' + rt.state.grazeCombo;
+    }
+    var heat = Math.min(8, Math.max(rt.state.combo || 0, rt.state.grazeCombo || 0));
+    if (el.setAttribute) el.setAttribute('data-heat', String(heat));
+    if (el.style && el.style.setProperty) {
+      el.style.setProperty('--chain', clamp((rt.state.comboTimer || 0) / COMBO_WINDOW, 0, 1).toFixed(3));
+    }
+    chainWasHot = true;
+    chainBreakUntil = 0;
+    return;
+  }
+  if (chainWasHot && el.classList && !motionOff()) {
+    el.classList.add('is-break');
+    el.hidden = false;
+    chainWasHot = false;
+    chainBreakUntil = now + 0.32;
+    return;
+  }
+  if (chainBreakUntil && now < chainBreakUntil) return;
+  el.hidden = true;
+  if (el.classList) el.classList.remove('is-break');
+  chainWasHot = false;
+  chainBreakUntil = 0;
+}
+
+function setTypeText(el, text) {
+  if (!el) return;
+  text = String(text);
+  if (el.getAttribute && el.getAttribute('data-full') === text) return;
+  if (el.setAttribute) el.setAttribute('data-full', text);
+  if (typeof document === 'undefined' || motionOff() || !el.classList) {
+    el.textContent = text;
+    if (el.classList) el.classList.remove('is-typing');
+    return;
+  }
+  el.textContent = '';
+  el._typeText = text;
+  el._typeIndex = 0;
+  el.classList.add('is-typing');
+  if (typeJobs.indexOf(el) === -1) typeJobs.push(el);
+}
+
+function stepTypewriters(dt) {
+  if (!typeJobs.length) return;
+  var step = Math.max(1, Math.round((dt > 0 ? dt : 0.016) * 22));
+  for (var i = typeJobs.length - 1; i >= 0; i -= 1) {
+    var el = typeJobs[i];
+    if (!el || !el._typeText) {
+      typeJobs.splice(i, 1);
+      continue;
+    }
+    el._typeIndex += step;
+    if (el._typeIndex >= el._typeText.length) {
+      el.textContent = el._typeText;
+      if (el.classList) el.classList.remove('is-typing');
+      typeJobs.splice(i, 1);
+    } else {
+      el.textContent = el._typeText.slice(0, el._typeIndex);
+    }
+  }
+}
+
+function syncComms() {
+  var comms = (rt.ui && rt.ui.commsStatus) || byId('commsStatus');
+  var wind = (rt.ui && rt.ui.windStatus) || byId('windStatus');
+  if (rt.ui) {
+    if (comms) rt.ui.commsStatus = comms;
+    if (wind) rt.ui.windStatus = wind;
+  }
+  var commsText = 'LIVE';
+  if (rt.ui.startScreen && !rt.ui.startScreen.hidden) commsText = 'OPEN';
+  else if (rt.state.over) commsText = 'LOST';
+  else if (rt.state.paused) commsText = 'HOLD';
+  else if (isStormFront()) commsText = 'STATIC';
+  var sector = 'dusk';
+  try { sector = sectorForWave(rt.state.wave); } catch (e) { sector = 'dusk'; }
+  var windText = sector === 'night' ? 'N 11' : sector === 'rust' ? 'SW 27' : 'NW 18';
+  if (isStormFront()) windText = 'GUST 44';
+  setTypeText(comms, commsText);
+  setTypeText(wind, windText);
+}
+
+function syncSector() {
+  if (typeof document === 'undefined') return;
+  var stage = (rt.ui && rt.ui.canvasStage) || byId('canvasStage');
+  if (!stage || !stage.setAttribute) return;
+  if (rt.ui) rt.ui.canvasStage = stage;
+  var sector = 'dusk';
+  try { sector = sectorForWave(rt.state.wave); } catch (e) { sector = 'dusk'; }
+  var storm = isStormFront() ? '1' : '0';
+  if (sector !== lastSector) {
+    lastSector = sector;
+    stage.setAttribute('data-sector', sector);
+  }
+  if (storm !== lastStorm) {
+    lastStorm = storm;
+    stage.setAttribute('data-storm', storm);
+  }
+  var hud = byId('hud');
+  if (hud && hud.classList) hud.classList.toggle('is-storm', storm === '1');
+  var waveMetric = rt.ui.wave && rt.ui.wave.closest ? rt.ui.wave.closest('.metric') : null;
+  if (waveMetric && waveMetric.classList) waveMetric.classList.toggle('is-storm', storm === '1');
+  var quality = 'auto';
+  try { quality = getQuality(); } catch (e) { quality = 'auto'; }
+  if (quality !== lastQuality) {
+    lastQuality = quality;
+    stage.setAttribute('data-quality', quality);
+  }
+}
+
+function syncPauseBlur() {
+  var canvas = rt.ui && rt.ui.canvas;
+  if (!canvas || !canvas.classList) return;
+  var modal = rt.ui.pauseModal;
+  var upgrading = rt.state.upgradeChoices && rt.state.upgradeChoices.length;
+  var onStart = rt.ui.startScreen && !rt.ui.startScreen.hidden;
+  var show = Boolean(rt.state.paused && modal && !modal.hidden && !upgrading && !onStart);
+  canvas.classList.toggle('is-pause-blur', show);
+}
+
+function writeTelemetry(accPct, combo, grazes, dmg) {
+  if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = accPct + '%';
+  if (rt.ui.telMaxCombo) rt.ui.telMaxCombo.textContent = 'x' + combo;
+  if (rt.ui.telGrazes) rt.ui.telGrazes.textContent = String(grazes);
+  if (rt.ui.telDamage) rt.ui.telDamage.textContent = String(dmg);
+}
+
+function canRollNumbers() {
+  return typeof requestAnimationFrame === 'function' && !motionOff() && rt.ui.telAccuracy && rt.ui.telAccuracy.classList;
+}
+
+function animateTelemetry(accPct, combo, grazes, dmg) {
+  var targets = [accPct, combo, grazes, dmg];
+  var each = 260;
+  var start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+  function frame(now) {
+    if (!telRoll.busy || !rt.ui) return;
+    var t = now - start;
+    var shown = [];
+    for (var i = 0; i < 4; i += 1) {
+      var local = (t - i * each) / each;
+      if (local <= 0) shown[i] = 0;
+      else if (local >= 1) shown[i] = targets[i];
+      else shown[i] = Math.round(targets[i] * (1 - Math.pow(1 - local, 3)));
+    }
+    writeTelemetry(shown[0], shown[1], shown[2], shown[3]);
+    if (t < each * 4) telRoll.raf = requestAnimationFrame(frame);
+    else {
+      telRoll.busy = false;
+      telRoll.raf = 0;
+      writeTelemetry(accPct, combo, grazes, dmg);
+    }
+  }
+  telRoll.busy = true;
+  telRoll.raf = requestAnimationFrame(function (now) {
+    writeTelemetry(0, 0, 0, 0);
+    frame(now);
+  });
+}
+
+function syncTelemetry(acc, stats) {
+  var accPct = Math.round(acc * 100);
+  var combo = stats.maxCombo || 0;
+  var grazes = stats.grazes || 0;
+  var dmg = Math.round(stats.damageDealt || 0);
+  var key = accPct + '|' + combo + '|' + grazes + '|' + dmg + '|' + (rt.state.score || 0);
+  if (!rt.state.over) return;
+  if (telRoll.busy && telRoll.key === key) return;
+  if (!telRoll.busy) writeTelemetry(accPct, combo, grazes, dmg);
+  var visible = !rt.ui.gameOver || rt.ui.gameOver.hidden === false;
+  if (!visible) return;
+  if (telRoll.key === key) return;
+  telRoll.key = key;
+  if (!canRollNumbers()) return;
+  animateTelemetry(accPct, combo, grazes, dmg);
+}
+
+function resetTelemetry() {
+  if (telRoll.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(telRoll.raf);
+  telRoll.busy = false;
+  telRoll.raf = 0;
+  telRoll.key = '';
+  slamKey = '';
+}
+
+function syncSlam() {
+  var stage = (rt.ui && rt.ui.canvasStage) || byId('canvasStage');
+  if (!stage || !stage.classList) return;
+  var show = Boolean(rt.state.over && !(rt.state.deathSequenceTimer > 0));
+  var key = show ? String(rt.state.score) + ':' + rt.state.wave : '';
+  if (!show) {
+    slamKey = '';
+    stage.classList.remove('is-rank-slam');
+    return;
+  }
+  if (key === slamKey || motionOff()) return;
+  slamKey = key;
+  stage.classList.remove('is-rank-slam');
+  void stage.offsetWidth;
+  stage.classList.add('is-rank-slam');
+}
+
+export function tickHudPresentation() {
+  if (!rt.state || !rt.ui || typeof document === 'undefined') return;
+  stepTypewriters(rt.renderDt || 0);
+  var stage = rt.ui.canvasStage || byId('canvasStage');
+  if (!stage || !stage.setAttribute) return;
+  var quality = 'auto';
+  try { quality = getQuality(); } catch (e) { quality = 'auto'; }
+  if (quality !== lastQuality) {
+    lastQuality = quality;
+    stage.setAttribute('data-quality', quality);
+  }
+}
+
+export function logEvent(message) {
+  if (!rt.state || !rt.ui || !rt.ui.runLog || typeof document === 'undefined') return;
+  var elapsed = Math.max(0, Math.floor((rt.state.wave - 1) * WAVE_LENGTH + rt.state.waveTime));
+  var item = document.createElement('li');
+  item.className = 'run-log-entry';
+  var time = document.createElement('time');
+  var copy = document.createElement('span');
+  time.textContent = String(Math.floor(elapsed / 60)).padStart(2, '0') + ':' + String(elapsed % 60).padStart(2, '0');
+  copy.textContent = message;
+  item.appendChild(time);
+  item.appendChild(copy);
+  rt.ui.runLog.insertBefore(item, rt.ui.runLog.firstChild);
+  while (rt.ui.runLog.children.length > 5) rt.ui.runLog.removeChild(rt.ui.runLog.lastElementChild);
+}
+
+export function updateDomUi() {
+  if (!rt.state || !rt.ui) return;
+  updateAudioBtn();
+  var pauseButton = typeof document !== 'undefined' ? document.getElementById('pauseBtn') : null;
+  if (pauseButton) {
+    pauseButton.disabled = rt.state.over || rt.state.upgradeChoices.length > 0 || Boolean(rt.ui.startScreen && !rt.ui.startScreen.hidden);
+    pauseButton.textContent = rt.state.paused && !pauseButton.disabled ? 'RESUME' : 'PAUSE';
+    pauseButton.setAttribute('aria-label', rt.state.paused && !pauseButton.disabled ? 'Resume game' : 'Pause game');
+  }
+  setText(rt.ui.health, Math.ceil(rt.state.player.hp));
+  pulse(rt.ui.health, 'hp', Math.ceil(rt.state.player.hp));
+  setText(rt.ui.xp, rt.state.xp);
+  setText(rt.ui.xpMax, rt.state.xpNext);
+  setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
+  pulse(rt.ui.level, 'level', rt.state.level);
+  setText(rt.ui.wave, String(rt.state.wave).padStart(2, '0'));
+  pulse(rt.ui.wave, 'wave', rt.state.wave);
+  syncScore();
+  setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
+  setText(rt.ui.kills, rt.state.kills + ' HOSTILES');
+  if (rt.ui.objectiveText) rt.ui.objectiveText.textContent = rt.state.bountyClaimed ? 'BOUNTY SECURED — HOLD THE DRYLINE.' : 'DROP ' + rt.state.bountyTarget + ' HOSTILES FOR +' + rt.state.bountyReward + ' SCORE.';
+  if (rt.ui.objectiveProgress) rt.ui.objectiveProgress.style.width = (rt.state.bountyClaimed ? 100 : clamp(rt.state.bountyKills / rt.state.bountyTarget, 0, 1) * 100) + '%';
+  if (rt.ui.threatIndex) rt.ui.threatIndex.textContent = rt.state.wave >= 5 ? 'CRITICAL' : rt.state.wave >= 3 ? 'HIGH' : 'LOW';
+  if (rt.ui.waveTimer) {
+    var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
+    rt.ui.waveTimer.textContent = (isStormFront() ? 'STORM FRONT ' : 'NEXT FRONT ') + String(seconds).padStart(2, '0') + 's';
+  }
+  syncHealth();
+  if (rt.ui.healthFill && rt.ui.healthFill.parentElement) rt.ui.healthFill.parentElement.setAttribute('aria-valuenow', String(Math.ceil(rt.state.player.hp)));
+  if (rt.ui.xpFill) rt.ui.xpFill.style.width = (clamp(rt.state.xp / rt.state.xpNext, 0, 1) * 100) + '%';
+  if (rt.ui.xpFill && rt.ui.xpFill.parentElement) {
+    rt.ui.xpFill.parentElement.setAttribute('aria-valuenow', String(rt.state.xp));
+    rt.ui.xpFill.parentElement.setAttribute('aria-valuemax', String(rt.state.xpNext));
+  }
+  if (rt.ui.hudEnergy) rt.ui.hudEnergy.textContent = Math.floor(rt.state.player.energy || 0);
+  if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) rt.ui.meterEnergy.setAttribute('aria-valuenow', String(Math.floor(rt.state.player.energy || 0)));
+  if (rt.ui.energyFill && rt.ui.energyFill.style) rt.ui.energyFill.style.width = (clamp((rt.state.player.energy || 0) / (rt.state.player.maxEnergy || 100), 0, 1) * 100) + '%';
+  syncCooldowns();
+  if (rt.ui.touchSpecial && rt.ui.touchSpecial.classList) {
+    if ((rt.state.player.energy || 0) >= 50) {
+      rt.ui.touchSpecial.classList.add('is-ready');
+      rt.ui.touchSpecial.classList.remove('touch-button--cooldown');
+    } else {
+      rt.ui.touchSpecial.classList.remove('is-ready');
+      rt.ui.touchSpecial.classList.add('touch-button--cooldown');
+    }
+  }
+  syncChain();
+  syncSector();
+  syncComms();
+  syncPauseBlur();
+  if (!rt.state.over) resetTelemetry();
+  if (rt.ui.gameOver) rt.ui.gameOver.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
+  if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0) || !rt.state.isNewRecord;
+  if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
+  if (rt.ui.finalWave) rt.ui.finalWave.textContent = String(rt.state.wave).padStart(2, '0');
+  if (rt.ui.finalScore) rt.ui.finalScore.textContent = String(rt.state.score).padStart(6, '0');
+  if (rt.ui.finalBest) rt.ui.finalBest.textContent = String(rt.state.bestScore).padStart(6, '0');
+  if (rt.state.over && rt.state.stats) {
+    var stats = rt.state.stats;
+    var rank = rt.state.evalRank || calculateCombatRank(rt.state.wave, rt.state.score, stats);
+    rt.state.evalRank = rank;
+    var acc = (stats.shotsFired > 0 ? (stats.shotsHit / stats.shotsFired) : 0);
+    syncTelemetry(acc, stats);
+    syncSlam();
+
+    if (rt.ui.combatRankLetter) {
+      rt.ui.combatRankLetter.textContent = rank.letter;
+      if (rt.ui.combatRankLetter.classList) {
+        rt.ui.combatRankLetter.classList.remove('rank-letter--s', 'rank-letter--a', 'rank-letter--b', 'rank-letter--c');
+        rt.ui.combatRankLetter.classList.add(rank.classMod);
+      }
+    }
+    if (rt.ui.combatRankStamp && rt.ui.combatRankStamp.classList) {
+      rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'S');
+    }
+    if (rt.ui.combatRankTitle) {
+      rt.ui.combatRankTitle.textContent = rank.title;
+    }
+
+    if (!rt.ui.telAccuracy && rt.ui.gameOver) {
+      var tel = typeof document !== 'undefined' ? document.getElementById('runTelemetry') : null;
+      if (!tel && typeof document !== 'undefined') {
+        var resGrid = rt.ui.gameOver.querySelector && rt.ui.gameOver.querySelector('.result-grid');
+        if (resGrid) {
+          tel = document.createElement('div');
+          tel.id = 'runTelemetry';
+          tel.className = 'telemetry-grid';
+          resGrid.insertAdjacentElement('afterend', tel);
+        }
+      }
+      if (tel) {
+        var accPct = Math.round(acc * 100);
+        tel.innerHTML =
+          '<div><span>ACCURACY</span><strong>' + accPct + '% <small>(' + stats.shotsHit + '/' + stats.shotsFired + ')</small></strong></div>' +
+          '<div><span>CRITS</span><strong>' + stats.crits + '</strong></div>' +
+          '<div><span>GRAZES</span><strong>' + stats.grazes + '</strong></div>' +
+          '<div><span>CORES DETONATED</span><strong>' + stats.coresDetonated + '</strong></div>' +
+          '<div><span>MAX COMBO</span><strong>x' + stats.maxCombo + '</strong></div>' +
+          '<div><span>DAMAGE DEALT</span><strong>' + stats.damageDealt + '</strong></div>';
+      }
+    }
+  }
+  if (rt.ui.accountSaveBadge) rt.ui.accountSaveBadge.hidden = !rt.state.over || !rt.accountRunSaved;
+  if (rt.ui.runState && rt.state.over) rt.ui.runState.textContent = 'SIGNAL LOST';
+  else if (rt.ui.runState && !rt.ui.startScreen) rt.ui.runState.textContent = 'LIVE';
+  if (rt.ui.statusText && rt.state.over) rt.ui.statusText.textContent = 'SIGNAL LOST — PRESS R TO REDEPLOY';
+}

@@ -1,5 +1,27 @@
 # DUST//REIGN 版本紀錄
 
+## V0.3.0 — 2026-10-08
+
+視覺全面改造（玩法、數值、既有存檔 key 與排行榜規則不變）：
+
+- 地表改為離屏快取，並依波次在 dusk、rust、night 之間換色；浮塵、風暴霧帶、色彩分級與暗角由渲染時鐘驅動，暫停時仍持續。
+- HIGH 畫質使用半解析度 lightmap；較低畫質改以加法光暈與暗角維持亮暗。玩家、敵人、場景物件與掉落物重繪，並加上接地陰影與受擊閃白。
+- 擊殺、暴擊、爆炸、衝刺、擦彈等戰鬥回饋改走 `pushFxEvent` 視覺事件與 `src/render/fx.js` 粒子池，含傷害數字與螢幕閃光。光暈改為 `sprites.js` 預渲染貼圖，不再使用 `shadowBlur`。
+- HUD、開始畫面、升級選卡、結算與暫停介面加入 `css/animations.css` 動效。升級卡依類別發牌與選定動畫，不改變選卡規則。
+- 暫停 SYSTEM 可循環畫質 `auto`、`high`、`medium`、`low`，存在 `dust_reign_visual_quality`。`auto` 依指標能力選起始等級，幀時間持續偏慢時只降不升；手動固定等級不自動降級。預算以 `src/render/quality.js` 為準。
+- 減動效停用螢幕閃光、膠片顆粒與多數介面動畫，並縮短受擊閃白；震屏與 hitstop 仍歸零。高對比停用 lightmap、色彩分級與暗角，敵我標記留在可讀性層。
+- 渲染時鐘為 `rt.renderTime`、`rt.renderDt`（暫停時仍前進）；戰鬥擺動與彈道仍使用 `state.waveTime`。模擬與繪製之間只透過 `src/core/fx-events.js` 傳視覺通知。
+
+## V0.2.1 — 2026-10-08
+
+結構重整（玩法與存檔格式不變）：
+
+- 單檔 `game.js`（約 7,300 行）拆成 `src/` 下 38 個原生 ES Modules，入口改為 `<script type="module" src="src/main.js">`，仍零建置、零依賴。
+- 跨模組共用且會重新賦值的閉包變數集中到 `src/core/runtime.js` 的 `rt` 物件。
+- `update(dt)` 拆成 `src/systems/sim/` 的 10 個依序執行步驟；`drawEnemy` 拆成依敵型與附加層的 helper。
+- `styles.css` 依原順序拆成 `css/` 下 10 個檔案。
+- 發布白名單改為根目錄 4 檔加 `src/**/*.js` 與 `css/**/*.css`；CI 加跑 `node scripts/self-check.mjs`。
+
 ## V0.1.2 — 2026-10-05
 
 Playroom 平台排行榜與成績 SDK 接入：

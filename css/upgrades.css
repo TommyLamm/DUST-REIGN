@@ -1,0 +1,284 @@
+.upgrade-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(12px, 4cqh, 48px);
+  overflow: hidden;
+  background: rgba(10, 11, 9, 0.84);
+  backdrop-filter: blur(5px);
+}
+
+.upgrade-panel::before {
+  position: absolute;
+  inset: 8% 4%;
+  content: "";
+  border: 1px solid rgba(232, 185, 78, 0.2);
+  pointer-events: none;
+}
+
+.upgrade-head,
+.upgrade-choices {
+  position: relative;
+  width: min(900px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.upgrade-head {
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.upgrade-head .overlay-kicker {
+  margin-bottom: 7px;
+  color: var(--amber);
+}
+
+.upgrade-head h2 {
+  margin: 0;
+  color: var(--bone);
+  font-family: var(--display);
+  font-size: clamp(31px, 4vw, 55px);
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+
+.upgrade-hint {
+  margin: 8px 0 0;
+  color: var(--mint);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.upgrade-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: min(240px, 42%);
+  flex: 0 0 auto;
+  color: var(--muted);
+  text-align: right;
+}
+
+.upgrade-count strong {
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.upgrade-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.upgrade-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 132px;
+  padding: 14px;
+  cursor: pointer;
+  color: var(--bone);
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--muted);
+  background: rgba(36, 39, 31, 0.88);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.upgrade-card:hover,
+.upgrade-card:focus-visible {
+  border-color: var(--amber);
+  border-top-color: var(--amber);
+  background: rgba(72, 61, 34, 0.92);
+  transform: translateY(-5px);
+}
+
+/* The game script may repopulate the same slot with its compact choice cards. */
+#upgradeChoices .upgrade-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-height: 132px !important;
+  padding: 34px 14px 14px !important;
+  cursor: pointer !important;
+  border: 1px solid var(--line-strong) !important;
+  border-top: 3px solid var(--muted) !important;
+  border-radius: 0 !important;
+  color: var(--bone) !important;
+  background: rgba(36, 39, 31, 0.88) !important;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  font-family: var(--body) !important;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+#upgradeChoices .upgrade-choice:hover,
+#upgradeChoices .upgrade-choice:focus-visible {
+  border-color: var(--amber) !important;
+  border-top-color: var(--amber) !important;
+  background: rgba(72, 61, 34, 0.92) !important;
+  transform: translateY(-5px);
+}
+
+#upgradeChoices .upgrade-choice strong {
+  color: var(--bone) !important;
+  font-family: var(--display) !important;
+  font-size: clamp(17px, 2vw, 23px) !important;
+  letter-spacing: 0.05em;
+  line-height: 0.9;
+}
+
+#upgradeChoices .upgrade-choice small {
+  color: var(--muted) !important;
+  font-family: var(--mono) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.08em;
+}
+
+#upgradeChoices .upgrade-choice em {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--amber) !important;
+  font-family: var(--mono) !important;
+  font-style: normal !important;
+  font-size: 0.78em;
+}
+
+.upgrade-cat {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mint);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.upgrade-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.upgrade-choice--offense,
+#upgradeChoices .upgrade-choice.upgrade-choice--offense {
+  border-top-color: #f0cf88 !important;
+}
+
+.upgrade-choice--offense .upgrade-cat { color: #f0cf88; }
+
+.upgrade-choice--defense,
+#upgradeChoices .upgrade-choice.upgrade-choice--defense {
+  border-top-color: var(--rust) !important;
+}
+
+.upgrade-choice--defense .upgrade-cat { color: var(--rust); }
+
+.upgrade-choice--tactical,
+#upgradeChoices .upgrade-choice.upgrade-choice--tactical {
+  border-top-color: #75d1b0 !important;
+}
+
+.upgrade-choice--tactical .upgrade-cat { color: #75d1b0; }
+
+.upgrade-choice--fusion,
+#upgradeChoices .upgrade-choice.upgrade-choice--fusion {
+  border-top-color: #ffd700 !important;
+}
+
+.upgrade-choice--fusion .upgrade-cat { color: #ffd700; }
+
+#upgradeChoices .upgrade-choice.is-fusion-chip,
+.upgrade-card.is-fusion-chip {
+  background-image:
+    linear-gradient(115deg, rgba(255, 215, 0, 0.08) 0%, transparent 35%, rgba(255, 244, 180, 0.22) 50%, transparent 68%),
+    linear-gradient(135deg, rgba(82, 60, 16, 0.95) 0%, rgba(46, 34, 12, 0.92) 100%);
+  background-size: 220% 220%, auto;
+}
+
+/* Fusion Chips - Resonance Evolution Cards */
+.upgrade-card.is-fusion-chip,
+#upgradeChoices .upgrade-choice.is-fusion-chip {
+  border-color: #ffd700 !important;
+  border-top-color: #fff066 !important;
+  background: linear-gradient(135deg, rgba(82, 60, 16, 0.95) 0%, rgba(46, 34, 12, 0.92) 100%) !important;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4), inset 0 0 12px rgba(255, 215, 0, 0.18) !important;
+  animation: fusion-chip-pulse 2.2s ease-in-out infinite alternate;
+}
+
+.upgrade-card.is-fusion-chip:hover,
+.upgrade-card.is-fusion-chip:focus-visible,
+#upgradeChoices .upgrade-choice.is-fusion-chip:hover,
+#upgradeChoices .upgrade-choice.is-fusion-chip:focus-visible {
+  border-color: #fff488 !important;
+  border-top-color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(120, 88, 24, 0.98) 0%, rgba(68, 50, 18, 0.95) 100%) !important;
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.65), inset 0 0 18px rgba(255, 215, 0, 0.28) !important;
+  transform: translateY(-6px);
+}
+
+@keyframes fusion-chip-pulse {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.25), inset 0 0 8px rgba(255, 215, 0, 0.12);
+  }
+  100% {
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.55), inset 0 0 16px rgba(255, 215, 0, 0.25);
+  }
+}
+
+.upgrade-index {
+  position: absolute;
+  top: 10px;
+  right: 13px;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.upgrade-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upgrade-copy strong {
+  font-family: var(--display);
+  font-size: clamp(17px, 2vw, 23px);
+  letter-spacing: 0.05em;
+  line-height: 0.9;
+}
+
+.upgrade-copy small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.upgrade-arrow {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  color: var(--rust);
+  font-size: 17px;
+}
