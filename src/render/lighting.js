@@ -171,8 +171,9 @@ function collect(w, h) {
   if (list) {
     for (i = 0; i < list.length; i += 1) {
       var enemy = list[i];
-      if (!enemy || enemy.kind !== 'titan') continue;
-      addLight(enemy.x, enemy.y, 200, enemy.phase2Triggered ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.8, px, py, w, h);
+      if (!enemy || !(enemy.isBoss || enemy.kind === 'titan')) continue;
+      var bossHot = enemy.phase2Triggered || (enemy.bossPhase && enemy.bossPhase >= 3);
+      addLight(enemy.x, enemy.y, 200, bossHot ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.8, px, py, w, h);
     }
   }
   list = state.shockRings;

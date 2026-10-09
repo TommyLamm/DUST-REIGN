@@ -46,12 +46,27 @@ export function drawContactShadows(ctx) {
     var dash = (p.dashPulse || 0) > 0;
     contact(ctx, p.x, p.y, p.r * 1.05, false, dash ? 1.5 : 1.2, 3);
   }
+  var sand = state.sandMarks;
+  if (sand) {
+    for (i = 0; i < sand.length; i += 1) {
+      var mark = sand[i];
+      var fade = mark.maxLife ? mark.life / mark.maxLife : 0.4;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, fade) * 0.55;
+      contact(ctx, mark.x, mark.y, mark.r || 8, false, 1.4, 0);
+      ctx.restore();
+    }
+  }
   var enemies = state.enemies;
   if (enemies) {
     for (i = 0; i < enemies.length; i += 1) {
       var e = enemies[i];
-      if (e.kind === 'titan') drawTitanShadow(ctx, e);
-      else if (e.kind === 'brute') contact(ctx, e.x, e.y, e.r * 1.08, true, 1.32, 0);
+      if (e.kind === 'burrower' && e.burrowed) {
+        contact(ctx, e.x, e.y, e.r * 0.55, false, 1.6, 0);
+      } else if (e.kind === 'titan' || e.kind === 'dreadnought') drawTitanShadow(ctx, e);
+      else if (e.kind === 'sovereign') contact(ctx, e.x, e.y, e.r * 0.72, false, 1.15, 6);
+      else if (e.kind === 'stormTower') contact(ctx, e.x, e.y, e.r * 0.9, true, 2.1, 0);
+      else if (e.kind === 'brute' || e.kind === 'warden') contact(ctx, e.x, e.y, e.r * 1.08, e.kind === 'brute', e.kind === 'brute' ? 1.32 : 1.15, 0);
       else if (e.kind === 'elite') contact(ctx, e.x, e.y, e.r * 1.05, false, 1.12, 0);
       else contact(ctx, e.x, e.y, e.r, false, 1, 0);
     }

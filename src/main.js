@@ -16,7 +16,9 @@ import { bindInput } from './input/keyboard-pointer.js';
 import { getPlayroom, startAccountRun } from './platform/playroom.js';
 import { draw } from './render/draw.js';
 import { sampleFrame } from './render/quality.js';
+import { directorStartRun } from './systems/director.js';
 import { calculateCombatRank, restart, triggerGameOver } from './systems/flow.js';
+import { applyLoadout } from './systems/meta.js';
 import { spawnEnemy } from './systems/spawning.js';
 import { update } from './systems/update.js';
 import { cycleWeaponMode } from './systems/weapons.js';
@@ -52,6 +54,8 @@ function init(options) {
   rt.state = makeState(960, 640);
   resize();
   rt.state = makeState(rt.ui.width, rt.ui.height);
+  applyLoadout(rt.state);
+  directorStartRun(rt.state);
   rt.state.paused = Boolean(rt.ui.startScreen && !rt.ui.startScreen.hidden);
   if (!rt.state.paused) rt.accountRun = startAccountRun();
   rt.input.mouse.x = rt.ui.width / 2 + 100;

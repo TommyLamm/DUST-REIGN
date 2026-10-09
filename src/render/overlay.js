@@ -76,7 +76,8 @@ function drawTitanBar(ctx, titan) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = enraged ? '#ff4d2e' : '#f5d58f';
-  ctx.fillText(enraged ? 'TITAN HULL // ENRAGED' : 'TITAN HULL // APEX THREAT', barX, barY - 11);
+  var bossTitle = (titan.bossName || 'TITAN') + ' // ' + (enraged && titan.kind === 'titan' ? 'ENRAGED' : (titan.bossSubtitle || 'APEX THREAT'));
+  ctx.fillText(bossTitle, barX, barY - 11);
   ctx.textAlign = 'right';
   ctx.fillText(Math.ceil(titan.hp) + ' / ' + titan.maxHp, barX + barW, barY - 11);
 
@@ -191,14 +192,8 @@ export function drawHud(ctx) {
   ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(rt.ui.width - 145, 58, 125, 4);
   ctx.fillStyle = '#d49a55'; ctx.fillRect(rt.ui.width - 145, 58, 125 * clamp(rt.state.waveTime / WAVE_LENGTH, 0, 1), 4);
 
-  var titan = null;
-  for (var tti = 0; tti < rt.state.enemies.length; tti += 1) {
-    if (rt.state.enemies[tti].kind === 'titan') {
-      titan = rt.state.enemies[tti];
-      break;
-    }
-  }
-  if (titan) drawTitanBar(ctx, titan);
+  var boss = rt.state.boss;
+  if (boss && boss.hp > 0) drawTitanBar(ctx, boss);
   else titanRef = null;
 
   ctx.restore();

@@ -35,7 +35,7 @@ function heatPaint(t) {
 }
 
 function stampBlink(e, fx) {
-  if (e.kind !== 'elite' || e.affix !== 'blink') return;
+  if (e.kind !== 'elite' || (e.affix !== 'blink' && e.affix2 !== 'blink')) return;
   if (!(fx.moved > 36)) return;
   fx.g0x = e.x - fx.dx;
   fx.g0y = e.y - fx.dy;
@@ -46,7 +46,7 @@ function stampBlink(e, fx) {
 }
 
 function senseMirror(e, fx) {
-  if (e.kind !== 'elite' || e.affix !== 'mirror') return;
+  if (e.kind !== 'elite' || (e.affix !== 'mirror' && e.affix2 !== 'mirror')) return;
   if (e.shieldBrokenTimer > 0) return;
   var now = rt.renderTime || 0;
   if (fx.rippleLock != null && now - fx.rippleLock < 0.08) return;
@@ -692,6 +692,418 @@ function drawCommandAntenna(ctx, e, reduced) {
   ctx.restore();
 }
 
+function drawSpitterBody(ctx, e, flashing) {
+  var r = e.r;
+  ctx.fillStyle = flashing ? '#ffffff' : '#3d4a22';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 1.05, r * 0.82, 0, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.6);
+  if (!flashing) {
+    ctx.fillStyle = '#6d8a32';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.1, -r * 0.16, r * 0.62, r * 0.4, -0.2, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#2a3818';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.35, r * 0.12, r * 0.28, r * 0.46, 0.4, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = flashing ? '#ffffff' : '#d6ff6a';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.95, 0, r * 0.38, r * 0.22, 0, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.2);
+  ctx.fillStyle = flashing ? '#ffffff' : '#1a140c';
+  ctx.beginPath();
+  ctx.arc(r * 0.35, -r * 0.08, Math.max(1.6, r * 0.16), 0, TAU);
+  ctx.fill();
+  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, r * 0.95, 0, r * 0.9, '#c6e35a', 0.55);
+}
+
+function drawScurrierBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var hot = !!e.arming;
+  var wobble = hot && !reduced ? Math.sin((rt.renderTime || 0) * 42) * 1.4 : 0;
+  ctx.translate(wobble, 0);
+  var i;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#4a2c1c';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  for (i = 0; i < 4; i += 1) {
+    var side = i < 2 ? -1 : 1;
+    var along = (i % 2 === 0 ? -0.35 : 0.35) * r;
+    ctx.beginPath();
+    ctx.moveTo(along, side * r * 0.4);
+    ctx.lineTo(along, side * r * 1.15);
+    ctx.stroke();
+  }
+  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#ffb070' : '#8a4a28');
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.95, r * 0.72, 0, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.5);
+  if (!flashing) {
+    ctx.fillStyle = '#c46a38';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.2, -r * 0.08, r * 0.4, r * 0.28, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = hot ? '#fff6e8' : (flashing ? '#ffffff' : '#2a140c');
+  ctx.beginPath();
+  ctx.arc(r * 0.55, 0, Math.max(1.4, r * 0.18), 0, TAU);
+  ctx.fill();
+  if (hot && !keyGlowsOnly()) drawGlow(ctx, 0, 0, r * 1.4, '#ff8a3d', reduced ? 0.7 : 0.85);
+}
+
+function drawWardenBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var pulse = reduced ? 0.5 : (0.5 + 0.5 * Math.sin((rt.renderTime || 0) * 3 + (e.phase || 0)));
+  ctx.fillStyle = flashing ? '#ffffff' : '#243848';
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(0, r * 0.72);
+  ctx.lineTo(-r * 0.85, 0);
+  ctx.lineTo(0, -r * 0.72);
+  ctx.closePath();
+  ctx.fill();
+  outline(ctx, 1.6);
+  if (!flashing) {
+    ctx.fillStyle = '#4e7388';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.55, 0);
+    ctx.lineTo(0, r * 0.38);
+    ctx.lineTo(-r * 0.2, 0);
+    ctx.lineTo(0, -r * 0.38);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.strokeStyle = flashing ? '#ffffff' : '#d5e8f5';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.2);
+  ctx.lineTo(0, -r * 1.15);
+  ctx.stroke();
+  ctx.fillStyle = flashing ? '#ffffff' : '#9fd0ea';
+  ctx.beginPath();
+  ctx.arc(0, -r * 1.15, 2.2 + pulse, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = flashing ? '#ffffff' : '#e8f6ff';
+  ctx.beginPath();
+  ctx.arc(r * 0.35, 0, Math.max(1.5, r * 0.14), 0, TAU);
+  ctx.fill();
+  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, -r * 1.15, 8, '#9fd0ea', 0.45);
+}
+
+function drawBurrowerBody(ctx, e, flashing) {
+  var r = e.r;
+  ctx.fillStyle = flashing ? '#ffffff' : '#5c4630';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 1.05, r * 0.78, 0, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.6);
+  if (!flashing) {
+    ctx.fillStyle = '#8a6a48';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.15, -r * 0.12, r * 0.55, r * 0.36, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#3a2a1c';
+    ctx.fillRect(-r * 0.1, -r * 0.55, r * 0.16, r * 1.1);
+  }
+  ctx.fillStyle = flashing ? '#ffffff' : '#e6d2a8';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.4, -r * 0.15);
+  ctx.lineTo(r * 1.25, -r * 0.45);
+  ctx.lineTo(r * 0.7, 0);
+  ctx.lineTo(r * 1.25, r * 0.45);
+  ctx.lineTo(r * 0.4, r * 0.15);
+  ctx.closePath();
+  ctx.fill();
+  outline(ctx, 1.2);
+  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, r * 0.2, 0, r * 0.45, '#e6d2a8', 0.25);
+}
+
+function drawBurrowGhost(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var pulse = reduced ? 0.65 : (0.45 + 0.25 * Math.sin((rt.renderTime || 0) * 6));
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.fillStyle = 'rgba(90, 70, 40, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, r * 1.15, r * 0.42, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = flashing ? '#ffffff' : 'rgba(230, 210, 168, ' + pulse.toFixed(3) + ')';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.ellipse(0, 2, r * 0.85, r * 0.32, 0, 0, TAU);
+  ctx.stroke();
+  ctx.setLineDash(NO_DASH);
+  ctx.fillStyle = 'rgba(230, 210, 168, 0.85)';
+  ctx.beginPath();
+  ctx.arc(r * 0.2, 0, 2, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDreadnoughtBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var enraged = (e.bossPhase || 1) >= 3;
+  ctx.fillStyle = flashing ? '#ffffff' : '#4a3028';
+  ctx.beginPath();
+  ctx.moveTo(r * 1.15, 0);
+  ctx.lineTo(r * 0.2, r * 0.72);
+  ctx.lineTo(-r * 0.95, r * 0.58);
+  ctx.lineTo(-r * 1.05, -r * 0.58);
+  ctx.lineTo(r * 0.2, -r * 0.72);
+  ctx.closePath();
+  ctx.fill();
+  outline(ctx, 1.8);
+  if (!flashing) {
+    ctx.fillStyle = enraged ? '#8a4034' : '#6a4638';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.7, 0);
+    ctx.lineTo(r * 0.05, r * 0.42);
+    ctx.lineTo(-r * 0.45, 0);
+    ctx.lineTo(r * 0.05, -r * 0.42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#2a1814';
+    ctx.fillRect(-r * 0.15, -r * 0.08, r * 0.7, r * 0.16);
+  }
+  ctx.fillStyle = flashing ? '#ffffff' : '#f0d2a4';
+  ctx.beginPath();
+  ctx.moveTo(r * 1.15, 0);
+  ctx.lineTo(r * 0.72, r * 0.28);
+  ctx.lineTo(r * 0.72, -r * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = flashing ? '#ffffff' : (e.empTimer > 0 ? '#fff6e8' : '#ffb15a');
+  ctx.beginPath();
+  ctx.arc(-r * 0.72, 0, r * 0.28, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.3);
+  ctx.strokeStyle = '#1a100c';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.95, -r * 0.16);
+  ctx.lineTo(-r * 0.5, -r * 0.16);
+  ctx.moveTo(-r * 0.95, r * 0.16);
+  ctx.lineTo(-r * 0.5, r * 0.16);
+  ctx.stroke();
+  if (!keyGlowsOnly()) drawGlow(ctx, -r * 0.72, 0, r * 0.7, e.empTimer > 0 ? '#fff1c4' : '#ff6a3d', reduced ? 0.55 : 0.85);
+}
+
+function drawSovereignBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var spin = reduced ? 0.4 : (rt.renderTime || 0) * 0.8;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#d5e8ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.92, spin, spin + Math.PI * 1.35);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.72, spin + Math.PI, spin + Math.PI * 2.2);
+  ctx.stroke();
+  ctx.fillStyle = flashing ? '#ffffff' : '#1c3048';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.48, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.5);
+  ctx.fillStyle = flashing ? '#ffffff' : '#f4fbff';
+  ctx.beginPath();
+  ctx.arc(0, 0, Math.max(3, r * 0.16), 0, TAU);
+  ctx.fill();
+  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, 0, r * 0.9, '#9ec0ea', e.shielded ? 0.9 : 0.45);
+}
+
+function drawStormTowerBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var pulse = reduced ? 1 : (0.7 + 0.3 * Math.sin((rt.renderTime || 0) * 5));
+  ctx.fillStyle = flashing ? '#ffffff' : '#2a3c52';
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.lineTo(r * 0.55, r * 0.75);
+  ctx.lineTo(-r * 0.55, r * 0.75);
+  ctx.closePath();
+  ctx.fill();
+  outline(ctx, 1.6);
+  ctx.fillStyle = flashing ? '#ffffff' : '#d5e8ff';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.15, 4.2 * pulse, 0, TAU);
+  ctx.fill();
+  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, -r * 0.15, 12, '#d5e8ff', 0.55);
+}
+
+function drawMineBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var hot = !!e.arming;
+  var blink = hot && !reduced ? (Math.sin((rt.renderTime || 0) * 28) > 0) : hot;
+  ctx.fillStyle = flashing ? '#ffffff' : '#5a4630';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.4);
+  ctx.fillStyle = blink ? '#fff6e8' : '#e0a84e';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.38, 0, TAU);
+  ctx.fill();
+  if (hot && !keyGlowsOnly()) drawGlow(ctx, 0, 0, r * 1.6, '#ffb15a', reduced ? 0.65 : 0.9);
+}
+
+function warnRing(ctx, x, y, radius, remain, color, reduced) {
+  if (!(radius > 1)) return;
+  var pulse = reduced ? 0.9 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * (reduced ? 0 : 16)));
+  var alpha = reduced ? 0.9 : (0.45 + (1 - remain) * 0.5);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, TAU);
+  ctx.setLineDash(reduced ? NO_DASH : [5, 4]);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash(NO_DASH);
+  ctx.globalAlpha = (reduced ? 0.28 : 0.16) + (1 - remain) * 0.2;
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.globalAlpha = pulse;
+  ctx.beginPath();
+  ctx.arc(x, y, 3, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFieldTelegraphs(ctx) {
+  if (!rt.state) return;
+  var reduced = isReducedMotion();
+  var list = rt.state.enemies;
+  var i;
+  if (list) {
+    for (i = 0; i < list.length; i += 1) {
+      var e = list[i];
+      if (!e) continue;
+      if (e.kind === 'scurrier' && e.arming) {
+        var armMax = 0.45;
+        var armLeft = e.armTimer > 0 ? e.armTimer / armMax : 0;
+        warnRing(ctx, e.x, e.y, 70, armLeft, '#ff8a3d', reduced);
+        if (!reduced) {
+          ctx.save();
+          ctx.globalAlpha = 0.35 + 0.4 * Math.abs(Math.sin((rt.renderTime || 0) * 22));
+          ctx.strokeStyle = '#fff6e8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, 70, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      if (e.kind === 'burrower' && e.state === 'warn') {
+        var warnLeft = e.warnT > 0 ? e.warnT / 0.8 : 0;
+        warnRing(ctx, e.warnX || e.x, e.warnY || e.y, 50, warnLeft, '#e6d2a8', reduced);
+      }
+      if (e.kind === 'dreadnought' && e.mode === 'telegraph') {
+        var len = 900;
+        var left = e.telegraphMax ? e.telegraphT / e.telegraphMax : 0;
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        ctx.rotate(e.aim || 0);
+        ctx.globalAlpha = reduced ? 0.55 : (0.35 + (1 - left) * 0.45);
+        ctx.fillStyle = 'rgba(255, 106, 61, 0.35)';
+        ctx.fillRect(0, -30, len, 60);
+        ctx.strokeStyle = '#fff1c4';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, -30, len, 60);
+        ctx.restore();
+      }
+      if (e.kind === 'sovereign') {
+        if (e.windNext != null && e.windCd <= 1) {
+          var ang = e.windNext;
+          ctx.save();
+          ctx.translate(e.x, e.y - e.r - 28);
+          ctx.rotate(ang);
+          ctx.globalAlpha = reduced ? 0.9 : (0.55 + 0.35 * Math.sin((rt.renderTime || 0) * 8));
+          ctx.strokeStyle = '#d5e8ff';
+          ctx.fillStyle = '#d5e8ff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-16, 0);
+          ctx.lineTo(18, 0);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(18, 0);
+          ctx.lineTo(8, -7);
+          ctx.lineTo(8, 7);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        if (e.eyeRadius > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(e.eyeX || e.x, e.eyeY || e.y, e.eyeRadius, 0, TAU);
+          ctx.strokeStyle = e.eyeWarn > 0 ? 'rgba(255, 210, 160, 0.85)' : 'rgba(180, 210, 255, 0.9)';
+          ctx.lineWidth = e.eyeWarn > 0 ? 2 : 3;
+          ctx.setLineDash(e.eyeWarn > 0 || reduced ? NO_DASH : [8, 6]);
+          ctx.stroke();
+          ctx.setLineDash(NO_DASH);
+          ctx.restore();
+        }
+        if (e.shielded) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.r + 16, 0, TAU);
+          ctx.strokeStyle = 'rgba(213, 232, 255, 0.9)';
+          ctx.lineWidth = 2.4;
+          ctx.stroke();
+          if (!keyGlowsOnly()) drawGlow(ctx, e.x, e.y, e.r + 18, '#d5e8ff', reduced ? 0.35 : 0.55);
+          ctx.restore();
+        }
+      }
+      if (e.shieldHp > 0 && e.shieldOwner) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(159, 208, 234, 0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(e.shieldOwner.x, e.shieldOwner.y);
+        ctx.lineTo(e.x, e.y);
+        ctx.stroke();
+        ctx.setLineDash(NO_DASH);
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r + 6, 0, TAU);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+  var blasts = rt.state.pendingBlasts;
+  if (blasts) {
+    for (i = 0; i < blasts.length; i += 1) {
+      var b = blasts[i];
+      var remain = b.maxTimer ? b.timer / b.maxTimer : 0;
+      warnRing(ctx, b.x, b.y, b.r || 110, remain, b.tint || '#e8b94e', reduced);
+    }
+  }
+  var strikes = rt.state.lightningStrikes;
+  if (strikes) {
+    for (i = 0; i < strikes.length; i += 1) {
+      var bolt = strikes[i];
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = bolt.warning ? 'rgba(213, 232, 255, 0.75)' : '#f4fbff';
+      ctx.lineWidth = bolt.width || 26;
+      ctx.globalAlpha = bolt.warning ? (reduced ? 0.55 : 0.28) : 0.95;
+      if (isHighContrast()) ctx.strokeStyle = bolt.warning ? '#ffffff' : '#f4fbff';
+      ctx.beginPath();
+      ctx.moveTo(bolt.x1, bolt.y1);
+      ctx.lineTo(bolt.x2, bolt.y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
 export function drawEnemy(ctx, e) {
   if (!ctx || !e || !rt.state) return;
   var fx = ensureFx(e);
@@ -704,11 +1116,15 @@ export function drawEnemy(ctx, e) {
   decay(fx, 'g0t');
   decay(fx, 'g1t');
   decay(fx, 'rippleT');
-  if (e.kind === 'elite' && e.affix === 'blink') {
+  if (e.kind === 'elite' && (e.affix === 'blink' || e.affix2 === 'blink')) {
     drawPixelGhost(ctx, fx.g0x, fx.g0y, fx.g0t);
     drawPixelGhost(ctx, fx.g1x, fx.g1y, fx.g1t);
   }
-  var pose = spawnPose(e, e.kind === 'titan' ? 1 : 0.35);
+  if (e.kind === 'burrower' && e.burrowed) {
+    drawBurrowGhost(ctx, e, flashing, reduced);
+    return;
+  }
+  var pose = spawnPose(e, e.kind === 'titan' || e.isBoss ? 1 : 0.35);
   var lean = 0;
   if (!reduced) {
     var spd = Math.hypot(e.vx || 0, e.vy || 0);
@@ -717,7 +1133,8 @@ export function drawEnemy(ctx, e) {
   ctx.save();
   ctx.translate(e.x, e.y);
   if (pose.dust > 0) drawDustRing(ctx, e.r * (e.kind === 'titan' || e.kind === 'brute' ? 1.5 : 1), pose.dust);
-  ctx.rotate(faceOf(e));
+  var facing = (e.kind === 'dreadnought' || e.kind === 'sovereign') && e.aim != null ? e.aim : faceOf(e);
+  ctx.rotate(facing);
   ctx.translate(lean, 0);
   ctx.globalAlpha *= pose.alpha;
   ctx.scale(pose.scale, pose.scale);
@@ -726,9 +1143,17 @@ export function drawEnemy(ctx, e) {
   else if (e.kind === 'rusher') drawRusherBody(ctx, e, flashing, reduced);
   else if (e.kind === 'artillery') drawArtilleryBody(ctx, e, flashing);
   else if (e.kind === 'titan') drawTitanBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'spitter') drawSpitterBody(ctx, e, flashing);
+  else if (e.kind === 'scurrier') drawScurrierBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'warden') drawWardenBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'burrower') drawBurrowerBody(ctx, e, flashing);
+  else if (e.kind === 'dreadnought') drawDreadnoughtBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'sovereign') drawSovereignBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'stormTower') drawStormTowerBody(ctx, e, flashing, reduced);
+  else if (e.kind === 'mine') drawMineBody(ctx, e, flashing, reduced);
   else drawCrawlerBody(ctx, e, flashing, reduced);
   ctx.restore();
-  if (e.kind === 'elite' && e.affix === 'command') drawCommandAntenna(ctx, e, reduced);
+  if (e.kind === 'elite' && (e.affix === 'command' || e.affix2 === 'command')) drawCommandAntenna(ctx, e, reduced);
 }
 
 var tagWidths = Object.create(null);
@@ -863,7 +1288,29 @@ function drawLabels(ctx) {
         e.affix === 'vortex' ? PALETTE.emissive.void :
         e.affix === 'command' ? '#f59e0b' :
         e.affix === 'blink' ? '#75d1b0' : '#ffffff';
+      if (!tag && e.affix === 'volatile') {
+        tag = '[VOL]';
+        col = '#e8b94e';
+      }
+      if (!tag && e.affix === 'splitter') {
+        tag = '[SPL]';
+        col = '#f0d2a4';
+      }
       if (tag) drawTag(ctx, e.x, y, tag, col);
+      if (e.affix2 && e.affix2 !== e.affix) {
+        var tag2 = e.affix2 === 'mirror' ? '[MRR]' :
+          e.affix2 === 'vortex' ? '[VTX]' :
+          e.affix2 === 'command' ? '[CMD]' :
+          e.affix2 === 'blink' ? '[BLK]' :
+          e.affix2 === 'volatile' ? '[VOL]' :
+          e.affix2 === 'splitter' ? '[SPL]' : '';
+        var col2 = e.affix2 === 'mirror' ? PALETTE.emissive.tech :
+          e.affix2 === 'vortex' ? PALETTE.emissive.void :
+          e.affix2 === 'command' ? '#f59e0b' :
+          e.affix2 === 'blink' ? '#75d1b0' :
+          e.affix2 === 'volatile' ? '#e8b94e' : '#f0d2a4';
+        if (tag2) drawTag(ctx, e.x, y - 14, tag2, col2);
+      }
     }
     if (e.kind === 'titan' && (e.leftCannonDestroyed || e.rightPodDestroyed)) {
       var titanTag = (e.leftCannonDestroyed ? '[L: OFF]' : '') +
@@ -877,6 +1324,7 @@ function drawLabels(ctx) {
 
 export function drawRusherTelegraphs(ctx) {
   if (!ctx || !rt.state || !rt.state.enemies) return;
+  drawFieldTelegraphs(ctx);
   var list = rt.state.enemies;
   var i;
   for (i = 0; i < list.length; i += 1) {
@@ -960,7 +1408,15 @@ function drawHighContrastMarker(ctx, e) {
       e.affix === 'command' ? '★' :
       e.affix === 'blink' ? '⚡' : '★'
     ) :
-    e.kind === 'titan' ? '☠' : '●';
+    e.kind === 'titan' ? '☠' :
+    e.kind === 'spitter' ? '◉' :
+    e.kind === 'scurrier' ? '✶' :
+    e.kind === 'warden' ? '✚' :
+    e.kind === 'burrower' ? '▽' :
+    e.kind === 'dreadnought' ? '▶' :
+    e.kind === 'sovereign' ? '◎' :
+    e.kind === 'stormTower' ? '⌃' :
+    e.kind === 'mine' ? '●' : '●';
   ctx.font = '900 13px "Segoe UI Symbol", monospace, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';

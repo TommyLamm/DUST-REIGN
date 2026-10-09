@@ -1,14 +1,16 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { rt } from '../core/runtime.js';
-import { cycleVisualQuality, isHapticsEnabled, isHighContrast, isReducedMotion, setHapticsEnabled, setHighContrast, setMotionReduction } from '../core/settings.js';
-import { on } from '../core/utils.js';
+import { isHapticsEnabled, isHighContrast, isReducedMotion, setHapticsEnabled, setHighContrast, setMotionReduction, cycleVisualQuality } from '../core/settings.js';
+import { clamp, on } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
 import { beginRun, restart, togglePause } from '../systems/flow.js';
+import { isCodexOpen } from '../ui/codex-panel.js';
 import { chooseUpgrade } from '../systems/progression.js';
-import { cycleWeaponMode } from '../systems/weapons.js';
 import { resize } from '../ui/dom.js';
 import { logEvent } from '../ui/hud.js';
-import { getCurrentPauseTab, handleAbandonClick, renderBuildInspector, switchPauseTab, updateAudioBtn, updateSettingsUi } from '../ui/pause-menu.js';
+import { getCurrentPauseTab, handleAbandonClick, switchPauseTab, updateAudioBtn, updateSettingsUi } from '../ui/pause-menu.js';
+import { readTipsEnabled, resetTipsSeen, writeTipsEnabled } from '../core/meta-store.js';
+import { onTipsReset, updateTips } from '../ui/tips.js';
 
 function pointerPosition(event) {
   var rect = rt.ui.canvas.getBoundingClientRect();
@@ -44,15 +46,19 @@ export function bindInput() {
     if (key === ' ' && !event.repeat) {
       if (!rt.state || !rt.state.paused) dash();
     }
+    if (key === 'shift' && !event.repeat && !isFormInput) {
+      if (!rt.state || !rt.state.paused) dash();
+    }
     if ((key === 'q' || key === 'e') && !event.repeat) {
       if (!rt.state || !rt.state.paused) triggerEmp();
     }
-    if (key === 't' && !event.repeat) {
-      if (!rt.state || !rt.state.paused) cycleWeaponMode();
-    }
     if (key === 'm' && !event.repeat) { AudioFX.toggleMute(); updateAudioBtn(); }
-    if ((key === 'p' || key === 'escape') && !event.repeat) togglePause();
-    if (rt.state && rt.state.paused && rt.ui.startScreen && !rt.ui.startScreen.hidden && key === 'enter') beginRun();
+    if ((key === 'p' || key === 'escape') && !event.repeat && !(rt.state && rt.state.banishPicking)) togglePause();
+    if (rt.state && rt.state.paused && rt.ui.startScreen && !rt.ui.startScreen.hidden && key === 'enter' && !event.repeat) {
+      var enterTarget = event.target;
+      var typingLoadout = enterTarget && enterTarget.closest && enterTarget.closest('#loadoutPanel') && enterTarget.id !== 'startBtn';
+      if (!typingLoadout && !isCodexOpen()) beginRun();
+    }
     if (rt.state && rt.state.over && rt.state.deathSequenceTimer <= 0 && key === 'r') restart();
     if (rt.state && rt.state.paused && (key === '1' || key === '2' || key === '3')) {
       if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) {
@@ -88,13 +94,28 @@ export function bindInput() {
     }
     if (rt.ui.canvas.setPointerCapture && event.pointerId !== undefined) rt.ui.canvas.setPointerCapture(event.pointerId);
   });
+  var touchFireIds = new Set();
   function releaseFire(event) {
-    rt.firePointers.delete(event.pointerId);
-    rt.input.mouse.down = rt.firePointers.size > 0;
+    if (event && event.pointerId !== undefined) {
+      rt.firePointers.delete(event.pointerId);
+      touchFireIds.delete(event.pointerId);
+    }
+    rt.input.touchFiring = touchFireIds.size > 0;
+    rt.input.mouse.down = rt.firePointers.size > 0 || Boolean(rt.input.gamepadFiring);
   }
   on(window, 'pointerup', releaseFire);
   on(window, 'pointercancel', releaseFire);
-  on(window, 'blur', function () { rt.input.keys.clear(); rt.firePointers.clear(); rt.input.mouse.down = false; rt.input.gamepadX = 0; rt.input.gamepadY = 0; });
+  on(window, 'blur', function () {
+    rt.input.keys.clear();
+    rt.firePointers.clear();
+    touchFireIds.clear();
+    rt.input.touchFiring = false;
+    rt.input.gamepadFiring = false;
+    rt.input.mouse.down = false;
+    rt.input.gamepadX = 0;
+    rt.input.gamepadY = 0;
+    cancelEmpDrag();
+  });
   on(window, 'gamepadconnected', function (e) {
     rt.gamepadState.connected = true;
     logEvent('GAMEPAD ONLINE // ' + (e.gamepad && e.gamepad.id ? e.gamepad.id.slice(0, 20) : 'DEVICE'));
@@ -131,19 +152,22 @@ export function bindInput() {
   if (rt.ui.toggleMotionReduction) on(rt.ui.toggleMotionReduction, 'click', function () { setMotionReduction(!isReducedMotion()); updateSettingsUi(); });
   if (rt.ui.toggleHighContrast) on(rt.ui.toggleHighContrast, 'click', function () { setHighContrast(!isHighContrast()); updateSettingsUi(); });
   if (rt.ui.settingVisualQuality) on(rt.ui.settingVisualQuality, 'click', function () { cycleVisualQuality(); updateSettingsUi(); });
-  if (rt.ui.pauseResumeBtn) on(rt.ui.pauseResumeBtn, 'click', togglePause);
-  if (rt.ui.pauseAbandonBtn) on(rt.ui.pauseAbandonBtn, 'click', handleAbandonClick);
-  if (rt.ui.chassisSelector) {
-    on(rt.ui.chassisSelector, 'click', function (event) {
-      var btn = event.target && event.target.closest ? event.target.closest('.chassis-btn') : null;
-      if (!btn) return;
-      var targetMode = btn.getAttribute('data-mode');
-      if (targetMode) {
-        cycleWeaponMode(targetMode);
-        renderBuildInspector();
-      }
+  if (rt.ui.toggleTips) {
+    on(rt.ui.toggleTips, 'click', function () {
+      writeTipsEnabled(!readTipsEnabled());
+      updateTips();
+      updateSettingsUi();
     });
   }
+  if (rt.ui.resetTips) {
+    on(rt.ui.resetTips, 'click', function () {
+      resetTipsSeen();
+      onTipsReset();
+      updateSettingsUi();
+    });
+  }
+  if (rt.ui.pauseResumeBtn) on(rt.ui.pauseResumeBtn, 'click', togglePause);
+  if (rt.ui.pauseAbandonBtn) on(rt.ui.pauseAbandonBtn, 'click', handleAbandonClick);
 
   // Dynamic Floating Analog Joystick
   var joystickZone = (rt.ui && rt.ui.touchJoystickZone) || document.getElementById('touchJoystickZone');
@@ -270,6 +294,8 @@ export function bindInput() {
       touchShoot.setPointerCapture(event.pointerId);
       rt.input.touchMode = true;
       rt.firePointers.add(event.pointerId);
+      touchFireIds.add(event.pointerId);
+      rt.input.touchFiring = true;
       rt.input.mouse.down = true;
     });
     on(touchShoot, 'pointerup', releaseFire);
@@ -278,6 +304,126 @@ export function bindInput() {
   }
   var touchDash = document.getElementById('touchDash');
   if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); rt.input.touchMode = true; dash(); });
+
   var touchSpecial = (rt.ui && rt.ui.touchSpecial) || document.getElementById('touchSpecial');
-  if (touchSpecial) on(touchSpecial, 'pointerdown', function (event) { event.preventDefault(); rt.input.touchMode = true; triggerEmp(); });
+  var empPointerId = null;
+  var empStartX = 0;
+  var empStartY = 0;
+  var empDragging = false;
+  var EMP_TAP_PX = 12;
+  var EMP_MAX_WORLD = 220;
+
+  function canvasScale() {
+    var canvas = rt.ui && rt.ui.canvas;
+    if (!canvas || !canvas.getBoundingClientRect) return { sx: 1, sy: 1, rect: null };
+    var rect = canvas.getBoundingClientRect();
+    var w = (rt.ui && rt.ui.width) || rect.width || 1;
+    var h = (rt.ui && rt.ui.height) || rect.height || 1;
+    return {
+      sx: rect.width ? w / rect.width : 1,
+      sy: rect.height ? h / rect.height : 1,
+      rect: rect,
+      w: w,
+      h: h
+    };
+  }
+
+  function hideEmpReticle() {
+    if (typeof document === 'undefined') return;
+    var el = document.getElementById('empDropReticle');
+    if (el) el.hidden = true;
+  }
+
+  function showEmpReticle(worldX, worldY, cancel) {
+    if (typeof document === 'undefined') return;
+    var el = document.getElementById('empDropReticle');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'empDropReticle';
+      el.className = 'emp-drop-reticle';
+      el.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(el);
+    }
+    var scale = canvasScale();
+    if (!scale.rect || !scale.w || !scale.h) return;
+    el.hidden = false;
+    el.style.left = (scale.rect.left + (worldX / scale.w) * scale.rect.width) + 'px';
+    el.style.top = (scale.rect.top + (worldY / scale.h) * scale.rect.height) + 'px';
+    el.classList.toggle('is-cancel', !!cancel);
+  }
+
+  function pointOnButton(clientX, clientY, button) {
+    if (!button || !button.getBoundingClientRect) return false;
+    var r = button.getBoundingClientRect();
+    return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+  }
+
+  function empWorldFromDrag(clientX, clientY) {
+    var p = rt.state && rt.state.player;
+    if (!p) return null;
+    var scale = canvasScale();
+    var dx = (clientX - empStartX) * scale.sx;
+    var dy = (clientY - empStartY) * scale.sy;
+    var len = Math.hypot(dx, dy);
+    if (len > EMP_MAX_WORLD) {
+      dx = (dx / len) * EMP_MAX_WORLD;
+      dy = (dy / len) * EMP_MAX_WORLD;
+    }
+    var boundW = rt.ui ? rt.ui.width : rt.state.width;
+    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    return {
+      x: clamp(p.x + dx, 20, boundW - 20),
+      y: clamp(p.y + dy, 20, boundH - 20)
+    };
+  }
+
+  function cancelEmpDrag() {
+    empPointerId = null;
+    empDragging = false;
+    hideEmpReticle();
+  }
+
+  function moveEmpDrag(event) {
+    if (empPointerId === null || event.pointerId !== empPointerId) return;
+    if (!rt.state || !rt.state.player) return;
+    var moved = Math.hypot(event.clientX - empStartX, event.clientY - empStartY);
+    if (moved > EMP_TAP_PX) empDragging = true;
+    if (!empDragging) return;
+    var drop = empWorldFromDrag(event.clientX, event.clientY);
+    if (!drop) return;
+    showEmpReticle(drop.x, drop.y, pointOnButton(event.clientX, event.clientY, touchSpecial));
+  }
+
+  function finishEmpDrag(event, forceCancel) {
+    if (empPointerId === null || !event || event.pointerId !== empPointerId) return;
+    var dragging = empDragging;
+    var cancel = forceCancel || (dragging && pointOnButton(event.clientX, event.clientY, touchSpecial));
+    var drop = dragging ? empWorldFromDrag(event.clientX, event.clientY) : null;
+    cancelEmpDrag();
+    if (cancel || (dragging && !drop)) return;
+    if (!rt.state || rt.state.paused || rt.state.over) return;
+    if (dragging && drop) rt.input.empDrop = drop;
+    triggerEmp();
+  }
+
+  if (touchSpecial) {
+    on(touchSpecial, 'pointerdown', function (event) {
+      event.preventDefault();
+      if (empPointerId !== null) return;
+      rt.input.touchMode = true;
+      empPointerId = event.pointerId;
+      empStartX = event.clientX;
+      empStartY = event.clientY;
+      empDragging = false;
+      if (touchSpecial.setPointerCapture) {
+        try { touchSpecial.setPointerCapture(event.pointerId); } catch (e) {}
+      }
+    });
+    on(touchSpecial, 'pointermove', moveEmpDrag);
+    on(touchSpecial, 'pointerup', function (event) { finishEmpDrag(event, false); });
+    on(touchSpecial, 'pointercancel', function (event) { finishEmpDrag(event, true); });
+    on(window, 'pointermove', moveEmpDrag);
+    on(window, 'pointerup', function (event) { finishEmpDrag(event, false); });
+    on(window, 'pointercancel', function (event) { finishEmpDrag(event, true); });
+  }
 }

@@ -1,0 +1,100 @@
+#contractTracker {
+  position: absolute;
+  top: 74px;
+  right: 12px;
+  z-index: 3;
+  display: grid;
+  gap: 6px;
+  width: min(220px, 46%);
+  pointer-events: none;
+}
+
+.mutator-chip,
+.contract-card {
+  padding: 6px 8px;
+  color: var(--bone);
+  background: rgba(16, 17, 14, 0.82);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--amber);
+}
+
+.contract-card {
+  border-left-color: var(--mint);
+}
+
+.mutator-kicker,
+.contract-kicker {
+  display: block;
+  color: var(--muted);
+  font: 10px var(--mono);
+  letter-spacing: 0.14em;
+}
+
+.mutator-chip strong,
+.contract-card strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
+.mutator-chip small,
+.contract-reward {
+  display: block;
+  color: var(--dust);
+  font: 11px var(--body);
+}
+
+.contract-reward::before {
+  content: attr(data-mark);
+  margin-right: 6px;
+  color: var(--amber);
+}
+
+.contract-check {
+  color: var(--mint);
+  font: 11px var(--mono);
+  letter-spacing: 0.12em;
+}
+
+.contract-card.is-complete {
+  border-left-color: var(--mint);
+  animation: contractPop var(--dur-pop, 0.7s) ease;
+}
+
+.contract-card.is-reset {
+  border-left-color: var(--rust);
+}
+
+@keyframes contractPop {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  #contractTracker {
+    top: auto;
+    right: 8px;
+    bottom: 108px;
+    width: min(180px, 70%);
+  }
+
+  .mutator-chip strong,
+  .contract-card strong {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contract-card.is-complete {
+    animation: none;
+  }
+}
+
+.game-root.is-high-contrast .mutator-chip,
+.game-root.is-high-contrast .contract-card {
+  background: #000000;
+  color: #ffffff;
+  border-color: #ffffff;
+}

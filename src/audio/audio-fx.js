@@ -158,7 +158,7 @@ export var AudioFX = (function () {
       nFilter.frequency.setValueAtTime(1000, t);
       var nGain = ctx.createGain();
       nGain.gain.setValueAtTime(0.18, t);
-      nGain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
       nSrc.connect(nFilter);
       nFilter.connect(nGain);
       route(nGain);
@@ -226,7 +226,7 @@ export var AudioFX = (function () {
       nFilter.frequency.exponentialRampToValueAtTime(80, t + 0.18);
       var nGain = ctx.createGain();
       nGain.gain.setValueAtTime(0.28, t);
-      nGain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
       nSrc.connect(nFilter);
       nFilter.connect(nGain);
       route(nGain);

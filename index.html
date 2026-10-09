@@ -16,6 +16,10 @@
   <link rel="stylesheet" href="css/pause-menu.css" />
   <link rel="stylesheet" href="css/touch.css" />
   <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/loadout.css" />
+  <link rel="stylesheet" href="css/interlude.css" />
+  <link rel="stylesheet" href="css/contracts.css" />
+  <link rel="stylesheet" href="css/codex.css" />
   <link rel="stylesheet" href="css/responsive.css" />
   <link rel="stylesheet" href="css/high-contrast.css" />
   <script type="module" src="src/main.js"></script>
@@ -85,6 +89,8 @@
               </div>
 
               <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
+              <div id="contractTracker" hidden></div>
+              <div id="tipToast" hidden></div>
 
               <div class="hud-bottom">
                 <div class="resource-block resource-block--health">
@@ -137,6 +143,7 @@
                   Outrun the dust. Outshoot the things that live in it.<br />
                   Every run writes a new map in the bones of the old world.
                 </p>
+                <div id="loadoutPanel" hidden></div>
                 <button id="startBtn" class="action-button action-button--primary" data-start type="button">
                   <span>ENTER THE DUST</span><b aria-hidden="true">↗</b>
                 </button>
@@ -213,7 +220,12 @@
                   <span class="upgrade-arrow" aria-hidden="true">↗</span>
                 </button>
               </div>
+              <div id="upgradeControlRow" class="upgrade-control-row"></div>
             </section>
+
+            <div id="interludePanel" hidden></div>
+            <div id="extractPanel" hidden></div>
+            <div id="codexPanel" hidden></div>
 
             <section id="pauseModal" class="overlay overlay--pause" role="dialog" aria-modal="true"
               aria-labelledby="pauseTitle" hidden>
@@ -300,6 +312,17 @@
                           <button type="button" id="settingVisualQuality" class="pause-setting-btn">QUALITY: AUTO</button>
                         </div>
                       </div>
+
+                      <div class="setting-row">
+                        <div class="setting-meta">
+                          <span class="setting-label">FIELD TIPS</span>
+                          <small class="setting-desc">SITUATIONAL HINTS DURING A RUN</small>
+                        </div>
+                        <div class="setting-controls">
+                          <button type="button" id="toggleTips" class="pause-setting-btn">TIPS: ON</button>
+                          <button type="button" id="resetTips" class="pause-setting-btn">RESET TIPS</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -309,10 +332,10 @@
                       <div class="build-stats-col">
                         <div class="build-col-title">WEAPON CHASSIS SELECTION</div>
                         <div class="chassis-selector" id="chassisSelector">
-                          <button type="button" class="chassis-btn is-active" data-mode="standard">STANDARD</button>
-                          <button type="button" class="chassis-btn" data-mode="breacher">BREACHER</button>
-                          <button type="button" class="chassis-btn" data-mode="vanguard">VANGUARD</button>
-                          <button type="button" class="chassis-btn" data-mode="arc-welder">ARC-WELDER</button>
+                          <button type="button" class="chassis-btn is-active" data-mode="standard" disabled>STANDARD</button>
+                          <button type="button" class="chassis-btn" data-mode="breacher" disabled>BREACHER</button>
+                          <button type="button" class="chassis-btn" data-mode="vanguard" disabled>VANGUARD</button>
+                          <button type="button" class="chassis-btn" data-mode="arc-welder" disabled>ARC-WELDER</button>
                         </div>
                         <div id="chassisDesc" class="chassis-desc">STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS</div>
 

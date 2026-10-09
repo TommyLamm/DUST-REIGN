@@ -1,4 +1,5 @@
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
+import { rt } from '../core/runtime.js';
 
 export var PALETTE = {
   ground: { base: '#2a241c', light: '#4a3d2a', dark: '#15120e', crack: '#0e0c09' },
@@ -37,6 +38,9 @@ export function groundPalette(name) {
 
 export function sectorForWave(wave) {
   var w = Math.max(1, wave | 0);
+  if (rt.state && typeof rt.state.sector === 'string' && rt.state.sector && w === (rt.state.wave | 0)) {
+    return rt.state.sector;
+  }
   var slot = w % 5;
   if (slot === 1 || slot === 2) return 'dusk';
   if (slot === 3 || slot === 4) return 'rust';

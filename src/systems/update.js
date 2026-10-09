@@ -1,5 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
+import { stepContracts } from './contracts.js';
+import { stepMutators } from './mutators.js';
 import { stepBullets } from './sim/bullets.js';
 import { stepEffects } from './sim/effects.js';
 import { stepEnemies } from './sim/enemies.js';
@@ -24,6 +26,7 @@ export function update(dt) {
     }
     return;
   }
+  if (rt.state.interlude) { updateDomUi(); return; }
   if (isReducedMotion()) rt.state.hitstop = 0;
   if (rt.state.hitstop > 0) {
     var freeze = Math.min(dt, rt.state.hitstop);
@@ -39,6 +42,7 @@ export function update(dt) {
   };
 
   stepWaveClock(dt, frame);
+  stepMutators(frame);
   stepHazards(dt, frame);
   stepPlayer(dt, frame);
   stepEnemySpawner(dt, frame);
@@ -48,5 +52,6 @@ export function update(dt) {
   stepEnemyBullets(dt, frame);
   stepArtilleryTargets(dt, frame);
   stepEffects(dt, frame);
+  stepContracts(frame);
   updateDomUi();
 }

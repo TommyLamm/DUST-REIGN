@@ -264,6 +264,60 @@ function strokeBox(ctx, x, y, rot, hw, hh) {
   ctx.stroke();
 }
 
+function drawAcidMark(ctx, eb, view) {
+  if (eb.type !== 'acid' || eb.targetX == null) return;
+  var maxT = eb.flight > 0 ? eb.flight : 0.7;
+  var remain = 1 - (eb.age || 0) / maxT;
+  if (remain < 0) remain = 0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(eb.targetX, eb.targetY, 38, 0, TAU);
+  ctx.setLineDash(view.reduced ? [] : [5, 4]);
+  ctx.strokeStyle = 'rgba(198, 227, 90, 0.9)';
+  ctx.lineWidth = view.contrast ? 2.6 : 1.8;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(eb.targetX, eb.targetY, Math.max(4, 38 * remain), 0, TAU);
+  ctx.fillStyle = 'rgba(198, 227, 90, 0.18)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawKindShape(ctx, body, view, time) {
+  var kind = body.type || 'basic';
+  if (kind === 'basic') return;
+  var br = body.r || 4;
+  ctx.save();
+  if (kind === 'flak') {
+    ctx.translate(body.x, body.y);
+    ctx.rotate(view.reduced ? 0.4 : time * 3);
+    ctx.strokeStyle = '#fff1c4';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-br, -br * 0.55, br * 2, br * 1.1);
+  } else if (kind === 'spike') {
+    var ang = Math.atan2(body.vy || 0, body.vx || 1);
+    ctx.strokeStyle = '#f0e2c4';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(body.x - Math.cos(ang) * 10, body.y - Math.sin(ang) * 10);
+    ctx.lineTo(body.x + Math.cos(ang) * 6, body.y + Math.sin(ang) * 6);
+    ctx.stroke();
+  } else if (kind === 'spiral') {
+    ctx.strokeStyle = '#d5e8ff';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(body.x, body.y, br + 3, time * 4, time * 4 + Math.PI);
+    ctx.stroke();
+  } else if (kind === 'acid') {
+    ctx.fillStyle = 'rgba(214, 255, 106, 0.85)';
+    ctx.beginPath();
+    ctx.arc(body.x, body.y, br * 0.7, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 export function drawEnemyBullets(ctx) {
   if (!ctx || !rt.state || !rt.state.enemyBullets) return;
   var view = syncBud();
@@ -340,12 +394,14 @@ export function drawEnemyBullets(ctx) {
     ctx.beginPath();
     ctx.arc(body.x, body.y, Math.max(1.4, br * 0.42 * pulse), 0, TAU);
     ctx.fill();
-    if (bodyHostile) {
+    if (bodyHostile && (body.type || 'basic') === 'basic') {
       var rot = view.reduced ? 0.6 : time * 2.4 + i;
       ctx.strokeStyle = '#ffe1cc';
       ctx.lineWidth = 1.35;
       strokeBox(ctx, body.x, body.y, rot, br + 3, br * 0.42);
     }
+    drawKindShape(ctx, body, view, time);
+    drawAcidMark(ctx, body, view);
     if (view.contrast) {
       ctx.beginPath();
       ctx.arc(body.x, body.y, br + 1.4, 0, TAU);
@@ -491,8 +547,38 @@ export function drawArtilleryTelegraphs(ctx) {
   }
 }
 
+function drawAcidPools(ctx) {
+  var pools = rt.state && rt.state.acidPools;
+  if (!pools || !pools.length) return;
+  var view = syncBud();
+  var i;
+  for (i = 0; i < pools.length; i += 1) {
+    var pool = pools[i];
+    var fade = pool.maxTimer ? pool.timer / pool.maxTimer : 1;
+    if (fade < 0) fade = 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(pool.x, pool.y, pool.r || 38, 0, TAU);
+    ctx.fillStyle = 'rgba(90, 110, 28, ' + (0.28 * fade).toFixed(3) + ')';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pool.x, pool.y, (pool.r || 38) * 0.55, 0, TAU);
+    ctx.fillStyle = 'rgba(198, 227, 90, ' + (0.35 * fade).toFixed(3) + ')';
+    ctx.fill();
+    if (!view.key) drawGlow(ctx, pool.x, pool.y, (pool.r || 38) * 0.6, '#c6e35a', 0.35 * fade);
+    ctx.strokeStyle = 'rgba(214, 255, 106, ' + (0.7 * fade).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 2.4 : 1.4;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 export function drawMoltenZones(ctx) {
-  if (!ctx || !rt.state || !rt.state.artilleryTargets) return;
+  if (!ctx || !rt.state) return;
+  if (!rt.state.artilleryTargets) {
+    drawAcidPools(ctx);
+    return;
+  }
   var view = syncBud();
   var time = view.reduced ? 0 : (rt.state.waveTime || 0);
   var list = rt.state.artilleryTargets;
@@ -540,6 +626,7 @@ export function drawMoltenZones(ctx) {
     ctx.stroke();
     ctx.restore();
   }
+  drawAcidPools(ctx);
 }
 
 export function drawPlasmaZones(ctx) {

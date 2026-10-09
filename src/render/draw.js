@@ -10,7 +10,7 @@ import { drawArtilleryTelegraphs, drawEnemyBullets, drawLightningArcs, drawMolte
 import { drawContactShadows } from './shadows.js';
 import { beginGlowBatch, endGlowBatch } from './sprites.js';
 import { drawDecals, drawGround } from './terrain.js';
-import { drawBarrels, drawCasings, drawCores, drawOrb, drawSpires } from './world.js';
+import { drawBarrels, drawCasings, drawCores, drawFieldReadability, drawOrb, drawSpires } from './world.js';
 
 export function draw() {
   if (!rt.ui || !rt.state) return;
@@ -70,6 +70,7 @@ export function draw() {
   drawEnemyBullets(ctx);
   drawArtilleryTelegraphs(ctx);
   drawRusherTelegraphs(ctx);
+  drawFieldReadability(ctx);
   drawHighContrastMarkers(ctx);
   drawDamageNumbers(ctx);
   ctx.restore();

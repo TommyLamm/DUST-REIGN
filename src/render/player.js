@@ -156,7 +156,8 @@ function drawWeapon(ctx, p, kick, flashing, ghost) {
   var mode = p.weaponMode || 'standard';
   var metal = flashing ? '#ffffff' : '#d7c094';
   var trim = flashing ? '#ffffff' : '#f4e2b4';
-  var charge = clamp((p.chargeTime || 0) / 0.6, 0, 1);
+  var chargeNeed = (typeof p.chargeNeed === 'number' && p.chargeNeed > 0) ? p.chargeNeed : 0.6;
+  var charge = clamp((p.chargeTime || 0) / chargeNeed, 0, 1);
   if (mode === 'breacher') {
     var bx = r * 0.12 - kick;
     ctx.fillStyle = metal;

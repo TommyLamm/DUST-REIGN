@@ -282,3 +282,124 @@
   color: var(--rust);
   font-size: 17px;
 }
+
+.upgrade-choice.is-common,
+#upgradeChoices .upgrade-choice.is-common {
+  box-shadow: inset 4px 0 0 #f4e8ce;
+}
+
+.upgrade-choice.is-rare,
+#upgradeChoices .upgrade-choice.is-rare {
+  box-shadow: inset 4px 0 0 #7ec8ff;
+}
+
+.upgrade-choice.is-prototype,
+#upgradeChoices .upgrade-choice.is-prototype {
+  box-shadow: inset 4px 0 0 #f0cf88;
+}
+
+.upgrade-rarity,
+.upgrade-stack,
+.upgrade-weapon {
+  position: absolute;
+  top: 8px;
+  z-index: 1;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}
+
+.upgrade-rarity { left: 10px; color: var(--bone); }
+.upgrade-choice.is-rare .upgrade-rarity { color: #7ec8ff; }
+.upgrade-choice.is-prototype .upgrade-rarity { color: #f0cf88; }
+.upgrade-stack { left: 10px; top: 22px; color: var(--muted); }
+.upgrade-weapon {
+  right: 28px;
+  color: #7ec8ff;
+}
+
+.upgrade-completes {
+  color: #f0cf88;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.upgrade-choice--mobility,
+#upgradeChoices .upgrade-choice.upgrade-choice--mobility {
+  border-top-color: #9ad7ff !important;
+}
+
+.upgrade-choice--mobility .upgrade-cat { color: #9ad7ff; }
+
+.upgrade-choice--weapon,
+#upgradeChoices .upgrade-choice.upgrade-choice--weapon {
+  border-top-color: #7ec8ff !important;
+}
+
+.upgrade-choice--weapon .upgrade-cat { color: #7ec8ff; }
+
+.upgrade-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(900px, 100%);
+  margin: 14px auto 0;
+}
+
+.upgrade-action {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  background: rgba(22, 24, 20, 0.92);
+  color: var(--bone);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.upgrade-action:hover,
+.upgrade-action:focus-visible,
+.upgrade-action.is-armed {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.upgrade-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.upgrade-action--skip { border-color: var(--mint); }
+
+.upgrade-control-hint {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.upgrade-panel.is-banish-mode .upgrade-choice,
+#upgradePanel.is-banish-mode .upgrade-choice {
+  outline: 1px dashed #f0cf88;
+}
+
+.upgrade-choice.is-reroll {
+  animation: upgradeReroll 0.42s ease both;
+}
+
+@keyframes upgradeReroll {
+  0% { transform: rotateX(88deg); opacity: 0.2; }
+  100% { transform: none; opacity: 1; }
+}
+
+html.reduced-motion .upgrade-choice.is-reroll {
+  animation: none;
+}

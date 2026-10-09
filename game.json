@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
-  "version": "0.3.0",
-  "description": "廢土 roguelike 射擊遊戲。躲避敵群、收集 scrap、選擇升級，完成波次賞金並在風暴中存活。",
+  "version": "0.4.0",
+  "description": "廢土 roguelike 射擊。開局選擇機體、主武器與 Dust Heat，或進行每日挑戰並查閱圖鑑。三幕各以首領收尾；第 15 波可撤離或深入無盡。升級可重抽、放逐或跳過，死亡後回到配裝重開。",
   "author": "TommyLam",
   "entry": "index.html",
   "cover": "cover.png",
@@ -12,13 +12,13 @@
     "roguelike",
     "生存"
   ],
-  "instructions": "點擊 ENTER THE DUST 開始。桌面：WASD／方向鍵移動，滑鼠瞄準並按住左鍵射擊，Space 衝刺；P／Esc 或 PAUSE／RESUME 暫停或恢復。手機：按住方向按鈕移動，按住 FIRE 自動瞄準最近敵人，可同時移動與射擊；點按 DASH 衝刺。收集 scrap 後點選升級（桌面亦可按 1／2／3）。死亡後點擊 RUN IT BACK 重開（桌面亦可按 R）。最高分保存在本機瀏覽器，平台登入後成績自動提交至排行榜。",
+  "instructions": "開始畫面用方向鍵切換機體、主武器、Dust Heat 與標準／每日模式，Enter 或點 ENTER THE DUST 開始，CODEX 開啟圖鑑。桌面：WASD 或方向鍵移動，滑鼠瞄準並按住左鍵射擊，Shift 或 Space 衝刺，Q、E 或右鍵施放 EMP，P 或 Esc 暫停。升級時按 1、2、3 選卡，R 重抽，B 放逐（再選一張卡確認，Esc 取消），X 跳過。幕間用方向鍵或 1–4 選擇路線與軍械庫，Enter 確認，Backspace 從武器選擇返回。第 15 波後選擇 EXTRACT 結算，或 PUSH DEEPER 進入無盡。死亡後回到配裝畫面再開始；結算面板也可按 R 或 RUN IT BACK。手機直向：按住方向鈕移動，按住 FIRE 自動瞄準最近敵人，DASH 衝刺；點按 EMP 朝準星施放，從 EMP 鈕拖曳選擇落點，拖回按鈕則取消。手把：左搖桿或 D-pad 移動，右搖桿瞄準，RT／RB 射擊，LT 或 A 衝刺，LB 或 B 施放 EMP；升級時 A 選目前卡片，X 重抽，Y 放逐，B 跳過。平台登入後成績提交至排行榜；訪客與離線仍可遊玩，只有成功保存才會顯示已保存。",
   "devices": [
     "desktop",
     "mobile"
   ],
   "leaderboard": {
-    "id": "dust-reign-score",
+    "id": "dust-reign-score-v2",
     "order": "desc",
     "unit": "分",
     "minScore": 0,

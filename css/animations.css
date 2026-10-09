@@ -278,7 +278,8 @@
   animation-delay: var(--dur-record-gap);
 }
 
-.rank-letter.rank-letter--s::before {
+.rank-letter.rank-letter--s::before,
+.rank-letter.rank-letter--splus::before {
   content: "";
   position: absolute;
   inset: -8px -16px;
@@ -286,6 +287,12 @@
   border-radius: 50%;
   animation: goldSpin var(--dur-gold) linear infinite;
   pointer-events: none;
+}
+
+.rank-letter.rank-letter--splus::before {
+  inset: -10px -18px;
+  border-style: double;
+  border-color: rgba(255, 246, 194, 0.85);
 }
 
 .rank-stamp-box::before {
@@ -332,6 +339,7 @@
   .upgrade-card.is-discarded,
   #upgradeChoices .upgrade-choice.is-discarded,
   .rank-letter.rank-letter--s::before,
+  .rank-letter.rank-letter--splus::before,
   .canvas-stage.is-rank-slam,
   .is-pulse,
   #hudWave.is-flip {
@@ -369,6 +377,7 @@ html.reduced-motion #upgradeChoices .upgrade-choice.is-picked,
 html.reduced-motion .upgrade-card.is-discarded,
 html.reduced-motion #upgradeChoices .upgrade-choice.is-discarded,
 html.reduced-motion .rank-letter.rank-letter--s::before,
+html.reduced-motion .rank-letter.rank-letter--splus::before,
 html.reduced-motion .canvas-stage.is-rank-slam,
 html.reduced-motion .is-pulse,
 html.reduced-motion #hudWave.is-flip {

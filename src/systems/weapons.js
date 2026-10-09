@@ -1,8 +1,10 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { OVERDRIVE_COOLDOWN, OVERDRIVE_DAMAGE, WEAPON_MODES } from '../config.js';
 import { ejectCasing, spawnParticles } from '../core/pools.js';
+import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { clamp, dist2 } from '../core/utils.js';
+import { currentWeaponId, weaponModActive } from '../data/upgrades.js';
 import { logEvent } from '../ui/hud.js';
 
 export function spawnKineticShrapnel(b, originX, originY) {
@@ -60,17 +62,96 @@ export function spawnPlasmaMeltdownZone(x, y) {
   }
 }
 
+function weaponMasteryBonus(p, state) {
+  if (!p) return 0;
+  var weapon = currentWeaponId(state || rt.state);
+  if (weapon === 'standard' && p.tracerRounds) return 1;
+  if (weapon === 'breacher' && p.flechettePack) return 1;
+  if (weapon === 'vanguard' && p.capacitorRail) return 1;
+  if (weapon === 'arc-welder' && p.arcLattice) return 1;
+  return 0;
+}
+
+export function vanguardChargeNeed(p) {
+  var need = 0.6;
+  if (!p) return need;
+  var mode = p.weaponMode || (rt.state && rt.state.weaponId) || 'standard';
+  if (mode !== 'vanguard') return need;
+  if ((p.mastery || 0) >= 1) need = 0.45;
+  if (p.capacitorRail) need *= 0.75;
+  return need;
+}
+
+export function resyncMastery(p, state) {
+  if (!p) return;
+  if (typeof p.masteryBase !== 'number') p.masteryBase = p.mastery || 0;
+  p.mastery = Math.min(3, p.masteryBase + weaponMasteryBonus(p, state));
+  p.chargeNeed = vanguardChargeNeed(p);
+}
+
+export function grantArmoryMastery(state) {
+  if (!state || !state.player) return;
+  var p = state.player;
+  if (typeof p.masteryBase !== 'number') {
+    p.masteryBase = Math.max(0, (p.mastery || 0) - weaponMasteryBonus(p, state));
+  }
+  if (p.masteryBase < 3) p.masteryBase += 1;
+  resyncMastery(p, state);
+}
+
+export function breacherPelletCount(p) {
+  var n = 5;
+  if (!p || (p.weaponMode || 'standard') !== 'breacher') return n;
+  if ((p.mastery || 0) >= 1) n += 2;
+  if (p.flechettePack) n += 2;
+  return n;
+}
+
+export function breacherSpread(count, scale) {
+  var step = 0.14 * (scale || 1);
+  var mid = (count - 1) / 2;
+  var angles = [];
+  var i;
+  for (i = 0; i < count; i += 1) angles.push((i - mid) * step);
+  return angles;
+}
+
+export function arcChainProfile(p) {
+  var profile = { targets: 2, range: 110, ratio: 0.7 };
+  if (!p || (p.weaponMode || 'standard') !== 'arc-welder') return profile;
+  if ((p.mastery || 0) >= 1) profile.targets = 3;
+  if ((p.mastery || 0) >= 2) profile.range = 150;
+  if (p.arcLattice) {
+    profile.targets += 1;
+    profile.ratio = 0.8;
+  }
+  return profile;
+}
+
+function shotCooldown(p, value) {
+  if (p.afterburner && (p.afterburnerTimer || 0) > 0) return value * 0.7;
+  return value;
+}
+
 export function cycleWeaponMode(targetMode) {
   if (!rt.state || !rt.state.player) return;
   var p = rt.state.player;
+  var previous = p.weaponMode || 'standard';
   if (targetMode && WEAPON_MODES.indexOf(targetMode) !== -1) {
     p.weaponMode = targetMode;
   } else {
-    var curIdx = WEAPON_MODES.indexOf(p.weaponMode || 'standard');
+    var curIdx = WEAPON_MODES.indexOf(previous);
     p.weaponMode = WEAPON_MODES[(curIdx + 1) % WEAPON_MODES.length];
   }
+  rt.state.weaponId = p.weaponMode;
   p.chargeTime = 0;
   p.isCharging = false;
+  if (p.weaponMode !== previous) {
+    p.masteryBase = 0;
+    resyncMastery(p, rt.state);
+  } else {
+    p.chargeNeed = vanguardChargeNeed(p);
+  }
   if (AudioFX && typeof AudioFX.click === 'function') AudioFX.click();
   logEvent('WEAPON CHASSIS // ' + p.weaponMode.toUpperCase());
   if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'WEAPON CHASSIS // ' + p.weaponMode.toUpperCase();
@@ -81,7 +162,17 @@ export function shoot() {
   if (p.cooldown > 0) return;
   var aimX = rt.input.mouse.x;
   var aimY = rt.input.mouse.y;
-  if (rt.input.touchMode && rt.state.enemies.length) {
+  var lock = rt.input && rt.input.aimLock;
+  var lockHeld = false;
+  if (lock && lock.enemy && lock.enemy.hp > 0 && lock.left > 0 && !lock.enemy.burrowed && !lock.enemy.untargetable) {
+    var lockLimit = (lock.dist || 0) * 1.5;
+    if (dist2(p.x, p.y, lock.enemy.x, lock.enemy.y) <= lockLimit * lockLimit) {
+      aimX = lock.enemy.x;
+      aimY = lock.enemy.y;
+      lockHeld = true;
+    }
+  }
+  if (!lockHeld && rt.input.touchMode && rt.state.enemies.length) {
     // ponytail: linear nearest-target scan; the enemy cap keeps it cheap, use a spatial hash only if mobile scale grows.
     var nearest = rt.state.enemies[0];
     var nearestDistance = dist2(p.x, p.y, nearest.x, nearest.y);
@@ -103,9 +194,11 @@ export function shoot() {
   var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
   var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
   var extraPierce = isVulcan ? 1 : 0;
+  p.chargeNeed = vanguardChargeNeed(p);
 
   if (mode === 'breacher') {
-    var offsets = [-0.28, -0.14, 0, 0.14, 0.28];
+    var spreadScale = weaponModActive(rt.state, 'flechette-pack') ? 0.9 : 1;
+    var offsets = breacherSpread(breacherPelletCount(p), spreadScale);
     var breacherDmg = Math.max(1, Math.round(p.damage * 0.42 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
     var bSpeed = p.bulletSpeed;
     var bR = 3.5 + (isPlasma ? 3 : 0);
@@ -129,11 +222,12 @@ export function shoot() {
         colorTrail: bTrail,
         colorCore: bCore,
         isVulcan: isVulcan,
-        isPlasmaMeltdown: isPlasma
+        isPlasmaMeltdown: isPlasma,
+        isBreacher: true
       });
     }
-    if (rt.state.stats) rt.state.stats.shotsFired += 5;
-    p.cooldown = p.fireRate * 2.4 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.5 : 1);
+    if (rt.state.stats) rt.state.stats.shotsFired += offsets.length;
+    p.cooldown = shotCooldown(p, p.fireRate * 2.4 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
     p.x -= Math.cos(p.aim) * 4.5;
     p.y -= Math.sin(p.aim) * 4.5;
@@ -147,11 +241,13 @@ export function shoot() {
     if (isVulcan) spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, '#ffd700', 8, 110, 2);
     rt.state.shake = Math.max(rt.state.shake, 4.5);
   } else if (mode === 'vanguard') {
-    var vgDmg = Math.round(p.damage * 3.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+    var railBonus = weaponModActive(rt.state, 'capacitor-rail') ? 1.2 : 1;
+    var vgDmg = Math.round(p.damage * 3.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1) * railBonus);
     if (rt.state.stats) rt.state.stats.shotsFired += 1;
     var vgR = 6.0 + (isPlasma ? 3 : 0);
     var vgTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.45)');
     var vgCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#5be7ff');
+    var mastery = p.mastery || 0;
     rt.state.bullets.push({
       x: p.x + Math.cos(baseAngle) * (p.r + 10),
       y: p.y + Math.sin(baseAngle) * (p.r + 10),
@@ -170,9 +266,12 @@ export function shoot() {
       colorTrail: vgTrail,
       colorCore: vgCore,
       isVulcan: isVulcan,
-      isPlasmaMeltdown: isPlasma
+      isPlasmaMeltdown: isPlasma,
+      scorchLine: mastery >= 2,
+      vanguardBurst: mastery >= 3,
+      scorchDamage: Math.max(1, vgDmg * 0.2)
     });
-    p.cooldown = 0.55 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.5 : 1);
+    p.cooldown = shotCooldown(p, 0.55 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
     p.x -= Math.cos(p.aim) * 3.5;
     p.y -= Math.sin(p.aim) * 3.5;
@@ -213,7 +312,7 @@ export function shoot() {
       isVulcan: isVulcan,
       isPlasmaMeltdown: isPlasma
     });
-    p.cooldown = p.fireRate * 0.45 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.5 : 1);
+    p.cooldown = shotCooldown(p, p.fireRate * 0.45 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 0.5;
     p.x -= Math.cos(p.aim) * 0.5;
     p.y -= Math.sin(p.aim) * 0.5;
@@ -226,32 +325,52 @@ export function shoot() {
     if (isVulcan) spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, '#ffd700', 6, 90, 2);
     rt.state.shake = Math.max(rt.state.shake, 1.5);
   } else {
-    var angle = baseAngle + (Math.random() - 0.5) * 0.035;
+    var angle = baseAngle + (rng('combat') - 0.5) * 0.035;
     var speed = p.bulletSpeed;
-    if (rt.state.stats) rt.state.stats.shotsFired += 1;
+    var stdCount = (p.mastery || 0) >= 2 ? 2 : 1;
+    var stdScale = stdCount === 2 ? 0.7 : 1;
     var stdR = (p.bulletSize || 4) + (isPlasma ? 3 : 0);
     var stdTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : null);
     var stdCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : null);
-    var stdBullet = {
-      x: p.x + Math.cos(angle) * (p.r + 8),
-      y: p.y + Math.sin(angle) * (p.r + 8),
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      r: stdR,
-      damage: p.damage * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1),
-      life: 1.25,
-      trail: [],
-      pierce: (p.pierce || 0) + extraPierce,
-      bounces: p.bounces || 0,
-      hits: [],
-      ambush: (p.dashAmbushTimer || 0) > 0,
-      isVulcan: isVulcan,
-      isPlasmaMeltdown: isPlasma
-    };
-    if (stdTrail) stdBullet.colorTrail = stdTrail;
-    if (stdCore) stdBullet.colorCore = stdCore;
-    rt.state.bullets.push(stdBullet);
-    p.cooldown = p.fireRate * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.5 : 1);
+    var tracerLive = weaponModActive(rt.state, 'tracer-rounds');
+    if (rt.state.stats) rt.state.stats.shotsFired += stdCount;
+    for (var si = 0; si < stdCount; si += 1) {
+      var side = stdCount === 2 ? (si === 0 ? -1 : 1) : 0;
+      var perp = angle + Math.PI / 2;
+      p.standardRound = (p.standardRound || 0) + 1;
+      var masteryPierce = ((p.mastery || 0) >= 1 && p.standardRound % 4 === 0) ? 1 : 0;
+      var tracerPierce = 0;
+      var forceCrit = false;
+      if (tracerLive) {
+        p.tracerRound = (p.tracerRound || 0) + 1;
+        if (p.tracerRound % 5 === 0) {
+          tracerPierce = 2;
+          forceCrit = true;
+        }
+      }
+      var stdBullet = {
+        x: p.x + Math.cos(angle) * (p.r + 8) + Math.cos(perp) * side * 7,
+        y: p.y + Math.sin(angle) * (p.r + 8) + Math.sin(perp) * side * 7,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: stdR,
+        damage: p.damage * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1) * stdScale,
+        life: 1.25,
+        trail: [],
+        pierce: (p.pierce || 0) + extraPierce + masteryPierce + tracerPierce,
+        bounces: p.bounces || 0,
+        hits: [],
+        ambush: (p.dashAmbushTimer || 0) > 0,
+        isVulcan: isVulcan,
+        isPlasmaMeltdown: isPlasma,
+        forceCrit: forceCrit,
+        masteryRicochet: (p.mastery || 0) >= 3
+      };
+      if (stdTrail) stdBullet.colorTrail = stdTrail;
+      if (stdCore) stdBullet.colorCore = stdCore;
+      rt.state.bullets.push(stdBullet);
+    }
+    p.cooldown = shotCooldown(p, p.fireRate * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
 
     p.recoil = 1.0;
     p.x -= Math.cos(p.aim) * 1.4;

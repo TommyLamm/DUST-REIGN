@@ -80,7 +80,8 @@
   text-shadow: none !important;
 }
 
-.game-root.is-high-contrast .rank-letter.rank-letter--s {
+.game-root.is-high-contrast .rank-letter.rank-letter--s,
+.game-root.is-high-contrast .rank-letter.rank-letter--splus {
   color: #ffff00 !important;
 }
 
@@ -103,6 +104,7 @@
 .game-root.is-high-contrast .brand-lockup h1,
 .game-root.is-high-contrast .metric--wave.is-storm::before,
 .game-root.is-high-contrast .rank-letter.rank-letter--s::before,
+.game-root.is-high-contrast .rank-letter.rank-letter--splus::before,
 .game-root.is-high-contrast .hud-chain-badge.is-break,
 .game-root.is-high-contrast #startTitle,
 .game-root.is-high-contrast .overlay::before {

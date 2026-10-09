@@ -1,9 +1,12 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { OVERDRIVE_COOLDOWN, OVERDRIVE_DAMAGE } from '../config.js';
+import { readTipsEnabled } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { getVisualQuality, isHapticsEnabled, isHighContrast, isReducedMotion } from '../core/settings.js';
+import { getHeatModifiers } from '../data/heat.js';
 import { FUSION_CHIPS, UPGRADES, toPropName } from '../data/upgrades.js';
 import { triggerGameOver } from '../systems/flow.js';
+import { breacherPelletCount } from '../systems/weapons.js';
 
 var currentPauseTab = 'system';
 var abandonConfirmTimer = 0;
@@ -136,6 +139,13 @@ export function updateSettingsUi() {
     if (q !== 'auto') rt.ui.settingVisualQuality.classList.add('is-active');
     else rt.ui.settingVisualQuality.classList.remove('is-active');
   }
+  var tipsOn = readTipsEnabled();
+  if (rt.ui.toggleTips) {
+    rt.ui.toggleTips.textContent = tipsOn ? 'TIPS: ON' : 'TIPS: OFF';
+    if (tipsOn) rt.ui.toggleTips.classList.add('is-active');
+    else rt.ui.toggleTips.classList.remove('is-active');
+  }
+  if (rt.ui.resetTips) rt.ui.resetTips.textContent = 'RESET TIPS';
   if (typeof document !== 'undefined' && document.documentElement) {
     document.documentElement.classList.toggle('reduced-motion', isReducedMotion());
   }
@@ -159,7 +169,9 @@ export function renderBuildInspector() {
       var btnMode = btns[bi].getAttribute('data-mode');
       var isActive = btnMode === mode;
       btns[bi].classList.toggle('is-active', isActive);
+      btns[bi].disabled = true;
       btns[bi].setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      btns[bi].setAttribute('aria-disabled', 'true');
     }
   }
   if (rt.ui.chassisDesc) {
@@ -171,14 +183,15 @@ export function renderBuildInspector() {
     } else if (mode === 'arc-welder') {
       desc = 'INDUCTION ARC WELDER // ULTRA HIGH-FREQUENCY VOLTAIC STREAM';
     }
-    rt.ui.chassisDesc.textContent = desc;
+    rt.ui.chassisDesc.textContent = desc + '  ·  MASTERY M' + (p.mastery || 0);
   }
 
   // 2. Core specs telemetry according to weapon chassis
   if (rt.ui.statFireRate) {
     var surge = p.overdrive > 0 ? ' (SURGE)' : '';
     if (mode === 'breacher') {
-      rt.ui.statFireRate.textContent = '2.3 RPS (x5)' + surge;
+      var pellets = breacherPelletCount(p);
+      rt.ui.statFireRate.textContent = pellets === 5 ? ('2.3 RPS (x5)' + surge) : ('2.3 RPS (x' + pellets + ')' + surge);
     } else if (mode === 'vanguard') {
       rt.ui.statFireRate.textContent = '1.8 RPS (CHARGE)' + surge;
     } else if (mode === 'arc-welder') {
@@ -194,8 +207,9 @@ export function renderBuildInspector() {
     var odDmgMult = od ? OVERDRIVE_DAMAGE : 1;
     var odLabel = od ? ' (+50%)' : '';
     if (mode === 'breacher') {
+      var pelletCount = breacherPelletCount(p);
       var bDmg = Math.max(1, Math.round(p.damage * 0.42 * odDmgMult));
-      rt.ui.statDamage.textContent = bDmg + 'x5 DMG' + odLabel;
+      rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + ' DMG' + odLabel;
     } else if (mode === 'vanguard') {
       var vDmg = Math.round(p.damage * 3.4 * odDmgMult);
       rt.ui.statDamage.textContent = vDmg + ' DMG [RAIL]' + odLabel;
@@ -250,13 +264,32 @@ export function renderBuildInspector() {
     if (chips.length === 0) {
       rt.ui.installedChipsList.innerHTML = '<div class="chips-empty">[ NO MOD CHIPS INSTALLED — SALVAGE REQUIRED ]</div>';
     } else {
-      rt.ui.installedChipsList.innerHTML = chips.map(function (c) {
+      var grouped = [];
+      var seen = {};
+      chips.forEach(function (c) {
+        if (!c || !c.id) return;
+        if (!seen[c.id]) {
+          seen[c.id] = { card: c, count: 0 };
+          grouped.push(seen[c.id]);
+        }
+        seen[c.id].count += 1;
+      });
+      rt.ui.installedChipsList.innerHTML = grouped.map(function (entry) {
+        var c = entry.card;
         var cat = (c.category || 'OFFENSE').toUpperCase();
-        var catClass = cat === 'DEFENSE' ? 'chip-card--defense' : cat === 'TACTICAL' ? 'chip-card--tactical' : 'chip-card--offense';
-        return '<div class="chip-card ' + catClass + '">' +
+        var catClass = 'chip-card--offense';
+        if (cat === 'DEFENSE') catClass = 'chip-card--defense';
+        else if (cat === 'TACTICAL') catClass = 'chip-card--tactical';
+        else if (cat === 'MOBILITY') catClass = 'chip-card--mobility';
+        else if (cat === 'WEAPON') catClass = 'chip-card--weapon';
+        else if (cat === 'FUSION') catClass = 'chip-card--fusion';
+        var inactive = !!(c.weapon && c.weapon !== mode);
+        var cap = c.maxStacks ? (' ' + entry.count + '/' + c.maxStacks) : (entry.count > 1 ? (' ×' + entry.count) : '');
+        return '<div class="chip-card ' + catClass + (inactive ? ' is-inactive' : '') + '">' +
           '<div class="chip-strip">' +
           '<span class="chip-cat">[' + cat + ']</span>' +
-          '<span class="chip-id">' + (c.id || '') + '</span>' +
+          '<span class="chip-id">' + (c.id || '') + cap + '</span>' +
+          (inactive ? '<span class="chip-inactive">INACTIVE</span>' : '') +
           '</div>' +
           '<strong class="chip-title">' + (c.title || '') + '</strong>' +
           '<p class="chip-text">' + (c.text || '') + '</p>' +
@@ -316,6 +349,48 @@ export function renderBuildInspector() {
   if (rt.ui.fusionMatrixList) {
     rt.ui.fusionMatrixList.innerHTML = matrixHtml;
   }
+
+  renderRunSummary(p);
+}
+
+function runLabel(value) {
+  if (!value) return '—';
+  if (typeof value === 'string') return value;
+  if (value.title) return value.title;
+  if (value.name) return value.name;
+  if (value.id) return String(value.id).toUpperCase();
+  return '—';
+}
+
+function renderRunSummary(p) {
+  if (typeof document === 'undefined' || !rt.ui || !rt.ui.panelBuild || !rt.ui.panelBuild.appendChild) return;
+  var node = document.getElementById('buildRunSummary');
+  if (!node) {
+    node = document.createElement('section');
+    node.id = 'buildRunSummary';
+    node.className = 'build-run-summary';
+    rt.ui.panelBuild.appendChild(node);
+  }
+  var heat = getHeatModifiers(rt.state.heat || 0);
+  var contract = rt.state.contract;
+  var contractText = '—';
+  if (contract) {
+    contractText = runLabel(contract);
+    if (typeof contract.progress === 'number' && typeof contract.goal === 'number') {
+      contractText += ' ' + contract.progress + '/' + contract.goal;
+    }
+  }
+  var rows = [
+    ['ACT', String(rt.state.act || 1) + ' · ' + String(rt.state.sector || 'dusk').toUpperCase()],
+    ['HEAT', 'H' + heat.heat + ' · SCORE ×' + heat.scoreMultiplier.toFixed(2)],
+    ['ROUTE', runLabel(rt.state.route)],
+    ['MUTATOR', runLabel(rt.state.mutator)],
+    ['CONTRACT', contractText],
+    ['WEAPON', (p.weaponMode || 'standard').toUpperCase() + ' · M' + (p.mastery || 0)]
+  ];
+  node.innerHTML = '<div class="build-col-title">RUN</div>' + rows.map(function (row) {
+    return '<div class="run-summary-row"><span>' + row[0] + '</span><strong>' + row[1] + '</strong></div>';
+  }).join('');
 }
 
 export function getCurrentPauseTab() {

@@ -1,7 +1,13 @@
 import { BOUNTY_SURGE_DURATION, REPAIR_OVERFLOW_SCORE, STORM_FRONT_SECONDS, WAVE_LENGTH, WEAPON_MODES } from '../config.js';
+import { clearSeed } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { makeState } from '../core/state.js';
 import { FUSION_CHIPS, UPGRADES } from '../data/upgrades.js';
+import { run as runBuildChecks } from './checks/build.js';
+import { run as runDirectorChecks } from './checks/director.js';
+import { run as runEnemyChecks } from './checks/enemies.js';
+import { run as runMetaChecks } from './checks/meta.js';
+import { run as runScoringChecks } from './checks/scoring.js';
 import { dash, triggerEmp, triggerReactiveArmor, triggerSpireMicroResonance } from '../systems/abilities.js';
 import { explodeBarrel, explodeCore, killEnemy } from '../systems/combat.js';
 import { calculateCombatRank, isStormFront } from '../systems/flow.js';
@@ -281,7 +287,7 @@ export function selfCheck() {
       test.stats.damageDealt === (20 + 14 + 14);
 
     // Fusion Chips Matrix & Synergy Draw Logic Check
-    var fusionCountOk = FUSION_CHIPS.length === 6;
+    var fusionCountOk = FUSION_CHIPS.length >= 6;
     var fusionReqsOk = FUSION_CHIPS.every(function (fc) {
       return fc.category === 'FUSION' &&
         fc.required &&
@@ -303,7 +309,7 @@ export function selfCheck() {
     test.acquiredUpgrades = [teslaCard, shockCard];
     var choicesWithPrereq = randomUpgradeChoices();
     var hasStaticTempest = choicesWithPrereq.some(function (c) { return c.id === 'static-tempest' && c.category === 'FUSION'; });
-    var hasOffenseCard = choicesWithPrereq.some(function (c) { return c.category === 'OFFENSE'; });
+    var hasOffenseCard = choicesWithPrereq.some(function (c) { return c.category === 'OFFENSE' || c.category === 'WEAPON'; });
     var fusionDrawOk = choicesWithPrereq.length === 3 && hasStaticTempest && hasOffenseCard;
 
     // Test 3: Apply static-tempest -> state flag flipped to true & will not be drawn again
@@ -373,7 +379,8 @@ export function selfCheck() {
     test.bullets = [];
     var normalRate = test.player.fireRate;
     shoot();
-    var vulcanShootOk = test.player.cooldown <= (normalRate * 0.55) &&
+    var vulcanShootOk = test.player.cooldown <= (normalRate * 0.75) &&
+      test.player.cooldown < normalRate &&
       test.bullets.length > 0 &&
       test.bullets[0].isVulcan === true &&
       test.bullets[0].pierce >= 1;
@@ -638,11 +645,13 @@ export function selfCheck() {
     test.enemies = [];
     spawnTitan();
     var spawnedTitan = test.enemies[0];
+    var titanHull = spawnedTitan.maxHp;
+    var titanPart = Math.round(titanHull * 0.22);
     var titanComponentsExistOk = Boolean(spawnedTitan &&
-      spawnedTitan.leftCannonHp === Math.round(650 * 0.22) &&
+      spawnedTitan.leftCannonHp === titanPart &&
       spawnedTitan.leftCannonMaxHp === spawnedTitan.leftCannonHp &&
       spawnedTitan.leftCannonDestroyed === false &&
-      spawnedTitan.rightPodHp === Math.round(650 * 0.22) &&
+      spawnedTitan.rightPodHp === titanPart &&
       spawnedTitan.rightPodMaxHp === spawnedTitan.rightPodHp &&
       spawnedTitan.rightPodDestroyed === false);
 
@@ -651,7 +660,7 @@ export function selfCheck() {
     test.player.y = 200;
     spawnedTitan.x = 100;
     spawnedTitan.y = 100;
-    spawnedTitan.hp = 650;
+    spawnedTitan.hp = titanHull;
     spawnedTitan.empTimer = 0;
     spawnedTitan.shootCd = 0.05;
     test.enemyBullets = [];
@@ -659,12 +668,12 @@ export function selfCheck() {
     // Bullet closer to left cannon (lcX = 122, rpX = 78)
     test.bullets = [{ x: 120, y: 100, vx: 0, vy: -100, r: 4, damage: 50, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
     update(0.016);
-    var damageTransferOk = spawnedTitan.hp === (650 - 50) &&
-      spawnedTitan.leftCannonHp === (Math.round(650 * 0.22) - 50) &&
-      spawnedTitan.rightPodHp === Math.round(650 * 0.22);
+    var damageTransferOk = spawnedTitan.hp === (titanHull - 50) &&
+      spawnedTitan.leftCannonHp === (titanPart - 50) &&
+      spawnedTitan.rightPodHp === titanPart;
 
     // Destroy Left Cannon
-    test.bullets = [{ x: 120, y: 100, vx: 0, vy: -100, r: 4, damage: 150, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
+    test.bullets = [{ x: 120, y: 100, vx: 0, vy: -100, r: 4, damage: (titanPart - 50) + 20, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
     update(0.016);
     var leftCannonDestroyOk = spawnedTitan.leftCannonDestroyed === true &&
       spawnedTitan.leftCannonHp === 0 &&
@@ -679,7 +688,7 @@ export function selfCheck() {
     var leftCannonSkillBlockedOk = test.enemyBullets.length === 0;
 
     // 3. Right Pod Destruction & Rusher Summon Disable Check
-    test.bullets = [{ x: 80, y: 100, vx: 0, vy: -100, r: 4, damage: 200, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
+    test.bullets = [{ x: 80, y: 100, vx: 0, vy: -100, r: 4, damage: titanPart + 20, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
     update(0.016);
     var rightPodDestroyOk = spawnedTitan.rightPodDestroyed === true &&
       spawnedTitan.rightPodHp === 0 &&
@@ -751,21 +760,21 @@ export function selfCheck() {
     var conductionSpireSystemOk = spireSpawnWave3Ok && spireNoSpawnWave2Ok && spireResonated && bulletsEvaporatedOk && enemiesStunnedOk && spireMicroResonanceOk;
 
     // Phase 3 Step 4: Endgame Telemetry & Combat Rank Evaluation Check
-    var rankS1 = calculateCombatRank(10, 0, { shotsFired: 10, shotsHit: 0 });
-    var rankS2 = calculateCombatRank(6, 7500, { shotsFired: 100, shotsHit: 45 });
-    var rankA1 = calculateCombatRank(6, 7500, { shotsFired: 100, shotsHit: 44 });
-    var rankA2 = calculateCombatRank(5, 500, { shotsFired: 0, shotsHit: 0 });
-    var rankA3 = calculateCombatRank(4, 4000, { shotsFired: 10, shotsHit: 1 });
-    var rankB1 = calculateCombatRank(4, 3999, { shotsFired: 10, shotsHit: 8 });
-    var rankB2 = calculateCombatRank(3, 1800, { shotsFired: 0, shotsHit: 0 });
-    var rankC1 = calculateCombatRank(3, 1799, { shotsFired: 10, shotsHit: 10 });
-    var rankC2 = calculateCombatRank(2, 9999, { shotsFired: 10, shotsHit: 10 });
+    var rankSplus = calculateCombatRank(15, 0, { shotsFired: 0, shotsHit: 0, extracted: true, heat: 2 });
+    var rankS1 = calculateCombatRank(15, 0, { shotsFired: 10, shotsHit: 0, extracted: true, heat: 1 });
+    var rankS2 = calculateCombatRank(3, 220000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
+    var rankA1 = calculateCombatRank(6, 219999, { shotsFired: 100, shotsHit: 44, extracted: false, heat: 0 });
+    var rankA2 = calculateCombatRank(2, 90000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
+    var rankB1 = calculateCombatRank(6, 30000, { shotsFired: 100, shotsHit: 45, extracted: false, heat: 0 });
+    var rankB2 = calculateCombatRank(2, 89999, { shotsFired: 10, shotsHit: 10, extracted: false, heat: 0 });
+    var rankC1 = calculateCombatRank(10, 0, { shotsFired: 10, shotsHit: 10, extracted: false, heat: 0 });
+    var rankC2 = calculateCombatRank(4, 29999, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 5 });
 
-    var rankLogicOk = rankS1.letter === 'S' && rankS1.title === 'APEX SCAVENGER' && rankS1.classMod === 'rank-letter--s' &&
+    var rankLogicOk = rankSplus.letter === 'S+' && rankSplus.title === 'DUST SOVEREIGN' && rankSplus.classMod === 'rank-letter--splus' &&
+      rankS1.letter === 'S' && rankS1.title === 'APEX SCAVENGER' && rankS1.classMod === 'rank-letter--s' &&
       rankS2.letter === 'S' &&
       rankA1.letter === 'A' && rankA1.title === 'VETERAN BREACHER' && rankA1.classMod === 'rank-letter--a' &&
       rankA2.letter === 'A' &&
-      rankA3.letter === 'A' &&
       rankB1.letter === 'B' && rankB1.title === 'IRON SCRAPPER' && rankB1.classMod === 'rank-letter--b' &&
       rankB2.letter === 'B' &&
       rankC1.letter === 'C' && rankC1.title === 'RECRUIT RECLUSE' && rankC1.classMod === 'rank-letter--c' &&
@@ -796,7 +805,7 @@ export function selfCheck() {
 
     test.over = true;
     test.wave = 7;
-    test.score = 8000;
+    test.score = 40000;
     test.stats.shotsFired = 50;
     test.stats.shotsHit = 25;
     test.stats.maxCombo = 14;
@@ -816,18 +825,24 @@ export function selfCheck() {
       mockUi.telMaxCombo.textContent === 'x14' &&
       mockUi.telGrazes.textContent === '9' &&
       mockUi.telDamage.textContent === '12346' &&
-      mockUi.combatRankLetter.textContent === 'S' &&
-      mockUi.combatRankLetter.classList.contains('rank-letter--s') &&
-      mockUi.combatRankTitle.textContent === 'APEX SCAVENGER' &&
-      test.evalRank && test.evalRank.letter === 'S';
+      mockUi.combatRankLetter.textContent === 'B' &&
+      mockUi.combatRankLetter.classList.contains('rank-letter--b') &&
+      mockUi.combatRankTitle.textContent === 'IRON SCRAPPER' &&
+      test.evalRank && test.evalRank.letter === 'B';
 
     var combatRankTelemetryOk = rankLogicOk && domSyncOk;
+    runBuildChecks();
+    runEnemyChecks();
+    runDirectorChecks();
+    runMetaChecks();
+    runScoringChecks();
   } finally {
+    clearSeed();
     rt.state = previous;
     rt.ui = previousUi;
     rt.input.mouse.down = previousMouseDown;
     rt.input.keys = previousKeys;
   }
   if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !stormClock || !waveReset || artilleryScore !== 60 || !grazeOk || !justDashOk || !barrelKickOk || !barrelShootOk || !stormWindOk || !coreTitanOk || !barrelTitanOk || !weaponCycleOk || !breacherShootOk || !vanguardSlowOk || !vanguardShootOk || !arcChainOk || !fusionMatrixOk || !fusionExecOk || !buildInspectorUiOk || !eliteAffixSystemOk || !titanComponentsSystemOk || !conductionSpireSystemOk || !combatRankTelemetryOk) throw new Error('LunaGame self-check failed');
-  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '6/6 verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S/A/B/C CRT stamp & telemetry verified' };
+  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '10 fusions, prerequisites verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified' };
 }

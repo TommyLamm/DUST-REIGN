@@ -1,4 +1,5 @@
 import { CASING_POOL_SIZE, DECAL_POOL_SIZE, TAU } from '../config.js';
+import { rng } from './rng.js';
 import { rt } from './runtime.js';
 
 export function createCasingPool() {
@@ -24,12 +25,12 @@ export function addDecal(x, y, r, maxLife, baseAlpha, color) {
   d.active = true;
   d.x = x;
   d.y = y;
-  d.r = r || (8 + Math.random() * 10);
-  d.maxLife = maxLife || (12 + Math.random() * 6);
+  d.r = r || (8 + rng('visual') * 10);
+  d.maxLife = maxLife || (12 + rng('visual') * 6);
   d.life = d.maxLife;
   d.alpha = baseAlpha !== undefined ? baseAlpha : 0.38;
   d.color = color || '#1b1715';
-  d.rot = Math.random() * TAU;
+  d.rot = rng('visual') * TAU;
 }
 
 export function spawnParticles(x, y, color, amount, speed, size) {
@@ -37,16 +38,16 @@ export function spawnParticles(x, y, color, amount, speed, size) {
   speed = speed || 130;
   size = size || 3;
   for (var i = 0; i < amount; i += 1) {
-    var angle = Math.random() * TAU;
-    var velocity = speed * (0.35 + Math.random() * 0.9);
+    var angle = rng('visual') * TAU;
+    var velocity = speed * (0.35 + rng('visual') * 0.9);
     rt.state.particles.push({
       x: x,
       y: y,
       vx: Math.cos(angle) * velocity,
       vy: Math.sin(angle) * velocity,
-      life: 0.25 + Math.random() * 0.5,
+      life: 0.25 + rng('visual') * 0.5,
       maxLife: 0.75,
-      size: size * (0.55 + Math.random() * 0.9),
+      size: size * (0.55 + rng('visual') * 0.9),
       color: color,
       gravity: 24
     });
@@ -61,12 +62,12 @@ export function ejectCasing(p) {
   c.active = true;
   c.x = p.x;
   c.y = p.y;
-  var ejectAngle = p.aim - Math.PI / 2 + (Math.random() - 0.5) * 0.6;
-  var speed = 80 + Math.random() * 50;
+  var ejectAngle = p.aim - Math.PI / 2 + (rng('visual') - 0.5) * 0.6;
+  var speed = 80 + rng('visual') * 50;
   c.vx = Math.cos(ejectAngle) * speed;
   c.vy = Math.sin(ejectAngle) * speed;
-  c.rot = Math.random() * TAU;
-  c.vrot = (Math.random() - 0.5) * 18;
+  c.rot = rng('visual') * TAU;
+  c.vrot = (rng('visual') - 0.5) * 18;
   c.life = 0.6;
   c.maxLife = 0.6;
 }

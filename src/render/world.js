@@ -60,11 +60,26 @@ function drawOrbTrail(ctx, orb, fx, color) {
   if (!keyGlowsOnly()) drawGlow(ctx, orb.x, orb.y, orb.r + 8, color, 0.28);
 }
 
+function crateColor(payload) {
+  if (payload === 'battery') return PALETTE.emissive.tech;
+  if (payload === 'reroll') return PALETTE.hud.amber;
+  if (payload === 'overdrive') return PALETTE.emissive.gold;
+  return PALETTE.hud.rust;
+}
+
 export function drawOrb(ctx, orb) {
   if (!ctx || !orb) return;
-  var power = orb.kind === 'overdrive';
-  var repair = orb.kind === 'repair';
-  var color = power ? PALETTE.emissive.gold : repair ? PALETTE.hud.rust : PALETTE.hud.mint;
+  var crate = orb.kind === 'crate' || orb.type === 'crate';
+  var power = !crate && orb.kind === 'overdrive';
+  var repair = !crate && orb.kind === 'repair';
+  var color = crate ? crateColor(orb.payload) : power ? PALETTE.emissive.gold : repair ? PALETTE.hud.rust : PALETTE.hud.mint;
+  var fadeWrap = false;
+  if (crate && orb.life <= 3) {
+    fadeWrap = true;
+    ctx.save();
+    if (isReducedMotion()) ctx.globalAlpha = Math.max(0.25, (orb.life || 0) / 3);
+    else ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin((rt.renderTime || 0) * 10));
+  }
   var reduced = isReducedMotion();
   var pulse = reduced ? 1 : (1 + Math.sin((rt.renderTime || 0) * 5 + orb.x) * 0.08);
   var fx = ensureFx(orb);
@@ -103,6 +118,36 @@ export function drawOrb(ctx, orb) {
     ctx.lineWidth = 1.2;
     ctx.strokeRect(-s * 0.16, -s * 0.78, s * 0.32, s * 1.56);
     ctx.strokeRect(-s * 0.78, -s * 0.16, s * 1.56, s * 0.32);
+  } else if (crate) {
+    ctx.fillStyle = '#2a241c';
+    ctx.fillRect(-s * 0.9, -s * 0.7, s * 1.8, s * 1.4);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.strokeRect(-s * 0.9, -s * 0.7, s * 1.8, s * 1.4);
+    ctx.fillStyle = '#6a5438';
+    ctx.fillRect(-s * 0.9, -s * 0.7, s * 1.8, s * 0.28);
+    ctx.fillStyle = color;
+    if (orb.payload === 'reroll') {
+      ctx.beginPath();
+      ctx.arc(0, s * 0.08, s * 0.28, 0.4, TAU - 0.2);
+      ctx.stroke();
+    } else if (orb.payload === 'battery') {
+      ctx.fillRect(-s * 0.16, -s * 0.05, s * 0.32, s * 0.55);
+      ctx.fillRect(-s * 0.08, -s * 0.16, s * 0.16, s * 0.12);
+    } else if (orb.payload === 'overdrive') {
+      ctx.beginPath();
+      ctx.moveTo(s * 0.1, -s * 0.35);
+      ctx.lineTo(-s * 0.22, s * 0.05);
+      ctx.lineTo(s * 0.02, s * 0.05);
+      ctx.lineTo(-s * 0.08, s * 0.4);
+      ctx.lineTo(s * 0.28, -s * 0.02);
+      ctx.lineTo(s * 0.02, -s * 0.02);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.fillRect(-s * 0.1, -s * 0.28, s * 0.2, s * 0.7);
+      ctx.fillRect(-s * 0.32, -s * 0.08, s * 0.64, s * 0.2);
+    }
   } else {
     ctx.rotate(reduced ? (orb.x || 0) * 0.01 : (rt.renderTime || 0) * 1.7 + (orb.x || 0));
     ctx.fillStyle = '#8d877c';
@@ -135,7 +180,7 @@ export function drawOrb(ctx, orb) {
     ctx.font = '900 12px "Segoe UI Symbol", monospace, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    var oGlyph = repair ? '+' : power ? '✦' : '●';
+    var oGlyph = crate ? (orb.payload === 'reroll' ? 'R' : orb.payload === 'battery' ? 'B' : '+') : repair ? '+' : power ? '✦' : '●';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 3;
     ctx.strokeText(oGlyph, orb.x, orb.y);
@@ -143,6 +188,7 @@ export function drawOrb(ctx, orb) {
     ctx.fillText(oGlyph, orb.x, orb.y);
     ctx.restore();
   }
+  if (fadeWrap) ctx.restore();
 }
 
 export function drawCasings(ctx) {
@@ -338,6 +384,34 @@ export function drawBarrels(ctx) {
     ctx.fill();
     ctx.restore();
   }
+  drawConvoys(ctx);
+}
+
+function drawConvoys(ctx) {
+  if (!ctx || !rt.state || !rt.state.convoy) return;
+  var c = rt.state.convoy;
+  var ratio = c.maxHp > 0 ? clamp(c.hp / c.maxHp, 0, 1) : 1;
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  if ((c.vx || 0) < 0) ctx.scale(-1, 1);
+  ctx.fillStyle = '#3a2a22';
+  ctx.fillRect(-c.r, -c.r * 0.55, c.r * 2, c.r * 1.1);
+  ctx.fillStyle = '#6a4632';
+  ctx.fillRect(-c.r * 0.2, -c.r * 0.72, c.r * 0.9, c.r * 0.7);
+  ctx.fillStyle = '#1c1917';
+  ctx.fillRect(-c.r * 0.85, c.r * 0.35, c.r * 0.45, c.r * 0.38);
+  ctx.fillRect(c.r * 0.35, c.r * 0.35, c.r * 0.45, c.r * 0.38);
+  ctx.strokeStyle = PALETTE.hud.amber;
+  ctx.lineWidth = 1.6;
+  ctx.strokeRect(-c.r, -c.r * 0.55, c.r * 2, c.r * 1.1);
+  if (!keyGlowsOnly()) drawGlow(ctx, c.r * 0.85, 0, 10, PALETTE.emissive.hostile, 0.45);
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = 'rgba(12, 10, 8, 0.8)';
+  ctx.fillRect(c.x - c.r, c.y - c.r - 8, c.r * 2, 4);
+  ctx.fillStyle = ratio > 0.35 ? PALETTE.hud.amber : PALETTE.hud.rust;
+  ctx.fillRect(c.x - c.r, c.y - c.r - 8, c.r * 2 * ratio, 4);
+  ctx.restore();
 }
 
 export function drawSpires(ctx) {
@@ -411,6 +485,72 @@ export function drawSpires(ctx) {
     } else {
       strokeBolt(ctx, mastX, mastY, mastX + 4, mastY - 14, 1, time, i, false);
     }
+    ctx.restore();
+  }
+  drawDevils(ctx);
+}
+
+function drawDevils(ctx) {
+  if (!ctx || !rt.state || !rt.state.devils) return;
+  var reduced = isReducedMotion();
+  var contrast = isHighContrast();
+  var i;
+  for (i = 0; i < rt.state.devils.length; i += 1) {
+    var d = rt.state.devils[i];
+    ctx.save();
+    ctx.translate(d.x, d.y);
+    ctx.strokeStyle = contrast ? '#ffffff' : 'rgba(232, 185, 78, 0.9)';
+    ctx.lineWidth = contrast ? 2.4 : 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, d.r || 60, 0, TAU);
+    ctx.stroke();
+    if (!reduced) {
+      ctx.rotate((rt.renderTime || 0) * 0.8 + i);
+      ctx.beginPath();
+      ctx.arc(0, 0, (d.r || 60) * 0.55, 0.4, 2.2);
+      ctx.stroke();
+    }
+    if (!keyGlowsOnly()) drawGlow(ctx, 0, 0, (d.r || 60) * 0.45, PALETTE.hud.amber, contrast ? 0.2 : 0.28);
+    ctx.restore();
+  }
+}
+
+export function drawFieldReadability(ctx) {
+  if (!ctx || !rt.state) return;
+  var reduced = isReducedMotion();
+  var contrast = isHighContrast();
+  var list = rt.state.meteors || [];
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var m = list[i];
+    var maxT = m.maxTimer || 0.8;
+    var remain = maxT > 0 ? clamp(m.timer / maxT, 0, 1) : 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r || 34, 0, TAU);
+    ctx.strokeStyle = contrast ? '#ffffff' : 'rgba(255, 176, 90, 0.95)';
+    ctx.lineWidth = contrast ? 2.6 : 1.7;
+    ctx.setLineDash(reduced ? [] : [4, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, Math.max(4, (m.r || 34) * (1 - remain)), 0, TAU);
+    ctx.fillStyle = contrast ? 'rgba(255,255,255,0.28)' : 'rgba(223, 64, 40, 0.28)';
+    ctx.fill();
+    ctx.restore();
+  }
+  var route = rt.state.route;
+  var blackout = rt.state.blackout || (route && route.blackout);
+  if (blackout && !contrast && rt.state.player) {
+    var p = rt.state.player;
+    var w = rt.state.width || (rt.ui && rt.ui.width) || 960;
+    var h = rt.state.height || (rt.ui && rt.ui.height) || 640;
+    var g = ctx.createRadialGradient(p.x, p.y, 80, p.x, p.y, 340);
+    g.addColorStop(0, 'rgba(6, 8, 12, 0)');
+    g.addColorStop(1, 'rgba(6, 8, 12, 0.78)');
+    ctx.save();
+    ctx.fillStyle = g;
+    ctx.fillRect(-40, -40, w + 80, h + 80);
     ctx.restore();
   }
 }

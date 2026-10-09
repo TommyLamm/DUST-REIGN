@@ -1,0 +1,222 @@
+/* Start-screen loadout. Scrolls inside the arena so a phone portrait iframe is not clipped. */
+
+.overlay.overlay--start {
+  overflow-x: hidden;
+  overflow-y: auto;
+  place-items: start center;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overlay--start .overlay-inner {
+  width: min(640px, 100%);
+  margin: 8px auto;
+  padding: 12px 14px 16px;
+}
+
+.overlay--start h2 {
+  font-size: min(42px, 8cqw, 7cqh);
+  margin-bottom: 8px;
+}
+
+.overlay--start .overlay-copy {
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-height: 900px) {
+  .overlay--start .overlay-copy,
+  .overlay--start .overlay-kicker {
+    display: none;
+  }
+
+  .overlay--start .overlay-stamp {
+    margin-bottom: 4px;
+  }
+}
+
+#loadoutPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 12px;
+  color: var(--dust);
+  font-family: var(--mono);
+}
+
+.loadout-kicker,
+.loadout-label,
+.run-unlocks-kicker {
+  color: var(--rust);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.loadout-status,
+.loadout-rule,
+.loadout-legacy,
+.loadout-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+}
+
+.loadout-status,
+.loadout-legacy {
+  color: var(--bone);
+}
+
+.loadout-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadout-choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.loadout-choices--mode {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.loadout-card,
+.loadout-step,
+.loadout-heat-value,
+.loadout-codex {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  background: rgba(16, 17, 14, 0.78);
+  color: var(--dust);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+  padding: 8px;
+  touch-action: manipulation;
+}
+
+.loadout-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.loadout-card strong,
+.loadout-heat-value,
+.loadout-codex,
+.loadout-step {
+  color: var(--bone);
+  font-weight: 700;
+}
+
+.loadout-card small,
+.loadout-line {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.loadout-card.is-selected,
+.loadout-mode.is-selected,
+.loadout-heat-value:focus-visible {
+  border-color: var(--amber);
+  background: rgba(232, 185, 78, 0.14);
+  color: var(--bone);
+}
+
+.loadout-card.is-locked {
+  color: var(--muted);
+}
+
+.loadout-card[aria-disabled="true"] {
+  cursor: default;
+}
+
+.loadout-heat {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 6px;
+}
+
+.loadout-step,
+.loadout-heat-value,
+.loadout-codex {
+  text-align: center;
+}
+
+.loadout-codex {
+  width: 100%;
+}
+
+.loadout-card:focus-visible,
+.loadout-step:focus-visible,
+.loadout-heat-value:focus-visible,
+.loadout-codex:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.run-unlocks {
+  width: min(560px, 100%);
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--amber);
+  background: rgba(16, 17, 14, 0.72);
+}
+
+.run-unlocks-kicker,
+.run-unlocks-line {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.run-unlocks-line {
+  color: var(--bone);
+}
+
+@media (max-width: 720px) {
+  .loadout-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadout-card,
+  .loadout-step,
+  .loadout-codex {
+    transition: none;
+  }
+}
+
+html.reduced-motion .loadout-card,
+html.reduced-motion .loadout-step,
+html.reduced-motion .loadout-codex {
+  transition: none;
+}
+
+.game-root.is-high-contrast .loadout-card,
+.game-root.is-high-contrast .loadout-step,
+.game-root.is-high-contrast .loadout-heat-value,
+.game-root.is-high-contrast .loadout-codex,
+.game-root.is-high-contrast .run-unlocks {
+  border-color: #fff;
+  background: #000;
+  color: #fff;
+}
+
+.game-root.is-high-contrast .loadout-card.is-selected {
+  outline: 2px solid #fff;
+}

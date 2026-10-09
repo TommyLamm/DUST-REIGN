@@ -1,5 +1,19 @@
 # DUST//REIGN 版本紀錄
 
+## V0.4.0 — 2026-10-09
+
+玩法結構改造。計分規則改變，排行榜改為新 ID `dust-reign-score-v2`（降序、單位「分」、範圍 0 至 9007199254740991）。舊榜 `dust-reign-score` 不再提交。
+
+- 一局改為三幕各 5 波，第 5、10、15 波分別是 Titan、Dreadnought、Storm Sovereign。首領清除後進入幕間：路線三選一與軍械庫。第 15 波可 EXTRACT 撤離並提交一次成績，或 PUSH DEEPER 進入無盡，留到最終死亡才提交。
+- 無盡持續計分，並依輪次提高首領血量。波次導演、突變、合約與補給箱加入單局節奏。
+- 新增 Spitter、Scurrier、Warden、Burrower，以及精英詞綴 volatile、splitter。
+- 開局選擇機體與主武器，局內不再用 `T`、手把或暫停頁換槍；軍械庫仍可更換並保留卡牌。升級卡有稀有度、層數上限、重抽、放逐與跳過，並加入新卡、融合與武器精通。XP 曲線改為初始 80、其後 `round(xpNext × 1.22 + 24)`。
+- 局外成長包含機體解鎖、Dust Heat、成就、每日挑戰與圖鑑。每日種子使用玩家本地日期 `YYYY-MM-DD`。
+- 計分集中到 `addScore`，結算顯示分數明細。評級改為 B 30000、A 90000、S 220000 或撤離；S+ 為撤離且 Heat ≥ 2。
+- 操作：Shift 或 Space 衝刺；Q、E 或右鍵 EMP；升級為 1／2／3 選卡、R 重抽、B 放逐、X 跳過。手機 EMP 可拖曳落點，FIRE 使用黏性鎖定。手把可累積持續開火，遊玩中 D-pad 可移動。
+- 首次遊玩有情境提示，可在暫停選單關閉或重設。
+- 新增 `dust-reign:meta:v1`、`dust-reign:best-score:v2`、`dust-reign:daily:v1`、`dust-reign:tips:v1`、`dust-reign:tips-enabled:v1`。舊的 `dust-reign:best-score:v1` 與 `dustReignBestScore` 只讀不刪，也不再被新分數覆寫。`dust_reign_visual_quality` 維持不變。
+
 ## V0.3.0 — 2026-10-08
 
 視覺全面改造（玩法、數值、既有存檔 key 與排行榜規則不變）：

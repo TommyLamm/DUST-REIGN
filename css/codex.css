@@ -1,0 +1,166 @@
+#codexPanel {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  overflow: auto;
+  padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+  background: rgba(10, 11, 9, 0.94);
+  -webkit-overflow-scrolling: touch;
+}
+
+.codex-inner {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--dust);
+  font-family: var(--mono);
+}
+
+.codex-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding-bottom: 8px;
+  background: rgba(16, 17, 14, 0.96);
+}
+
+.codex-kicker {
+  margin: 0;
+  color: var(--rust);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  grid-column: 1;
+}
+
+.codex-title {
+  margin: 0;
+  grid-column: 1;
+  color: var(--bone);
+  font-family: var(--display);
+  font-size: min(42px, 10vw);
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+}
+
+.codex-close,
+.codex-tab {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--line-strong);
+  background: rgba(16, 17, 14, 0.9);
+  color: var(--bone);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  touch-action: manipulation;
+}
+
+.codex-close {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.codex-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.codex-tab.is-selected,
+.codex-tab[aria-selected="true"] {
+  border-color: var(--amber);
+  background: rgba(232, 185, 78, 0.16);
+}
+
+.codex-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.codex-card {
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  background: rgba(16, 17, 14, 0.78);
+}
+
+.codex-card-title,
+.codex-card-detail,
+.codex-card-extra {
+  display: block;
+  margin: 0;
+}
+
+.codex-card-title {
+  color: var(--bone);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.codex-card-detail,
+.codex-card-extra {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.codex-card.is-unknown .codex-card-title {
+  color: var(--muted);
+}
+
+.codex-silhouette {
+  display: block;
+  width: 28px;
+  height: 18px;
+  margin-bottom: 6px;
+  background: var(--slate);
+  clip-path: polygon(10% 80%, 50% 10%, 90% 80%);
+}
+
+.codex-close:focus-visible,
+.codex-tab:focus-visible,
+.codex-body:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .codex-tabs,
+  .codex-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .codex-tab {
+    font-size: 10px;
+    padding: 8px 6px;
+  }
+}
+
+.game-root.is-high-contrast .codex-card,
+.game-root.is-high-contrast .codex-tab,
+.game-root.is-high-contrast .codex-close {
+  border-color: #fff;
+  background: #000;
+  color: #fff;
+}
+
+.game-root.is-high-contrast .codex-tab.is-selected {
+  outline: 2px solid #fff;
+}
+
+.game-root.is-high-contrast .codex-silhouette {
+  background: #fff;
+}

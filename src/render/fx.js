@@ -381,6 +381,33 @@ function emitPreset(name, x, y, tint) {
   }
 }
 
+function emitBurst(name, x, y, tint, scale) {
+  if (!(scale > 0) || scale === 1) {
+    emitPreset(name, x, y, tint);
+    return;
+  }
+  var list = PRESETS[name];
+  if (!list) return;
+  for (var i = 0; i < list.length; i += 1) {
+    var item = list[i];
+    var copy = {
+      kind: item.kind,
+      count: item.count,
+      radius: item.radius ? item.radius * scale : item.radius,
+      speed: item.speed ? item.speed * scale : item.speed,
+      size: item.size ? item.size * scale : item.size,
+      maxRadius: item.maxRadius ? item.maxRadius * scale : item.maxRadius,
+      color: tint || item.color,
+      life: item.life,
+      wobble: item.wobble
+    };
+    var count = scaledCount(copy.count || 1);
+    for (var n = 0; n < count; n += 1) {
+      emitFx(copy.kind, x, y, copy, copy.kind === 'shard' ? tint : '');
+    }
+  }
+}
+
 function emitHitSparks(x, y, crit) {
   var n = (frameLow || frameReduced) ? 3 : (3 + ((fxRand() * 4) | 0));
   var color = crit ? '#ffd36b' : '#fff1c9';
@@ -701,6 +728,11 @@ function onFxEvent(ev) {
     } else {
       emitPreset('playerHit', x, y);
     }
+  } else if (kind === 'burst') {
+    var presetName = (o && o.preset) || 'deathSmall';
+    var burstTint = o && o.tint ? o.tint : '';
+    var burstScale = o && typeof o.scale === 'number' && o.scale > 0 ? o.scale : 1;
+    emitBurst(presetName, x, y, burstTint, burstScale);
   } else if (kind === 'bounty' || kind === 'surge') {
     var cx = x;
     var cy = y;

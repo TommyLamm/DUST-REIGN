@@ -1,8 +1,9 @@
 import { TAU } from '../../config.js';
 import { spawnParticles } from '../../core/pools.js';
+import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { dist2 } from '../../core/utils.js';
-import { killEnemy } from '../combat.js';
+import { damageEnemy, killEnemy } from '../combat.js';
 
 export function stepEffects(dt, frame) {
   if (rt.state.opticalFlashes) {
@@ -33,16 +34,15 @@ export function stepEffects(dt, frame) {
           for (var pzei = rt.state.enemies.length - 1; pzei >= 0; pzei -= 1) {
             var pzEnemy = rt.state.enemies[pzei];
             if (dist2(pz.x, pz.y, pzEnemy.x, pzEnemy.y) <= (pz.r + (pzEnemy.r || 10)) * (pz.r + (pzEnemy.r || 10))) {
-              pzEnemy.hp -= 16;
-              if (rt.state.stats) rt.state.stats.damageDealt += 16;
+              damageEnemy(pzEnemy, 16, { source: 'zone', x: pz.x, y: pz.y });
               spawnParticles(pzEnemy.x, pzEnemy.y, '#ff4d2e', 4, 80, 2);
-              if (pzEnemy.hp <= 0) killEnemy(pzei);
+              if (pzEnemy.hp <= 0) killEnemy(pzEnemy, 'zone');
             }
           }
         }
       }
-      if (Math.random() < 0.2) {
-        spawnParticles(pz.x + (Math.random() - 0.5) * pz.r * 1.2, pz.y + (Math.random() - 0.5) * pz.r * 1.2, '#ff4d2e', 1, 35, 1.8);
+      if (rng('combat') < 0.2) {
+        spawnParticles(pz.x + (rng('combat') - 0.5) * pz.r * 1.2, pz.y + (rng('combat') - 0.5) * pz.r * 1.2, '#ff4d2e', 1, 35, 1.8);
       }
       if (pz.timer <= 0) {
         rt.state.plasmaZones.splice(pzi, 1);
@@ -63,7 +63,7 @@ export function stepEffects(dt, frame) {
       if (rt.state.enemies) {
         for (var vei = 0; vei < rt.state.enemies.length; vei += 1) {
           var ve = rt.state.enemies[vei];
-          if (ve.kind === 'elite' || ve.kind === 'titan') continue;
+          if (ve.kind === 'elite' || ve.isBoss || ve.kind === 'titan') continue;
           var vdx = vortex.x - ve.x;
           var vdy = vortex.y - ve.y;
           var vd2 = vdx * vdx + vdy * vdy;
@@ -89,15 +89,15 @@ export function stepEffects(dt, frame) {
           }
         }
       }
-      if (Math.random() < 0.25) {
-        var vPartAngle = Math.random() * TAU;
-        var vPartDist = 20 + Math.random() * (vr - 20);
+      if (rng('combat') < 0.25) {
+        var vPartAngle = rng('combat') * TAU;
+        var vPartDist = 20 + rng('combat') * (vr - 20);
         rt.state.particles.push({
           x: vortex.x + Math.cos(vPartAngle) * vPartDist,
           y: vortex.y + Math.sin(vPartAngle) * vPartDist,
           vx: -Math.cos(vPartAngle) * 50 - Math.sin(vPartAngle) * 70,
           vy: -Math.sin(vPartAngle) * 50 + Math.cos(vPartAngle) * 70,
-          life: 0.18 + Math.random() * 0.12,
+          life: 0.18 + rng('combat') * 0.12,
           maxLife: 0.3,
           size: 2,
           color: '#b55fe6',

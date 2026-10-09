@@ -1,0 +1,170 @@
+#interludePanel,
+#extractPanel {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  pointer-events: auto;
+  background: rgba(12, 13, 11, 0.78);
+  overflow: auto;
+}
+
+.interlude-shell,
+.extract-shell {
+  width: min(920px, 100%);
+  max-height: 100%;
+  color: var(--bone);
+  font-family: var(--body);
+}
+
+.interlude-kicker {
+  margin: 0 0 6px;
+  color: var(--rust);
+  font: 12px var(--mono);
+  letter-spacing: 0.16em;
+}
+
+.interlude-title {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: clamp(28px, 6cqw, 64px);
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+}
+
+.interlude-grid,
+.extract-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.extract-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.interlude-card,
+.extract-action,
+.interlude-back {
+  min-height: 44px;
+  padding: 12px;
+  text-align: left;
+  color: var(--bone);
+  background: rgba(24, 26, 21, 0.92);
+  border: 1px solid var(--line-strong);
+  border-bottom: 3px solid var(--rust);
+  cursor: pointer;
+}
+
+.interlude-card.is-selected,
+.extract-action.is-selected,
+.interlude-card:focus-visible,
+.extract-action:focus-visible {
+  border-color: var(--amber);
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.interlude-index {
+  display: block;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+
+.interlude-name,
+.extract-action {
+  font-family: var(--display);
+  letter-spacing: 0.04em;
+}
+
+.extract-action {
+  font-size: clamp(20px, 4cqw, 36px);
+  text-align: center;
+}
+
+.extract-action--go {
+  color: var(--soot);
+  background: var(--amber);
+  border-bottom-color: var(--rust-deep);
+}
+
+.interlude-rule,
+.interlude-hint,
+.extract-note,
+.extract-score,
+.extract-bonus {
+  margin: 8px 0 0;
+  color: var(--dust);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.interlude-reward {
+  display: block;
+  margin-top: 8px;
+  color: var(--amber);
+  font-style: normal;
+  font: 12px var(--mono);
+}
+
+.interlude-sector {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 6px;
+  font: 10px var(--mono);
+  letter-spacing: 0.12em;
+}
+
+.interlude-sector--dusk { color: #1a140c; background: var(--amber); }
+.interlude-sector--rust { color: #1a100c; background: var(--rust); }
+.interlude-sector--night { color: #e8e0c6; background: #243246; }
+
+.interlude-back {
+  margin-top: 10px;
+}
+
+.extract-score strong,
+.extract-bonus strong {
+  display: block;
+  color: var(--bone);
+  font-family: var(--display);
+  font-size: clamp(28px, 6cqw, 56px);
+  font-weight: 400;
+}
+
+.interlude-card.is-dusk { box-shadow: inset 4px 0 0 var(--amber); }
+.interlude-card.is-rust { box-shadow: inset 4px 0 0 var(--rust); }
+.interlude-card.is-night { box-shadow: inset 4px 0 0 #5be7ff; }
+
+@media (max-width: 720px) {
+  .interlude-grid,
+  .extract-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .interlude-title {
+    font-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interlude-card,
+  .extract-action {
+    transition: none;
+  }
+}
+
+.game-root.is-high-contrast .interlude-card,
+.game-root.is-high-contrast .extract-action,
+.game-root.is-high-contrast .interlude-back {
+  border-color: #ffffff;
+  background: #000000;
+  color: #ffffff;
+}
+
+.game-root.is-high-contrast .extract-action--go {
+  background: #ffffff;
+  color: #000000;
+}

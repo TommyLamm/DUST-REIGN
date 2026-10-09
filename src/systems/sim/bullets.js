@@ -1,43 +1,155 @@
 import { AudioFX } from '../../audio/audio-fx.js';
 import { spawnParticles } from '../../core/pools.js';
 import { pushFxEvent } from '../../core/fx-events.js';
+import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
 import { clamp, dist2 } from '../../core/utils.js';
 import { triggerSpireMicroResonance } from '../abilities.js';
-import { explodeBarrel, explodeCore, killEnemy } from '../combat.js';
-import { isStormFront } from '../flow.js';
-import { spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
+import { applyEnemySlow, stepCardEffects } from '../card-effects.js';
+import { damageEnemy, explodeBarrel, explodeCore, killEnemy } from '../combat.js';
+import { stormWind } from '../flow.js';
+import { addScore } from '../scoring.js';
+import { noteMetaEvent } from '../meta.js';
+import { arcChainProfile, spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
 import { logEvent } from '../../ui/hud.js';
+
+function notePartDestroyed() {
+  addScore(200, 'style');
+  if (!rt.state.stats) return;
+  rt.state.stats.partsDestroyed = (rt.state.stats.partsDestroyed || 0) + 1;
+  noteMetaEvent('parts', { count: rt.state.stats.partsDestroyed });
+}
+
+function nearestEnemy(x, y, range, ignore) {
+  var best = null;
+  var bestD = range * range;
+  var enemies = rt.state.enemies || [];
+  var i;
+  for (i = 0; i < enemies.length; i += 1) {
+    var enemy = enemies[i];
+    if (!enemy || enemy === ignore || enemy.hp <= 0 || enemy.burrowed || enemy.untargetable) continue;
+    var d2 = dist2(x, y, enemy.x, enemy.y);
+    if (d2 < bestD) {
+      best = enemy;
+      bestD = d2;
+    }
+  }
+  return best;
+}
+
+function steerHoming(b, dt) {
+  if (!b.homing) return;
+  var target = nearestEnemy(b.x, b.y, 2400, null);
+  if (!target) return;
+  var desired = Math.atan2(target.y - b.y, target.x - b.x);
+  var current = Math.atan2(b.vy, b.vx);
+  var diff = Math.atan2(Math.sin(desired - current), Math.cos(desired - current));
+  var maxTurn = 7 * dt;
+  if (diff > maxTurn) diff = maxTurn;
+  if (diff < -maxTurn) diff = -maxTurn;
+  var speed = Math.hypot(b.vx, b.vy) || 460;
+  var next = current + diff;
+  b.vx = Math.cos(next) * speed;
+  b.vy = Math.sin(next) * speed;
+}
+
+function dropScorch(b) {
+  if (!b.scorchLine) return;
+  b.scorchAcc = (b.scorchAcc || 0) + 1;
+  if (b.scorchAcc < 3) return;
+  b.scorchAcc = 0;
+  if (!rt.state.scorchMarks) rt.state.scorchMarks = [];
+  if (rt.state.scorchMarks.length > 40) rt.state.scorchMarks.shift();
+  rt.state.scorchMarks.push({
+    x: b.x,
+    y: b.y,
+    r: 12,
+    life: 1,
+    tick: 0,
+    dmg: b.scorchDamage || Math.max(1, b.damage * 0.2)
+  });
+}
+
+function burstVanguard(b) {
+  if (!b.vanguardBurst || b.burstDone) return;
+  b.burstDone = true;
+  var radius = 90;
+  var damage = Math.max(1, b.damage * 0.6);
+  var enemies = rt.state.enemies || [];
+  var i;
+  for (i = enemies.length - 1; i >= 0; i -= 1) {
+    var enemy = enemies[i];
+    var reach = radius + (enemy.r || 0);
+    if (dist2(b.x, b.y, enemy.x, enemy.y) > reach * reach) continue;
+    damageEnemy(enemy, damage, { source: 'bullet', x: b.x, y: b.y });
+    if (enemy.hp <= 0) killEnemy(enemy, 'bullet');
+  }
+  if (rt.state.shockRings) {
+    rt.state.shockRings.push({
+      x: b.x,
+      y: b.y,
+      r: 8,
+      maxR: radius,
+      life: 0.24,
+      maxLife: 0.24,
+      color: '#5be7ff'
+    });
+  }
+  pushFxEvent('burst', b.x, b.y, { preset: 'mortar', tint: '#5be7ff', scale: 0.7 });
+}
+
+function noteArcHit(p, x, y) {
+  if (!p || (p.weaponMode || 'standard') !== 'arc-welder' || (p.mastery || 0) < 3) return;
+  p.arcHits = (p.arcHits || 0) + 1;
+  if (p.arcHits % 30 !== 0) return;
+  var radius = 70;
+  var damage = Math.max(8, Math.round((p.damage || 26) * 0.5));
+  var enemies = rt.state.enemies || [];
+  var i;
+  for (i = enemies.length - 1; i >= 0; i -= 1) {
+    var enemy = enemies[i];
+    var reach = radius + (enemy.r || 0);
+    if (dist2(x, y, enemy.x, enemy.y) > reach * reach) continue;
+    damageEnemy(enemy, damage, { source: 'emp', x: x, y: y });
+    enemy.empTimer = Math.max(enemy.empTimer || 0, 0.6);
+    if (enemy.hp <= 0) killEnemy(enemy, 'emp');
+  }
+  pushFxEvent('burst', x, y, { preset: 'emp', scale: 0.45 });
+}
 
 export function stepBullets(dt, frame) {
   var p = frame.p;
   var boundW = frame.boundW;
   var boundH = frame.boundH;
+  stepCardEffects(dt);
   for (var bi = rt.state.bullets.length - 1; bi >= 0; bi -= 1) {
     var b = rt.state.bullets[bi];
+    steerHoming(b, dt);
     b.trail.push({ x: b.x, y: b.y });
     if (b.trail.length > 4) b.trail.shift();
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    if (b.isVulcan && Math.random() < 0.45) {
+    if (b.isVulcan && rng('combat') < 0.45) {
       rt.state.particles.push({
         x: b.x,
         y: b.y,
-        vx: -b.vx * 0.12 + (Math.random() - 0.5) * 40,
-        vy: -b.vy * 0.12 + (Math.random() - 0.5) * 40,
-        life: 0.14 + Math.random() * 0.14,
+        vx: -b.vx * 0.12 + (rng('combat') - 0.5) * 40,
+        vy: -b.vy * 0.12 + (rng('combat') - 0.5) * 40,
+        life: 0.14 + rng('combat') * 0.14,
         maxLife: 0.28,
         size: 2.2,
-        color: Math.random() < 0.5 ? '#ff4500' : '#ffd700',
+        color: rng('combat') < 0.5 ? '#ff4500' : '#ffd700',
         gravity: 5
       });
     }
-    if (isStormFront()) {
-      var stormRad = 35 * Math.PI / 180;
-      b.x += Math.cos(stormRad) * 16 * dt;
-      b.y += Math.sin(stormRad) * 16 * dt;
+    var wind = stormWind();
+    if (wind) {
+      var windStep = ((p && p.stormRider) ? 48 : 16) * (wind.power / 38);
+      b.x += Math.cos(wind.angle) * windStep * dt;
+      b.y += Math.sin(wind.angle) * windStep * dt;
     }
+    dropScorch(b);
     b.life -= dt;
 
     if (b.bounces > 0) {
@@ -57,14 +169,14 @@ export function stepBullets(dt, frame) {
       if (bouncedX) {
         var normAngleX = normX > 0 ? 0 : Math.PI;
         for (var rsi = 0; rsi < 6; rsi += 1) {
-          var sAngle = normAngleX + (Math.random() - 0.5) * 1.5;
-          var sSpeed = 70 + Math.random() * 90;
+          var sAngle = normAngleX + (rng('combat') - 0.5) * 1.5;
+          var sSpeed = 70 + rng('combat') * 90;
           rt.state.particles.push({
             x: b.x,
             y: b.y,
             vx: Math.cos(sAngle) * sSpeed,
             vy: Math.sin(sAngle) * sSpeed,
-            life: 0.15 + Math.random() * 0.25,
+            life: 0.15 + rng('combat') * 0.25,
             maxLife: 0.4,
             size: 2.4,
             color: '#ffe7a4',
@@ -101,14 +213,14 @@ export function stepBullets(dt, frame) {
       if (bouncedY) {
         var normAngleY = normY > 0 ? Math.PI / 2 : -Math.PI / 2;
         for (var rsi2 = 0; rsi2 < 6; rsi2 += 1) {
-          var sAngle2 = normAngleY + (Math.random() - 0.5) * 1.5;
-          var sSpeed2 = 70 + Math.random() * 90;
+          var sAngle2 = normAngleY + (rng('combat') - 0.5) * 1.5;
+          var sSpeed2 = 70 + rng('combat') * 90;
           rt.state.particles.push({
             x: b.x,
             y: b.y,
             vx: Math.cos(sAngle2) * sSpeed2,
             vy: Math.sin(sAngle2) * sSpeed2,
-            life: 0.15 + Math.random() * 0.25,
+            life: 0.15 + rng('combat') * 0.25,
             maxLife: 0.4,
             size: 2.4,
             color: '#ffe7a4',
@@ -207,8 +319,9 @@ export function stepBullets(dt, frame) {
       for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
         var enemy = rt.state.enemies[ei];
         if (b.hits && b.hits.indexOf(enemy) !== -1) continue;
+        if (enemy.burrowed || enemy.untargetable) continue;
         if (dist2(b.x, b.y, enemy.x, enemy.y) <= (b.r + enemy.r) * (b.r + enemy.r)) {
-          if (enemy.kind === 'elite' && enemy.affix === 'mirror' && (!enemy.shieldBrokenTimer || enemy.shieldBrokenTimer <= 0)) {
+          if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror') && (!enemy.shieldBrokenTimer || enemy.shieldBrokenTimer <= 0)) {
             var hitAngle = (dist2(b.x, b.y, enemy.x, enemy.y) > 0.001) ? Math.atan2(b.y - enemy.y, b.x - enemy.x) : Math.atan2(-b.vy, -b.vx);
             var angleDiff = Math.atan2(Math.sin(hitAngle - (enemy.shieldAngle || 0)), Math.cos(hitAngle - (enemy.shieldAngle || 0)));
             if (Math.abs(angleDiff) <= 1.14) {
@@ -225,9 +338,9 @@ export function stepBullets(dt, frame) {
           b.hits.push(enemy);
 
           var isCrit = false;
-          if (b.ambush) {
+          if (b.forceCrit || b.ambush) {
             isCrit = true;
-          } else if (p.highCaliber && Math.random() < 0.20) {
+          } else if (p.highCaliber && rng('combat') < 0.20) {
             isCrit = true;
           } else if (enemy.vx !== undefined && enemy.vy !== undefined) {
             var bSpeed = Math.hypot(b.vx, b.vy);
@@ -240,7 +353,11 @@ export function stepBullets(dt, frame) {
 
           var critMult = p.highCaliber ? 2.2 : 1.75;
           var damageDealt = isCrit ? b.damage * critMult : b.damage;
-          enemy.hp -= damageDealt;
+          if (b.isBreacher && (p.mastery || 0) >= 2 && dist2(b.x, b.y, p.x, p.y) <= 120 * 120) {
+            damageDealt *= 1.4;
+          }
+          damageEnemy(enemy, damageDealt, { source: 'bullet', crit: isCrit, bullet: b, x: b.x, y: b.y });
+          if (b.isBreacher && (p.mastery || 0) >= 3) applyEnemySlow(enemy, 0.4, 0.7);
 
           if (enemy.kind === 'titan') {
             var e = enemy;
@@ -258,7 +375,8 @@ export function stepBullets(dt, frame) {
                   e.leftCannonHp = 0;
                   e.leftCannonDestroyed = true;
                   e.empTimer = Math.max(e.empTimer || 0, 1.8);
-                  rt.state.orbs.push({ kind: 'repair', x: lcX, y: lcY, vx: (Math.random() - 0.5) * 85, vy: (Math.random() - 0.5) * 85, r: 10, value: 0, life: 25 });
+                  notePartDestroyed();
+                  rt.state.orbs.push({ kind: 'repair', x: lcX, y: lcY, vx: (rng('loot') - 0.5) * 85, vy: (rng('loot') - 0.5) * 85, r: 10, value: 0, life: 25 });
                   AudioFX.blast();
                   rt.state.shake = Math.max(rt.state.shake, 14);
                   triggerHaptic([40, 50, 60]);
@@ -279,7 +397,8 @@ export function stepBullets(dt, frame) {
                   e.rightPodHp = 0;
                   e.rightPodDestroyed = true;
                   e.empTimer = Math.max(e.empTimer || 0, 1.8);
-                  rt.state.orbs.push({ kind: 'overdrive', x: rpX, y: rpY, vx: (Math.random() - 0.5) * 95, vy: (Math.random() - 0.5) * 95, r: 11, value: 0, life: 25 });
+                  notePartDestroyed();
+                  rt.state.orbs.push({ kind: 'overdrive', x: rpX, y: rpY, vx: (rng('loot') - 0.5) * 95, vy: (rng('loot') - 0.5) * 95, r: 11, value: 0, life: 25 });
                   AudioFX.blast();
                   rt.state.shake = Math.max(rt.state.shake, 14);
                   triggerHaptic([40, 50, 60]);
@@ -298,19 +417,19 @@ export function stepBullets(dt, frame) {
 
           if (rt.state.stats) {
             rt.state.stats.shotsHit += 1;
-            rt.state.stats.damageDealt += damageDealt;
             if (isCrit) rt.state.stats.crits += 1;
           }
 
           var kb = b.knockback !== undefined ? b.knockback : (isCrit ? 6 : 0);
-          if (kb > 0 && !(enemy.commandBuffTimer > 0)) {
+          if (kb > 0 && !(enemy.commandBuffTimer > 0) && !enemy.knockbackImmune) {
             var bLen = Math.hypot(b.vx, b.vy) || 1;
             enemy.x += (b.vx / bLen) * kb;
             enemy.y += (b.vy / bLen) * kb;
           }
 
           if (isCrit) {
-            p.energy = Math.min(p.maxEnergy, (p.energy || 0) + 4.0);
+            var cap = (typeof p.batteryMax === 'number') ? p.batteryMax : (p.maxEnergy || 100);
+            p.energy = Math.min(cap, (p.energy || 0) + 4.0);
             spawnParticles(enemy.x, enemy.y, '#fbda8a', 8, 140, 3);
             AudioFX.critHit();
           } else {
@@ -319,23 +438,25 @@ export function stepBullets(dt, frame) {
           }
 
           if (b.isArcWelder && rt.state.enemies) {
+            noteArcHit(p, enemy.x, enemy.y);
+            var chain = arcChainProfile(p);
             var arcCandidates = [];
             for (var aei = 0; aei < rt.state.enemies.length; aei += 1) {
               var other = rt.state.enemies[aei];
               if (other === enemy || other.hp <= 0) continue;
               var d2 = dist2(enemy.x, enemy.y, other.x, other.y);
-              if (d2 <= 110 * 110) {
+              if (d2 <= chain.range * chain.range) {
                 arcCandidates.push({ enemy: other, dist2: d2 });
               }
             }
             if (arcCandidates.length > 0) {
               arcCandidates.sort(function (e1, e2) { return e1.dist2 - e2.dist2; });
-              var targets = arcCandidates.slice(0, 2);
-              var arcDmg = Math.max(1, Math.round(b.damage * 0.7));
+              var targets = arcCandidates.slice(0, chain.targets);
+              var arcDmg = Math.max(1, Math.round(b.damage * chain.ratio));
               for (var ati = 0; ati < targets.length; ati += 1) {
                 var tgt = targets[ati].enemy;
-                tgt.hp -= arcDmg;
-                if (rt.state.stats) rt.state.stats.damageDealt += arcDmg;
+                damageEnemy(tgt, arcDmg, { source: 'bullet', x: enemy.x, y: enemy.y });
+                noteArcHit(p, tgt.x, tgt.y);
                 if (rt.state.lightningArcs) {
                   rt.state.lightningArcs.push({
                     x1: enemy.x,
@@ -351,7 +472,7 @@ export function stepBullets(dt, frame) {
                 if (tgt.hp <= 0) {
                   var tgtIdx = rt.state.enemies.indexOf(tgt);
                   if (tgtIdx !== -1) {
-                    killEnemy(tgtIdx);
+                    killEnemy(tgt, 'bullet');
                     if (tgtIdx < ei) ei -= 1;
                   }
                 }
@@ -375,7 +496,21 @@ export function stepBullets(dt, frame) {
 
           if (enemy.hp <= 0) {
             var mainIdx = rt.state.enemies.indexOf(enemy);
-            if (mainIdx !== -1) killEnemy(mainIdx);
+            if (mainIdx !== -1) killEnemy(enemy, 'bullet');
+          }
+
+          if (isCrit && b.masteryRicochet && !b.didMasteryBounce) {
+            var bounceTo = nearestEnemy(enemy.x, enemy.y, 160, enemy);
+            if (bounceTo) {
+              b.didMasteryBounce = true;
+              var bounceSpeed = Math.hypot(b.vx, b.vy) || 700;
+              var bounceAngle = Math.atan2(bounceTo.y - enemy.y, bounceTo.x - enemy.x);
+              b.vx = Math.cos(bounceAngle) * bounceSpeed;
+              b.vy = Math.sin(bounceAngle) * bounceSpeed;
+              b.x = enemy.x + Math.cos(bounceAngle) * ((enemy.r || 10) + b.r + 2);
+              b.y = enemy.y + Math.sin(bounceAngle) * ((enemy.r || 10) + b.r + 2);
+              b._deferRemove = true;
+            }
           }
 
           if (b.pierce > 0) {
@@ -395,20 +530,22 @@ export function stepBullets(dt, frame) {
             });
             var backAngle = Math.atan2(b.vy, b.vx) + Math.PI;
             for (var pji = 0; pji < 5; pji += 1) {
-              var jetAngle = backAngle + (Math.random() - 0.5) * 0.45;
-              var jetSpeed = 150 + Math.random() * 110;
+              var jetAngle = backAngle + (rng('combat') - 0.5) * 0.45;
+              var jetSpeed = 150 + rng('combat') * 110;
               rt.state.particles.push({
                 x: enemy.x,
                 y: enemy.y,
                 vx: Math.cos(jetAngle) * jetSpeed,
                 vy: Math.sin(jetAngle) * jetSpeed,
-                life: 0.15 + Math.random() * 0.15,
+                life: 0.15 + rng('combat') * 0.15,
                 maxLife: 0.3,
                 size: 2.5,
                 color: '#a8f5e5',
                 gravity: 6
               });
             }
+          } else if (b._deferRemove) {
+            b._deferRemove = false;
           } else {
             hitSomething = true;
           }
@@ -418,6 +555,7 @@ export function stepBullets(dt, frame) {
     }
 
     if (hitSomething || b.life <= 0 || b.x < -60 || b.y < -60 || b.x > boundW + 60 || b.y > boundH + 60) {
+      if (b.vanguardBurst) burstVanguard(b);
       rt.state.bullets.splice(bi, 1);
     }
   }

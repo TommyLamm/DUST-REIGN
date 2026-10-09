@@ -5,12 +5,104 @@ import { pushFxEvent } from '../core/fx-events.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../core/settings.js';
 import { clamp, dist2 } from '../core/utils.js';
-import { killEnemy } from './combat.js';
+import { onDash, onEmp } from './card-effects.js';
+import { damageEnemy, killEnemy } from './combat.js';
+import { onEnemyEmp } from './sim/enemy-defense.js';
+import { noteContractEvent } from './contracts.js';
+import { noteMetaEvent } from './meta.js';
+import { addScore } from './scoring.js';
 import { logEvent } from '../ui/hud.js';
 
-export function dash() {
-  if (!rt.state || rt.state.over || rt.state.paused || rt.state.player.dashCooldown > 0) return;
+var DASH_HEAT_MAX = 3;
+var DASH_HEAT_WINDOW = 3;
+var heatClockState = null;
+var heatClockTime = 0;
+
+// Layers 0–3 → 0.35 / 0.65 / 0.95 / 1.25. Lookup keeps the self-check's 0.35 exact.
+export function justDashCooldown(heat) {
+  var h = heat | 0;
+  if (h < 0) h = 0;
+  if (h > DASH_HEAT_MAX) h = DASH_HEAT_MAX;
+  if (h === 0) return 0.35;
+  if (h === 1) return 0.65;
+  if (h === 2) return 0.95;
+  return 1.25;
+}
+
+// Heat applies only after a sim tick (dashHeatArmed). The opening Just Dash stays 0.35.
+function liveJustHeat(p) {
+  if (!p || !p.dashHeatArmed) return 0;
+  var h = p.dashHeat | 0;
+  if (h < 0) return 0;
+  if (h > DASH_HEAT_MAX) return DASH_HEAT_MAX;
+  return h;
+}
+
+function heatWindow(p) {
+  var n = p && p.dashHeatReset;
+  if (typeof n === 'number' && n > 0) return n;
+  return DASH_HEAT_WINDOW;
+}
+
+function applyJustDashHeat(p) {
+  var next = (p.dashHeat || 0) + 1;
+  if (next > DASH_HEAT_MAX) next = DASH_HEAT_MAX;
+  p.dashHeat = next;
+  p.dashHeatTimer = heatWindow(p);
+  p.dashHeatArmed = false;
+}
+
+export function stepDashHeat(dt) {
+  if (!rt.state || !rt.state.player) return;
   var p = rt.state.player;
+  if (!((p.dashHeat || 0) > 0)) {
+    p.dashHeat = 0;
+    p.dashHeatTimer = 0;
+    p.dashHeatArmed = false;
+    return;
+  }
+  var step = Number(dt) || 0;
+  if (step > 0) p.dashHeatTimer = (p.dashHeatTimer || 0) - step;
+  if (!((p.dashHeatTimer || 0) > 0)) {
+    p.dashHeat = 0;
+    p.dashHeatTimer = 0;
+    p.dashHeatArmed = false;
+    return;
+  }
+  if (step > 0) p.dashHeatArmed = true;
+}
+
+// Called from the HUD tick. Decays with waveTime so pause / hitstop / interlude do not cool heat.
+export function syncDashHeatClock() {
+  var state = rt.state;
+  if (!state || !state.player) {
+    heatClockState = null;
+    return;
+  }
+  var waveTime = state.waveTime || 0;
+  if (heatClockState !== state) {
+    heatClockState = state;
+    heatClockTime = waveTime;
+    return;
+  }
+  var delta = waveTime - heatClockTime;
+  heatClockTime = waveTime;
+  if (delta > 0 && delta <= 0.25) stepDashHeat(delta);
+}
+
+// Inter-charge gap. Just Dash heat shortens a spare charge; an empty gauge still uses 2.2.
+export function dashRechargeCooldown(player) {
+  if (player && player.lastDashJust && (player.dashHeat || 0) > 0) return justDashCooldown(player.dashHeat);
+  return 2.2;
+}
+
+export function dash() {
+  if (!rt.state || rt.state.over || rt.state.paused) return;
+  var p = rt.state.player;
+  var maxCharges = (typeof p.dashChargesMax === 'number' && p.dashChargesMax > 0) ? p.dashChargesMax : 1;
+  if (typeof p.dashCharges !== 'number') p.dashCharges = maxCharges;
+  if (p.dashCharges < maxCharges && !(p.dashCooldown > 0)) p.dashCharges += 1;
+  if (p.dashCharges <= 0) return;
   var startX = p.x;
   var startY = p.y;
 
@@ -50,11 +142,20 @@ export function dash() {
   var length = Math.hypot(dx, dy) || 1;
   var boundW = rt.ui ? rt.ui.width : rt.state.width;
   var boundH = rt.ui ? rt.ui.height : rt.state.height;
-  p.x = clamp(p.x + (dx / length) * 140, p.r, boundW - p.r);
-  p.y = clamp(p.y + (dy / length) * 140, p.r, boundH - p.r);
+  var dashDist = (typeof p.dashDistance === 'number' && p.dashDistance > 0) ? p.dashDistance : 140;
+  p.x = clamp(p.x + (dx / length) * dashDist, p.r, boundW - p.r);
+  p.y = clamp(p.y + (dy / length) * dashDist, p.r, boundH - p.r);
   addDecal(p.x, p.y, 6, 8, 0.35, '#141210');
   triggerHaptic(isJustDash ? [30, 20, 50] : [15]);
-  p.dashCooldown = isJustDash ? 0.35 : 2.2;
+  var cooledHeat = isJustDash ? liveJustHeat(p) : 0;
+  var cdMult = (typeof p.dashCooldownMult === 'number' && p.dashCooldownMult > 0) ? p.dashCooldownMult : 1;
+  p.dashCharges -= 1;
+  p.lastDashJust = isJustDash;
+  if (p.dashCharges <= 0) {
+    p.dashCooldown = (isJustDash ? justDashCooldown(cooledHeat) : 2.2) * cdMult;
+  } else if (p.dashIndependent && !(p.dashCooldown > 0)) {
+    p.dashCooldown = dashRechargeCooldown(p) * cdMult;
+  }
   p.invulnerable = Math.max(p.invulnerable, 0.32);
   p.dashPulse = DASH_PULSE_DURATION;
   p.dashAmbushTimer = isJustDash ? 1.2 : 0.6;
@@ -81,15 +182,17 @@ export function dash() {
     var enemy = rt.state.enemies[di];
     if (dist2(p.x, p.y, enemy.x, enemy.y) > pulseRadius * pulseRadius) continue;
     hitCount += 1;
-    enemy.hp -= pulseDamage;
-    if (rt.state.stats) rt.state.stats.damageDealt += pulseDamage;
-    var kdx = enemy.x - p.x;
-    var kdy = enemy.y - p.y;
-    var kd = Math.hypot(kdx, kdy) || 1;
-    enemy.x += (kdx / kd) * kbDistance;
-    enemy.y += (kdy / kd) * kbDistance;
+    damageEnemy(enemy, pulseDamage, { source: 'dash', x: p.x, y: p.y });
+    onEnemyEmp(enemy);
+    if (!enemy.knockbackImmune) {
+      var kdx = enemy.x - p.x;
+      var kdy = enemy.y - p.y;
+      var kd = Math.hypot(kdx, kdy) || 1;
+      enemy.x += (kdx / kd) * kbDistance;
+      enemy.y += (kdy / kd) * kbDistance;
+    }
     spawnParticles(enemy.x, enemy.y, '#75d1b0', 7, 110, 2);
-    if (enemy.hp <= 0) killEnemy(di);
+    if (enemy.hp <= 0) killEnemy(enemy, 'dash');
   }
   if (rt.state.barrels) {
     var dirX = dx / length;
@@ -137,40 +240,58 @@ export function dash() {
     for (var sti = rt.state.enemies.length - 1; sti >= 0; sti -= 1) {
       var sEnemy = rt.state.enemies[sti];
       if (dist2(p.x, p.y, sEnemy.x, sEnemy.y) <= (tempestRange + (sEnemy.r || 10)) * (tempestRange + (sEnemy.r || 10))) {
-        sEnemy.hp -= tempestDamage;
-        if (rt.state.stats) rt.state.stats.damageDealt += tempestDamage;
+        damageEnemy(sEnemy, tempestDamage, { source: 'dash', x: p.x, y: p.y });
         sEnemy.empTimer = Math.max(sEnemy.empTimer || 0, 1.8);
-        if (sEnemy.kind === 'elite' && sEnemy.affix === 'mirror') {
+        onEnemyEmp(sEnemy);
+        if (sEnemy.kind === 'elite' && (sEnemy.affix === 'mirror' || sEnemy.affix2 === 'mirror')) {
           sEnemy.shieldBrokenTimer = 3.0;
         }
         spawnParticles(sEnemy.x, sEnemy.y, '#5be7ff', 8, 120, 2.2);
-        if (sEnemy.hp <= 0) killEnemy(sti);
+        if (sEnemy.hp <= 0) killEnemy(sEnemy, 'dash');
       }
     }
     logEvent('STATIC TEMPEST // 6-WAY CHAIN DISCHARGE');
   }
+  if (isJustDash) {
+    applyJustDashHeat(p);
+    if (rt.state.stats) rt.state.stats.justDashes = (rt.state.stats.justDashes || 0) + 1;
+    addScore(40, 'style');
+    noteContractEvent('just-dash', { x: p.x, y: p.y });
+    noteMetaEvent('just-dash', { x: p.x, y: p.y });
+  }
+  onDash(p, { just: isJustDash, x: p.x, y: p.y, startX: startX, startY: startY });
   pushFxEvent('dash', p.x, p.y, { sx: startX, sy: startY, just: isJustDash ? 1 : 0, aim: p.aim || 0 });
 }
 
 export function triggerEmp() {
   if (!rt.state || rt.state.over || rt.state.paused) return;
   var p = rt.state.player;
-  if (p.energy < 50) return;
-  p.energy -= 50;
+  var cost = (typeof p.empCost === 'number') ? p.empCost : 50;
+  var drop = rt.input && rt.input.empDrop;
+  if (rt.input) rt.input.empDrop = null;
+  if ((p.energy || 0) < cost) return;
+  p.energy -= cost;
 
   var boundW = rt.ui ? rt.ui.width : rt.state.width;
   var boundH = rt.ui ? rt.ui.height : rt.state.height;
 
-  var empX = rt.input.mouse.x;
-  var empY = rt.input.mouse.y;
-  if (rt.input.touchMode || !rt.input.mouse || (rt.input.gamepadX || rt.input.gamepadY) || isNaN(empX) || isNaN(empY)) {
-    empX = p.x + Math.cos(p.aim) * 85;
-    empY = p.y + Math.sin(p.aim) * 85;
+  var empX;
+  var empY;
+  if (drop && typeof drop.x === 'number' && typeof drop.y === 'number') {
+    empX = drop.x;
+    empY = drop.y;
+  } else {
+    empX = rt.input.mouse.x;
+    empY = rt.input.mouse.y;
+    if (rt.input.touchMode || !rt.input.mouse || (rt.input.gamepadX || rt.input.gamepadY) || isNaN(empX) || isNaN(empY)) {
+      empX = p.x + Math.cos(p.aim) * 85;
+      empY = p.y + Math.sin(p.aim) * 85;
+    }
   }
   empX = clamp(empX, 20, boundW - 20);
   empY = clamp(empY, 20, boundH - 20);
 
-  var empR = 140;
+  var empR = 140 + ((typeof p.empRadiusBonus === 'number') ? p.empRadiusBonus : 0);
 
   AudioFX.emp();
   triggerHaptic([35, 20, 50]);
@@ -213,17 +334,15 @@ export function triggerEmp() {
     var eDist2 = dist2(enemy.x, enemy.y, empX, empY);
     if (eDist2 <= (empR + enemy.r) * (empR + enemy.r)) {
       hitCount += 1;
-      enemy.hp -= 35;
-      if (rt.state.stats) {
-        rt.state.stats.damageDealt += 35;
-      }
+      damageEnemy(enemy, 35, { source: 'emp', x: empX, y: empY });
       enemy.empTimer = 2.2;
-      if (enemy.kind === 'elite' && enemy.affix === 'mirror') {
+      onEnemyEmp(enemy);
+      if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror')) {
         enemy.shieldBrokenTimer = 3.0;
       }
       spawnParticles(enemy.x, enemy.y, '#5be7ff', 8, 130, 2.5);
       if (enemy.hp <= 0) {
-        killEnemy(ei);
+        killEnemy(enemy, 'emp');
       }
     }
   }
@@ -243,6 +362,7 @@ export function triggerEmp() {
       }
     }
   }
+  onEmp(p, { x: empX, y: empY, r: empR });
   pushFxEvent('emp', empX, empY, { r: empR });
 }
 
@@ -262,26 +382,27 @@ function triggerSpireResonance(spire) {
     }
   }
 
+  var chainHits = 0;
   if (rt.state.enemies) {
     for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
       var enemy = rt.state.enemies[ei];
       var ed2 = dist2(enemy.x, enemy.y, spire.x, spire.y);
       if (ed2 <= (megaR + enemy.r) * (megaR + enemy.r)) {
-        enemy.hp -= 40;
-        if (rt.state.stats) {
-          rt.state.stats.damageDealt += 40;
-        }
+        chainHits += 1;
+        damageEnemy(enemy, 40, { source: 'spire', x: spire.x, y: spire.y });
         enemy.empTimer = Math.max(enemy.empTimer || 0, 3.0);
-        if (enemy.kind === 'elite' && enemy.affix === 'mirror') {
+        onEnemyEmp(enemy);
+        if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror')) {
           enemy.shieldBrokenTimer = Math.max(enemy.shieldBrokenTimer || 0, 3.0);
         }
         spawnParticles(enemy.x, enemy.y, '#5be7ff', 10, 150, 3);
         if (enemy.hp <= 0) {
-          killEnemy(ei);
+          killEnemy(enemy, 'spire');
         }
       }
     }
   }
+  noteContractEvent('spire-chain', { hits: chainHits });
 
   if (rt.state.shockRings) {
     rt.state.shockRings.push({
@@ -346,11 +467,11 @@ export function triggerSpireMicroResonance(spire, srcX, srcY) {
     for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
       var enemy = rt.state.enemies[ei];
       if (dist2(enemy.x, enemy.y, spire.x, spire.y) <= (90 + enemy.r) * (90 + enemy.r)) {
-        enemy.hp -= 15;
-        if (rt.state.stats) rt.state.stats.damageDealt += 15;
+        damageEnemy(enemy, 15, { source: 'spire', x: spire.x, y: spire.y });
         enemy.empTimer = Math.max(enemy.empTimer || 0, 1.0);
+        onEnemyEmp(enemy);
         spawnParticles(enemy.x, enemy.y, '#5be7ff', 6, 100, 2);
-        if (enemy.hp <= 0) killEnemy(ei);
+        if (enemy.hp <= 0) killEnemy(enemy, 'spire');
       }
     }
   }
@@ -375,8 +496,7 @@ export function triggerReactiveArmor(threatX, threatY) {
   for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
     var enemy = rt.state.enemies[ei];
     if (dist2(p.x, p.y, enemy.x, enemy.y) <= (pulseR + enemy.r) * (pulseR + enemy.r)) {
-      enemy.hp -= pulseDmg;
-      if (rt.state.stats) rt.state.stats.damageDealt += pulseDmg;
+      damageEnemy(enemy, pulseDmg, { source: 'armor', x: p.x, y: p.y });
       var pdx = enemy.x - p.x;
       var pdy = enemy.y - p.y;
       var pd = Math.hypot(pdx, pdy) || 1;
@@ -384,7 +504,7 @@ export function triggerReactiveArmor(threatX, threatY) {
       enemy.x += (pdx / pd) * kbDist;
       enemy.y += (pdy / pd) * kbDist;
       spawnParticles(enemy.x, enemy.y, p.overchargeRetaliation ? '#ff6030' : '#f0cf88', 6, 110, 2);
-      if (enemy.hp <= 0) killEnemy(ei);
+      if (enemy.hp <= 0) killEnemy(enemy, 'other');
     }
   }
 
@@ -432,8 +552,7 @@ export function triggerTeslaCoil(orb) {
   });
   var targets = sorted.slice(0, 2);
   targets.forEach(function (tgt) {
-    tgt.hp -= 22;
-    if (rt.state.stats) rt.state.stats.damageDealt += 22;
+    damageEnemy(tgt, 22, { source: 'tesla', x: orb.x, y: orb.y });
     rt.state.lightningArcs.push({
       x1: orb.x,
       y1: orb.y,
@@ -443,10 +562,7 @@ export function triggerTeslaCoil(orb) {
       maxLife: 0.1
     });
     spawnParticles(tgt.x, tgt.y, '#a8f5e5', 6, 110, 2);
-    if (tgt.hp <= 0) {
-      var idx = rt.state.enemies.indexOf(tgt);
-      if (idx !== -1) killEnemy(idx);
-    }
+    if (tgt.hp <= 0) killEnemy(tgt, 'other');
   });
   if (rt.state.spires && rt.state.spires.length > 0) {
     for (var tsi = 0; tsi < rt.state.spires.length; tsi += 1) {

@@ -3,6 +3,9 @@ import { clamp, first, on } from '../core/utils.js';
 import { clearSpriteCache } from '../render/sprites.js';
 import { chooseUpgrade } from '../systems/progression.js';
 import { rebuildTerrain } from '../systems/spawning.js';
+import { initCodexPanel } from './codex-panel.js';
+import { initInterludePanel } from './interlude-panel.js';
+import { initLoadoutPanel } from './loadout-panel.js';
 
 export function setupDom(options) {
   options = options || {};
@@ -114,6 +117,8 @@ export function setupDom(options) {
   var toggleMotionReduction = first(['#toggleMotionReduction'], pauseModal || document);
   var toggleHighContrast = first(['#toggleHighContrast'], pauseModal || document);
   var settingVisualQuality = first(['#settingVisualQuality'], pauseModal || document);
+  var toggleTips = first(['#toggleTips'], pauseModal || document);
+  var resetTips = first(['#resetTips'], pauseModal || document);
   var pauseResumeBtn = first(['#pauseResumeBtn'], pauseModal || document);
   var pauseAbandonBtn = first(['#pauseAbandonBtn'], pauseModal || document);
   var pauseTabIndicator = first(['#pauseTabIndicator', '.pause-tab-indicator'], pauseModal || document);
@@ -133,6 +138,10 @@ export function setupDom(options) {
   var touchJoystickZone = first(['#touchJoystickZone'], root || document);
   var joystickBase = first(['#joystickBase'], touchJoystickZone || document);
   var joystickThumb = first(['#joystickThumb'], touchJoystickZone || document);
+
+  initLoadoutPanel();
+  initInterludePanel();
+  initCodexPanel();
 
   return {
     root: root,
@@ -200,6 +209,8 @@ export function setupDom(options) {
     toggleMotionReduction: toggleMotionReduction,
     toggleHighContrast: toggleHighContrast,
     settingVisualQuality: settingVisualQuality,
+    toggleTips: toggleTips,
+    resetTips: resetTips,
     pauseResumeBtn: pauseResumeBtn,
     pauseAbandonBtn: pauseAbandonBtn,
     pauseTabIndicator: pauseTabIndicator,

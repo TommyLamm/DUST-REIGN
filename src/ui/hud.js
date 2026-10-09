@@ -1,11 +1,17 @@
 import { COMBO_WINDOW, WAVE_LENGTH } from '../config.js';
+import { AudioFX } from '../audio/audio-fx.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { clamp, setText } from '../core/utils.js';
 import { sectorForWave } from '../render/palette.js';
 import { getQuality } from '../render/quality.js';
 import { calculateCombatRank, isStormFront } from '../systems/flow.js';
+import { updateCodexPanel } from './codex-panel.js';
+import { updateContractsHud } from './contracts-hud.js';
+import { updateInterludePanel } from './interlude-panel.js';
+import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
+import { updateTips } from './tips.js';
 
 var shownScore = null;
 var scoreState = null;
@@ -334,6 +340,98 @@ function animateTelemetry(accPct, combo, grazes, dmg) {
   });
 }
 
+var breakdownRoll = { key: '', busy: false, raf: 0 };
+
+function breakdownBuckets(breakdown) {
+  var b = breakdown || {};
+  function n(key) { return typeof b[key] === 'number' ? b[key] : 0; }
+  return [
+    n('kill') + n('bounty'),
+    n('wave') + n('flawless'),
+    n('boss'),
+    n('style') + n('graze') + n('storm') + n('repair') + n('overtime'),
+    n('contract'),
+    n('extract')
+  ];
+}
+
+function writeBreakdown(values) {
+  var host = typeof document !== 'undefined' ? document.getElementById('scoreBreakdown') : null;
+  if (!host) return;
+  var nodes = host.querySelectorAll('strong');
+  var i;
+  for (i = 0; i < nodes.length && i < values.length; i += 1) nodes[i].textContent = String(values[i]);
+}
+
+function ensureBreakdown() {
+  if (typeof document === 'undefined' || !rt.ui || !rt.ui.gameOver) return null;
+  var host = document.getElementById('scoreBreakdown');
+  if (host) return host;
+  var grid = rt.ui.gameOver.querySelector && rt.ui.gameOver.querySelector('.result-grid');
+  if (!grid || !grid.parentNode) return null;
+  host = document.createElement('div');
+  host.id = 'scoreBreakdown';
+  host.className = 'result-grid score-breakdown';
+  var labels = ['KILLS', 'WAVES', 'BOSSES', 'STYLE', 'CONTRACTS', 'EXTRACTION'];
+  var i;
+  for (i = 0; i < labels.length; i += 1) {
+    var cell = document.createElement('div');
+    var span = document.createElement('span');
+    var strong = document.createElement('strong');
+    span.textContent = labels[i];
+    strong.textContent = '0';
+    cell.appendChild(span);
+    cell.appendChild(strong);
+    host.appendChild(cell);
+  }
+  grid.insertAdjacentElement('afterend', host);
+  return host;
+}
+
+function animateBreakdown(targets) {
+  if (typeof requestAnimationFrame !== 'function') {
+    writeBreakdown(targets);
+    return;
+  }
+  var start = 0;
+  function frame(now) {
+    if (!breakdownRoll.busy) return;
+    if (!start) start = now;
+    var t = (now - start) / 700;
+    if (t < 0) t = 0;
+    if (t > 1) t = 1;
+    var eased = 1 - Math.pow(1 - t, 3);
+    var shown = [];
+    var i;
+    for (i = 0; i < targets.length; i += 1) shown[i] = Math.round(targets[i] * eased);
+    writeBreakdown(shown);
+    if (t < 1) breakdownRoll.raf = requestAnimationFrame(frame);
+    else {
+      breakdownRoll.busy = false;
+      breakdownRoll.raf = 0;
+      writeBreakdown(targets);
+    }
+  }
+  breakdownRoll.busy = true;
+  breakdownRoll.raf = requestAnimationFrame(frame);
+}
+
+function syncScoreBreakdown() {
+  if (!rt.state || !rt.state.over || !rt.ui || !rt.ui.gameOver) return;
+  if (rt.ui.gameOver.hidden) return;
+  var values = breakdownBuckets(rt.state.scoreBreakdown);
+  var key = values.join('|');
+  if (!ensureBreakdown()) return;
+  if (breakdownRoll.key === key) return;
+  breakdownRoll.key = key;
+  if (motionOff() || typeof requestAnimationFrame !== 'function') {
+    writeBreakdown(values);
+    return;
+  }
+  writeBreakdown(values.map(function () { return 0; }));
+  animateBreakdown(values);
+}
+
 function syncTelemetry(acc, stats) {
   var accPct = Math.round(acc * 100);
   var combo = stats.maxCombo || 0;
@@ -356,6 +454,10 @@ function resetTelemetry() {
   telRoll.busy = false;
   telRoll.raf = 0;
   telRoll.key = '';
+  if (breakdownRoll.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(breakdownRoll.raf);
+  breakdownRoll.busy = false;
+  breakdownRoll.raf = 0;
+  breakdownRoll.key = '';
   slamKey = '';
 }
 
@@ -404,6 +506,13 @@ export function logEvent(message) {
   while (rt.ui.runLog.children.length > 5) rt.ui.runLog.removeChild(rt.ui.runLog.lastElementChild);
 }
 
+function actRoman(act) {
+  var names = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  var n = act | 0;
+  if (n > 0 && n < names.length) return names[n];
+  return String(n || 1);
+}
+
 export function updateDomUi() {
   if (!rt.state || !rt.ui) return;
   updateAudioBtn();
@@ -419,7 +528,7 @@ export function updateDomUi() {
   setText(rt.ui.xpMax, rt.state.xpNext);
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
-  setText(rt.ui.wave, String(rt.state.wave).padStart(2, '0'));
+  setText(rt.ui.wave, 'ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0'));
   pulse(rt.ui.wave, 'wave', rt.state.wave);
   syncScore();
   setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
@@ -438,12 +547,14 @@ export function updateDomUi() {
     rt.ui.xpFill.parentElement.setAttribute('aria-valuenow', String(rt.state.xp));
     rt.ui.xpFill.parentElement.setAttribute('aria-valuemax', String(rt.state.xpNext));
   }
+  var empCost = (typeof rt.state.player.empCost === 'number') ? rt.state.player.empCost : 50;
+  var batteryCap = (typeof rt.state.player.batteryMax === 'number') ? rt.state.player.batteryMax : (rt.state.player.maxEnergy || 100);
   if (rt.ui.hudEnergy) rt.ui.hudEnergy.textContent = Math.floor(rt.state.player.energy || 0);
   if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) rt.ui.meterEnergy.setAttribute('aria-valuenow', String(Math.floor(rt.state.player.energy || 0)));
-  if (rt.ui.energyFill && rt.ui.energyFill.style) rt.ui.energyFill.style.width = (clamp((rt.state.player.energy || 0) / (rt.state.player.maxEnergy || 100), 0, 1) * 100) + '%';
+  if (rt.ui.energyFill && rt.ui.energyFill.style) rt.ui.energyFill.style.width = (clamp((rt.state.player.energy || 0) / (batteryCap || 100), 0, 1) * 100) + '%';
   syncCooldowns();
   if (rt.ui.touchSpecial && rt.ui.touchSpecial.classList) {
-    if ((rt.state.player.energy || 0) >= 50) {
+    if ((rt.state.player.energy || 0) >= empCost) {
       rt.ui.touchSpecial.classList.add('is-ready');
       rt.ui.touchSpecial.classList.remove('touch-button--cooldown');
     } else {
@@ -455,6 +566,11 @@ export function updateDomUi() {
   syncSector();
   syncComms();
   syncPauseBlur();
+  updateContractsHud();
+  updateTips();
+  updateLoadoutPanel();
+  updateInterludePanel();
+  updateCodexPanel();
   if (!rt.state.over) resetTelemetry();
   if (rt.ui.gameOver) rt.ui.gameOver.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
   if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0) || !rt.state.isNewRecord;
@@ -473,17 +589,18 @@ export function updateDomUi() {
     if (rt.ui.combatRankLetter) {
       rt.ui.combatRankLetter.textContent = rank.letter;
       if (rt.ui.combatRankLetter.classList) {
-        rt.ui.combatRankLetter.classList.remove('rank-letter--s', 'rank-letter--a', 'rank-letter--b', 'rank-letter--c');
+        rt.ui.combatRankLetter.classList.remove('rank-letter--splus', 'rank-letter--s', 'rank-letter--a', 'rank-letter--b', 'rank-letter--c');
         rt.ui.combatRankLetter.classList.add(rank.classMod);
       }
     }
     if (rt.ui.combatRankStamp && rt.ui.combatRankStamp.classList) {
-      rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'S');
+      rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'S' || rank.letter === 'S+');
     }
     if (rt.ui.combatRankTitle) {
       rt.ui.combatRankTitle.textContent = rank.title;
     }
 
+    syncScoreBreakdown();
     if (!rt.ui.telAccuracy && rt.ui.gameOver) {
       var tel = typeof document !== 'undefined' ? document.getElementById('runTelemetry') : null;
       if (!tel && typeof document !== 'undefined') {
