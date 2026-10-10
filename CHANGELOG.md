@@ -1,5 +1,9 @@
 # DUST//REIGN 版本紀錄
 
+## V0.4.3 — 2026-10-10
+
+修復升級面板卡片初始傾斜與選取狀態。升級面板開啟時取消預設第 0 張卡片的高亮選取（`selectedUpgrade: -1`），使 3 張升級卡片在玩家尚未懸浮或導航時保持水平平整；移除更新選取時的強制 DOM `focus()` 調用並在彈窗顯示時清除焦點，防止瀏覽器 `:focus-visible` 偽類觸發 3D 傾斜與發光邊框；新增卡片容器 `pointermove` 監聽，當滑鼠指標移動時自動清除手把選取狀態；擴充手把十字鍵左/右與類比搖桿水平選取支援，配合三欄橫向卡片版面。玩法、計分、榜單 `dust-reign-score-v2` 與既有存檔鍵維持不變。
+
 ## V0.4.2 — 2026-10-10
 
 修正出擊配置同步時遺漏匯入 `peekRunUnlocks` 的執行期例外。出擊面板在更新時同步結算解鎖橫幅（`syncUnlockBanner`）呼叫 `peekRunUnlocks`，因未從 `src/systems/meta.js` 匯入而拋出 `ReferenceError`，導致 `init()` 在更新介面時中斷，畫布繪製與 `requestAnimationFrame` 主遊戲迴圈未被啟動、畫面卡在靜態無內容狀態。補齊匯入後啟動與主迴圈運轉恢復正常。玩法、計分、榜單 `dust-reign-score-v2` 與既有存檔鍵維持不變。

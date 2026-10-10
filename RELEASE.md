@@ -1,8 +1,14 @@
-# DUST//REIGN 0.4.2
+# DUST//REIGN 0.4.3
 
-遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.4.2`，對應 tag 為 `v0.4.2`。
+遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.4.3`，對應 tag 為 `v0.4.3`。
 
-這是 `0.4.1` 的修正版。修復出擊配置面板在更新結算解鎖橫幅（`syncUnlockBanner`）呼叫 `peekRunUnlocks` 時未從 `src/systems/meta.js` 匯入該函式，導致 `init()` 介面更新時拋出 `ReferenceError: peekRunUnlocks is not defined`、使主繪製與 `requestAnimationFrame` 遊戲更新迴圈未被啟動、畫面空白無內容的問題。補齊匯入後遊戲主迴圈與渲染已恢復正常。玩法、計分與榜單 `dust-reign-score-v2` 不變，既有存檔鍵不變。GitHub Release 不代表已在 Playroom 匯入或上架。既有 `v0.4.1` 與 `v0.4.0` 不覆寫。
+這是 `0.4.2` 的修正版。修復升級面板卡片在開啟時預設第一張卡片傾斜與發光高亮的問題：
+1. 升級面板開啟時將手把選取狀態預設為未選取（`selectedUpgrade: -1`），使三張卡片在滑鼠懸浮或手把操作前維持平整水平狀態。
+2. 移除選取更新時的強制 DOM `focus()` 調用，並在彈窗打開時主動清除容器內焦點，防止瀏覽器 `:focus-visible` 偽類觸發 3D 傾斜與發光邊框。
+3. 新增卡片容器 `pointermove` 監聽，當玩家移動滑鼠時自動清除手把選取狀態（`-1`），回復滑鼠原生 `:hover` 懸浮回饋。
+4. 擴充手把升級面板選取控制，支援十字鍵左/右（D-pad Left/Right）及左類比搖桿水平導航，符合橫向三欄式卡片版面。
+
+玩法、計分與榜單 `dust-reign-score-v2` 不變，既有存檔鍵不變。GitHub Release 不代表已在 Playroom 匯入或上架。既有 `v0.4.2`、`v0.4.1` 與 `v0.4.0` 不覆寫。
 
 ## 0.4.0 玩法改造
 
@@ -72,7 +78,7 @@
 
 ## 限制與未執行項目
 
-- `0.4.2` 的 GitHub Release 建立後，仍須在 Playroom 匯入並預覽，才算平台上架。
+- `0.4.3` 的 GitHub Release 建立後，仍須在 Playroom 匯入並預覽，才算平台上架。
 - 未驗證：管理員在平台上的實際遊玩預覽、SDK 診斷面板，以及登入帳號 `finishRun()` 回傳 `saved: true`。本機 guest 只是父頁送出 init。
 - 未驗證：平台上新榜 `dust-reign-score-v2` 的排序、單位與範圍是否與 manifest 一致。本機 ZIP 驗證通過不代表榜單已在平台建立。
 - 未驗證：實體手把、減動效與高對比對全部新內容的實機巡覽、桌面 HIGH／手機 MEDIUM 的長時間幀率，以及手機 4 倍節流。
@@ -90,8 +96,8 @@ node scripts/stage-release.mjs
 在平台工具 checkout（`main` 最新內容、已 `npm ci`）執行。ZIP 必須放在成品目錄之外：
 
 ```sh
-npm run game:pack -- <repository>/output/release/0.4.2/game <repository>/output/release/0.4.2/game.zip
-npm run game:validate -- <repository>/output/release/0.4.2/game.zip
+npm run game:pack -- <repository>/output/release/0.4.3/game <repository>/output/release/0.4.3/game.zip
+npm run game:validate -- <repository>/output/release/0.4.3/game.zip
 ```
 
-`v0.4.2` 的打包與 ZIP 驗證由 Release workflow 在推送 tag 時執行。`0.4.0` 曾於 2026-10-09 用平台工具 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30` 驗證。
+`v0.4.3` 的打包與 ZIP 驗證由 Release workflow 在推送 tag 時執行。`0.4.0` 曾於 2026-10-09 用平台工具 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30` 驗證。
