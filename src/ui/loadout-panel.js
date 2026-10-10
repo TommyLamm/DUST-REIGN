@@ -3,7 +3,7 @@ import { readBestScoreV2, readDaily, readLegacyBestScore, writeMeta } from '../c
 import { on } from '../core/utils.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { RIGS, getRig } from '../data/rigs.js';
-import { resolveSelection } from '../systems/meta.js';
+import { peekRunUnlocks, resolveSelection } from '../systems/meta.js';
 import { closeCodex, cycleCodexTab, isCodexOpen, openCodex } from './codex-panel.js';
 
 var WEAPONS = [

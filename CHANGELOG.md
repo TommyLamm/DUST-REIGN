@@ -1,5 +1,9 @@
 # DUST//REIGN 版本紀錄
 
+## V0.4.2 — 2026-10-10
+
+修正出擊配置同步時遺漏匯入 `peekRunUnlocks` 的執行期例外。出擊面板在更新時同步結算解鎖橫幅（`syncUnlockBanner`）呼叫 `peekRunUnlocks`，因未從 `src/systems/meta.js` 匯入而拋出 `ReferenceError`，導致 `init()` 在更新介面時中斷，畫布繪製與 `requestAnimationFrame` 主遊戲迴圈未被啟動、畫面卡在靜態無內容狀態。補齊匯入後啟動與主迴圈運轉恢復正常。玩法、計分、榜單 `dust-reign-score-v2` 與既有存檔鍵維持不變。
+
 ## V0.4.1 — 2026-10-10
 
 修正開始畫面初始化中斷。配裝面板呼叫 `resolveSelection` 時沒有從 `src/systems/meta.js` 匯入，模組載入後立刻丟出 `ReferenceError`，事件還沒綁上，所以 Playroom 上按鈕完全沒反應。玩法、計分、榜單 `dust-reign-score-v2` 與既有存檔鍵都沒有改。
