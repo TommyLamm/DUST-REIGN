@@ -19,7 +19,7 @@ export var rt = {
   },
   gamepadState: {
     connected: false,
-    selectedUpgrade: 0,
+    selectedUpgrade: -1,
     navDebounce: 0,
     prevButtons: {}
   },

@@ -8,6 +8,7 @@ import { isChinese, onLanguageChange, tCategory, tFusionTitle, tRarity, tUpgrade
 var hideTimer = 0;
 var dealTimers = [];
 var keysBound = false;
+var mouseBound = false;
 var shortcutReadyAt = 0;
 
 var ICONS = {
@@ -201,6 +202,17 @@ function ensureUpgradeKeys() {
   window.addEventListener('keydown', onUpgradeKey);
 }
 
+function ensureOptionsMouse() {
+  if (mouseBound || !rt.ui || !rt.ui.optionsNode || typeof rt.ui.optionsNode.addEventListener !== 'function') return;
+  mouseBound = true;
+  rt.ui.optionsNode.addEventListener('pointermove', function () {
+    if (rt.gamepadState && rt.gamepadState.selectedUpgrade >= 0) {
+      rt.gamepadState.selectedUpgrade = -1;
+      updateUpgradeSelectionUi();
+    }
+  });
+}
+
 export function renderUpgradePanel(options) {
   if (!rt.ui || !rt.ui.overlay || !rt.ui.optionsNode || !rt.state) return;
   var choices = rt.state.upgradeChoices || [];
@@ -236,8 +248,12 @@ export function renderUpgradePanel(options) {
   }
   renderControlRow();
   if (!rt.gamepadState) rt.gamepadState = {};
-  rt.gamepadState.selectedUpgrade = 0;
+  rt.gamepadState.selectedUpgrade = -1;
   updateUpgradeSelectionUi();
+  ensureOptionsMouse();
+  if (typeof document !== 'undefined' && document.activeElement && rt.ui.optionsNode.contains(document.activeElement)) {
+    if (typeof document.activeElement.blur === 'function') document.activeElement.blur();
+  }
   rt.ui.overlay.hidden = false;
 }
 
@@ -272,10 +288,10 @@ export function presentUpgradePick(index) {
 export function updateUpgradeSelectionUi() {
   if (!rt.ui || !rt.ui.optionsNode) return;
   var buttons = qa('button', rt.ui.optionsNode);
+  var selected = (rt.gamepadState && typeof rt.gamepadState.selectedUpgrade === 'number') ? rt.gamepadState.selectedUpgrade : -1;
   for (var i = 0; i < buttons.length; i += 1) {
-    if (i === rt.gamepadState.selectedUpgrade) {
+    if (selected >= 0 && i === selected) {
       buttons[i].classList.add('is-gamepad-selected');
-      if (buttons[i].focus) buttons[i].focus();
     } else {
       buttons[i].classList.remove('is-gamepad-selected');
     }

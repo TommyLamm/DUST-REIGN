@@ -125,18 +125,33 @@ function pollGamepadInner(dt) {
     if (rt.gamepadState.navDebounce > 0) rt.gamepadState.navDebounce -= dt;
     var upPressed = isBtnPressed(buttons[12]) || (axes.length > 1 && axes[1] < -0.5);
     var downPressed = isBtnPressed(buttons[13]) || (axes.length > 1 && axes[1] > 0.5);
+    var leftPressed = isBtnPressed(buttons[14]) || (axes.length > 0 && axes[0] < -0.5);
+    var rightPressed = isBtnPressed(buttons[15]) || (axes.length > 0 && axes[0] > 0.5);
+    var navPrev = upPressed || leftPressed;
+    var navNext = downPressed || rightPressed;
     if (rt.gamepadState.navDebounce <= 0) {
-      if (upPressed) {
-        rt.gamepadState.selectedUpgrade = (rt.gamepadState.selectedUpgrade - 1 + rt.state.upgradeChoices.length) % rt.state.upgradeChoices.length;
+      if (navPrev) {
+        if (typeof rt.gamepadState.selectedUpgrade !== 'number' || rt.gamepadState.selectedUpgrade < 0) {
+          rt.gamepadState.selectedUpgrade = rt.state.upgradeChoices.length - 1;
+        } else {
+          rt.gamepadState.selectedUpgrade = (rt.gamepadState.selectedUpgrade - 1 + rt.state.upgradeChoices.length) % rt.state.upgradeChoices.length;
+        }
         rt.gamepadState.navDebounce = 0.22;
         updateUpgradeSelectionUi();
-      } else if (downPressed) {
-        rt.gamepadState.selectedUpgrade = (rt.gamepadState.selectedUpgrade + 1) % rt.state.upgradeChoices.length;
+      } else if (navNext) {
+        if (typeof rt.gamepadState.selectedUpgrade !== 'number' || rt.gamepadState.selectedUpgrade < 0) {
+          rt.gamepadState.selectedUpgrade = 0;
+        } else {
+          rt.gamepadState.selectedUpgrade = (rt.gamepadState.selectedUpgrade + 1) % rt.state.upgradeChoices.length;
+        }
         rt.gamepadState.navDebounce = 0.22;
         updateUpgradeSelectionUi();
       }
     }
-    if (justPressed(0)) chooseUpgrade(rt.gamepadState.selectedUpgrade);
+    if (justPressed(0)) {
+      var pickIndex = (typeof rt.gamepadState.selectedUpgrade === 'number' && rt.gamepadState.selectedUpgrade >= 0) ? rt.gamepadState.selectedUpgrade : 0;
+      chooseUpgrade(pickIndex);
+    }
     else if (justPressed(2)) rerollUpgrades();
     else if (justPressed(3)) beginBanish();
     else if (justPressed(1)) skipUpgrade();
