@@ -1,9 +1,10 @@
+import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 import { readBestScoreV2, readDaily, readLegacyBestScore, writeMeta } from '../core/meta-store.js';
 import { on } from '../core/utils.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { RIGS, getRig } from '../data/rigs.js';
+import { resolveSelection } from '../systems/meta.js';
 import { closeCodex, cycleCodexTab, isCodexOpen, openCodex } from './codex-panel.js';
-import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 
 var WEAPONS = [
   { id: 'standard', name: 'STANDARD', rate: '0.18s', pattern: 'DIRECT', line: 'Steady rifle. Stay mobile.' },

@@ -1,8 +1,8 @@
-# DUST//REIGN 0.4.0
+# DUST//REIGN 0.4.1
 
-遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.4.0`，對應 tag 應為 `v0.4.0`。
+遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.4.1`，對應 tag 為 `v0.4.1`。
 
-**尚未發布。** 尚未 commit 本次改動，尚未建立 tag、尚未建立 GitHub Release，也尚未在 Playroom 匯入或上架。日後的 GitHub Release 亦不代表已在平台上架。既有已發布版本不可覆寫。
+這是 `0.4.0` 的修正版。開始畫面在 `refresh()` 呼叫 `resolveSelection` 時沒有匯入該函式，初始化在綁定輸入前中斷，Playroom 上按鈕沒有反應。玩法、計分與榜單 `dust-reign-score-v2` 不變，既有存檔鍵不變。GitHub Release 不代表已在 Playroom 匯入或上架。既有 `v0.4.0` 不覆寫。
 
 ## 0.4.0 玩法改造
 
@@ -72,7 +72,7 @@
 
 ## 限制與未執行項目
 
-- 0.4.0 尚未 commit、尚未發布，不能匯入或上架。
+- `0.4.1` 的 GitHub Release 建立後，仍須在 Playroom 匯入並預覽，才算平台上架。
 - 未驗證：管理員在平台上的實際遊玩預覽、SDK 診斷面板，以及登入帳號 `finishRun()` 回傳 `saved: true`。本機 guest 只是父頁送出 init。
 - 未驗證：平台上新榜 `dust-reign-score-v2` 的排序、單位與範圍是否與 manifest 一致。本機 ZIP 驗證通過不代表榜單已在平台建立。
 - 未驗證：實體手把、減動效與高對比對全部新內容的實機巡覽、桌面 HIGH／手機 MEDIUM 的長時間幀率，以及手機 4 倍節流。
@@ -90,8 +90,8 @@ node scripts/stage-release.mjs
 在平台工具 checkout（`main` 最新內容、已 `npm ci`）執行。ZIP 必須放在成品目錄之外：
 
 ```sh
-npm run game:pack -- <repository>/output/release/0.4.0/game <repository>/output/release/0.4.0/game.zip
-npm run game:validate -- <repository>/output/release/0.4.0/game.zip
+npm run game:pack -- <repository>/output/release/0.4.1/game <repository>/output/release/0.4.1/game.zip
+npm run game:validate -- <repository>/output/release/0.4.1/game.zip
 ```
 
-上述指令已於 2026-10-09 執行。平台工具 commit 為 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30`。
+`v0.4.1` 的打包與 ZIP 驗證由 Release workflow 在推送 tag 時執行。`0.4.0` 曾於 2026-10-09 用平台工具 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30` 驗證。

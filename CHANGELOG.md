@@ -1,5 +1,9 @@
 # DUST//REIGN 版本紀錄
 
+## V0.4.1 — 2026-10-10
+
+修正開始畫面初始化中斷。配裝面板呼叫 `resolveSelection` 時沒有從 `src/systems/meta.js` 匯入，模組載入後立刻丟出 `ReferenceError`，事件還沒綁上，所以 Playroom 上按鈕完全沒反應。玩法、計分、榜單 `dust-reign-score-v2` 與既有存檔鍵都沒有改。
+
 ## V0.4.0 — 2026-10-09
 
 玩法結構改造。計分規則改變，排行榜改為新 ID `dust-reign-score-v2`（降序、單位「分」、範圍 0 至 9007199254740991）。舊榜 `dust-reign-score` 不再提交。

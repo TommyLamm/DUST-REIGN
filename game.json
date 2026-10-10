@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "廢土 roguelike 射擊。開局選擇機體、主武器與 Dust Heat，或進行每日挑戰並查閱圖鑑。三幕各以首領收尾；第 15 波可撤離或深入無盡。升級可重抽、放逐或跳過，死亡後回到配裝重開。",
   "author": "TommyLam",
   "entry": "index.html",
