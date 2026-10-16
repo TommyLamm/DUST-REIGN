@@ -79,6 +79,7 @@ export function vanguardChargeNeed(p) {
   if (mode !== 'vanguard') return need;
   if ((p.mastery || 0) >= 1) need = 0.45;
   if (p.capacitorRail) need *= 0.75;
+  if (p.chargeTimeMult) need *= p.chargeTimeMult;
   return need;
 }
 
@@ -129,7 +130,8 @@ export function arcChainProfile(p) {
 }
 
 function shotCooldown(p, value) {
-  if (p.afterburner && (p.afterburnerTimer || 0) > 0) return value * 0.7;
+  if (p.afterburner && (p.afterburnerTimer || 0) > 0) value *= 0.7;
+  if (p.surgeUnit && p.surgeUnit.active) value /= 1.40;
   return value;
 }
 
@@ -200,7 +202,7 @@ export function shoot() {
     var spreadScale = weaponModActive(rt.state, 'flechette-pack') ? 0.9 : 1;
     var offsets = breacherSpread(breacherPelletCount(p), spreadScale);
     var breacherDmg = Math.max(1, Math.round(p.damage * 0.42 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
-    var bSpeed = p.bulletSpeed;
+    var bSpeed = p.bulletSpeed * (p.bulletSpeedMult || 1);
     var bR = 3.5 + (isPlasma ? 3 : 0);
     var bTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(255, 170, 80, 0.32)');
     var bCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#ffd08a');
@@ -229,8 +231,9 @@ export function shoot() {
     if (rt.state.stats) rt.state.stats.shotsFired += offsets.length;
     p.cooldown = shotCooldown(p, p.fireRate * 2.4 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
-    p.x -= Math.cos(p.aim) * 4.5;
-    p.y -= Math.sin(p.aim) * 4.5;
+    var recoilPush = (p.recoilMult || 1);
+    p.x -= Math.cos(p.aim) * 4.5 * recoilPush;
+    p.y -= Math.sin(p.aim) * 4.5 * recoilPush;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
     ejectCasing(p);
@@ -248,11 +251,12 @@ export function shoot() {
     var vgTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.45)');
     var vgCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#5be7ff');
     var mastery = p.mastery || 0;
+    var vgSpeed = 1350 * (p.bulletSpeedMult || 1);
     rt.state.bullets.push({
       x: p.x + Math.cos(baseAngle) * (p.r + 10),
       y: p.y + Math.sin(baseAngle) * (p.r + 10),
-      vx: Math.cos(baseAngle) * 1350,
-      vy: Math.sin(baseAngle) * 1350,
+      vx: Math.cos(baseAngle) * vgSpeed,
+      vy: Math.sin(baseAngle) * vgSpeed,
       r: vgR,
       damage: vgDmg,
       life: 1.5,
@@ -273,8 +277,9 @@ export function shoot() {
     });
     p.cooldown = shotCooldown(p, 0.55 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
-    p.x -= Math.cos(p.aim) * 3.5;
-    p.y -= Math.sin(p.aim) * 3.5;
+    var recoilPushVg = (p.recoilMult || 1);
+    p.x -= Math.cos(p.aim) * 3.5 * recoilPushVg;
+    p.y -= Math.sin(p.aim) * 3.5 * recoilPushVg;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
     ejectCasing(p);
@@ -288,7 +293,7 @@ export function shoot() {
     p.isCharging = false;
   } else if (mode === 'arc-welder') {
     var arcDmg = Math.max(1, Math.round(p.damage * 0.32 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
-    var arcSpeed = p.bulletSpeed;
+    var arcSpeed = p.bulletSpeed * (p.bulletSpeedMult || 1);
     if (rt.state.stats) rt.state.stats.shotsFired += 1;
     var arcR = 3.0 + (isPlasma ? 3 : 0);
     var arcTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.35)');
@@ -314,8 +319,9 @@ export function shoot() {
     });
     p.cooldown = shotCooldown(p, p.fireRate * 0.45 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 0.5;
-    p.x -= Math.cos(p.aim) * 0.5;
-    p.y -= Math.sin(p.aim) * 0.5;
+    var recoilPushArc = (p.recoilMult || 1);
+    p.x -= Math.cos(p.aim) * 0.5 * recoilPushArc;
+    p.y -= Math.sin(p.aim) * 0.5 * recoilPushArc;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
     ejectCasing(p);
@@ -326,7 +332,7 @@ export function shoot() {
     rt.state.shake = Math.max(rt.state.shake, 1.5);
   } else {
     var angle = baseAngle + (rng('combat') - 0.5) * 0.035;
-    var speed = p.bulletSpeed;
+    var speed = p.bulletSpeed * (p.bulletSpeedMult || 1);
     var stdCount = (p.mastery || 0) >= 2 ? 2 : 1;
     var stdScale = stdCount === 2 ? 0.7 : 1;
     var stdR = (p.bulletSize || 4) + (isPlasma ? 3 : 0);
@@ -373,8 +379,9 @@ export function shoot() {
     p.cooldown = shotCooldown(p, p.fireRate * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
 
     p.recoil = 1.0;
-    p.x -= Math.cos(p.aim) * 1.4;
-    p.y -= Math.sin(p.aim) * 1.4;
+    var recoilPushStd = (p.recoilMult || 1);
+    p.x -= Math.cos(p.aim) * 1.4 * recoilPushStd;
+    p.y -= Math.sin(p.aim) * 1.4 * recoilPushStd;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
 

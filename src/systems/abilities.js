@@ -107,11 +107,12 @@ export function dash() {
   var startY = p.y;
 
   var isJustDash = false;
+  var justRangeBonus = (p.justDashWindowBonus || 0) * 20;
   if (rt.state.enemyBullets && rt.state.enemyBullets.length > 0) {
     for (var bi = 0; bi < rt.state.enemyBullets.length; bi += 1) {
       var eb = rt.state.enemyBullets[bi];
       var ebRadius = eb.r || 4;
-      var bDist = p.r + ebRadius + 20;
+      var bDist = p.r + ebRadius + 20 + justRangeBonus;
       if (dist2(startX, startY, eb.x, eb.y) < bDist * bDist) {
         isJustDash = true;
         break;
@@ -122,7 +123,7 @@ export function dash() {
     for (var ei = 0; ei < rt.state.enemies.length; ei += 1) {
       var enemyThreat = rt.state.enemies[ei];
       var enemyRadius = enemyThreat.r || 10;
-      var eDist = p.r + enemyRadius + 15;
+      var eDist = p.r + enemyRadius + 15 + justRangeBonus;
       if (dist2(startX, startY, enemyThreat.x, enemyThreat.y) < eDist * eDist) {
         isJustDash = true;
         break;
@@ -142,10 +143,54 @@ export function dash() {
   var length = Math.hypot(dx, dy) || 1;
   var boundW = rt.ui ? rt.ui.width : rt.state.width;
   var boundH = rt.ui ? rt.ui.height : rt.state.height;
-  var dashDist = (typeof p.dashDistance === 'number' && p.dashDistance > 0) ? p.dashDistance : 140;
+  var baseDist = (typeof p.dashDistance === 'number' && p.dashDistance > 0) ? p.dashDistance : 140;
+  var dashDist = baseDist * (p.dashDistanceMult || 1);
   p.x = clamp(p.x + (dx / length) * dashDist, p.r, boundW - p.r);
   p.y = clamp(p.y + (dy / length) * dashDist, p.r, boundH - p.r);
   addDecal(p.x, p.y, 6, 8, 0.35, '#141210');
+
+  if (p.plasmaTrail && rt.state.plasmaZones) {
+    rt.state.plasmaZones.push({
+      x: (startX + p.x) / 2,
+      y: (startY + p.y) / 2,
+      r: 32,
+      timer: 1.5,
+      maxTimer: 1.5,
+      damageTickTimer: 0,
+      slow: p.plasmaTrail.slow || 0,
+      dps: p.plasmaTrail.dps || 40
+    });
+  }
+
+  if (p.dashDetonateKinetic && (p.kineticCharges || 0) > 0) {
+    var kCharges = p.kineticCharges;
+    p.kineticCharges = 0;
+    var blastRadius = 80 + kCharges * 6;
+    if (rt.state.enemyBullets) {
+      for (var kbi = rt.state.enemyBullets.length - 1; kbi >= 0; kbi -= 1) {
+        var kbEb = rt.state.enemyBullets[kbi];
+        if (dist2(p.x, p.y, kbEb.x, kbEb.y) <= blastRadius * blastRadius) {
+          rt.state.enemyBullets.splice(kbi, 1);
+        }
+      }
+    }
+    if (rt.state.enemies) {
+      for (var kei = 0; kei < rt.state.enemies.length; kei += 1) {
+        var emy = rt.state.enemies[kei];
+        var d2 = dist2(p.x, p.y, emy.x, emy.y);
+        if (d2 <= blastRadius * blastRadius) {
+          var ang = Math.atan2(emy.y - p.y, emy.x - p.x);
+          emy.x += Math.cos(ang) * (40 + kCharges * 5);
+          emy.y += Math.sin(ang) * (40 + kCharges * 5);
+          if (p.kineticKnockbackDamage) {
+            damageEnemy(emy, Math.max(15, Math.round(emy.maxHp * p.kineticKnockbackDamage)), { source: 'kinetic-blast', x: emy.x, y: emy.y });
+          }
+        }
+      }
+    }
+    pushFxEvent('emp', p.x, p.y, { radius: blastRadius });
+  }
+
   triggerHaptic(isJustDash ? [30, 20, 50] : [15]);
   var cooledHeat = isJustDash ? liveJustHeat(p) : 0;
   var cdMult = (typeof p.dashCooldownMult === 'number' && p.dashCooldownMult > 0) ? p.dashCooldownMult : 1;
@@ -156,11 +201,20 @@ export function dash() {
   } else if (p.dashIndependent && !(p.dashCooldown > 0)) {
     p.dashCooldown = dashRechargeCooldown(p) * cdMult;
   }
-  p.invulnerable = Math.max(p.invulnerable, 0.32);
+  p.invulnerable = Math.max(p.invulnerable, 0.32 + (p.dashInvulnBonus || 0));
   p.dashPulse = DASH_PULSE_DURATION;
   p.dashAmbushTimer = isJustDash ? 1.2 : 0.6;
   AudioFX.dash();
   if (isJustDash) {
+    if (p.justDashCooldownReset) {
+      var nowTime = rt.renderTime || 0;
+      if (!p._lastJustReset || (nowTime - p._lastJustReset >= 4.0)) {
+        p.dashCooldown = 0;
+        p.dashCharges = maxCharges;
+        p._lastJustReset = nowTime;
+        logEvent('PHASE BEARING // DASH COOLDOWN RESET');
+      }
+    }
     AudioFX.critHit();
     if (!isReducedMotion()) {
       rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.22);
@@ -271,6 +325,15 @@ export function triggerEmp() {
   if (rt.input) rt.input.empDrop = null;
   if ((p.energy || 0) < cost) return;
   p.energy -= cost;
+
+  if (p.surgeUnit) {
+    p.surgeUnit.active = true;
+    p.surgeUnit.timer = 5.0;
+    AudioFX.overdrive();
+    logEvent('OVERCLOCK SURGE // MAXIMUM FIRE RATE');
+    pushFxEvent('surge', p.x, p.y, { duration: 5.0 });
+    return;
+  }
 
   var boundW = rt.ui ? rt.ui.width : rt.state.width;
   var boundH = rt.ui ? rt.ui.height : rt.state.height;

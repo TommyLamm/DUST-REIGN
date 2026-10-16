@@ -21,6 +21,7 @@ export function stepPlayer(dt, frame) {
   if (moveLength > 0) {
     var moveScale = Math.min(1, moveLength);
     var speedMult = (typeof p.moveSpeedMult === 'number') ? p.moveSpeedMult : 1;
+    if ((p.speedBoostTimer || 0) > 0 && p.speedBoostMult) speedMult *= p.speedBoostMult;
     var effectiveSpeed = p.speed * (p.slowTimer > 0 ? 0.55 : 1) * speedMult;
     if (p.weaponMode === 'vanguard' && p.isCharging) {
       effectiveSpeed *= 0.65;

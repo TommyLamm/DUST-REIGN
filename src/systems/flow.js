@@ -1,12 +1,13 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
-import { writeBestScoreV2 } from '../core/meta-store.js';
+import { getCampaignStore, getHardcoreStore, readModdedBestScore, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
 import { applyRig } from '../data/rigs.js';
 import { finishAccountRun, startAccountRun } from '../platform/playroom.js';
 import { checkStageVictory, directorStartRun, evaluateStageStars } from './director.js';
+import { finalizeGhostOnClear, initGhostForRun } from './ghost.js';
 import { grantDeferredExtract } from './interlude.js';
 import { applyLoadout, onRunEnd } from './meta.js';
 import { calculateCombatRank } from './scoring.js';
@@ -146,12 +147,13 @@ export function beginRun() {
   AudioFX.unlock();
   AudioFX.setLowpass(0);
   rt.state.paused = false;
-  if (rt.state.mode === 'standard' || rt.state.mode === 'daily') {
+  if ((rt.state.mode === 'standard' || rt.state.mode === 'daily') && !rt.state.isModded) {
     rt.accountRun = startAccountRun();
   } else {
     rt.accountRun = null;
   }
   rt.accountRunSaved = false;
+  initGhostForRun(rt.state);
   if (rt.ui && rt.ui.startScreen) rt.ui.startScreen.hidden = true;
   if (rt.ui && rt.ui.runState) rt.ui.runState.textContent = 'LIVE';
   if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SIGNAL LIVE — KEEP MOVING';
@@ -227,8 +229,17 @@ export function restart() {
 }
 
 function recordBestScore() {
-  if (!rt.state || rt.state.score <= rt.state.bestScore) return;
-  rt.state.bestScore = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(rt.state.score || 0)));
+  if (!rt.state) return;
+  var finalScore = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(rt.state.score || 0)));
+  if (rt.state.isModded) {
+    var curModBest = readModdedBestScore();
+    if (finalScore > curModBest) {
+      writeModdedBestScore(finalScore);
+    }
+    return;
+  }
+  if (finalScore <= rt.state.bestScore) return;
+  rt.state.bestScore = finalScore;
   writeBestScoreV2(rt.state.bestScore);
 }
 
@@ -252,6 +263,20 @@ export function triggerGameOver(options) {
     rt.state.bannerText = 'SECTOR SECURED // MISSION COMPLETE';
     if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SECTOR SECURED // MISSION COMPLETE';
     if (typeof AudioFX.blast === 'function') AudioFX.blast();
+
+    var stageId = rt.state.stageId || (rt.state.stageConfig && rt.state.stageConfig.id);
+    if (stageId && (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore')) {
+      var clearTime = rt.state.stageElapsed || 0;
+      var isNewPb = false;
+      if (rt.state.mode === 'campaign') {
+        var campRecord = getCampaignStore().stages[stageId];
+        isNewPb = !campRecord || !campRecord.bestTime || clearTime <= campRecord.bestTime;
+      } else {
+        var hcRecord = getHardcoreStore().operations[stageId];
+        isNewPb = !hcRecord || !hcRecord.bestTime || clearTime <= hcRecord.bestTime;
+      }
+      finalizeGhostOnClear(stageId, clearTime, isNewPb);
+    }
   }
   rt.state.over = true;
   grantDeferredExtract(rt.state);
@@ -260,7 +285,9 @@ export function triggerGameOver(options) {
   var previousBest = rt.state.bestScore;
   if (rt.state.mode === 'standard' || rt.state.mode === 'daily') {
     recordBestScore();
-    finishAccountRun();
+    if (!rt.state.isModded) {
+      finishAccountRun();
+    }
   }
   rt.input.mouse.down = false;
   rt.state.isNewRecord = (rt.state.score > previousBest && rt.state.score > 0);

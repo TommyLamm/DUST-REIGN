@@ -166,6 +166,17 @@ export function stepWaveClock(dt, frame) {
   p.dashPulse = Math.max(0, p.dashPulse - dt);
   p.dashAmbushTimer = Math.max(0, (p.dashAmbushTimer || 0) - dt);
   p.overdrive = Math.max(0, p.overdrive - dt);
+  if (p.reactiveMicroEmp && (p.reactiveMicroEmp.timer || 0) > 0) {
+    p.reactiveMicroEmp.timer = Math.max(0, p.reactiveMicroEmp.timer - dt);
+  }
+  if (p.surgeUnit && p.surgeUnit.active) {
+    p.surgeUnit.timer = Math.max(0, p.surgeUnit.timer - dt);
+    if (p.surgeUnit.timer <= 0) p.surgeUnit.active = false;
+  }
+  if ((p.speedBoostTimer || 0) > 0) {
+    p.speedBoostTimer = Math.max(0, p.speedBoostTimer - dt);
+    if (p.speedBoostTimer <= 0) p.speedBoostMult = 1;
+  }
   if (p.slowTimer > 0) p.slowTimer -= dt;
   rt.state.comboTimer = Math.max(0, rt.state.comboTimer - dt);
   if (rt.state.comboTimer === 0) rt.state.combo = 0;

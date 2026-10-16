@@ -336,11 +336,22 @@ export function stepBullets(dt, frame) {
           }
           if (!b.hits) b.hits = [];
           b.hits.push(enemy);
+          b.hasHitEnemy = true;
+          p.consecutiveHits = (p.consecutiveHits || 0) + 1;
+
+          var res = p.resonanceFireControl;
+          var streakCritBonus = 0;
+          if (res) {
+            var streak = p.consecutiveHits || 0;
+            if (streak >= 6) streakCritBonus = (res.tier >= 2 ? 0.15 : 0.10);
+          }
 
           var isCrit = false;
           if (b.forceCrit || b.ambush) {
             isCrit = true;
           } else if (p.highCaliber && rng('combat') < 0.20) {
+            isCrit = true;
+          } else if (streakCritBonus > 0 && rng('combat') < streakCritBonus) {
             isCrit = true;
           } else if (enemy.vx !== undefined && enemy.vy !== undefined) {
             var bSpeed = Math.hypot(b.vx, b.vy);
@@ -352,10 +363,14 @@ export function stepBullets(dt, frame) {
           }
 
           var critMult = p.highCaliber ? 2.2 : 1.75;
+          if (res && res.tier >= 2 && (p.consecutiveHits || 0) >= 12) {
+            critMult += 0.35;
+          }
           var damageDealt = isCrit ? b.damage * critMult : b.damage;
           if (b.isBreacher && (p.mastery || 0) >= 2 && dist2(b.x, b.y, p.x, p.y) <= 120 * 120) {
             damageDealt *= 1.4;
           }
+          rt.state.lastHitWasCrit = isCrit;
           damageEnemy(enemy, damageDealt, { source: 'bullet', crit: isCrit, bullet: b, x: b.x, y: b.y });
           if (b.isBreacher && (p.mastery || 0) >= 3) applyEnemySlow(enemy, 0.4, 0.7);
 
@@ -515,6 +530,11 @@ export function stepBullets(dt, frame) {
 
           if (b.pierce > 0) {
             b.pierce -= 1;
+            if (p.shatterArmorPierced && enemy && !enemy.shattered) {
+              enemy.shattered = true;
+              enemy.damageTakenMult = (enemy.damageTakenMult || 1) * 1.30;
+              spawnParticles(enemy.x, enemy.y, '#5be7ff', 8, 120, 2);
+            }
             if (p.kineticShrapnel && !b.isShrapnel) {
               spawnKineticShrapnel(b, enemy.x, enemy.y);
             }
@@ -555,6 +575,9 @@ export function stepBullets(dt, frame) {
     }
 
     if (hitSomething || b.life <= 0 || b.x < -60 || b.y < -60 || b.x > boundW + 60 || b.y > boundH + 60) {
+      if (!b.hasHitEnemy && p.resonanceFireControl) {
+        p.consecutiveHits = 0;
+      }
       if (b.vanguardBurst) burstVanguard(b);
       rt.state.bullets.splice(bi, 1);
     }

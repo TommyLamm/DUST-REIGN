@@ -794,6 +794,137 @@ function drawTurret(ctx, p, flashing, reduced) {
   drawWeapon(ctx, p, kick, flashing);
 }
 
+function drawCosmeticTrail(ctx, p, fx, reduced) {
+  var trail = p.selectedTrail;
+  if (!trail || trail === 'default') return;
+  var isMoving = (fx.moved || 0) > 0.8 || Math.hypot(p.vx || 0, p.vy || 0) > 15;
+  var moveAng = (fx.moveAng != null ? fx.moveAng : (p.aim || 0));
+  var rearAng = moveAng + Math.PI;
+  var t = rt.renderTime || 0;
+
+  if (trail === 'trail_amber_jet') {
+    if (!isMoving) return;
+    ctx.save();
+    var flameLen = 14 + Math.sin(t * 30) * 5;
+    var ox = p.x + Math.cos(rearAng) * (p.r * 0.8);
+    var oy = p.y + Math.sin(rearAng) * (p.r * 0.8);
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = '#ff9e3b';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + Math.cos(rearAng) * flameLen, oy + Math.sin(rearAng) * flameLen);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#fff275';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + Math.cos(rearAng) * (flameLen * 0.6), oy + Math.sin(rearAng) * (flameLen * 0.6));
+    ctx.stroke();
+    ctx.restore();
+  } else if (trail === 'trail_plasma_dual') {
+    if (!isMoving) return;
+    ctx.save();
+    var perp = rearAng + Math.PI / 2;
+    var spacing = p.r * 0.55;
+    var beamLen = 18 + Math.sin(t * 24) * 4;
+    var leftX = p.x + Math.cos(rearAng) * (p.r * 0.7) + Math.cos(perp) * spacing;
+    var leftY = p.y + Math.sin(rearAng) * (p.r * 0.7) + Math.sin(perp) * spacing;
+    var rightX = p.x + Math.cos(rearAng) * (p.r * 0.7) - Math.cos(perp) * spacing;
+    var rightY = p.y + Math.sin(rearAng) * (p.r * 0.7) - Math.sin(perp) * spacing;
+
+    ctx.globalAlpha = 0.8;
+    ctx.strokeStyle = '#00f3ff';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(leftX, leftY);
+    ctx.lineTo(leftX + Math.cos(rearAng) * beamLen, leftY + Math.sin(rearAng) * beamLen);
+    ctx.moveTo(rightX, rightY);
+    ctx.lineTo(rightX + Math.cos(rearAng) * beamLen, rightY + Math.sin(rearAng) * beamLen);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(leftX, leftY);
+    ctx.lineTo(leftX + Math.cos(rearAng) * (beamLen * 0.5), leftY + Math.sin(rearAng) * (beamLen * 0.5));
+    ctx.moveTo(rightX, rightY);
+    ctx.lineTo(rightX + Math.cos(rearAng) * (beamLen * 0.5), rightY + Math.sin(rearAng) * (beamLen * 0.5));
+    ctx.stroke();
+    ctx.restore();
+  } else if (trail === 'trail_singularity') {
+    if (!isMoving) return;
+    ctx.save();
+    var singR = (p.r * 0.5) + (Math.sin(t * 8) * 3);
+    var sx = p.x + Math.cos(rearAng) * (p.r * 1.1);
+    var sy = p.y + Math.sin(rearAng) * (p.r * 1.1);
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = '#c084fc';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.arc(sx, sy, singR, 0, TAU);
+    ctx.stroke();
+    ctx.strokeStyle = '#7e22ce';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.arc(sx, sy, singR * 0.5, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawCosmeticSkin(ctx, p, fx, flashing, reduced) {
+  var skin = p.selectedSkin;
+  if (!skin || skin === 'default') return;
+  var t = rt.renderTime || 0;
+
+  if (skin === 'paint_neon_dusk') {
+    var pulse = reduced ? 0.6 : (0.5 + 0.3 * Math.sin(t * 6));
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.strokeStyle = '#ff9e3b';
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(-p.r * 0.45, -p.r * 0.45, p.r * 0.9, p.r * 0.9);
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r * 0.7, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  } else if (skin === 'paint_storm_surge') {
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.strokeStyle = (Math.sin(t * 20) > 0) ? '#00f3ff' : '#a855f7';
+    ctx.lineWidth = 1.5;
+    var a1 = (t * 4) % TAU;
+    var a2 = a1 + 1.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r * 0.65, a1, a2);
+    ctx.stroke();
+    var a3 = a1 + Math.PI;
+    ctx.beginPath();
+    ctx.arc(0, 0, p.r * 0.65, a3, a3 + 1.2);
+    ctx.stroke();
+    ctx.restore();
+  } else if (skin === 'paint_apex_gold') {
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-p.r * 0.5, -p.r * 0.2);
+    ctx.lineTo(p.r * 0.5, -p.r * 0.2);
+    ctx.moveTo(-p.r * 0.5, p.r * 0.2);
+    ctx.lineTo(p.r * 0.5, p.r * 0.2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 function drawMech(ctx, p, fx, flashing, reduced) {
   var move = fx.moveAng == null ? p.aim : fx.moveAng;
   ctx.save();
@@ -803,6 +934,7 @@ function drawMech(ctx, p, fx, flashing, reduced) {
   ctx.save();
   ctx.rotate(fx.aim != null ? fx.aim : (p.aim || 0));
   drawTurret(ctx, p, flashing, reduced);
+  drawCosmeticSkin(ctx, p, fx, flashing, reduced);
   ctx.restore();
 }
 
@@ -967,6 +1099,7 @@ export function drawPlayer(ctx) {
   noteChrono(p, fx);
   noteFoot(p, fx);
   if (p.dashPulse > 0) drawDashRing(ctx, p);
+  drawCosmeticTrail(ctx, p, fx, reduced);
   var i;
   for (i = 0; i < fx.dashTrail.length; i += 1) {
     var ghost = fx.dashTrail[i];
