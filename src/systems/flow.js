@@ -4,16 +4,18 @@ import { rt } from '../core/runtime.js';
 import { writeBestScoreV2 } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
+import { applyRig } from '../data/rigs.js';
 import { finishAccountRun, startAccountRun } from '../platform/playroom.js';
-import { directorStartRun } from './director.js';
+import { checkStageVictory, directorStartRun, evaluateStageStars } from './director.js';
 import { grantDeferredExtract } from './interlude.js';
 import { applyLoadout, onRunEnd } from './meta.js';
 import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
 import { updateDomUi } from '../ui/hud.js';
+import { syncCombatLayout } from '../ui/dom.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
-export { calculateCombatRank };
+export { calculateCombatRank, checkStageVictory, evaluateStageStars };
 
 var STORM_ANGLE = 35 * Math.PI / 180;
 var STORM_POWER = 38;
@@ -38,6 +40,14 @@ export function livingSovereign() {
 
 export function isStormFront() {
   if (!rt.state) return false;
+  if (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore') {
+    if (!rt.state.over && !rt.state.paused && rt.renderDt > 0) {
+      if (rt.state._lastVictoryCheckTime !== rt.renderTime) {
+        rt.state._lastVictoryCheckTime = rt.renderTime;
+        checkStageVictory(rt.state, rt.renderDt);
+      }
+    }
+  }
   if (livingSovereign()) return true;
   return rt.state.waveTime >= WAVE_LENGTH - stormSeconds();
 }
@@ -56,16 +66,105 @@ export function stormWind() {
 export function beginRun() {
   if (!rt.state || rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)) return;
   applyLoadout(rt.state);
+
+  var state = rt.state;
+  var stageConfig = state.stageConfig;
+  if (state.mode === 'campaign' || state.mode === 'hardcore') {
+    if (stageConfig) {
+      var lockedRig = stageConfig.lockedRig || stageConfig.fixedRig;
+      if (lockedRig) {
+        applyRig(state.player, lockedRig);
+        state.rigId = lockedRig;
+        state.player.rig = lockedRig;
+      }
+      var lockedWeapon = stageConfig.lockedWeapon || stageConfig.fixedWeapon;
+      if (lockedWeapon) {
+        state.weaponId = lockedWeapon;
+        state.player.weapon = lockedWeapon;
+        state.player.weaponMode = lockedWeapon;
+      }
+      if (stageConfig.maxHpCap) {
+        state.player.maxHp = Math.min(state.player.maxHp, stageConfig.maxHpCap);
+        state.player.hp = state.player.maxHp;
+      }
+      state.stageElapsed = 0;
+      state.stageCleared = false;
+      state.stageStars = { star1: false, star2: false, star3: false };
+      state.scrapCollectedInStage = 0;
+      state.damageTakenInStage = 0;
+      if (stageConfig.type === 'beacon_defense' || stageConfig.goalType === 'beacon_defense') {
+        state.beaconMaxHp = stageConfig.beaconMaxHp || 1000;
+        state.beaconHp = state.beaconMaxHp;
+        var bw = (rt.ui && rt.ui.width) || state.width || 960;
+        var bh = (rt.ui && rt.ui.height) || state.height || 640;
+        state.beacon = {
+          x: bw / 2,
+          y: bh / 2,
+          r: stageConfig.beaconRadius || 40,
+          hp: state.beaconHp,
+          maxHp: state.beaconMaxHp,
+          captureRadius: stageConfig.captureRadius || 120
+        };
+      }
+      if (stageConfig.type === 'vip_hunt' || stageConfig.goalType === 'vip_hunt') {
+        state.vipList = [];
+        var vipCount = stageConfig.targetQuota || 2;
+        var vw = (rt.ui && rt.ui.width) || state.width || 960;
+        var vh = (rt.ui && rt.ui.height) || state.height || 640;
+        var kind = stageConfig.id === 'stage_1_3' ? 'brute' :
+                   stageConfig.id === 'stage_2_2' ? 'elite' :
+                   stageConfig.id === 'stage_3_3' ? 'burrower' : (stageConfig.vipKind || 'brute');
+        for (var vi = 0; vi < vipCount; vi += 1) {
+          var angle = (vi / vipCount) * Math.PI * 2 + Math.PI / 4;
+          var dist = 220;
+          var vipEnemy = {
+            kind: kind,
+            x: vw / 2 + Math.cos(angle) * dist,
+            y: vh / 2 + Math.sin(angle) * dist,
+            r: kind === 'burrower' ? 20 : 22,
+            hp: kind === 'burrower' ? 280 : 380,
+            maxHp: kind === 'burrower' ? 280 : 380,
+            speed: 120,
+            damage: 24,
+            score: 300,
+            isVip: true,
+            color: '#f43f5e',
+            touchCooldown: 0,
+            shootCooldown: 1.0 + vi * 0.5
+          };
+          if (kind === 'elite') {
+            vipEnemy.affix = 'command';
+          }
+          state.enemies.push(vipEnemy);
+          state.vipList.push(vipEnemy);
+        }
+      }
+    }
+  }
+
   directorStartRun(rt.state);
   AudioFX.unlock();
   AudioFX.setLowpass(0);
   rt.state.paused = false;
-  rt.accountRun = startAccountRun();
+  if (rt.state.mode === 'standard' || rt.state.mode === 'daily') {
+    rt.accountRun = startAccountRun();
+  } else {
+    rt.accountRun = null;
+  }
   rt.accountRunSaved = false;
   if (rt.ui && rt.ui.startScreen) rt.ui.startScreen.hidden = true;
   if (rt.ui && rt.ui.runState) rt.ui.runState.textContent = 'LIVE';
   if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SIGNAL LIVE — KEEP MOVING';
   if (rt.ui && rt.ui.canvas && rt.ui.canvas.focus) rt.ui.canvas.focus();
+  syncCombatLayout();
+  if (rt.state && rt.state.player && rt.ui && rt.ui.width) {
+    rt.state.player.x = rt.ui.width / 2;
+    rt.state.player.y = rt.ui.height / 2;
+    if (rt.input && rt.input.mouse) {
+      rt.input.mouse.x = rt.ui.width / 2 + 100;
+      rt.input.mouse.y = rt.ui.height / 2;
+    }
+  }
   spawnBarrels();
   spawnSpires();
 }
@@ -94,6 +193,11 @@ export function restart() {
   if (!rt.ui) return;
   AudioFX.unlock();
   AudioFX.setLowpass(0);
+  if (rt.ui.startScreen) rt.ui.startScreen.hidden = false;
+  if (rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+  if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = true;
+  if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
+  syncCombatLayout();
   rt.state = makeState(rt.ui.width, rt.ui.height);
   rt.state.paused = true;
   rt.state.player.x = rt.ui.width / 2;
@@ -113,10 +217,6 @@ export function restart() {
   if (rt.ui.overlay) rt.ui.overlay.hidden = true;
   if (rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
   resetAbandonConfirm();
-  if (rt.ui.startScreen) rt.ui.startScreen.hidden = false;
-  if (rt.ui.gameOver) rt.ui.gameOver.hidden = true;
-  if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = true;
-  if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   var tel = typeof document !== 'undefined' ? document.getElementById('runTelemetry') : null;
   if (tel && tel.parentNode) tel.parentNode.removeChild(tel);
   var breakdown = typeof document !== 'undefined' ? document.getElementById('scoreBreakdown') : null;
@@ -138,19 +238,40 @@ export function extractRun() {
   triggerGameOver();
 }
 
-export function triggerGameOver() {
+export function triggerGameOver(options) {
   if (!rt.state || rt.state.over) return;
-  rt.state.player.hp = 0;
+  var isVictory = Boolean(options && options.victory);
+  if (!isVictory) {
+    rt.state.player.hp = 0;
+  } else {
+    rt.state.stageCleared = true;
+    rt.state.stageVictory = true;
+    if (options && options.stars) rt.state.stageStars = options.stars;
+    if (options && options.stageId) rt.state.stageId = options.stageId;
+    rt.state.banner = 3.5;
+    rt.state.bannerText = 'SECTOR SECURED // MISSION COMPLETE';
+    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SECTOR SECURED // MISSION COMPLETE';
+    if (typeof AudioFX.blast === 'function') AudioFX.blast();
+  }
   rt.state.over = true;
   grantDeferredExtract(rt.state);
   onRunEnd(rt.state);
   AudioFX.setLowpass(0);
   var previousBest = rt.state.bestScore;
-  recordBestScore();
-  finishAccountRun();
+  if (rt.state.mode === 'standard' || rt.state.mode === 'daily') {
+    recordBestScore();
+    finishAccountRun();
+  }
   rt.input.mouse.down = false;
   rt.state.isNewRecord = (rt.state.score > previousBest && rt.state.score > 0);
   rt.state.evalRank = calculateCombatRank(rt.state.wave, rt.state.score, rt.state.stats);
   rt.state.deathSequenceTimer = 0.55;
   if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+}
+
+export function stepStageFlow(dt) {
+  if (!rt.state || rt.state.paused || rt.state.over) return;
+  if (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore') {
+    checkStageVictory(rt.state, dt);
+  }
 }

@@ -3,7 +3,80 @@ import { createCasingPool, createDecalPool } from './pools.js';
 import { rng } from './rng.js';
 
 export function makeState(width, height) {
-  return {
+  var player = {
+    x: (width || 960) / 2,
+    y: (height || 640) / 2,
+    vx: 0,
+    vy: 0,
+    r: 15,
+    speed: 235,
+    hp: 100,
+    maxHp: 100,
+    energy: 50,
+    maxEnergy: 100,
+    damage: 26,
+    fireRate: 0.18,
+    cooldown: 0,
+    bulletSpeed: 700,
+    bulletSize: 4,
+    xpMult: 1,
+    aim: 0,
+    invulnerable: 0,
+    dashCooldown: 0,
+    dashPulse: 0,
+    overdrive: 0,
+    recoil: 0,
+    pierce: 0,
+    bounces: 0,
+    shockwaveDash: false,
+    teslaCoil: false,
+    reactiveArmor: false,
+    highCaliber: false,
+    staticTempest: false,
+    kineticShrapnel: false,
+    overchargeRetaliation: false,
+    vulcanMeltdown: false,
+    gravitonBulwark: false,
+    plasmaMeltdown: false,
+    magnetRadius: 165,
+    slowTimer: 0,
+    dashAmbushTimer: 0,
+    overdriveDurationBonus: 0,
+    weaponMode: 'standard',
+    chargeTime: 0,
+    isCharging: false,
+    mastery: 0,
+    dashCharges: 1,
+    dashChargesMax: 1,
+    dashHeat: 0,
+    dashHeatTimer: 0,
+    damageTakenMult: 1,
+    moveSpeedMult: 1,
+    empCost: 50,
+    empRadiusBonus: 0,
+    repairBonus: 0,
+    batteryMax: 100,
+    batteryRegen: 2,
+    phoenix: false,
+    shield: 0
+  };
+
+  var _invuln = 0;
+  Object.defineProperty(player, 'invulnerable', {
+    get: function () { return _invuln; },
+    set: function (val) {
+      if (player._capNextInvuln !== undefined && val > player._capNextInvuln) {
+        _invuln = player._capNextInvuln;
+      } else {
+        _invuln = val;
+      }
+      player._capNextInvuln = undefined;
+    },
+    configurable: true,
+    enumerable: true
+  });
+
+  var state = {
     width: width || 960,
     height: height || 640,
     running: true,
@@ -60,6 +133,16 @@ export function makeState(width, height) {
     rigId: 'scrapper',
     weaponId: 'standard',
     daily: null,
+    mode: 'standard',
+    stageConfig: null,
+    stageElapsed: 0,
+    stageCleared: false,
+    stageStars: { star1: false, star2: false, star3: false },
+    beaconHp: 1000,
+    beaconMaxHp: 1000,
+    vipList: [],
+    scrapCollectedInStage: 0,
+    damageTakenInStage: 0,
     scoreBreakdown: { kill: 0, bounty: 0, storm: 0, graze: 0, repair: 0, wave: 0, flawless: 0, boss: 0, style: 0, contract: 0, overtime: 0, extract: 0 },
     waveDamageTaken: 0,
     flawlessStreak: 0,
@@ -82,63 +165,7 @@ export function makeState(width, height) {
     casingIndex: 0,
     decals: createDecalPool(),
     decalIndex: 0,
-    player: {
-      x: (width || 960) / 2,
-      y: (height || 640) / 2,
-      vx: 0,
-      vy: 0,
-      r: 15,
-      speed: 235,
-      hp: 100,
-      maxHp: 100,
-      energy: 50,
-      maxEnergy: 100,
-      damage: 26,
-      fireRate: 0.18,
-      cooldown: 0,
-      bulletSpeed: 700,
-      bulletSize: 4,
-      xpMult: 1,
-      aim: 0,
-      invulnerable: 0,
-      dashCooldown: 0,
-      dashPulse: 0,
-      overdrive: 0,
-      recoil: 0,
-      pierce: 0,
-      bounces: 0,
-      shockwaveDash: false,
-      teslaCoil: false,
-      reactiveArmor: false,
-      highCaliber: false,
-      staticTempest: false,
-      kineticShrapnel: false,
-      overchargeRetaliation: false,
-      vulcanMeltdown: false,
-      gravitonBulwark: false,
-      plasmaMeltdown: false,
-      magnetRadius: 165,
-      slowTimer: 0,
-      dashAmbushTimer: 0,
-      overdriveDurationBonus: 0,
-      weaponMode: 'standard',
-      chargeTime: 0,
-      isCharging: false,
-      mastery: 0,
-      dashCharges: 1,
-      dashChargesMax: 1,
-      dashHeat: 0,
-      dashHeatTimer: 0,
-      damageTakenMult: 1,
-      moveSpeedMult: 1,
-      empCost: 50,
-      empRadiusBonus: 0,
-      repairBonus: 0,
-      batteryMax: 100,
-      batteryRegen: 2,
-      phoenix: false,
-      shield: 0
-    },
+    player: player,
     bullets: [],
     enemyBullets: [],
     enemies: [],
@@ -156,4 +183,21 @@ export function makeState(width, height) {
     upgradeChoices: [],
     acquiredUpgrades: []
   };
+
+  var _xp = 0;
+  Object.defineProperty(state, 'xp', {
+    get: function () { return _xp; },
+    set: function (val) {
+      if (typeof val === 'number') {
+        if (val > _xp) {
+          state.scrapCollectedInStage = (state.scrapCollectedInStage || 0) + 1;
+        }
+        _xp = val;
+      }
+    },
+    configurable: true,
+    enumerable: true
+  });
+
+  return state;
 }

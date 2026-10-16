@@ -9,7 +9,7 @@ import { clamp, dist2 } from '../core/utils.js';
 import { triggerReactiveArmor } from './abilities.js';
 import { onEnemyHit, onKill, onLethal, onPlayerDamaged } from './card-effects.js';
 import { noteContractEvent } from './contracts.js';
-import { onBossDefeated } from './director.js';
+import { checkStageVictory, onBossDefeated } from './director.js';
 import { rollDrops } from './drops.js';
 import { filterEnemyDamage } from './sim/enemy-defense.js';
 import { isStormFront, triggerGameOver } from './flow.js';
@@ -55,6 +55,13 @@ export function damagePlayer(amount, source) {
   if (p.invulnerable > 0) return 0;
   var requested = Number(amount);
   if (!(requested > 0)) return 0;
+
+  if (rt.state.stageConfig && rt.state.stageConfig.fixedDmgPercent) {
+    requested = Math.round(p.maxHp * rt.state.stageConfig.fixedDmgPercent);
+  } else if (rt.state.mode === 'hardcore') {
+    requested = Math.round(p.maxHp * 0.50);
+  }
+
   var mult = (typeof p.damageTakenMult === 'number') ? p.damageTakenMult : 1;
   if (p.fortressProtocol && (p.energy || 0) >= 50) mult *= 0.75;
   var remaining = requested * mult;
@@ -80,6 +87,13 @@ export function damagePlayer(amount, source) {
   }
   if (isStormFront()) rt.state.stormHurt = true;
   rt.state.waveDamageTaken = (rt.state.waveDamageTaken || 0) + applied;
+  rt.state.damageTakenInStage = (rt.state.damageTakenInStage || 0) + applied;
+
+  if (rt.state.mode === 'hardcore' || (rt.state.stageConfig && (rt.state.stageConfig.shortInvuln || rt.state.stageConfig.fixedDmgPercent))) {
+    p.invulnerable = 0.08;
+    p._capNextInvuln = 0.08;
+  }
+
   var info = { amount: applied, requested: requested, source: source || '', saved: saved };
   onPlayerDamaged(p, info);
   noteContractEvent('player-damaged', info);
@@ -140,6 +154,26 @@ export function damageEnemy(e, amount, info) {
   return applied;
 }
 
+function processEnemyDrops(e) {
+  if (!canDropLoot(e)) return;
+  var orbs = rt.state.orbs;
+  var prevLen = orbs ? orbs.length : 0;
+  rollDrops(e);
+  if (rt.state && rt.state.stageConfig && rt.state.stageConfig.famine && orbs) {
+    var p = rt.state.player;
+    var isFullHp = p && p.hp >= p.maxHp;
+    for (var i = orbs.length - 1; i >= prevLen; i -= 1) {
+      if (orbs[i].kind === 'repair') {
+        if (isFullHp) {
+          orbs.splice(i, 1);
+        } else if (rng('loot') < 0.75) {
+          orbs.splice(i, 1);
+        }
+      }
+    }
+  }
+}
+
 export function killEnemy(enemyOrIndex, cause) {
   var index;
   var e;
@@ -176,7 +210,7 @@ export function killEnemy(enemyOrIndex, cause) {
     if (!isReducedMotion()) {
       rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.055);
     }
-    if (canDropLoot(e)) rollDrops(e);
+    processEnemyDrops(e);
     addDecal(e.x, e.y, 28, 20, 0.45, '#1b1715');
     spawnParticles(e.x, e.y, '#e69535', 40, 260, 5);
     spawnParticles(e.x, e.y, '#ff4d2e', 25, 200, 4);
@@ -215,7 +249,24 @@ export function killEnemy(enemyOrIndex, cause) {
       spawnParticles(e.x, e.y, '#9d4edd', 22, 190, 3.5);
     }
   }
-  if (!isTitan && canDropLoot(e)) rollDrops(e);
+  if (e.isVip || (rt.state.vipList && rt.state.vipList.indexOf(e) !== -1)) {
+    AudioFX.blast();
+    triggerHaptic([50, 60, 80]);
+    rt.state.shake = Math.max(rt.state.shake, 18);
+    logEvent('VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED');
+    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'VIP TARGET NEUTRALIZED // EMP DETONATION';
+    if (rt.state.enemies) {
+      for (var fIdx = rt.state.enemies.length - 1; fIdx >= 0; fIdx -= 1) {
+        var foe = rt.state.enemies[fIdx];
+        if (foe && !foe.isBoss && foe !== e && !foe.isVip) {
+          foe.empTimer = Math.max(foe.empTimer || 0, 4.0);
+          foe.hp -= 80;
+          if (foe.hp <= 0) killEnemy(foe, 'emp');
+        }
+      }
+    }
+  }
+  if (!isTitan) processEnemyDrops(e);
   spawnParticles(e.x, e.y, e.color, elite ? 26 : (e.kind === 'brute' || e.kind === 'artillery') ? 22 : 11, elite ? 260 : (e.kind === 'brute' || e.kind === 'artillery') ? 220 : 150, elite ? 5 : (e.kind === 'brute' || e.kind === 'artillery') ? 5 : 3);
   rt.state.shake = Math.max(rt.state.shake, elite ? 10 : (e.kind === 'brute' || e.kind === 'artillery') ? 7 : 3);
   pushFxEvent('kill', e.x, e.y, { kind: e.kind, color: e.color || '', elite: elite ? 1 : 0, affix: e.affix || '', hp: e.hp, ref: e });
@@ -224,6 +275,9 @@ export function killEnemy(enemyOrIndex, cause) {
   noteContractEvent('kill', killInfo);
   noteMetaEvent('kill', killInfo);
   if (e.isBoss) onBossDefeated(e);
+  if (rt.state && (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore')) {
+    checkStageVictory(rt.state, 0);
+  }
 }
 
 export function explodeCore(core, index) {

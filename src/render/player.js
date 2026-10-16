@@ -577,15 +577,21 @@ function drawTurret(ctx, p, flashing, reduced) {
   var kick = (p.recoil || 0) * 3.5;
   var rigId = (rt.state && rt.state.rigId) || 'scrapper';
 
-  // Base armored chassis
-  hullPath(ctx, r);
-  ctx.fillStyle = flashing ? '#ffffff' : '#122824';
+  // Base armored chassis with dark contrast rim
+  ctx.save();
+  hullPath(ctx, r + 1.2);
+  ctx.fillStyle = 'rgba(4, 6, 8, 0.75)';
   ctx.fill();
-  outline(ctx, 1.8);
+  ctx.restore();
+
+  hullPath(ctx, r);
+  ctx.fillStyle = flashing ? '#ffffff' : '#102420';
+  ctx.fill();
+  outline(ctx, 2.2);
 
   if (!flashing) {
     // Main raised deck armor plates
-    ctx.fillStyle = '#1e4840';
+    ctx.fillStyle = '#1c443c';
     ctx.beginPath();
     ctx.moveTo(r * 0.6, 0);
     ctx.lineTo(r * 0.24, r * 0.46);
@@ -597,9 +603,9 @@ function drawTurret(ctx, p, flashing, reduced) {
     ctx.closePath();
     ctx.fill();
 
-    // Sloped edge bevel highlights
-    ctx.strokeStyle = '#327265';
-    ctx.lineWidth = 1.4;
+    // Sloped edge bevel highlights (crisp edge contrast)
+    ctx.strokeStyle = '#5eead4';
+    ctx.lineWidth = 1.6;
     ctx.stroke();
 
     // Shoulder pauldron armor plates with rig-specific styling
@@ -627,7 +633,7 @@ function drawTurret(ctx, p, flashing, reduced) {
     // Rig-specific visual accents on shoulders
     if (rigId === 'strider') {
       // Swept aerodynamic fins with cyan racing trim
-      ctx.fillStyle = '#5be7ff';
+      ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
       ctx.moveTo(-r * 0.32, r * 0.42);
       ctx.lineTo(-r * 0.52, r * 0.56);
@@ -642,23 +648,23 @@ function drawTurret(ctx, p, flashing, reduced) {
       ctx.fill();
     } else if (rigId === 'bulwark') {
       // Reinforced heavy pauldron slab & amber hazard stripes
-      ctx.fillStyle = '#d49b38';
+      ctx.fillStyle = '#fbbf24';
       ctx.fillRect(-r * 0.22, r * 0.26, 4, 8);
       ctx.fillRect(-r * 0.08, r * 0.28, 4, 8);
       ctx.fillRect(-r * 0.22, -r * 0.34 - 8, 4, 8);
       ctx.fillRect(-r * 0.08, -r * 0.36 - 8, 4, 8);
     } else if (rigId === 'salvager') {
       // Scavenger induction coils with copper windings
-      ctx.fillStyle = '#c87842';
+      ctx.fillStyle = '#fb923c';
       ctx.fillRect(-r * 0.2, r * 0.28, 6, 5);
       ctx.fillRect(-r * 0.2, -r * 0.33, 6, 5);
-      ctx.strokeStyle = '#e29e68';
+      ctx.strokeStyle = '#fdba74';
       ctx.lineWidth = 1;
       ctx.strokeRect(-r * 0.2, r * 0.28, 6, 5);
       ctx.strokeRect(-r * 0.2, -r * 0.33, 6, 5);
     } else {
       // Scrapper: Industrial hazard markings
-      ctx.fillStyle = '#d49b38';
+      ctx.fillStyle = '#fbbf24';
       ctx.fillRect(-r * 0.18, r * 0.28, 3, 6);
       ctx.fillRect(-r * 0.06, r * 0.3, 3, 6);
       ctx.fillRect(-r * 0.18, -r * 0.34 - 6, 3, 6);
@@ -686,8 +692,8 @@ function drawTurret(ctx, p, flashing, reduced) {
     ctx.arc(r * 0.46, 0, 1.2, 0, TAU);
     ctx.fill();
 
-    // Armored Cockpit Canopy Visor
-    ctx.fillStyle = '#10302b';
+    // Armored Cockpit Canopy Visor (high contrast)
+    ctx.fillStyle = '#061614';
     ctx.beginPath();
     ctx.moveTo(r * 0.34, 0);
     ctx.lineTo(r * 0.06, r * 0.2);
@@ -696,12 +702,12 @@ function drawTurret(ctx, p, flashing, reduced) {
     ctx.lineTo(r * 0.06, -r * 0.2);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#0e1c19';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#040d0c';
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
-    // Crystalline visor glow
-    ctx.fillStyle = PALETTE.emissive.player;
+    // Crystalline visor glow (high optical contrast)
+    ctx.fillStyle = '#2dd4bf';
     ctx.beginPath();
     ctx.moveTo(r * 0.3, 0);
     ctx.lineTo(r * 0.06, r * 0.15);
@@ -711,18 +717,29 @@ function drawTurret(ctx, p, flashing, reduced) {
     ctx.closePath();
     ctx.fill();
 
-    // Canopy specular gloss glint
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = 1.5;
+    // Inner bright optic lens
+    ctx.fillStyle = '#a7f3d0';
     ctx.beginPath();
-    ctx.moveTo(r * 0.26, -r * 0.05);
-    ctx.lineTo(r * 0.08, -r * 0.15);
+    ctx.moveTo(r * 0.24, 0);
+    ctx.lineTo(r * 0.06, r * 0.1);
+    ctx.lineTo(-r * 0.06, r * 0.06);
+    ctx.lineTo(-r * 0.06, -r * 0.06);
+    ctx.lineTo(r * 0.06, -r * 0.1);
+    ctx.closePath();
+    ctx.fill();
+
+    // Canopy specular gloss glint
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(r * 0.26, -r * 0.04);
+    ctx.lineTo(r * 0.08, -r * 0.14);
     ctx.stroke();
 
-    // Internal HUD targeting ocular diode
+    // Internal HUD targeting ocular diode (radiant center)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(r * 0.12, 0, 1.8, 0, TAU);
+    ctx.arc(r * 0.12, 0, 2.0, 0, TAU);
     ctx.fill();
 
     // Central Reactor Hub (mounted on torso)
@@ -967,6 +984,14 @@ export function drawPlayer(ctx) {
     ctx.fill();
     ctx.restore();
   }
+  // Dedicated grounding under-chassis contact shadow
+  ctx.save();
+  ctx.fillStyle = 'rgba(4, 6, 8, 0.72)';
+  ctx.beginPath();
+  ctx.ellipse(0, p.r * 0.15, p.r * 1.08, p.r * 0.72, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
   drawMech(ctx, p, fx, flashing, reduced);
   drawStatus(ctx, p, reduced);
   ctx.restore();

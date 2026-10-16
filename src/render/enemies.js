@@ -118,46 +118,46 @@ function drawCrawlerLeg(ctx, r, i, step, flashing, reduced) {
   var footY = side * r * 1.38;
 
   // Upper leg (femur) with chitin spine
-  ctx.strokeStyle = flashing ? '#ffffff' : '#221810';
-  ctx.lineWidth = 3.6;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#0e0804';
+  ctx.lineWidth = 4.0;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(hipX, hipY);
   ctx.lineTo(kneeX, kneeY);
   ctx.stroke();
 
-  ctx.strokeStyle = flashing ? '#ffffff' : '#4a3626';
+  ctx.strokeStyle = flashing ? '#ffffff' : '#5c3e28';
   ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(hipX, hipY);
   ctx.lineTo(kneeX, kneeY);
   ctx.stroke();
 
-  // Knee joint
-  ctx.fillStyle = flashing ? '#ffffff' : '#18120c';
+  // Knee joint articulation pin
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
   ctx.beginPath();
   ctx.arc(kneeX, kneeY, 2.2, 0, TAU);
   ctx.fill();
 
   // Lower leg (tibia & sharp claw)
-  ctx.strokeStyle = flashing ? '#ffffff' : '#221810';
-  ctx.lineWidth = 3.0;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#0e0804';
+  ctx.lineWidth = 3.4;
   ctx.beginPath();
   ctx.moveTo(kneeX, kneeY);
   ctx.lineTo(footX, footY);
   ctx.stroke();
 
-  ctx.strokeStyle = flashing ? '#ffffff' : '#8c684a';
-  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#b0885c';
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(kneeX, kneeY);
   ctx.lineTo(footX, footY);
   ctx.stroke();
 
   // Sharp clawed foot tip
-  ctx.fillStyle = flashing ? '#ffffff' : '#d8b488';
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffe8c2';
   ctx.beginPath();
-  ctx.arc(footX, footY, 1.8, 0, TAU);
+  ctx.arc(footX, footY, 2.0, 0, TAU);
   ctx.fill();
 }
 
@@ -168,48 +168,48 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   for (i = 0; i < 6; i += 1) drawCrawlerLeg(ctx, r, i, step, flashing, reduced);
 
   // Main abdominal segmented carapace: Outer base
-  ctx.fillStyle = flashing ? '#ffffff' : '#261c14';
+  ctx.fillStyle = flashing ? '#ffffff' : '#1a120c';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.8);
+  outline(ctx, 2.0);
 
   if (!flashing) {
     // Posterior dorsal plate
-    ctx.fillStyle = '#4a3828';
+    ctx.fillStyle = '#423022';
     ctx.beginPath();
     ctx.ellipse(-r * 0.28, 0, r * 0.58, r * 0.72, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = '#18120c';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#120c08';
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Mid dorsal plate
-    ctx.fillStyle = '#6a523c';
+    ctx.fillStyle = '#644832';
     ctx.beginPath();
     ctx.ellipse(r * 0.05, 0, r * 0.62, r * 0.58, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = '#18120c';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#120c08';
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Anterior thoracic crest / carapace ridge
-    ctx.fillStyle = '#8c6c50';
+    ctx.fillStyle = '#8f6a4a';
     ctx.beginPath();
     ctx.ellipse(r * 0.25, 0, r * 0.44, r * 0.42, 0, 0, TAU);
     ctx.fill();
 
     // Chitin spinal ridges
-    ctx.strokeStyle = '#bfa07a';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#f8dfba';
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(-r * 0.6, 0);
     ctx.lineTo(r * 0.48, 0);
     ctx.stroke();
 
     // Lateral segmental suture lines
-    ctx.strokeStyle = '#1e140d';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#120a06';
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-r * 0.15, -r * 0.68);
     ctx.lineTo(-r * 0.05, r * 0.68);
@@ -220,7 +220,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
 
   // Cephalothorax head & curved mandibles
   var twitch = reduced ? 0 : Math.sin(step * 0.3) * 0.15;
-  ctx.fillStyle = flashing ? '#ffffff' : '#1e1610';
+  ctx.fillStyle = flashing ? '#ffffff' : '#140e0a';
   ctx.beginPath();
   ctx.moveTo(r * 0.45, -r * 0.35);
   ctx.lineTo(r * 0.95, -r * 0.18 + twitch * 2);
@@ -229,10 +229,10 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   ctx.lineTo(r * 0.45, r * 0.35);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.2);
+  outline(ctx, 1.4);
 
   // Mandible ivory/amber tips
-  ctx.fillStyle = flashing ? '#ffffff' : '#e0b878';
+  ctx.fillStyle = flashing ? '#ffffff' : '#fff2d6';
   ctx.beginPath();
   ctx.moveTo(r * 0.8, -r * 0.2 + twitch * 2);
   ctx.lineTo(r * 1.08, -r * 0.12 + twitch * 2);
@@ -242,37 +242,37 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   ctx.closePath();
   ctx.fill();
 
-  // Arachnid Multi-Eye Cluster: 2 primary forward eyes, 2 lateral
-  ctx.fillStyle = flashing ? '#ffffff' : '#f59e0b';
+  // Arachnid Multi-Eye Cluster: 2 primary forward eyes, 2 lateral with white optical pinpoints
+  ctx.fillStyle = flashing ? '#ffffff' : '#ff3b10';
   ctx.beginPath();
   ctx.arc(r * 0.58, -r * 0.15, Math.max(1.8, r * 0.16), 0, TAU);
   ctx.arc(r * 0.58, r * 0.15, Math.max(1.8, r * 0.16), 0, TAU);
   ctx.fill();
 
-  ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
+  ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.arc(r * 0.64, -r * 0.15, Math.max(1, r * 0.08), 0, TAU);
   ctx.arc(r * 0.64, r * 0.15, Math.max(1, r * 0.08), 0, TAU);
   ctx.fill();
 
-  ctx.fillStyle = flashing ? '#ffffff' : '#d97706';
+  ctx.fillStyle = flashing ? '#ffffff' : '#f59e0b';
   ctx.beginPath();
   ctx.arc(r * 0.42, -r * 0.3, Math.max(1.2, r * 0.1), 0, TAU);
   ctx.arc(r * 0.42, r * 0.3, Math.max(1.2, r * 0.1), 0, TAU);
   ctx.fill();
 
   if (!keyGlowsOnly() && !flashing) {
-    drawGlow(ctx, r * 0.6, 0, r * 0.8, PALETTE.hud.amber, 0.45);
+    drawGlow(ctx, r * 0.6, 0, r * 0.8, '#ff552e', 0.5);
   }
 }
 
 function drawRusherShape(ctx, r, flashing, hot) {
   // Dual raked turbine housings
-  ctx.fillStyle = hot ? '#ffe8d0' : '#1e140d';
+  ctx.fillStyle = hot ? '#ffe8d0' : '#140c06';
   ctx.fillRect(-r * 1.05, -r * 0.65, r * 0.52, r * 0.28);
   ctx.fillRect(-r * 1.05, r * 0.37, r * 0.52, r * 0.28);
-  ctx.strokeStyle = '#0e0c09';
-  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = '#060402';
+  ctx.lineWidth = 1.4;
   ctx.strokeRect(-r * 1.05, -r * 0.65, r * 0.52, r * 0.28);
   ctx.strokeRect(-r * 1.05, r * 0.37, r * 0.52, r * 0.28);
 
@@ -283,13 +283,13 @@ function drawRusherShape(ctx, r, flashing, hot) {
   ctx.lineTo(-r * 0.22, 0);
   ctx.lineTo(-r * 0.6, -r * 0.98);
   ctx.closePath();
-  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#8a3c1c' : '#562816');
+  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#9a3412' : '#22120a');
   ctx.fill();
-  outline(ctx, 1.8);
+  outline(ctx, 2.2);
 
   if (!flashing) {
     // Twin forward-swept scythe blades
-    ctx.fillStyle = hot ? '#ffb080' : '#e0a05a';
+    ctx.fillStyle = hot ? '#ffb080' : '#ea580c';
     ctx.beginPath();
     ctx.moveTo(r * 1.45, 0);
     ctx.lineTo(r * 0.2, r * 0.38);
@@ -299,12 +299,12 @@ function drawRusherShape(ctx, r, flashing, hot) {
     ctx.lineTo(r * 0.2, -r * 0.38);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#fff0d0';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#fff7ed';
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Dorsal armor plate & spine
-    ctx.fillStyle = hot ? '#ff7e42' : '#8c4224';
+    ctx.fillStyle = hot ? '#ff7e42' : '#c2410c';
     ctx.beginPath();
     ctx.moveTo(r * 0.8, 0);
     ctx.lineTo(-r * 0.35, r * 0.45);
@@ -314,8 +314,8 @@ function drawRusherShape(ctx, r, flashing, hot) {
     ctx.fill();
 
     // Racing/hazard thermal stripes
-    ctx.strokeStyle = hot ? '#ffffff' : '#ffa660';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = hot ? '#ffffff' : '#ffedd5';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-r * 0.3, -r * 0.6);
     ctx.lineTo(r * 0.1, -r * 0.22);
@@ -324,10 +324,14 @@ function drawRusherShape(ctx, r, flashing, hot) {
     ctx.stroke();
   }
 
-  // Forward predatory visor slit
-  ctx.fillStyle = hot ? '#ffffff' : (flashing ? '#ffffff' : '#ff4d2e');
+  // Forward predatory visor slit with white-hot optical center
+  ctx.fillStyle = flashing ? '#ffffff' : '#ff2200';
   ctx.beginPath();
   ctx.ellipse(r * 0.72, 0, Math.max(2.2, r * 0.22), Math.max(1.2, r * 0.1), 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.74, 0, Math.max(1.2, r * 0.12), Math.max(0.6, r * 0.05), 0, 0, TAU);
   ctx.fill();
 }
 
@@ -392,7 +396,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   var puff = reduced ? 0.4 : ((rt.renderTime || 0) * 1.6) % 1;
 
   // Main heavy armored hull base
-  ctx.fillStyle = flashing ? '#ffffff' : '#321812';
+  ctx.fillStyle = flashing ? '#ffffff' : '#1c1614';
   ctx.beginPath();
   ctx.moveTo(r * 0.18, -r * 0.95);
   ctx.lineTo(r * 0.76, -r * 0.5);
@@ -404,11 +408,11 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   ctx.lineTo(-r * 0.88, -r * 0.82);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 2);
+  outline(ctx, 2.4);
 
   if (!flashing) {
-    // Frontal ballistic battering ram shield
-    ctx.fillStyle = '#6e2c20';
+    // Frontal ballistic battering ram shield (forged industrial alloy)
+    ctx.fillStyle = '#261e1a';
     ctx.beginPath();
     ctx.moveTo(r * 1.05, 0);
     ctx.lineTo(r * 0.74, -r * 0.5);
@@ -419,17 +423,25 @@ function drawBruteBody(ctx, e, flashing, reduced) {
     ctx.closePath();
     ctx.fill();
 
-    // Shield reinforced bevel rim
-    ctx.strokeStyle = '#e8b088';
-    ctx.lineWidth = 2.4;
+    // Shield reinforced bevel rim & industrial hazard chevrons
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(r * 0.74, -r * 0.5);
     ctx.lineTo(r * 1.05, 0);
     ctx.lineTo(r * 0.74, r * 0.5);
     ctx.stroke();
 
-    // Side armor skirt plates
-    ctx.fillStyle = '#4e2018';
+    ctx.strokeStyle = '#ffe28a';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(r * 0.68, -r * 0.42);
+    ctx.lineTo(r * 0.96, 0);
+    ctx.lineTo(r * 0.68, r * 0.42);
+    ctx.stroke();
+
+    // Side armor skirt plates with amber hazard trim
+    ctx.fillStyle = '#2c201a';
     ctx.beginPath();
     ctx.moveTo(r * 0.18, -r * 0.92);
     ctx.lineTo(-r * 0.82, -r * 0.78);
@@ -437,8 +449,8 @@ function drawBruteBody(ctx, e, flashing, reduced) {
     ctx.lineTo(r * 0.1, -r * 0.5);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#180c08';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.3;
     ctx.stroke();
 
     ctx.beginPath();
@@ -452,25 +464,27 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   }
 
   // Active hydraulic cylinders on flanks
-  ctx.fillStyle = flashing ? '#ffffff' : '#221410';
+  ctx.fillStyle = flashing ? '#ffffff' : '#18120e';
   ctx.fillRect(-r * 0.22, -r * 0.58, r * 0.3, r * 0.32);
   ctx.fillRect(-r * 0.22, r * 0.26, r * 0.3, r * 0.32);
 
   // Chrome sliding piston rods
-  ctx.fillStyle = flashing ? '#ffffff' : '#d8dcd8';
+  ctx.fillStyle = flashing ? '#ffffff' : '#f0f4f8';
   ctx.fillRect(-r * 0.15, -r * 0.54, r * 0.16, r * 0.24 + piston);
   ctx.fillRect(-r * 0.15, r * 0.3 - piston, r * 0.16, r * 0.24);
 
   // Brass cylinder gland nuts
-  ctx.fillStyle = flashing ? '#ffffff' : '#c89e58';
+  ctx.fillStyle = flashing ? '#ffffff' : '#e5a840';
   ctx.fillRect(-r * 0.2, -r * 0.56, r * 0.26, 3);
   ctx.fillRect(-r * 0.2, r * 0.53, r * 0.26, 3);
 
-  // Piloting slit visor behind armored bars (balanced spacing)
-  ctx.fillStyle = flashing ? '#ffffff' : '#ff4d2e';
+  // Piloting slit visor with white-hot laser core
+  ctx.fillStyle = flashing ? '#ffffff' : '#ff3b1e';
   ctx.fillRect(r * 0.18, -r * 0.16, 5, r * 0.32);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(r * 0.20, -r * 0.08, 2, r * 0.16);
   if (!flashing) {
-    ctx.fillStyle = '#180c08';
+    ctx.fillStyle = '#0e0806';
     ctx.fillRect(r * 0.18, -r * 0.05, 5, 2.2);
   }
 
@@ -1195,7 +1209,7 @@ function drawWardenBody(ctx, e, flashing, reduced) {
   var pulse = reduced ? 0.5 : (0.5 + 0.5 * Math.sin((rt.renderTime || 0) * 3 + (e.phase || 0)));
 
   // Sleek geometric diamond ceramic armor chassis
-  ctx.fillStyle = flashing ? '#ffffff' : '#1a2c3a';
+  ctx.fillStyle = flashing ? '#ffffff' : '#0e1a24';
   ctx.beginPath();
   ctx.moveTo(r * 1.05, 0);
   ctx.lineTo(0, r * 0.76);
@@ -1203,11 +1217,11 @@ function drawWardenBody(ctx, e, flashing, reduced) {
   ctx.lineTo(0, -r * 0.76);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.8);
+  outline(ctx, 2.2);
 
   if (!flashing) {
-    // Inner ceramic facet plates
-    ctx.fillStyle = '#3a627a';
+    // Inner ceramic facet plates (high-luminance cold ice ceramic)
+    ctx.fillStyle = '#3b82f6';
     ctx.beginPath();
     ctx.moveTo(r * 0.6, 0);
     ctx.lineTo(0, r * 0.42);
@@ -1215,72 +1229,89 @@ function drawWardenBody(ctx, e, flashing, reduced) {
     ctx.lineTo(0, -r * 0.42);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#78a6c4';
-    ctx.lineWidth = 1.3;
+    ctx.strokeStyle = '#bfdbfe';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
     // Floating hard-light emitter pylons symmetrically on BOTH flanks
-    ctx.fillStyle = '#78a6c4';
+    ctx.fillStyle = '#60a5fa';
     ctx.fillRect(-r * 0.15, -r * 0.95, r * 0.3, 3.5);
     ctx.fillRect(-r * 0.15, r * 0.95 - 3.5, r * 0.3, 3.5);
-    ctx.strokeStyle = '#9fd0ea';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 1.2;
     ctx.strokeRect(-r * 0.15, -r * 0.95, r * 0.3, 3.5);
     ctx.strokeRect(-r * 0.15, r * 0.95 - 3.5, r * 0.3, 3.5);
   }
 
   // Symmetrical central harmonic shield resonator crest
-  ctx.strokeStyle = flashing ? '#ffffff' : '#d5e8f5';
-  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#ffffff';
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(-r * 0.2, 0);
   ctx.lineTo(r * 0.8, 0);
   ctx.stroke();
 
-  ctx.fillStyle = flashing ? '#ffffff' : '#9fd0ea';
+  ctx.fillStyle = flashing ? '#ffffff' : '#38bdf8';
   ctx.beginPath();
-  ctx.arc(0, 0, 2.5 + pulse * 1.2, 0, TAU);
+  ctx.arc(0, 0, 2.8 + pulse * 1.4, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, 0, 1.4, 0, TAU);
   ctx.fill();
 
-  // Central ocular sensor
-  ctx.fillStyle = flashing ? '#ffffff' : '#e8f6ff';
+  // Central ocular sensor with radiant white-cyan eye
+  ctx.fillStyle = flashing ? '#ffffff' : '#e0f2fe';
   ctx.beginPath();
   ctx.arc(r * 0.4, 0, Math.max(1.8, r * 0.16), 0, TAU);
   ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(r * 0.4, 0, Math.max(1, r * 0.08), 0, TAU);
+  ctx.fill();
 
   if (!keyGlowsOnly() && !flashing) {
-    drawGlow(ctx, 0, 0, r * 0.95, '#5be7ff', 0.45);
+    drawGlow(ctx, 0, 0, r * 1.1, '#38bdf8', 0.55);
   }
 }
 
 function drawBurrowerBody(ctx, e, flashing) {
   var r = e.r;
   // Segmented armored shingle carapace
-  ctx.fillStyle = flashing ? '#ffffff' : '#4a3624';
+  ctx.fillStyle = flashing ? '#ffffff' : '#22160c';
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 1.08, r * 0.82, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.8);
+  outline(ctx, 2.2);
 
   if (!flashing) {
-    ctx.fillStyle = '#78583a';
+    ctx.fillStyle = '#6e4c2e';
     ctx.beginPath();
     ctx.ellipse(r * 0.12, 0, r * 0.6, r * 0.42, 0, 0, TAU);
     ctx.fill();
 
-    // Chitin shingle ridges
-    ctx.strokeStyle = '#22160e';
-    ctx.lineWidth = 1.4;
+    // Chitin shingle ridges with crisp highlight
+    ctx.strokeStyle = '#120a06';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-r * 0.1, -r * 0.6);
     ctx.lineTo(-r * 0.1, r * 0.6);
     ctx.moveTo(-r * 0.4, -r * 0.45);
     ctx.lineTo(-r * 0.4, r * 0.45);
     ctx.stroke();
+
+    ctx.strokeStyle = '#d4aa78';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.08, -r * 0.55);
+    ctx.lineTo(-r * 0.08, r * 0.55);
+    ctx.moveTo(-r * 0.38, -r * 0.4);
+    ctx.lineTo(-r * 0.38, r * 0.4);
+    ctx.stroke();
   }
 
   // Massive serrated fossorial digging claws / mandibles
-  ctx.fillStyle = flashing ? '#ffffff' : '#e6d2a8';
+  ctx.fillStyle = flashing ? '#ffffff' : '#f5e4c0';
   ctx.beginPath();
   ctx.moveTo(r * 0.35, -r * 0.2);
   ctx.lineTo(r * 1.35, -r * 0.52);
@@ -1289,17 +1320,22 @@ function drawBurrowerBody(ctx, e, flashing) {
   ctx.lineTo(r * 0.35, r * 0.2);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.4);
+  outline(ctx, 1.8);
 
   // Sand vibration sonar sensory pits
   ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
   ctx.beginPath();
-  ctx.arc(r * 0.35, -r * 0.12, 1.6, 0, TAU);
-  ctx.arc(r * 0.35, r * 0.12, 1.6, 0, TAU);
+  ctx.arc(r * 0.35, -r * 0.12, 1.8, 0, TAU);
+  ctx.arc(r * 0.35, r * 0.12, 1.8, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(r * 0.35, -r * 0.12, 0.9, 0, TAU);
+  ctx.arc(r * 0.35, r * 0.12, 0.9, 0, TAU);
   ctx.fill();
 
   if (!keyGlowsOnly() && !flashing) {
-    drawGlow(ctx, r * 0.25, 0, r * 0.5, '#e6d2a8', 0.3);
+    drawGlow(ctx, r * 0.25, 0, r * 0.6, '#ffd36b', 0.4);
   }
 }
 
@@ -1528,27 +1564,53 @@ function drawMineBody(ctx, e, flashing, reduced) {
   var hot = !!e.arming;
   var blink = hot && !reduced ? (Math.sin((rt.renderTime || 0) * 28) > 0) : hot;
 
+  // Proximity trigger field (high-contrast dashed warning ring)
+  if (!hot) {
+    ctx.save();
+    // Dark contrast backing rim
+    ctx.beginPath();
+    ctx.arc(0, 0, 80, 0, TAU);
+    ctx.strokeStyle = 'rgba(6, 6, 8, 0.72)';
+    ctx.lineWidth = isHighContrast() ? 3.8 : 2.8;
+    ctx.stroke();
+
+    // High-visibility hazard boundary
+    ctx.strokeStyle = isHighContrast() ? '#ffffff' : 'rgba(255, 175, 45, 0.82)';
+    ctx.lineWidth = isHighContrast() ? 2.2 : 1.6;
+    ctx.setLineDash(reduced ? [4, 6] : [5, 5]);
+    ctx.beginPath();
+    ctx.arc(0, 0, 80, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash(NO_DASH);
+    ctx.restore();
+  }
+
   // 8 Magnetic sensor horns / contact detonators
-  ctx.fillStyle = flashing ? '#ffffff' : '#221810';
+  ctx.fillStyle = flashing ? '#ffffff' : '#140c06';
   var mi;
   for (mi = 0; mi < 8; mi += 1) {
     var ma = (mi / 8) * TAU;
     ctx.beginPath();
     ctx.arc(Math.cos(ma) * (r + 1.5), Math.sin(ma) * (r + 1.5), 1.8, 0, TAU);
     ctx.fill();
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(Math.cos(ma) * (r + 2), Math.sin(ma) * (r + 2), 0.8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = flashing ? '#ffffff' : '#140c06';
   }
 
-  // Heavy spherical casing
-  ctx.fillStyle = flashing ? '#ffffff' : '#4a3824';
+  // Heavy spherical casing (obsidian finish)
+  ctx.fillStyle = flashing ? '#ffffff' : '#161412';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.5);
+  outline(ctx, 2.0);
 
   // Hazard warning chevron stripe ring
   if (!flashing) {
-    ctx.strokeStyle = '#d49b38';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.8;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.arc(0, 0, r * 0.65, 0, TAU);
@@ -1557,13 +1619,19 @@ function drawMineBody(ctx, e, flashing, reduced) {
   }
 
   // Central pulsating proximity sensor eye
-  ctx.fillStyle = blink ? '#fff6e8' : (hot ? '#ff4d2e' : '#e0a84e');
+  ctx.fillStyle = blink ? '#ffffff' : (hot ? '#ff2600' : '#f59e0b');
   ctx.beginPath();
   ctx.arc(0, 0, r * 0.38, 0, TAU);
   ctx.fill();
+  if (blink || hot) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.16, 0, TAU);
+    ctx.fill();
+  }
 
   if (hot && !keyGlowsOnly()) {
-    drawGlow(ctx, 0, 0, r * 1.7, '#ffb15a', reduced ? 0.7 : 0.95);
+    drawGlow(ctx, 0, 0, r * 1.8, '#ff3b1e', reduced ? 0.75 : 0.98);
   }
 }
 
@@ -1572,12 +1640,19 @@ function warnRing(ctx, x, y, radius, remain, color, reduced) {
   var pulse = reduced ? 0.9 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * (reduced ? 0 : 16)));
   var alpha = reduced ? 0.9 : (0.45 + (1 - remain) * 0.5);
   ctx.save();
+  // Contrast backing dark rim
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, TAU);
+  ctx.strokeStyle = 'rgba(6, 6, 8, 0.85)';
+  ctx.lineWidth = isHighContrast() ? 4.8 : 3.6;
+  ctx.stroke();
+
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, TAU);
   ctx.setLineDash(reduced ? NO_DASH : [5, 4]);
   ctx.strokeStyle = color;
   ctx.globalAlpha = alpha;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = isHighContrast() ? 2.8 : 2;
   ctx.stroke();
   ctx.setLineDash(NO_DASH);
   ctx.globalAlpha = (reduced ? 0.28 : 0.16) + (1 - remain) * 0.2;
@@ -1585,7 +1660,8 @@ function warnRing(ctx, x, y, radius, remain, color, reduced) {
   ctx.fill();
   ctx.globalAlpha = pulse;
   ctx.beginPath();
-  ctx.arc(x, y, 3, 0, TAU);
+  ctx.arc(x, y, 3.5, 0, TAU);
+  ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.restore();
 }
@@ -1610,6 +1686,21 @@ function drawFieldTelegraphs(ctx) {
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(e.x, e.y, 70, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      if (e.kind === 'mine' && e.arming) {
+        var mineArmMax = 0.4;
+        var mineLeft = e.armTimer > 0 ? e.armTimer / mineArmMax : 0;
+        warnRing(ctx, e.x, e.y, 80, mineLeft, '#ff3814', reduced);
+        if (!reduced) {
+          ctx.save();
+          ctx.globalAlpha = 0.4 + 0.45 * Math.abs(Math.sin((rt.renderTime || 0) * 28));
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, 80, 0, TAU);
           ctx.stroke();
           ctx.restore();
         }
@@ -1656,13 +1747,48 @@ function drawFieldTelegraphs(ctx) {
         }
         if (e.eyeRadius > 0) {
           ctx.save();
+          var eyeCx = e.eyeX || e.x;
+          var eyeCy = e.eyeY || e.y;
+          var eyeR = e.eyeRadius;
+          var eyeHc = isHighContrast();
+
+          // 1. Heavy dark contrast backing
           ctx.beginPath();
-          ctx.arc(e.eyeX || e.x, e.eyeY || e.y, e.eyeRadius, 0, TAU);
-          ctx.strokeStyle = e.eyeWarn > 0 ? 'rgba(255, 210, 160, 0.85)' : 'rgba(180, 210, 255, 0.9)';
-          ctx.lineWidth = e.eyeWarn > 0 ? 2 : 3;
+          ctx.arc(eyeCx, eyeCy, eyeR, 0, TAU);
+          ctx.strokeStyle = 'rgba(6, 6, 8, 0.92)';
+          ctx.lineWidth = eyeHc ? 7.0 : 5.5;
+          ctx.stroke();
+
+          // 2. High-contrast main boundary ring
+          ctx.beginPath();
+          ctx.arc(eyeCx, eyeCy, eyeR, 0, TAU);
+          ctx.strokeStyle = e.eyeWarn > 0
+            ? (eyeHc ? '#ffffff' : 'rgba(255, 215, 150, 0.98)')
+            : (eyeHc ? '#ffffff' : 'rgba(185, 220, 255, 0.98)');
+          ctx.lineWidth = e.eyeWarn > 0 ? (eyeHc ? 3.5 : 2.8) : (eyeHc ? 4.0 : 3.2);
           ctx.setLineDash(e.eyeWarn > 0 || reduced ? NO_DASH : [8, 6]);
           ctx.stroke();
           ctx.setLineDash(NO_DASH);
+
+          // 3. Hazard hash ticks / storm boundary teeth
+          if (!reduced) {
+            var teeth = 16;
+            var tAngleOffset = (rt.renderTime || 0) * 0.4;
+            ctx.save();
+            ctx.strokeStyle = e.eyeWarn > 0 ? 'rgba(255, 180, 100, 0.85)' : 'rgba(140, 200, 255, 0.8)';
+            ctx.lineWidth = 1.6;
+            for (var ti = 0; ti < teeth; ti += 1) {
+              var ta = tAngleOffset + (ti / teeth) * TAU;
+              var cosT = Math.cos(ta);
+              var sinT = Math.sin(ta);
+              ctx.beginPath();
+              ctx.moveTo(eyeCx + cosT * (eyeR - 4), eyeCy + sinT * (eyeR - 4));
+              ctx.lineTo(eyeCx + cosT * (eyeR + 8), eyeCy + sinT * (eyeR + 8));
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+
           ctx.restore();
         }
         if (e.shielded) {
@@ -1707,17 +1833,94 @@ function drawFieldTelegraphs(ctx) {
       var bolt = strikes[i];
       ctx.save();
       ctx.lineCap = 'round';
-      ctx.strokeStyle = bolt.warning ? 'rgba(213, 232, 255, 0.75)' : '#f4fbff';
-      ctx.lineWidth = bolt.width || 26;
-      ctx.globalAlpha = bolt.warning ? (reduced ? 0.55 : 0.28) : 0.95;
-      if (isHighContrast()) ctx.strokeStyle = bolt.warning ? '#ffffff' : '#f4fbff';
-      ctx.beginPath();
-      ctx.moveTo(bolt.x1, bolt.y1);
-      ctx.lineTo(bolt.x2, bolt.y2);
-      ctx.stroke();
+      var w = bolt.width || 26;
+      var hc = isHighContrast();
+      if (bolt.warning) {
+        // Warning corridor telegraph
+        // 1. Dark contrast envelope backing
+        ctx.strokeStyle = 'rgba(6, 8, 14, 0.85)';
+        ctx.lineWidth = w + 4;
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+
+        // 2. Translucent electric danger fill
+        ctx.strokeStyle = hc ? 'rgba(255, 255, 255, 0.45)' : 'rgba(140, 215, 255, 0.35)';
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+
+        // 3. Bright hazard rail edges / centerline
+        ctx.strokeStyle = hc ? '#ffffff' : 'rgba(220, 245, 255, 0.9)';
+        ctx.lineWidth = 2.0;
+        ctx.setLineDash(reduced ? NO_DASH : [6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+        ctx.setLineDash(NO_DASH);
+      } else {
+        // Active lightning strike
+        // 1. Dark shock envelope backing
+        ctx.strokeStyle = 'rgba(6, 8, 14, 0.9)';
+        ctx.lineWidth = w + 6;
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+
+        // 2. Electric blue core
+        ctx.strokeStyle = hc ? '#ffffff' : '#badbff';
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+
+        // 3. Blinding white-hot spine
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(3, w * 0.4);
+        ctx.beginPath();
+        ctx.moveTo(bolt.x1, bolt.y1);
+        ctx.lineTo(bolt.x2, bolt.y2);
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
+}
+
+function drawEnemyContrastBase(ctx, e) {
+  var r = e.r || 12;
+  ctx.save();
+  ctx.fillStyle = 'rgba(6, 6, 8, 0.72)';
+  ctx.beginPath();
+  if (e.kind === 'rusher') {
+    ctx.moveTo(r * 1.55, 0);
+    ctx.lineTo(-r * 0.7, r * 1.1);
+    ctx.lineTo(-r * 0.28, 0);
+    ctx.lineTo(-r * 0.7, -r * 1.1);
+    ctx.closePath();
+  } else if (e.kind === 'burrower') {
+    ctx.ellipse(0, 0, r * 1.2, r * 0.95, 0, 0, TAU);
+  } else if (e.kind === 'crawler') {
+    ctx.ellipse(0, 0, r * 1.18, r * 1.12, 0, 0, TAU);
+  } else if (e.kind === 'brute') {
+    ctx.ellipse(0, 0, r * 1.18, r * 1.08, 0, 0, TAU);
+  } else if (e.kind === 'warden') {
+    ctx.moveTo(r * 1.18, 0);
+    ctx.lineTo(0, r * 0.88);
+    ctx.lineTo(-r * 1.02, 0);
+    ctx.lineTo(0, -r * 0.88);
+    ctx.closePath();
+  } else {
+    ctx.arc(0, 0, r * 1.12 + 1.2, 0, TAU);
+  }
+  ctx.fill();
+  ctx.restore();
 }
 
 export function drawEnemy(ctx, e) {
@@ -1758,6 +1961,9 @@ export function drawEnemy(ctx, e) {
   ctx.globalAlpha *= pose.alpha;
   ctx.scale(pose.scale, pose.scale);
 
+  // High contrast under-chassis grounding silhouette
+  drawEnemyContrastBase(ctx, e);
+
   if (e.kind === 'elite') drawEliteBody(ctx, e, flashing, reduced);
   else if (e.kind === 'brute') drawBruteBody(ctx, e, flashing, reduced);
   else if (e.kind === 'rusher') drawRusherBody(ctx, e, flashing, reduced);
@@ -1796,13 +2002,16 @@ function tagSprite(text, color) {
   g.font = '700 9px monospace';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.fillStyle = 'rgba(12, 10, 8, 0.86)';
-  g.fillRect(0, 1, w, 13);
+  g.fillStyle = 'rgba(6, 6, 8, 0.94)';
+  g.fillRect(0, 0, w, 16);
+  g.strokeStyle = '#000000';
+  g.lineWidth = 2;
+  g.strokeRect(0, 0, w, 16);
   g.strokeStyle = color;
-  g.lineWidth = 1;
-  g.strokeRect(0.5, 1.5, w - 1, 12);
+  g.lineWidth = 1.2;
+  g.strokeRect(1, 1, w - 2, 14);
   g.fillStyle = color;
-  g.fillText(text, w * 0.5, 8);
+  g.fillText(text, w * 0.5, 8.5);
   tagSprites[key] = canvas;
   return canvas;
 }
@@ -1818,11 +2027,14 @@ function drawTag(ctx, x, y, text, color) {
       known = ctx.measureText(text).width + 8;
       tagWidths[text] = known;
     }
-    ctx.fillStyle = 'rgba(12, 10, 8, 0.86)';
-    ctx.fillRect(x - known * 0.5, y - 7, known, 13);
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.94)';
+    ctx.fillRect(x - known * 0.5, y - 8, known, 16);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - known * 0.5, y - 8, known, 16);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x - known * 0.5 + 0.5, y - 6.5, known - 1, 12);
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(x - known * 0.5 + 1, y - 7, known - 2, 14);
     ctx.fillStyle = color;
     ctx.fillText(text, x, y);
     return;
@@ -1905,17 +2117,17 @@ function drawLabels(ctx) {
         e.affix === 'vortex' ? '[VTX]' :
         e.affix === 'command' ? '[CMD]' :
         e.affix === 'blink' ? '[BLK]' : '';
-      var col = e.affix === 'mirror' ? PALETTE.emissive.tech :
-        e.affix === 'vortex' ? PALETTE.emissive.void :
-        e.affix === 'command' ? '#f59e0b' :
-        e.affix === 'blink' ? '#75d1b0' : '#ffffff';
+      var col = e.affix === 'mirror' ? '#38bdf8' :
+        e.affix === 'vortex' ? '#c084fc' :
+        e.affix === 'command' ? '#fbbf24' :
+        e.affix === 'blink' ? '#34d399' : '#ffffff';
       if (!tag && e.affix === 'volatile') {
         tag = '[VOL]';
-        col = '#e8b94e';
+        col = '#ffbe2e';
       }
       if (!tag && e.affix === 'splitter') {
         tag = '[SPL]';
-        col = '#f0d2a4';
+        col = '#ff7844';
       }
       if (tag) drawTag(ctx, e.x, y, tag, col);
       if (e.affix2 && e.affix2 !== e.affix) {
@@ -1925,11 +2137,11 @@ function drawLabels(ctx) {
           e.affix2 === 'blink' ? '[BLK]' :
           e.affix2 === 'volatile' ? '[VOL]' :
           e.affix2 === 'splitter' ? '[SPL]' : '';
-        var col2 = e.affix2 === 'mirror' ? PALETTE.emissive.tech :
-          e.affix2 === 'vortex' ? PALETTE.emissive.void :
-          e.affix2 === 'command' ? '#f59e0b' :
-          e.affix2 === 'blink' ? '#75d1b0' :
-          e.affix2 === 'volatile' ? '#e8b94e' : '#f0d2a4';
+        var col2 = e.affix2 === 'mirror' ? '#38bdf8' :
+          e.affix2 === 'vortex' ? '#c084fc' :
+          e.affix2 === 'command' ? '#fbbf24' :
+          e.affix2 === 'blink' ? '#34d399' :
+          e.affix2 === 'volatile' ? '#ffbe2e' : '#ff7844';
         if (tag2) drawTag(ctx, e.x, y - 14, tag2, col2);
       }
     }
@@ -1964,18 +2176,38 @@ function drawRusherTelegraph(ctx, e) {
     var y1 = e.y + Math.sin(tAngle) * 160;
     ctx.save();
     ctx.lineCap = 'round';
+    // Dark contrast backing beam
     ctx.beginPath();
     ctx.moveTo(e.x, e.y);
     ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'rgba(255, 106, 61, 0.28)';
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(6, 6, 8, 0.85)';
+    ctx.lineWidth = 6.5;
     ctx.stroke();
+    // Colored outer laser guide
+    ctx.beginPath();
+    ctx.moveTo(e.x, e.y);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = 'rgba(255, 60, 20, 0.45)';
+    ctx.lineWidth = 4.5;
+    ctx.stroke();
+    // Inner dashed guide with bright white-hot center
     ctx.setLineDash(DASH_6);
-    ctx.strokeStyle = 'rgba(237, 104, 66, ' + (0.55 + chargeRatio * 0.4) + ')';
-    ctx.lineWidth = 2.25;
+    ctx.strokeStyle = 'rgba(255, 120, 50, ' + (0.7 + chargeRatio * 0.3) + ')';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.8 + chargeRatio * 0.2) + ')';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
     ctx.setLineDash(NO_DASH);
-    ctx.fillStyle = 'rgba(255, 210, 170, ' + (0.45 + chargeRatio * 0.45) + ')';
+    // Arrowhead reticle with dark border
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.85)';
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - Math.cos(tAngle - 0.4) * 12, y1 - Math.sin(tAngle - 0.4) * 12);
+    ctx.lineTo(x1 - Math.cos(tAngle + 0.4) * 12, y1 - Math.sin(tAngle + 0.4) * 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 220, 180, ' + (0.6 + chargeRatio * 0.4) + ')';
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x1 - Math.cos(tAngle - 0.4) * 10, y1 - Math.sin(tAngle - 0.4) * 10);

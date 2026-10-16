@@ -90,34 +90,110 @@ export function drawOrb(ctx, orb) {
   ctx.translate(orb.x, orb.y);
   if (!keyGlowsOnly()) drawGlow(ctx, 0, 0, s * 2.2, color, power || repair ? 0.45 : 0.4);
   if (power) {
-    ctx.rotate(reduced ? 0.2 : (rt.renderTime || 0) * 0.8);
-    ctx.fillStyle = '#8a6420';
-    ctx.fillRect(-s * 0.55, -s * 0.95, s * 1.1, s * 1.7);
-    ctx.fillStyle = '#f0c85a';
-    ctx.fillRect(-s * 0.42, -s * 0.78, s * 0.7, s * 1.35);
-    ctx.fillStyle = '#fff1c2';
-    ctx.fillRect(-s * 0.28, -s * 1.22, s * 0.28, s * 0.32);
-    ctx.fillRect(s * 0.08, -s * 1.12, s * 0.24, s * 0.24);
-    ctx.strokeStyle = '#0e0c09';
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(-s * 0.55, -s * 0.95, s * 1.1, s * 1.7);
-  } else if (repair) {
-    ctx.fillStyle = '#7a2e22';
+    // Overclock Core (金色超頻核心): Enhanced contrast on desert/yellow sand
+    // 1. Dark ground contact shadow
     ctx.beginPath();
-    ctx.moveTo(-s * 0.7, -s * 0.45);
-    ctx.lineTo(s * 0.7, -s * 0.45);
-    ctx.lineTo(s * 0.7, s * 0.45);
-    ctx.lineTo(-s * 0.7, s * 0.45);
+    ctx.ellipse(0, s * 0.45, s * 1.35, s * 0.65, 0, 0, TAU);
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.75)';
+    ctx.fill();
+
+    // 2. Base high-tech pulsing aura ring
+    var ocPulse = reduced ? 0.8 : (0.65 + 0.35 * Math.sin((rt.renderTime || 0) * 8 + (orb.x || 0)));
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.35, s * 1.45, s * 0.72, 0, 0, TAU);
+    ctx.strokeStyle = 'rgba(255, 215, 80, ' + (0.65 * ocPulse).toFixed(3) + ')';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    ctx.rotate(reduced ? 0.2 : (rt.renderTime || 0) * 0.8);
+
+    // 3. Heavy obsidian/bronze contrast outer housing (prevents blend with yellow sand)
+    ctx.fillStyle = '#14100c';
+    ctx.fillRect(-s * 0.62, -s * 1.02, s * 1.24, s * 1.84);
+    ctx.strokeStyle = '#060608';
+    ctx.lineWidth = 2.4;
+    ctx.strokeRect(-s * 0.62, -s * 1.02, s * 1.24, s * 1.84);
+
+    // 4. Radiant electric gold battery housing
+    ctx.fillStyle = '#946e22';
+    ctx.fillRect(-s * 0.52, -s * 0.92, s * 1.04, s * 1.64);
+    ctx.fillStyle = '#f5c642';
+    ctx.fillRect(-s * 0.38, -s * 0.75, s * 0.76, s * 1.3);
+
+    // 5. White-hot superconductor core beam
+    ctx.fillStyle = '#fffdf0';
+    ctx.fillRect(-s * 0.2, -s * 0.62, s * 0.4, s * 1.04);
+
+    // 6. Top terminal anode / cathode studs in bright platinum
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-s * 0.32, -s * 1.25, s * 0.28, s * 0.32);
+    ctx.fillRect(s * 0.08, -s * 1.15, s * 0.24, s * 0.24);
+    ctx.strokeStyle = '#0e0c09';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-s * 0.32, -s * 1.25, s * 0.28, s * 0.32);
+    ctx.strokeRect(s * 0.08, -s * 1.15, s * 0.24, s * 0.24);
+
+    // 7. Sharp inner border
+    ctx.strokeStyle = '#ffdf7a';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-s * 0.52, -s * 0.92, s * 1.04, s * 1.64);
+  } else if (repair) {
+    // Repair Scrap (修復碎片): Enhanced contrast on iron rust ground
+    // 1. Dark ground contact shadow
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.35, s * 1.4, s * 0.7, 0, 0, TAU);
+    ctx.fillStyle = 'rgba(6, 4, 8, 0.78)';
+    ctx.fill();
+
+    // 2. High-contrast dark backing silhouette (thick black outline against rust)
+    ctx.fillStyle = '#140606';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.78, -s * 0.52);
+    ctx.lineTo(s * 0.78, -s * 0.52);
+    ctx.lineTo(s * 0.78, s * 0.52);
+    ctx.lineTo(-s * 0.78, s * 0.52);
     ctx.closePath();
     ctx.fill();
-    outline(ctx, 1.5);
-    ctx.fillStyle = '#ffd0c2';
-    ctx.fillRect(-s * 0.16, -s * 0.78, s * 0.32, s * 1.56);
-    ctx.fillRect(-s * 0.78, -s * 0.16, s * 1.56, s * 0.32);
-    ctx.strokeStyle = '#3a120e';
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(-s * 0.16, -s * 0.78, s * 0.32, s * 1.56);
-    ctx.strokeRect(-s * 0.78, -s * 0.16, s * 1.56, s * 0.32);
+    ctx.strokeStyle = '#060202';
+    ctx.lineWidth = 2.8;
+    ctx.stroke();
+
+    // 3. Deep emergency crimson base
+    ctx.fillStyle = '#b82a1c';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.68, -s * 0.42);
+    ctx.lineTo(s * 0.68, -s * 0.42);
+    ctx.lineTo(s * 0.68, s * 0.42);
+    ctx.lineTo(-s * 0.68, s * 0.42);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. Vibrant emergency red cross arms
+    ctx.fillStyle = '#ff4d3d';
+    ctx.fillRect(-s * 0.2, -s * 0.82, s * 0.4, s * 1.64);
+    ctx.fillRect(-s * 0.82, -s * 0.2, s * 1.64, s * 0.4);
+
+    // 5. White-hot medical beacon core
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-s * 0.1, -s * 0.68, s * 0.2, s * 1.36);
+    ctx.fillRect(-s * 0.68, -s * 0.1, s * 1.36, s * 0.2);
+
+    // 6. Sharp contrast cross borders
+    ctx.strokeStyle = '#260604';
+    ctx.lineWidth = 1.3;
+    ctx.strokeRect(-s * 0.2, -s * 0.82, s * 0.4, s * 1.64);
+    ctx.strokeRect(-s * 0.82, -s * 0.2, s * 1.64, s * 0.4);
+
+    // 7. Pulsing cross micro-flare rays
+    var crossPulse = reduced ? 0.8 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * 8 + (orb.x || 0)));
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 1.2);
+    ctx.lineTo(0, s * 1.2);
+    ctx.moveTo(-s * 1.2, 0);
+    ctx.lineTo(s * 1.2, 0);
+    ctx.strokeStyle = 'rgba(255, 210, 195, ' + (0.85 * crossPulse).toFixed(3) + ')';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
   } else if (crate) {
     ctx.fillStyle = '#2a241c';
     ctx.fillRect(-s * 0.9, -s * 0.7, s * 1.8, s * 1.4);
@@ -149,30 +225,69 @@ export function drawOrb(ctx, orb) {
       ctx.fillRect(-s * 0.32, -s * 0.08, s * 0.64, s * 0.2);
     }
   } else {
+    // Scrap (金屬碎片): Enhanced readability on rocky/desert terrain
+    // 1. Dark ground contact shadow
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.4, s * 1.35, s * 0.65, 0, 0, TAU);
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.7)';
+    ctx.fill();
+
+    // 2. Pulsing mint base halo / micro-glow ring
+    var scrapPulse = reduced ? 0.75 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * 6 + (orb.x || 0)));
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.35, s * 1.4, s * 0.7, 0, 0, TAU);
+    ctx.strokeStyle = 'rgba(110, 231, 183, ' + (0.6 * scrapPulse).toFixed(3) + ')';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
     ctx.rotate(reduced ? (orb.x || 0) * 0.01 : (rt.renderTime || 0) * 1.7 + (orb.x || 0));
-    ctx.fillStyle = '#8d877c';
+
+    // 3. Heavy dark silhouette backing outline against rock terrain
+    ctx.beginPath();
+    ctx.moveTo(s * 1.25, -s * 0.12);
+    ctx.lineTo(-s * 0.18, s * 0.95);
+    ctx.lineTo(-s * 0.9, -s * 0.24);
+    ctx.closePath();
+    ctx.fillStyle = '#0a0908';
+    ctx.fill();
+    ctx.strokeStyle = '#0a0908';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    // 4. Base metallic alloy
+    ctx.fillStyle = '#9c9588';
     ctx.beginPath();
     ctx.moveTo(s * 1.2, -s * 0.1);
     ctx.lineTo(-s * 0.15, s * 0.9);
     ctx.lineTo(-s * 0.85, -s * 0.2);
     ctx.closePath();
     ctx.fill();
-    outline(ctx, 1.4);
-    ctx.fillStyle = '#e4ddd0';
+
+    // 5. Bright specular highlight facet (polished chrome facet)
+    ctx.fillStyle = '#faf6ed';
     ctx.beginPath();
     ctx.moveTo(s * 1.2, -s * 0.1);
     ctx.lineTo(s * 0.15, s * 0.12);
     ctx.lineTo(s * 0.05, -s * 0.45);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#6e675e';
+
+    // 6. Deep dark-bevel facet
+    ctx.fillStyle = '#5c554c';
     ctx.beginPath();
     ctx.moveTo(-s * 0.2, s * 0.15);
     ctx.lineTo(s * 0.45, s * 0.85);
     ctx.lineTo(-s * 0.55, s * 0.55);
     ctx.closePath();
     ctx.fill();
-    outline(ctx, 1.2);
+
+    outline(ctx, 1.4);
+
+    // 7. Specular glint pip at apex
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(s * 1.15, -s * 0.1, 1.8, 0, TAU);
+    ctx.fill();
   }
   ctx.restore();
   if (isHighContrast()) {

@@ -247,6 +247,8 @@ function paintScrap(ctx, size, variant, colors, detail) {
 function paintProps(ctx, colors, detail) {
   var pieces = rt.terrain || [];
   var i;
+  ctx.save();
+  ctx.globalAlpha = 0.68;
   for (i = 0; i < pieces.length; i += 1) {
     var piece = pieces[i];
     if (!piece) continue;
@@ -260,6 +262,7 @@ function paintProps(ctx, colors, detail) {
     else paintRock(ctx, size, seed, colors, detail);
     ctx.restore();
   }
+  ctx.restore();
 }
 
 function paintGrid(ctx, w, h) {
@@ -273,7 +276,7 @@ function paintGrid(ctx, w, h) {
   var x;
   for (x = grid; x < w; x += grid) {
     var dx = Math.abs(x - cx) / halfW;
-    var ax = (1 - dx) * (1 - dx) * 0.16;
+    var ax = (1 - dx) * (1 - dx) * 0.12;
     if (ax < 0.02) continue;
     ctx.strokeStyle = 'rgba(210,186,140,' + ax.toFixed(3) + ')';
     ctx.beginPath();
@@ -284,7 +287,7 @@ function paintGrid(ctx, w, h) {
   var y;
   for (y = grid; y < h; y += grid) {
     var dy = Math.abs(y - cy) / halfH;
-    var ay = (1 - dy) * (1 - dy) * 0.16;
+    var ay = (1 - dy) * (1 - dy) * 0.12;
     if (ay < 0.02) continue;
     ctx.strokeStyle = 'rgba(210,186,140,' + ay.toFixed(3) + ')';
     ctx.beginPath();
@@ -302,7 +305,7 @@ function paintGround(ctx, w, h, sector, detail) {
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = colors.base;
   ctx.fillRect(0, 0, w, h);
-  ctx.globalAlpha = sector === 'night' ? 0.72 : sector === 'rust' ? 0.62 : 0.58;
+  ctx.globalAlpha = sector === 'night' ? 0.52 : sector === 'rust' ? 0.46 : 0.44;
   ctx.fillStyle = colors.light;
   ctx.fillRect(0, 0, w, h);
   ctx.globalAlpha = 1;

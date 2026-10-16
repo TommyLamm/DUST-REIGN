@@ -2,10 +2,10 @@ import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
 
 export var PALETTE = {
-  ground: { base: '#2a241c', light: '#4a3d2a', dark: '#15120e', crack: '#0e0c09' },
-  shadow: 'rgba(6, 10, 14, 0.55)',
+  ground: { base: '#241f18', light: '#423524', dark: '#120f0b', crack: '#0a0806' },
+  shadow: 'rgba(4, 6, 10, 0.62)',
   ambient: { dusk: '#3a2a1e', storm: '#3b1712', night: '#0d1420' },
-  emissive: { player: '#7cf0c8', hostile: '#ff6a3d', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
+  emissive: { player: '#7cf0c8', hostile: '#ff552e', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
   hud: { bone: '#e8e0c6', rust: '#ed6842', amber: '#e8b94e', mint: '#96baa0' }
 };
 
@@ -13,9 +13,9 @@ export var SECTOR_BLEND_SEC = 1.5;
 export var STORM_BLEND_SEC = 0.6;
 
 var GROUND_SECTORS = {
-  dusk: { base: '#2a241c', light: '#5c4a34', dark: '#15120e', crack: '#0e0c09', hi: '#d7c4a2' },
-  rust: { base: '#3a2218', light: '#704030', dark: '#1a100c', crack: '#120a08', hi: '#e2b089' },
-  night: { base: '#243246', light: '#6a84a8', dark: '#141c28', crack: '#0e141c', hi: '#d5e2f2' }
+  dusk: { base: '#241f18', light: '#4a3a28', dark: '#120f0b', crack: '#0a0806', hi: '#c2b08e' },
+  rust: { base: '#2c1a12', light: '#542c1e', dark: '#140c08', crack: '#0c0705', hi: '#c8926e' },
+  night: { base: '#182230', light: '#3a4e6c', dark: '#0e1420', crack: '#080c14', hi: '#a2bcd8' }
 };
 
 function hexToRgb(hex) {

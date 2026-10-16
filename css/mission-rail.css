@@ -29,6 +29,13 @@
   background: var(--line);
 }
 
+.game-layout.is-in-combat .mission-rail,
+.game-layout[data-run-state="LIVE"] .mission-rail,
+.game-frame.is-in-combat .mission-rail,
+.game-frame[data-run-state="LIVE"] .mission-rail {
+  display: none !important;
+}
+
 .rail-card {
   padding: 19px 19px 20px;
   background: rgba(24, 26, 21, 0.88);

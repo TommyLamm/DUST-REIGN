@@ -1,0 +1,882 @@
+/* ==========================================================================
+   DUST//REIGN - Campaign & Hardcore Modes Stylesheet
+   Covers: Four-mode navigation, Stage selector modal, Hardcore briefing card,
+           Victory settlement panel with sequential stars and dual exit buttons.
+   ========================================================================== */
+
+/* --- 1. Mode Tabs & Loadout Navigation --- */
+
+.loadout-choices--mode {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.mode-tab,
+.loadout-mode {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: rgba(24, 26, 21, 0.85);
+  border: 1px solid var(--line);
+  color: var(--dust);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  touch-action: manipulation;
+}
+
+.mode-tab:hover,
+.loadout-mode:hover {
+  background: rgba(36, 39, 31, 0.95);
+  border-color: var(--line-strong);
+  color: var(--bone);
+}
+
+.mode-tab.is-active,
+.loadout-mode.is-selected {
+  background: var(--slate);
+  border-color: var(--bone);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(232, 224, 198, 0.2);
+}
+
+/* Mode-specific Theme Accents */
+.loadout-mode[data-mode="campaign"].is-selected {
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 12px rgba(232, 185, 78, 0.35);
+}
+
+.loadout-mode[data-mode="hardcore"].is-selected {
+  border-color: var(--rust);
+  color: #ff7b54;
+  box-shadow: 0 0 12px rgba(237, 104, 66, 0.35);
+}
+
+.loadout-mode[data-mode="daily"].is-selected {
+  border-color: var(--glow-tech);
+  color: #7ce7ff;
+  box-shadow: 0 0 12px rgba(91, 231, 255, 0.35);
+}
+
+/* --- 2. Locked State Styling (Amber Warning & Padlock) --- */
+
+.loadout-card.is-locked,
+.stage-card.is-locked,
+.sector-tab.is-locked {
+  position: relative;
+  border-color: var(--amber) !important;
+  background: rgba(36, 30, 20, 0.6) !important;
+  color: #c4a974 !important;
+  cursor: not-allowed;
+}
+
+.loadout-card.is-locked::after,
+.stage-card.is-locked::after {
+  content: "🔒 LOCKED";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  background: rgba(16, 17, 14, 0.9);
+  padding: 1px 4px;
+  border: 1px solid var(--amber);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.loadout-card.is-locked-by-rule {
+  border-color: #d8a040 !important;
+  box-shadow: inset 0 0 10px rgba(216, 160, 64, 0.25);
+}
+
+/* --- 3. Campaign Selected Stage Summary Bar (in Loadout Panel) --- */
+
+.campaign-stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(36, 30, 20, 0.7);
+  border: 1px solid var(--amber);
+  border-radius: 2px;
+  margin: 4px 0;
+  box-shadow: 0 0 8px rgba(232, 185, 78, 0.15);
+}
+
+.campaign-stage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.campaign-stage-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.campaign-stage-code {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.campaign-stage-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bone);
+  letter-spacing: 0.04em;
+}
+
+.campaign-stage-stars {
+  color: #ffd700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+.campaign-stage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 14px;
+  background: var(--slate);
+  border: 1px solid var(--amber);
+  color: var(--bone);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  touch-action: manipulation;
+}
+
+.campaign-stage-btn:hover {
+  background: var(--amber);
+  color: var(--soot);
+  box-shadow: 0 0 10px rgba(232, 185, 78, 0.5);
+}
+
+/* --- 4. Campaign Stage Selection Grid Modal (#campaignModal) --- */
+
+.overlay--campaign {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(10, 11, 9, 0.92);
+  backdrop-filter: blur(8px);
+  padding: clamp(8px, 2vh, 20px);
+}
+
+.campaign-modal-inner {
+  display: flex;
+  flex-direction: column;
+  width: min(840px, 96vw);
+  max-height: 92vh;
+  background: var(--coal);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(232, 185, 78, 0.1);
+  padding: 16px 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.campaign-modal-header {
+  position: relative;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.campaign-modal-header h2 {
+  font-family: var(--display);
+  font-size: clamp(20px, 3.5vw, 28px);
+  color: var(--bone);
+  margin: 2px 0 4px;
+  letter-spacing: 0.04em;
+}
+
+.campaign-modal-header h2 span {
+  color: var(--amber);
+}
+
+.campaign-modal-header .modal-close-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--dust);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.campaign-modal-header .modal-close-button:hover {
+  border-color: var(--rust);
+  color: #ffffff;
+  background: rgba(237, 104, 66, 0.2);
+}
+
+/* Summary Bar & Milestones */
+.campaign-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(24, 26, 21, 0.9);
+  border: 1px solid var(--line);
+  margin: 10px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.campaign-star-count strong {
+  color: #ffd700;
+  font-size: 14px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.campaign-milestone-hint {
+  color: var(--dust);
+  letter-spacing: 0.05em;
+}
+
+.campaign-milestone-hint strong {
+  color: var(--amber);
+}
+
+/* Sector Tabs Navigation */
+.sector-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.sector-tab {
+  flex: 1;
+  min-width: 140px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  background: rgba(36, 39, 31, 0.6);
+  border: 1px solid var(--line);
+  color: var(--dust);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sector-tab small {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.sector-tab:hover:not(.is-locked) {
+  border-color: var(--line-strong);
+  color: var(--bone);
+  background: var(--slate);
+}
+
+.sector-tab.is-active {
+  border-color: var(--amber);
+  background: rgba(45, 38, 25, 0.9);
+  color: var(--amber);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+
+/* Stage Cards Grid */
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 48vh;
+  padding: 4px 2px;
+  margin-bottom: 12px;
+  scrollbar-width: thin;
+}
+
+.stage-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 120px;
+  padding: 12px;
+  background: rgba(24, 26, 21, 0.85);
+  border: 1px solid var(--line);
+  color: var(--bone);
+  font-family: var(--mono);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  touch-action: manipulation;
+}
+
+.stage-card:hover:not(.is-locked) {
+  border-color: var(--bone);
+  background: var(--slate);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.stage-card.is-selected {
+  border-color: var(--amber) !important;
+  background: rgba(45, 38, 25, 0.9) !important;
+  box-shadow: 0 0 12px rgba(232, 185, 78, 0.3);
+}
+
+.stage-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stage-code {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+}
+
+.stage-type-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--line);
+  color: var(--dust);
+  text-transform: uppercase;
+}
+
+.stage-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  margin: 2px 0;
+}
+
+/* Stars Row in Stage Card */
+.stage-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  margin: 2px 0;
+}
+
+.star-icon {
+  color: rgba(232, 224, 198, 0.25);
+  transition: color 0.2s ease;
+}
+
+.star-icon.is-earned {
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+/* Criteria List in Card */
+.stage-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.stage-criteria-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.stage-criteria-item.is-met {
+  color: var(--dust);
+}
+
+.stage-criteria-item.is-met .star-bullet {
+  color: #ffd700;
+}
+
+.stage-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+.stage-records strong {
+  color: var(--bone);
+}
+
+/* Modal Footer */
+.campaign-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+}
+
+.campaign-foot-hint {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+/* --- 5. Hardcore Operation Briefing Card (#hardcoreBriefing) --- */
+
+.hardcore-briefing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: rgba(30, 20, 18, 0.75);
+  border: 1px solid var(--rust);
+  box-shadow: 0 0 16px rgba(237, 104, 66, 0.15);
+  margin: 6px 0;
+  font-family: var(--mono);
+}
+
+.hardcore-op-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+}
+
+.op-pill {
+  min-height: 44px;
+  padding: 6px 10px;
+  background: rgba(24, 26, 21, 0.9);
+  border: 1px solid var(--line);
+  color: var(--dust);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.op-pill:hover:not(.is-locked) {
+  border-color: var(--rust);
+  color: #ff9170;
+}
+
+.op-pill.is-active {
+  border-color: var(--rust);
+  background: rgba(237, 104, 66, 0.25);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(237, 104, 66, 0.4);
+}
+
+.op-pill.is-cleared::after {
+  content: " ✓";
+  color: #7cf0c8;
+}
+
+.hardcore-briefing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgba(237, 104, 66, 0.3);
+  padding-bottom: 6px;
+}
+
+.hardcore-title-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.hardcore-code {
+  font-size: 11px;
+  color: var(--rust);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.hardcore-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.hardcore-badge-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  background: rgba(232, 185, 78, 0.1);
+  letter-spacing: 0.06em;
+}
+
+/* Locked Config Row */
+.hardcore-locked-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hardcore-locked-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(16, 17, 14, 0.85);
+  border: 1px solid var(--amber);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+/* Handicap Warning Badges */
+.handicap-tags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 6px;
+}
+
+.handicap-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(40, 15, 12, 0.7);
+  border: 1px solid var(--rust);
+  font-size: 10px;
+  color: #ff9170;
+  font-weight: 600;
+}
+
+.handicap-tag i {
+  color: var(--rust);
+  font-style: normal;
+}
+
+/* Intel Details */
+.hardcore-intel-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: rgba(16, 17, 14, 0.7);
+  border-left: 2px solid var(--rust);
+  font-size: 11px;
+  color: var(--dust);
+  line-height: 1.4;
+}
+
+.hardcore-intel-block strong {
+  color: var(--bone);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hardcore-hint-block {
+  border-left-color: var(--amber);
+  background: rgba(30, 25, 15, 0.7);
+}
+
+.hardcore-hint-block strong {
+  color: var(--amber);
+}
+
+/* --- 6. Victory Settlement Screen Styles (#gameOverScreen.is-victory) --- */
+
+.overlay--gameover.is-victory .overlay-inner {
+  border-color: var(--amber);
+  box-shadow: 0 0 30px rgba(232, 185, 78, 0.25);
+}
+
+.victory-banner {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(90deg, rgba(232, 185, 78, 0.2) 0%, rgba(255, 215, 0, 0.35) 50%, rgba(232, 185, 78, 0.2) 100%);
+  border: 1px solid var(--amber);
+  color: #ffd700;
+  font-family: var(--display);
+  font-size: clamp(14px, 2.5vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  margin-bottom: 8px;
+}
+
+/* Victory 3-Star Sequential Lighting */
+.victory-stars-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px 0 16px;
+}
+
+.victory-star-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.victory-star-glyph {
+  font-size: 36px;
+  line-height: 1;
+  color: rgba(232, 224, 198, 0.2);
+  transition: all 0.3s ease;
+}
+
+.victory-star-slot.is-lit .victory-star-glyph {
+  color: #ffd700;
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.8), 0 0 30px rgba(232, 185, 78, 0.5);
+  animation: starPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.victory-star-slot[data-star="1"].is-lit .victory-star-glyph {
+  animation-delay: 0.15s;
+}
+
+.victory-star-slot[data-star="2"].is-lit .victory-star-glyph {
+  animation-delay: 0.45s;
+}
+
+.victory-star-slot[data-star="3"].is-lit .victory-star-glyph {
+  animation-delay: 0.75s;
+}
+
+.victory-star-desc {
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.victory-star-slot.is-lit .victory-star-desc {
+  color: var(--dust);
+}
+
+@keyframes starPop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Dual-Exit Button Group */
+.dual-exit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 12px 0 6px;
+}
+
+.dual-exit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.action-button--next {
+  min-height: 48px;
+  background: var(--amber);
+  color: var(--soot);
+  border-color: var(--bone);
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(232, 185, 78, 0.4);
+}
+
+.action-button--next:hover {
+  background: #ffe380;
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.6);
+}
+
+.action-button--replay {
+  min-height: 44px;
+  background: var(--slate);
+  border-color: var(--line-strong);
+  color: var(--bone);
+}
+
+.action-button--replay:hover {
+  background: var(--coal);
+  border-color: var(--bone);
+}
+
+.action-button--stage-select {
+  min-height: 44px;
+  background: rgba(24, 26, 21, 0.9);
+  border-color: var(--line);
+  color: var(--dust);
+}
+
+.action-button--stage-select:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* --- 7. Responsive Adaptations (< 600px Mobile Portrait Carousel) --- */
+
+@media (max-width: 600px) {
+  .loadout-choices--mode {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .campaign-modal-inner {
+    padding: 12px;
+    width: 98vw;
+    max-height: 96vh;
+  }
+
+  .stage-grid {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stage-card {
+    flex: 0 0 84%;
+    min-width: 250px;
+    scroll-snap-align: center;
+  }
+
+  .sector-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sector-tab {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .victory-stars-container {
+    gap: 8px;
+  }
+
+  .victory-star-slot {
+    min-width: 70px;
+  }
+
+  .dual-exit-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- 8. High Contrast & Reduced Motion Overrides --- */
+
+.high-contrast .mode-tab,
+.high-contrast .stage-card,
+.high-contrast .sector-tab,
+.high-contrast .campaign-stage-bar,
+.high-contrast .hardcore-briefing-card,
+.high-contrast .campaign-modal-inner,
+@media (forced-colors: active) {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .mode-tab.is-active,
+.high-contrast .stage-card.is-selected,
+.high-contrast .sector-tab.is-active {
+  outline: 3px solid #ffff00 !important;
+}
+
+.high-contrast .star-icon.is-earned,
+.high-contrast .victory-star-slot.is-lit .victory-star-glyph {
+  color: #ffff00 !important;
+  text-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .victory-star-slot.is-lit .victory-star-glyph {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mode-tab,
+  .stage-card,
+  .campaign-stage-btn {
+    transition: none !important;
+    transform: none !important;
+  }
+}

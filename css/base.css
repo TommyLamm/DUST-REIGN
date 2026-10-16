@@ -296,6 +296,20 @@ h1 {
   background: var(--line);
 }
 
+.game-layout.is-in-combat,
+.game-layout[data-run-state="LIVE"],
+.game-frame.is-in-combat .game-layout,
+.game-frame[data-run-state="LIVE"] .game-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.game-layout.is-in-combat .mission-rail,
+.game-layout[data-run-state="LIVE"] .mission-rail,
+.game-frame.is-in-combat .mission-rail,
+.game-frame[data-run-state="LIVE"] .mission-rail {
+  display: none;
+}
+
 .arena-card,
 .mission-rail {
   min-width: 0;

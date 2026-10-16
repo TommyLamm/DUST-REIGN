@@ -142,6 +142,9 @@ export function setupDom(options) {
   var touchJoystickZone = first(['#touchJoystickZone'], root || document);
   var joystickBase = first(['#joystickBase'], touchJoystickZone || document);
   var joystickThumb = first(['#joystickThumb'], touchJoystickZone || document);
+  var gameFrame = first(['.game-frame', '[data-game-frame]'], root || document);
+  var gameLayout = first(['.game-layout', 'main.game-layout'], root || document);
+  var missionRail = first(['.mission-rail', 'aside.mission-rail'], root || document);
 
   initLoadoutPanel();
   initInterludePanel();
@@ -149,6 +152,10 @@ export function setupDom(options) {
 
   return {
     root: root,
+    gameFrame: gameFrame,
+    gameLayout: gameLayout,
+    layout: gameLayout,
+    missionRail: missionRail,
     canvas: canvas,
     ctx: ctx,
     overlay: overlay,
@@ -244,8 +251,47 @@ export function setupDom(options) {
   };
 }
 
+export function syncCombatLayout() {
+  if (typeof document === 'undefined' || !rt.ui) return false;
+  var onStart = Boolean(rt.ui.startScreen && !rt.ui.startScreen.hidden);
+  var isOver = Boolean(rt.state && rt.state.over && (rt.state.deathSequenceTimer <= 0 || (rt.ui.gameOver && !rt.ui.gameOver.hidden)));
+  var inCombat = Boolean(rt.state && !onStart && !isOver);
+  var layout = rt.ui.gameLayout || rt.ui.layout || (rt.ui.root ? rt.ui.root.querySelector('.game-layout') : null) || document.querySelector('.game-layout');
+  var frame = rt.ui.gameFrame || (rt.ui.root ? rt.ui.root.querySelector('.game-frame') : null) || document.querySelector('.game-frame');
+  var changed = false;
+  var nextState = inCombat ? 'LIVE' : (onStart ? 'STANDBY' : 'GAMEOVER');
+
+  if (layout && layout.classList) {
+    var wasInCombat = layout.classList.contains('is-in-combat');
+    if (wasInCombat !== inCombat) {
+      layout.classList.toggle('is-in-combat', inCombat);
+      changed = true;
+    }
+    if (layout.getAttribute && layout.getAttribute('data-run-state') !== nextState) {
+      layout.setAttribute('data-run-state', nextState);
+    }
+  }
+
+  if (frame && frame.classList) {
+    var frameWasInCombat = frame.classList.contains('is-in-combat');
+    if (frameWasInCombat !== inCombat) {
+      frame.classList.toggle('is-in-combat', inCombat);
+      changed = true;
+    }
+    if (frame.getAttribute && frame.getAttribute('data-run-state') !== nextState) {
+      frame.setAttribute('data-run-state', nextState);
+    }
+  }
+
+  if (changed && rt.ui.canvas) {
+    resize();
+  }
+  return inCombat;
+}
+
 export function resize() {
-  var rect = rt.ui.canvas.getBoundingClientRect();
+  if (!rt.ui || !rt.ui.canvas) return;
+  var rect = rt.ui.canvas.getBoundingClientRect ? rt.ui.canvas.getBoundingClientRect() : {};
   var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || window.innerWidth || 960));
   var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || window.innerHeight || 640));
   var dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -257,13 +303,15 @@ export function resize() {
   clearSpriteCache();
   rt.ui.canvas.width = Math.round(width * dpr);
   rt.ui.canvas.height = Math.round(height * dpr);
-  rt.ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (rt.ui.ctx && rt.ui.ctx.setTransform) rt.ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (changed || !rt.terrain.length) rebuildTerrain();
   if (!rt.state) return;
   rt.state.width = width;
   rt.state.height = height;
-  rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r, width - rt.state.player.r);
-  rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r, height - rt.state.player.r);
+  if (rt.state.player) {
+    rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r || 14, width - (rt.state.player.r || 14));
+    rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r || 14, height - (rt.state.player.r || 14));
+  }
   fitGameOverOverlay();
 }
 

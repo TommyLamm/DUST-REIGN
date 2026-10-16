@@ -187,8 +187,8 @@ function traceBeam(ctx, bullet, width, style, alpha, amp, time, phase) {
 
 function drawBullet(ctx, bullet, view, time) {
   if (!bullet) return;
-  var core = bullet.colorCore || '#fff4bd';
-  var trail = bullet.colorTrail || 'rgba(240, 207, 136, 0.28)';
+  var core = bullet.colorCore || '#5be7ff';
+  var trail = bullet.colorTrail || 'rgba(91, 231, 255, 0.45)';
   var headR = (bullet.r || 4) * (bullet.isVanguard ? 4.4 : 2.7);
   if (bullet.isArcWelder) {
     var x1;
@@ -218,7 +218,11 @@ function drawBullet(ctx, bullet, view, time) {
   ctx.globalAlpha = 1;
   ctx.fillStyle = core;
   ctx.beginPath();
-  ctx.arc(bullet.x, bullet.y, Math.max(1.6, (bullet.r || 4) * 0.55), 0, TAU);
+  ctx.arc(bullet.x, bullet.y, Math.max(2.0, (bullet.r || 4) * 0.65), 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(bullet.x, bullet.y, Math.max(1.2, (bullet.r || 4) * 0.35), 0, TAU);
   ctx.fill();
   drawGlow(ctx, bullet.x, bullet.y, headR, core, bullet.isVanguard ? 0.95 : 0.82);
   if (!view.key && bullet.trail && bullet.trail.length) {
@@ -270,16 +274,23 @@ function drawAcidMark(ctx, eb, view) {
   var remain = 1 - (eb.age || 0) / maxT;
   if (remain < 0) remain = 0;
   ctx.save();
+  // Contrast backing dark rim
+  ctx.beginPath();
+  ctx.arc(eb.targetX, eb.targetY, 38, 0, TAU);
+  ctx.strokeStyle = 'rgba(6, 10, 4, 0.85)';
+  ctx.lineWidth = view.contrast ? 4.4 : 3.2;
+  ctx.stroke();
+
   ctx.beginPath();
   ctx.arc(eb.targetX, eb.targetY, 38, 0, TAU);
   ctx.setLineDash(view.reduced ? [] : [5, 4]);
-  ctx.strokeStyle = 'rgba(198, 227, 90, 0.9)';
+  ctx.strokeStyle = 'rgba(214, 255, 106, 0.95)';
   ctx.lineWidth = view.contrast ? 2.6 : 1.8;
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.beginPath();
   ctx.arc(eb.targetX, eb.targetY, Math.max(4, 38 * remain), 0, TAU);
-  ctx.fillStyle = 'rgba(198, 227, 90, 0.18)';
+  ctx.fillStyle = 'rgba(198, 227, 90, 0.24)';
   ctx.fill();
   ctx.restore();
 }
@@ -327,14 +338,14 @@ export function drawEnemyBullets(ctx) {
   var i;
   ctx.save();
   ctx.lineCap = 'round';
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.85;
   var pass;
   for (pass = 0; pass < 2; pass += 1) {
     var wantGlow = pass === 0;
     ctx.beginPath();
     var trailCount = 0;
-    var trailColor = wantGlow ? '#ff5533' : '#75d1b0';
-    var trailWidth = 2;
+    var trailColor = wantGlow ? '#ff381e' : '#75d1b0';
+    var trailWidth = 2.4;
     for (i = 0; i < n; i += 1) {
       var eb = list[i];
       if (!eb || !!eb.glow !== wantGlow) continue;
@@ -345,7 +356,7 @@ export function drawEnemyBullets(ctx) {
       var inv = 11 / Math.sqrt(spd);
       if (!trailCount) {
         trailColor = eb.color || trailColor;
-        trailWidth = Math.max(2, (eb.r || 4) * 0.55);
+        trailWidth = Math.max(2.4, (eb.r || 4) * 0.6);
       }
       ctx.moveTo(eb.x, eb.y);
       ctx.lineTo(eb.x - vx * inv, eb.y - vy * inv);
@@ -358,12 +369,12 @@ export function drawEnemyBullets(ctx) {
     }
   }
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#140c09';
+  ctx.fillStyle = '#0e0806';
   ctx.beginPath();
   for (i = 0; i < n; i += 1) {
     var dark = list[i];
     if (!dark) continue;
-    disc(ctx, dark.x, dark.y, (dark.r || 4) + 2.1);
+    disc(ctx, dark.x, dark.y, (dark.r || 4) + 2.2);
   }
   ctx.fill();
   ctx.globalCompositeOperation = 'lighter';
@@ -373,8 +384,8 @@ export function drawEnemyBullets(ctx) {
     if (!glowB) continue;
     var gr = glowB.r || 4;
     var hostile = !!glowB.glow;
-    var glow = glowB.glowColor || (hostile ? '#ff4d2e' : '#7cf0c8');
-    drawGlow(ctx, glowB.x, glowB.y, gr + (hostile ? 16 : 12), glow, hostile ? 0.9 : 0.8);
+    var glow = glowB.glowColor || (hostile ? '#ff3b1e' : '#7cf0c8');
+    drawGlow(ctx, glowB.x, glowB.y, gr + (hostile ? 16 : 12), glow, hostile ? 0.92 : 0.82);
   }
   endGlowBatch();
   ctx.globalCompositeOperation = 'source-over';
@@ -384,29 +395,40 @@ export function drawEnemyBullets(ctx) {
     if (!body) continue;
     var br = body.r || 4;
     var bodyHostile = !!body.glow;
-    var color = body.color || (bodyHostile ? '#ff5533' : '#75d1b0');
+    var color = body.color || (bodyHostile ? '#ff381e' : '#75d1b0');
     var pulse = view.reduced ? 1 : (0.84 + 0.16 * (0.5 + 0.5 * Math.sin(time * 6 + i * 1.3)));
+
+    // Solid dark contrast rim hugging bullet body
+    ctx.fillStyle = '#080504';
+    ctx.beginPath();
+    ctx.arc(body.x, body.y, br + 1.8, 0, TAU);
+    ctx.fill();
+
+    // Vibrant body core
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(body.x, body.y, br, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = bodyHostile ? '#fff0dd' : '#ffd36b';
+
+    // High-luminance white-hot core
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(body.x, body.y, Math.max(1.4, br * 0.42 * pulse), 0, TAU);
+    ctx.arc(body.x, body.y, Math.max(1.8, br * 0.58 * pulse), 0, TAU);
     ctx.fill();
+
     if (bodyHostile && (body.type || 'basic') === 'basic') {
       var rot = view.reduced ? 0.6 : time * 2.4 + i;
-      ctx.strokeStyle = '#ffe1cc';
-      ctx.lineWidth = 1.35;
-      strokeBox(ctx, body.x, body.y, rot, br + 3, br * 0.42);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.4;
+      strokeBox(ctx, body.x, body.y, rot, br + 2.8, br * 0.42);
     }
     drawKindShape(ctx, body, view, time);
     drawAcidMark(ctx, body, view);
     if (view.contrast) {
       ctx.beginPath();
-      ctx.arc(body.x, body.y, br + 1.4, 0, TAU);
-      ctx.strokeStyle = '#120c09';
-      ctx.lineWidth = 1.4;
+      ctx.arc(body.x, body.y, br + 1.6, 0, TAU);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
       ctx.stroke();
     }
   }
@@ -414,10 +436,10 @@ export function drawEnemyBullets(ctx) {
   for (i = 0; i < n; i += 1) {
     var ring = list[i];
     if (!ring) continue;
-    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 2.6));
+    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 2.4));
   }
-  ctx.strokeStyle = view.contrast ? '#ffffff' : '#120c09';
-  ctx.lineWidth = view.contrast ? 3.2 : 2;
+  ctx.strokeStyle = view.contrast ? '#ffffff' : '#080504';
+  ctx.lineWidth = view.contrast ? 3.2 : 2.2;
   ctx.stroke();
   ctx.restore();
 }
@@ -517,32 +539,62 @@ export function drawArtilleryTelegraphs(ctx) {
     if (remain > 1) remain = 1;
     var urgent = at.timer <= 0.2;
     var pulse = view.reduced ? 0.9 : (0.55 + 0.45 * (0.5 + 0.5 * Math.sin(time * 9)));
-    var ringA = (0.45 + (1 - remain) * 0.5).toFixed(3);
+    var ringA = (0.55 + (1 - remain) * 0.45).toFixed(3);
     ctx.save();
+
+    // 1. Contrast backing dark rim for artillery impact zone
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, at.r, 0, TAU);
+    ctx.strokeStyle = 'rgba(6, 6, 8, 0.88)';
+    ctx.lineWidth = (urgent ? 4.8 : 3.8) + (view.contrast ? 1.6 : 0);
+    ctx.stroke();
+
+    // 2. High-contrast dashed alert ring
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
     ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = urgent ? 'rgba(255,255,255,0.96)' : ('rgba(237,104,66,' + ringA + ')');
-    ctx.lineWidth = (urgent ? 2.6 : 1.8) + (view.contrast ? 1.3 : 0);
+    ctx.strokeStyle = urgent ? '#ffffff' : ('rgba(255, 115, 75, ' + ringA + ')');
+    ctx.lineWidth = (urgent ? 2.8 : 2.0) + (view.contrast ? 1.3 : 0);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // 3. Imminent impact danger zone fill
     var fillR = Math.max(4, at.r * remain);
     ctx.beginPath();
     ctx.arc(at.x, at.y, fillR, 0, TAU);
-    ctx.fillStyle = 'rgba(223,64,40,' + (0.16 + (1 - remain) * 0.42).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(235, 60, 36, ' + (0.2 + (1 - remain) * 0.45).toFixed(3) + ')';
     ctx.fill();
+
+    // 4. Crosshair dark contrast backing
+    ctx.beginPath();
+    ctx.moveTo(at.x - 9, at.y);
+    ctx.lineTo(at.x + 9, at.y);
+    ctx.moveTo(at.x, at.y - 9);
+    ctx.lineTo(at.x, at.y + 9);
+    ctx.strokeStyle = 'rgba(6, 6, 8, 0.9)';
+    ctx.lineWidth = (view.contrast ? 2.4 : 1.4) + 2.2;
+    ctx.stroke();
+
+    // 5. Crosshair targeting line
     ctx.beginPath();
     ctx.moveTo(at.x - 8, at.y);
     ctx.lineTo(at.x + 8, at.y);
     ctx.moveTo(at.x, at.y - 8);
     ctx.lineTo(at.x, at.y + 8);
-    ctx.strokeStyle = urgent ? 'rgba(255,255,255,0.96)' : 'rgba(237,104,66,0.92)';
+    ctx.strokeStyle = urgent ? '#ffffff' : 'rgba(255, 120, 80, 0.95)';
     ctx.lineWidth = view.contrast ? 2.4 : 1.4;
     ctx.stroke();
+
+    // 6. Bullseye core
     ctx.beginPath();
-    ctx.arc(at.x, at.y, 3.6, 0, TAU);
-    ctx.fillStyle = 'rgba(255,214,150,' + pulse.toFixed(3) + ')';
+    ctx.arc(at.x, at.y, 4.4, 0, TAU);
+    ctx.fillStyle = 'rgba(6, 6, 8, 0.85)';
     ctx.fill();
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, 3.4, 0, TAU);
+    ctx.fillStyle = urgent ? '#ffffff' : ('rgba(255, 220, 160, ' + pulse.toFixed(3) + ')');
+    ctx.fill();
+
     ctx.restore();
   }
 }
@@ -551,24 +603,81 @@ function drawAcidPools(ctx) {
   var pools = rt.state && rt.state.acidPools;
   if (!pools || !pools.length) return;
   var view = syncBud();
+  var time = view.reduced ? 0 : (rt.state.waveTime || 0);
   var i;
   for (i = 0; i < pools.length; i += 1) {
     var pool = pools[i];
     var fade = pool.maxTimer ? pool.timer / pool.maxTimer : 1;
     if (fade < 0) fade = 0;
+    if (fade > 1) fade = 1;
+    var r = pool.r || 38;
     ctx.save();
+
+    // 1. Heavy dark caustic grounding outline (contrast against rust/dusk/night grounds)
     ctx.beginPath();
-    ctx.arc(pool.x, pool.y, pool.r || 38, 0, TAU);
-    ctx.fillStyle = 'rgba(90, 110, 28, ' + (0.28 * fade).toFixed(3) + ')';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(pool.x, pool.y, (pool.r || 38) * 0.55, 0, TAU);
-    ctx.fillStyle = 'rgba(198, 227, 90, ' + (0.35 * fade).toFixed(3) + ')';
-    ctx.fill();
-    if (!view.key) drawGlow(ctx, pool.x, pool.y, (pool.r || 38) * 0.6, '#c6e35a', 0.35 * fade);
-    ctx.strokeStyle = 'rgba(214, 255, 106, ' + (0.7 * fade).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 2.4 : 1.4;
+    ctx.arc(pool.x, pool.y, r, 0, TAU);
+    ctx.strokeStyle = 'rgba(8, 14, 6, ' + (0.85 * fade).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 4.2 : 3.0;
     ctx.stroke();
+
+    // 2. Base caustic toxic muck fill
+    ctx.fillStyle = 'rgba(42, 68, 14, ' + (0.42 * fade).toFixed(3) + ')';
+    ctx.fill();
+
+    // 3. Inner acid depth fill
+    ctx.beginPath();
+    ctx.arc(pool.x, pool.y, r * 0.62, 0, TAU);
+    ctx.fillStyle = 'rgba(172, 218, 54, ' + (0.42 * fade).toFixed(3) + ')';
+    ctx.fill();
+
+    // 4. Alternating corrosive foam ring / perimeter bubbling nodes
+    var foamCount = view.reduced ? 6 : 9;
+    var bi;
+    for (bi = 0; bi < foamCount; bi += 1) {
+      var fa = (bi / foamCount) * TAU + (view.reduced ? 0.2 : Math.sin(time * 2.4 + bi * 1.3) * 0.22);
+      var fRad = r * (0.82 + (view.reduced ? 0 : Math.sin(time * 3.2 + bi * 2.1) * 0.08));
+      var fx = pool.x + Math.cos(fa) * fRad;
+      var fy = pool.y + Math.sin(fa) * fRad;
+      var bubbleR = (view.reduced ? 2.6 : (2.2 + 1.2 * (0.5 + 0.5 * Math.sin(time * 4.5 + bi * 1.7)))) * (fade * 0.6 + 0.4);
+
+      // Bubble dark backing
+      ctx.beginPath();
+      ctx.arc(fx, fy, bubbleR + 0.8, 0, TAU);
+      ctx.fillStyle = 'rgba(6, 12, 4, ' + (0.75 * fade).toFixed(3) + ')';
+      ctx.fill();
+
+      // Bubble bright caustic core (alternating lime and pale yellow)
+      ctx.beginPath();
+      ctx.arc(fx, fy, bubbleR, 0, TAU);
+      ctx.fillStyle = (bi % 2 === 0)
+        ? ('rgba(235, 255, 150, ' + (0.88 * fade).toFixed(3) + ')')
+        : ('rgba(180, 235, 60, ' + (0.82 * fade).toFixed(3) + ')');
+      ctx.fill();
+    }
+
+    // 5. Central bubbling caustic vent
+    if (!view.reduced) {
+      var ventCount = 3;
+      var vi;
+      for (vi = 0; vi < ventCount; vi += 1) {
+        var va = time * 1.6 + vi * (TAU / ventCount);
+        var vRad = r * 0.3 * (0.5 + 0.5 * Math.sin(time * 2.8 + vi));
+        ctx.beginPath();
+        ctx.arc(pool.x + Math.cos(va) * vRad, pool.y + Math.sin(va) * vRad, 2.2, 0, TAU);
+        ctx.fillStyle = 'rgba(240, 255, 180, ' + (0.85 * fade).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
+
+    if (!view.key) drawGlow(ctx, pool.x, pool.y, r * 0.6, '#c6e35a', 0.4 * fade);
+
+    // 6. High-contrast sharp toxic perimeter stroke
+    ctx.beginPath();
+    ctx.arc(pool.x, pool.y, r, 0, TAU);
+    ctx.strokeStyle = 'rgba(214, 255, 106, ' + (0.92 * fade).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 2.4 : 1.6;
+    ctx.stroke();
+
     ctx.restore();
   }
 }
@@ -589,8 +698,14 @@ export function drawMoltenZones(ctx) {
     if (fade < 0) fade = 0;
     if (fade > 1) fade = 1;
     ctx.save();
+
+    // Contrast dark backing rim for lava edge
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
+    ctx.strokeStyle = 'rgba(16, 6, 4, ' + (fade * 0.85).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 4.2 : 3.2;
+    ctx.stroke();
+
     ctx.fillStyle = 'rgba(150,42,16,' + (fade * 0.4).toFixed(3) + ')';
     ctx.fill();
     ctx.beginPath();
@@ -621,7 +736,7 @@ export function drawMoltenZones(ctx) {
     }
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(255,150,60,' + (fade * 0.8).toFixed(3) + ')';
+    ctx.strokeStyle = 'rgba(255,160,70,' + (fade * 0.9).toFixed(3) + ')';
     ctx.lineWidth = view.contrast ? 2.6 : 1.6;
     ctx.stroke();
     ctx.restore();
@@ -641,8 +756,14 @@ export function drawPlasmaZones(ctx) {
     if (fade < 0) fade = 0;
     if (fade > 1) fade = 1;
     ctx.save();
+
+    // Contrast dark backing rim
     ctx.beginPath();
     ctx.arc(pz.x, pz.y, pz.r, 0, TAU);
+    ctx.strokeStyle = 'rgba(18, 4, 8, ' + (fade * 0.85).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 4.0 : 3.0;
+    ctx.stroke();
+
     if (!view.key) drawGlow(ctx, pz.x, pz.y, pz.r, '#ff4d2e', fade * 0.45);
     ctx.fillStyle = 'rgba(255,77,46,' + (fade * 0.34).toFixed(3) + ')';
     ctx.fill();
@@ -650,6 +771,7 @@ export function drawPlasmaZones(ctx) {
     ctx.arc(pz.x, pz.y, pz.r * 0.62, 0, TAU);
     ctx.fillStyle = 'rgba(255,170,50,' + (fade * 0.42).toFixed(3) + ')';
     ctx.fill();
+
     var motes = view.reduced ? 2 : 3;
     for (var m = 0; m < motes; m += 1) {
       var a = time * 1.8 + m * (TAU / motes);
@@ -659,6 +781,14 @@ export function drawPlasmaZones(ctx) {
       ctx.fillStyle = 'rgba(255,236,190,' + (fade * 0.75).toFixed(3) + ')';
       ctx.fill();
     }
+
+    // High-contrast radiant border
+    ctx.beginPath();
+    ctx.arc(pz.x, pz.y, pz.r, 0, TAU);
+    ctx.strokeStyle = 'rgba(255, 120, 80, ' + (fade * 0.88).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 2.4 : 1.6;
+    ctx.stroke();
+
     ctx.restore();
   }
 }

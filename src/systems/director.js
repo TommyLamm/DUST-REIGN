@@ -9,6 +9,7 @@ import { routeById, routeIds } from '../data/routes.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
 import { assignRoute, onBossCleared } from './interlude.js';
+import { triggerGameOver } from './flow.js';
 
 var WEIGHT_KEYS = ['crawler', 'rusher', 'brute', 'artillery', 'spitter', 'scurrier', 'warden', 'burrower'];
 var UNLOCK_WAVE = { crawler: 1, rusher: 1, brute: 1, artillery: 2, spitter: 6, scurrier: 7, warden: 11, burrower: 12 };
@@ -351,7 +352,62 @@ function applyMutatorMods(recipe, mut) {
   }
 }
 
-export function planWave(wave) {
+export function applyStageDirectorMods(state, recipe) {
+  if (!state || !recipe) return;
+  var config = state.stageConfig;
+  if (!config) return;
+
+  if (state.mode === 'campaign') {
+    if (config.enemyWeights && Object.keys(config.enemyWeights).length > 0) {
+      var k;
+      for (k in config.enemyWeights) {
+        if (Object.prototype.hasOwnProperty.call(config.enemyWeights, k)) {
+          recipe.weights[k] = config.enemyWeights[k];
+        }
+      }
+      renormalize(recipe.weights);
+      refreshCuts(recipe);
+    }
+    if (config.boss) {
+      var targetWave = config.targetWaves || 1;
+      if ((state.wave || 1) >= targetWave) {
+        recipe.boss = config.boss;
+      }
+    }
+  } else if (state.mode === 'hardcore') {
+    recipe.cap = config.enemyCap || 60;
+    recipe.spawnInterval = config.spawnInterval || 0.22;
+    if (typeof config.eliteChance === 'number') {
+      recipe.eliteChance = config.eliteChance;
+    }
+    if (config.counterWeights && Object.keys(config.counterWeights).length > 0) {
+      var cw;
+      for (cw = 0; cw < WEIGHT_KEYS.length; cw += 1) {
+        recipe.weights[WEIGHT_KEYS[cw]] = 0;
+      }
+      for (var key in config.counterWeights) {
+        if (Object.prototype.hasOwnProperty.call(config.counterWeights, key)) {
+          recipe.weights[key] = config.counterWeights[key];
+        }
+      }
+      renormalize(recipe.weights);
+      refreshCuts(recipe);
+    }
+    recipe.affixMinWave = 1;
+    if (config.flashStorm) {
+      var stormSec = typeof config.flashStorm === 'number' ? config.flashStorm : 15;
+      state.stormSeconds = stormSec;
+    }
+    if (config.bossOverride && config.bossOverride.kind) {
+      var hWave = config.targetWaves || 1;
+      if ((state.wave || 1) >= hWave) {
+        recipe.boss = config.bossOverride.kind;
+      }
+    }
+  }
+}
+
+export function planWave(wave, state) {
   var parts = waveParts(wave);
   var scales = designScales(parts.wave);
   var weights = copyWeights(weightRow(parts.act, parts.wIn, parts.wave));
@@ -365,7 +421,7 @@ export function planWave(wave) {
     dmgScale = round2(Math.pow(1.06, scales.overheat));
   }
   var cycle = overtimeCycle(parts.wave);
-  return {
+  var recipe = {
     wave: parts.wave,
     act: parts.act,
     sector: defaultSector(parts.act),
@@ -398,6 +454,11 @@ export function planWave(wave) {
     crateChance: 0.15,
     overheat: scales.overheat
   };
+  var s = state || (rt && rt.state);
+  if (s && (s.mode === 'campaign' || s.mode === 'hardcore')) {
+    applyStageDirectorMods(s, recipe);
+  }
+  return recipe;
 }
 
 function sectorFor(state, recipe) {
@@ -453,6 +514,10 @@ export function onWaveStart(state) {
   if (recipe.eliteChance < 0) recipe.eliteChance = 0;
   if (recipe.eliteChance > 0.6) recipe.eliteChance = 0.6;
   refreshCuts(recipe);
+  if (state && (state.mode === 'campaign' || state.mode === 'hardcore')) {
+    applyStageDirectorMods(state, recipe);
+    refreshCuts(recipe);
+  }
   recipe.mutator = mut ? mut.id : null;
   var contract = rollContract(wave, recipe.act, recipe.boss, recipe.eliteChance);
   recipe.contract = contract ? contract.id : null;
@@ -465,6 +530,9 @@ export function onWaveStart(state) {
   var storm = heat.stormSeconds || 5;
   if (route && route.stormSeconds > storm) storm = route.stormSeconds;
   if (daily && typeof daily.stormSeconds === 'number' && daily.stormSeconds > storm) storm = daily.stormSeconds;
+  if (state.stageConfig && state.stageConfig.flashStorm) {
+    storm = typeof state.stageConfig.flashStorm === 'number' ? state.stageConfig.flashStorm : 15;
+  }
   state.stormSeconds = storm;
   state.moltenBonus = recipe.moltenBonus || 0;
   state.waveSettled = false;
@@ -593,4 +661,212 @@ export function onBossDefeated(enemy) {
   noteMetaEvent('boss', { kind: kind, wave: rt.state.wave || 1 });
   onWaveEnd(rt.state);
   onBossCleared(rt.state);
+  if (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore') {
+    checkStageVictory(rt.state, 0);
+  }
+}
+
+export function evaluateStageStars(state, stageConfig) {
+  if (!state) state = rt.state;
+  if (!stageConfig) stageConfig = state && state.stageConfig;
+  var stars = { star1: false, star2: false, star3: false };
+  if (!stageConfig) return stars;
+
+  // Star 1 is completing the primary stage objective
+  stars.star1 = true;
+
+  var p = (state && state.player) || {};
+  var maxHp = p.maxHp || 100;
+  var currentHp = p.hp || 0;
+  var hpRatio = currentHp / maxHp;
+  var elapsed = (state && state.stageElapsed) || 0;
+  var id = stageConfig.id || '';
+  var type = stageConfig.type || stageConfig.goalType || '';
+
+  switch (id) {
+    case 'stage_1_1':
+      stars.star2 = elapsed <= 60;
+      stars.star3 = hpRatio >= 0.8 && ((state.damageTakenInStage || 0) <= 20 || (state.stats && state.stats.coresDetonated > 0) || Boolean(state.barrelKill));
+      break;
+    case 'stage_1_2':
+      stars.star2 = elapsed <= 50;
+      stars.star3 = hpRatio >= 0.75 && ((state.damageTakenInStage || 0) <= 25);
+      break;
+    case 'stage_1_3':
+      stars.star2 = ((stageConfig.targetTime || 90) - elapsed) >= 30 || elapsed <= 60;
+      stars.star3 = hpRatio >= 0.70;
+      break;
+    case 'stage_1_4':
+      stars.star2 = elapsed <= 90;
+      stars.star3 = (state.stats && state.stats.justDashes >= 3) || hpRatio >= 0.8;
+      break;
+    case 'stage_2_1':
+      stars.star2 = !state.steppedInLava;
+      stars.star3 = hpRatio >= 0.70;
+      break;
+    case 'stage_2_2':
+      stars.star2 = elapsed <= ((stageConfig.targetTime || 60) * 0.6);
+      stars.star3 = hpRatio >= 0.75;
+      break;
+    case 'stage_2_3':
+      stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.75;
+      stars.star3 = (state.beaconPlayerStayTime || 0) >= 45;
+      break;
+    case 'stage_2_4':
+      stars.star2 = elapsed <= 100;
+      stars.star3 = hpRatio >= 0.70;
+      break;
+    case 'stage_3_1':
+      stars.star2 = elapsed <= 75;
+      stars.star3 = (state.stats && state.stats.maxCombo >= 10) || ((state.combo || 0) >= 10);
+      break;
+    case 'stage_3_2':
+      stars.star2 = (state.stats && state.stats.spireChains >= 3) || elapsed <= 70;
+      stars.star3 = hpRatio >= 0.70 && !state.empUsed;
+      break;
+    case 'stage_3_3':
+      stars.star2 = elapsed <= 75;
+      stars.star3 = hpRatio >= 0.80;
+      break;
+    case 'stage_3_4':
+      stars.star2 = elapsed <= 110;
+      stars.star3 = hpRatio >= 0.75;
+      break;
+    case 'stage_ex_1':
+      stars.star2 = elapsed <= 100;
+      stars.star3 = hpRatio >= 0.80 && (state.stats && state.stats.maxCombo >= 15);
+      break;
+    case 'stage_ex_2':
+      stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.80;
+      stars.star3 = (state.beaconPlayerStayTime || 0) >= 60 && hpRatio >= 0.75;
+      break;
+    case 'stage_ex_3':
+      stars.star2 = elapsed <= 120;
+      stars.star3 = (state.stats && state.stats.justDashes >= 5) || hpRatio >= 0.80;
+      break;
+    default:
+      if (type === 'beacon_defense') {
+        stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.75;
+        stars.star3 = (state.beaconPlayerStayTime || 0) >= ((stageConfig.targetTime || 90) * 0.5);
+      } else {
+        var tLimit = stageConfig.targetTime || 90;
+        stars.star2 = elapsed <= tLimit * 0.8;
+        stars.star3 = hpRatio >= 0.75;
+      }
+      break;
+  }
+
+  return stars;
+}
+
+export function checkStageVictory(state, dt) {
+  if (!state) state = rt.state;
+  if (!state || state.over || state.stageCleared) return null;
+  if (state.mode !== 'campaign' && state.mode !== 'hardcore') return null;
+
+  var config = state.stageConfig;
+  if (!config) return null;
+
+  if (typeof dt === 'number' && dt > 0) {
+    state.stageElapsed = (state.stageElapsed || 0) + dt;
+  }
+
+  var type = config.type || config.goalType || '';
+  if (state.mode === 'hardcore') {
+    type = 'boss_duel';
+  }
+
+  // Beacon defense logic
+  if (type === 'beacon_defense') {
+    if (state.beacon) {
+      if (typeof dt === 'number' && dt > 0 && state.enemies) {
+        var b = state.beacon;
+        for (var ei = 0; ei < state.enemies.length; ei += 1) {
+          var foe = state.enemies[ei];
+          if (!foe || foe.hp <= 0) continue;
+          var fDist = Math.hypot(foe.x - b.x, foe.y - b.y);
+          if (fDist <= (b.r + (foe.r || 10) + 10)) {
+            state.beaconHp = Math.max(0, state.beaconHp - (foe.damage || 15) * dt * 0.8);
+            b.hp = state.beaconHp;
+          }
+        }
+      }
+      if (state.player && typeof dt === 'number' && dt > 0) {
+        var pDist = Math.hypot(state.player.x - state.beacon.x, state.player.y - state.beacon.y);
+        if (pDist <= (state.beacon.captureRadius || 120)) {
+          state.beaconPlayerStayTime = (state.beaconPlayerStayTime || 0) + dt;
+          state.stageElapsed += dt * 0.5;
+        }
+      }
+    }
+    if (state.beaconHp <= 0) {
+      triggerGameOver({ victory: false });
+      return { victory: false, failed: true };
+    }
+  }
+
+  // Scrap rush timeout check
+  if (type === 'scrap_rush') {
+    var quota = config.targetQuota || 100;
+    var tLimit = config.targetTime || 75;
+    if (state.stageElapsed > tLimit && (state.scrapCollectedInStage || 0) < quota) {
+      triggerGameOver({ victory: false });
+      return { victory: false, failed: true };
+    }
+  }
+
+  var won = false;
+  if (type === 'wave_wipeout') {
+    var targetWaves = config.targetWaves || 3;
+    var livingEnemies = state.enemies ? state.enemies.length : 0;
+    if (state.wave >= targetWaves && state.stageElapsed > 3 && livingEnemies === 0) {
+      won = true;
+    }
+  } else if (type === 'vip_hunt') {
+    if (state.vipList && state.vipList.length > 0) {
+      var allVipsDead = true;
+      for (var vi = 0; vi < state.vipList.length; vi += 1) {
+        var vip = state.vipList[vi];
+        if (vip && vip.hp > 0 && state.enemies && state.enemies.indexOf(vip) !== -1) {
+          allVipsDead = false;
+          break;
+        }
+      }
+      if (allVipsDead) {
+        won = true;
+      }
+    }
+  } else if (type === 'beacon_defense') {
+    var defTime = config.targetTime || 90;
+    if (state.stageElapsed >= defTime && state.beaconHp > 0) {
+      won = true;
+    }
+  } else if (type === 'scrap_rush') {
+    var reqQuota = config.targetQuota || 100;
+    var maxTime = config.targetTime || 75;
+    if ((state.scrapCollectedInStage || 0) >= reqQuota && state.stageElapsed <= maxTime) {
+      won = true;
+    }
+  } else if (type === 'boss_duel') {
+    var bKind = config.boss || (config.bossOverride && config.bossOverride.kind);
+    if (bKind) {
+      if (state.bossesDefeated && state.bossesDefeated.indexOf(bKind) !== -1) {
+        won = true;
+      }
+    } else if (state.bossesDefeated && state.bossesDefeated.length > 0) {
+      won = true;
+    }
+  }
+
+  if (won) {
+    state.stageCleared = true;
+    state.stageVictory = true;
+    var stars = evaluateStageStars(state, config);
+    state.stageStars = stars;
+    var stageId = config.id || '';
+    triggerGameOver({ victory: true, stars: stars, stageId: stageId });
+    return { victory: true, stars: stars, stageId: stageId };
+  }
+
+  return null;
 }

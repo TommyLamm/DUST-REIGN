@@ -161,7 +161,15 @@ class CDPClient {
     const res = await this.send('Page.captureScreenshot', { format: 'png' });
     const buffer = Buffer.from(res.data, 'base64');
     const outPath = path.join(SCREENSHOT_DIR, filename);
-    fs.writeFileSync(outPath, buffer);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        fs.writeFileSync(outPath, buffer);
+        break;
+      } catch (err) {
+        if (attempt === 2) throw err;
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    }
     console.log(`[Screenshot] Saved: ${outPath} (${(buffer.length / 1024).toFixed(1)} KB)`);
     return outPath;
   }
@@ -421,10 +429,19 @@ async function runTests() {
         startHidden: document.getElementById('startScreen').hidden,
         runState: document.getElementById('runState').textContent,
         paused: window.LunaGame.getState().paused,
-        playerHp: window.LunaGame.getState().player.hp
+        playerHp: window.LunaGame.getState().player.hp,
+        layoutInCombat: document.querySelector('.game-layout').classList.contains('is-in-combat'),
+        railDisplay: getComputedStyle(document.querySelector('.mission-rail')).display
       })
     `);
-    recordStep('ENTER THE DUST starts run', runStartedState.startHidden && !runStartedState.paused && runStartedState.playerHp > 0, runStartedState);
+    recordStep('ENTER THE DUST starts run',
+      runStartedState.startHidden &&
+      !runStartedState.paused &&
+      runStartedState.playerHp > 0 &&
+      runStartedState.layoutInCombat === true &&
+      runStartedState.railDisplay === 'none',
+      runStartedState
+    );
 
     await client.captureScreenshot('03-combat-started.png');
 
@@ -738,10 +755,18 @@ async function runTests() {
         telGrazes: document.getElementById('telGrazes').textContent,
         telDamage: document.getElementById('telDamage').textContent,
         combatRankLetter: document.getElementById('combatRankLetter').textContent,
-        combatRankTitle: document.getElementById('combatRankTitle').textContent
+        combatRankTitle: document.getElementById('combatRankTitle').textContent,
+        layoutInCombat: document.querySelector('.game-layout').classList.contains('is-in-combat'),
+        railDisplay: getComputedStyle(document.querySelector('.mission-rail')).display
       })
     `);
-    recordStep('Game Over triggered and displayed', gameOverInfo.screenVisible && gameOverInfo.isOver, gameOverInfo);
+    recordStep('Game Over triggered and displayed',
+      gameOverInfo.screenVisible &&
+      gameOverInfo.isOver &&
+      gameOverInfo.layoutInCombat === false &&
+      gameOverInfo.railDisplay !== 'none',
+      gameOverInfo
+    );
 
     await client.captureScreenshot('08-game-over-screen.png');
 
@@ -759,7 +784,9 @@ async function runTests() {
         paused: s.paused,
         playerHp: s.player.hp,
         bulletsCount: s.bullets.length,
-        enemiesCount: s.enemies.length
+        enemiesCount: s.enemies.length,
+        layoutInCombat: document.querySelector('.game-layout').classList.contains('is-in-combat'),
+        railDisplay: getComputedStyle(document.querySelector('.mission-rail')).display
       })
     `);
     recordStep('RUN IT BACK returns cleanly to standby loadout',
@@ -767,7 +794,9 @@ async function runTests() {
       postRestartState.startScreenVisible &&
       postRestartState.runState === 'STANDBY' &&
       postRestartState.paused === true &&
-      postRestartState.playerHp > 0,
+      postRestartState.playerHp > 0 &&
+      postRestartState.layoutInCombat === false &&
+      postRestartState.railDisplay !== 'none',
       postRestartState
     );
 

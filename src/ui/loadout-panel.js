@@ -1,10 +1,15 @@
 import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
-import { readBestScoreV2, readDaily, readLegacyBestScore, writeMeta } from '../core/meta-store.js';
+import { getCampaignStore, readBestScoreV2, readDaily, readLegacyBestScore, readMeta, writeMeta } from '../core/meta-store.js';
+import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
+import { CAMPAIGN_STAGES } from '../data/campaign-stages.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { RIGS, getRig } from '../data/rigs.js';
 import { peekRunUnlocks, resolveSelection } from '../systems/meta.js';
+import { isCampaignModalOpen, openCampaignModal, campaignModalCommand } from './campaign-modal.js';
 import { closeCodex, cycleCodexTab, isCodexOpen, openCodex } from './codex-panel.js';
+import { updateGameOverUi } from './game-over.js';
+import { cycleHardcoreOperation, getSelectedHardcoreOperation, renderHardcoreBriefing } from './hardcore-briefing.js';
 
 var WEAPONS = [
   { id: 'standard', name: 'STANDARD', rate: '0.18s', pattern: 'DIRECT', line: 'Steady rifle. Stay mobile.' },
@@ -12,17 +17,27 @@ var WEAPONS = [
   { id: 'vanguard', name: 'VANGUARD', rate: 'CHARGE', pattern: 'PIERCE', line: 'Hold to fire a heavy slug.' },
   { id: 'arc-welder', name: 'ARC WELDER', rate: 'FAST', pattern: 'CHAIN', line: 'Lightning that jumps targets.' }
 ];
+var MODES = ['standard', 'campaign', 'hardcore', 'daily'];
 var ROWS = ['rig', 'weapon', 'heat', 'mode'];
 
 var built = false;
 var activeRow = 0;
 var rigButtons = [];
 var weaponButtons = [];
+var heatRow;
 var heatDown;
 var heatUp;
 var heatValue;
 var modeStandard;
+var modeCampaign;
+var modeHardcore;
 var modeDaily;
+var campaignStageBar;
+var campaignStageCode;
+var campaignStageName;
+var campaignStageStars;
+var campaignSelectStageBtn;
+var hardcoreBriefingContainer;
 var ruleNode;
 var scoreNode;
 var statusNode;
@@ -77,7 +92,9 @@ function setPressed(button, selected, disabled) {
 function refresh() {
   var pick;
   var meta;
+  var currentMode;
   var lockedDaily;
+  var lockedHardcore;
   var i;
   var rig;
   var weapon;
@@ -87,28 +104,58 @@ function refresh() {
   var status;
   var ruleText;
   if (!built) return;
+
   pick = resolveSelection();
-  meta = pick.meta;
-  lockedDaily = !!(pick.rule && pick.mode === 'daily');
+  meta = readMeta();
+  currentMode = meta.selectedMode || 'standard';
+  lockedDaily = !!(pick.rule && currentMode === 'daily');
+  lockedHardcore = (currentMode === 'hardcore');
+
   var zh = isChinese();
+  var hcOp = lockedHardcore ? getSelectedHardcoreOperation() : null;
+
+  // If in Hardcore, force sync rig & weapon to match locked operation
+  if (lockedHardcore && hcOp) {
+    if (pick.rigId !== hcOp.lockedRig || pick.weaponId !== hcOp.lockedWeapon) {
+      writeMeta({ selectedRig: hcOp.lockedRig, selectedWeapon: hcOp.lockedWeapon });
+      pick.rigId = hcOp.lockedRig;
+      pick.weaponId = hcOp.lockedWeapon;
+    }
+  }
+
+  // Rig Buttons Refresh
   for (i = 0; i < rigButtons.length; i += 1) {
     rig = RIGS[i];
     var locked = meta.unlockedRigs.indexOf(rig.id) === -1;
     var selected = rig.id === pick.rigId;
-    setPressed(rigButtons[i], selected, locked || lockedDaily);
-    rigButtons[i].classList.toggle('is-locked', locked && !selected);
+    setPressed(rigButtons[i], selected, locked || lockedDaily || lockedHardcore);
+    rigButtons[i].classList.toggle('is-locked', (locked && !selected) || (lockedHardcore && !selected));
+    rigButtons[i].classList.toggle('is-locked-by-rule', (lockedDaily && selected) || (lockedHardcore && selected));
+
     var rigTitle = rigButtons[i].querySelector('strong');
     if (rigTitle) rigTitle.textContent = zh ? tRigName(rig.id) : rig.name;
     var detail = rigButtons[i].querySelector('small');
     if (detail) {
-      detail.textContent = locked && !lockedDaily
-        ? (zh ? tRigReq(rig) : rig.req)
-        : (lockedDaily && selected ? (zh ? '每日鎖定' : 'DAILY LOCK') : (zh ? tRigBlurb(rig.id) : rig.blurb));
+      if (lockedHardcore) {
+        detail.textContent = selected ? (zh ? '🔒 極限鎖定機體' : '🔒 HARDCORE LOCKED') : (zh ? '極限模式禁用' : 'RESTRICTED');
+      } else if (locked && !lockedDaily) {
+        detail.textContent = zh ? tRigReq(rig) : rig.req;
+      } else if (lockedDaily && selected) {
+        detail.textContent = zh ? '每日鎖定' : 'DAILY LOCK';
+      } else {
+        detail.textContent = zh ? tRigBlurb(rig.id) : rig.blurb;
+      }
     }
   }
+
+  // Weapon Buttons Refresh
   for (i = 0; i < weaponButtons.length; i += 1) {
     weapon = WEAPONS[i];
-    setPressed(weaponButtons[i], weapon.id === pick.weaponId, lockedDaily);
+    var wSelected = (weapon.id === pick.weaponId);
+    setPressed(weaponButtons[i], wSelected, lockedDaily || lockedHardcore);
+    weaponButtons[i].classList.toggle('is-locked', lockedHardcore && !wSelected);
+    weaponButtons[i].classList.toggle('is-locked-by-rule', (lockedDaily && wSelected) || (lockedHardcore && wSelected));
+
     var wTitle = weaponButtons[i].querySelector('strong');
     if (wTitle) wTitle.textContent = zh ? tWeaponName(weapon.id) : weapon.name;
     var wRatePattern = weaponButtons[i].querySelector('small:not(.loadout-line)');
@@ -118,22 +165,80 @@ function refresh() {
       wRatePattern.textContent = rText + ' · ' + (zh ? tWeaponPattern(weapon.id) : weapon.pattern);
     }
     var wLine = weaponButtons[i].querySelector('.loadout-line');
-    if (wLine) wLine.textContent = zh ? tWeaponLine(weapon.id) : weapon.line;
+    if (wLine) {
+      if (lockedHardcore) {
+        wLine.textContent = wSelected ? (zh ? '🔒 極限專屬主武' : '🔒 HARDCORE LOCKED') : (zh ? '作戰禁用' : 'RESTRICTED');
+      } else {
+        wLine.textContent = zh ? tWeaponLine(weapon.id) : weapon.line;
+      }
+    }
   }
-  setPressed(heatDown, false, lockedDaily);
-  setPressed(heatUp, false, lockedDaily);
-  heatDown.tabIndex = 0;
-  heatUp.tabIndex = 0;
-  heatValue.tabIndex = 0;
-  heatValue.textContent = (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' ' + formatMult(pick.heat);
-  heatValue.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
-  setPressed(modeStandard, pick.mode !== 'daily', false);
-  setPressed(modeDaily, pick.mode === 'daily', false);
-  modeStandard.tabIndex = pick.mode !== 'daily' ? 0 : -1;
-  modeDaily.tabIndex = pick.mode === 'daily' ? 0 : -1;
-  modeStandard.textContent = zh ? '標準模式' : 'STANDARD';
+
+  // Heat Controls Refresh
+  if (lockedHardcore) {
+    if (heatRow) heatRow.style.display = 'none';
+  } else {
+    if (heatRow) heatRow.style.display = '';
+    setPressed(heatDown, false, lockedDaily);
+    setPressed(heatUp, false, lockedDaily);
+    heatDown.tabIndex = 0;
+    heatUp.tabIndex = 0;
+    heatValue.tabIndex = 0;
+    heatValue.textContent = (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' ' + formatMult(pick.heat);
+    heatValue.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
+  }
+
+  // Mode Buttons Refresh
+  setPressed(modeStandard, currentMode === 'standard', false);
+  setPressed(modeCampaign, currentMode === 'campaign', false);
+  setPressed(modeHardcore, currentMode === 'hardcore', false);
+  setPressed(modeDaily, currentMode === 'daily', false);
+
+  modeStandard.textContent = zh ? '標準出擊' : 'STANDARD';
+  modeCampaign.textContent = zh ? '戰役闖關' : 'CAMPAIGN';
+  modeHardcore.textContent = zh ? '極限作戰' : 'HARDCORE';
   modeDaily.textContent = zh ? '每日挑戰' : 'DAILY';
-  if (pick.rule) {
+
+  // Campaign Stage Bar Display
+  if (currentMode === 'campaign') {
+    if (campaignStageBar) {
+      campaignStageBar.hidden = false;
+      var campStore = getCampaignStore();
+      var selStageId = campStore.selectedStage || 'stage_1_1';
+      var stgObj = null;
+      for (var sIdx = 0; sIdx < CAMPAIGN_STAGES.length; sIdx += 1) {
+        if (CAMPAIGN_STAGES[sIdx].id === selStageId) {
+          stgObj = CAMPAIGN_STAGES[sIdx];
+          break;
+        }
+      }
+      var stgRecord = (campStore.stages && campStore.stages[selStageId]) || { stars: 0 };
+      var starsStr = (stgRecord.stars >= 1 ? '★' : '☆') + (stgRecord.stars >= 2 ? '★' : '☆') + (stgRecord.stars >= 3 ? '★' : '☆');
+
+      if (campaignStageCode) campaignStageCode.textContent = stgObj ? stgObj.code : 'STAGE 1-1';
+      if (campaignStageName) campaignStageName.textContent = stgObj ? (zh ? stgObj.name : stgObj.name) : '荒漠清道夫';
+      if (campaignStageStars) campaignStageStars.textContent = '[' + starsStr + ']';
+      if (campaignSelectStageBtn) campaignSelectStageBtn.textContent = zh ? '選擇關卡 ⊞' : 'SELECT STAGE ⊞';
+    }
+  } else {
+    if (campaignStageBar) campaignStageBar.hidden = true;
+  }
+
+  // Hardcore Briefing Display
+  if (currentMode === 'hardcore') {
+    if (hardcoreBriefingContainer) {
+      hardcoreBriefingContainer.hidden = false;
+      renderHardcoreBriefing(hardcoreBriefingContainer, function (op) {
+        writeMeta({ selectedRig: op.lockedRig, selectedWeapon: op.lockedWeapon });
+        refresh();
+      });
+    }
+  } else {
+    if (hardcoreBriefingContainer) hardcoreBriefingContainer.hidden = true;
+  }
+
+  // Summary Rule Line
+  if (currentMode === 'daily' && pick.rule) {
     saved = readDaily();
     best = saved.date === pick.dateKey ? saved.best : 0;
     runs = saved.date === pick.dateKey ? saved.runs : 0;
@@ -142,13 +247,19 @@ function refresh() {
     } else {
       ruleText = pick.rule.title + ' — ' + pick.rule.summary + ' Lock ' + pick.rigId.toUpperCase() + ' / ' + pick.weaponId.toUpperCase() + ' / HEAT ' + pick.heat + '. ' + routeText(pick.rule) + '. TODAY BEST ' + padScore(best) + ' · RUNS ' + runs;
     }
+  } else if (currentMode === 'campaign') {
+    ruleText = zh ? '戰役區域闖關 — 目標突破與三星精通評級' : 'SECTOR CAMPAIGN — STAGE OBJECTIVES & 3-STAR MASTERY';
+  } else if (currentMode === 'hardcore') {
+    ruleText = zh ? '極限作戰模式 — 固定配置、天敵怪潮與苛刻負面懲罰' : 'HARDCORE OPERATIONS — FIXED LOADOUTS & TACTICAL COUNTER SWARMS';
   } else {
-    ruleText = zh ? '標準出擊' : 'STANDARD RUN';
+    ruleText = zh ? '標準出擊 — 自由選配機體與主武器，深入荒原長程生存' : 'STANDARD RUN — FREE LOADOUT, ADAPTIVE ROGUELIKE WASTELAND DRIFT';
   }
   if (ruleNode.textContent !== ruleText) ruleNode.textContent = ruleText;
+
   var scores = (zh ? '最佳分數 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '歷史最佳 ' : 'LEGACY BEST ') + padScore(readLegacyBestScore());
   if (scoreNode.textContent !== scores) scoreNode.textContent = scores;
-  status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase()) + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase()) + ' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat) + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);
+
+  status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase()) + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase()) + (currentMode !== 'hardcore' ? (' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat)) : '') + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);
   if (statusNode.textContent !== status) statusNode.textContent = status;
 
   var kicker = document.querySelector('#loadoutPanel .loadout-kicker');
@@ -168,32 +279,38 @@ function refresh() {
 }
 
 function chooseRig(id) {
-  var pick = resolveSelection();
-  if (pick.rule) return;
-  if (pick.meta.unlockedRigs.indexOf(id) === -1) return;
+  var meta = readMeta();
+  if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
+  if (meta.unlockedRigs.indexOf(id) === -1) return;
   writeMeta({ selectedRig: id });
   refresh();
 }
 
 function chooseWeapon(id) {
-  if (resolveSelection().rule) return;
+  var meta = readMeta();
+  if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
   writeMeta({ selectedWeapon: id });
   refresh();
 }
 
 function stepHeat(delta) {
-  var pick = resolveSelection();
-  var next;
-  if (pick.rule) return;
-  next = (pick.heat | 0) + delta;
+  var meta = readMeta();
+  if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
+  var next = (meta.selectedHeat | 0) + delta;
   if (next < 0) next = 0;
-  if (next > (pick.meta.heatUnlocked | 0)) next = pick.meta.heatUnlocked | 0;
+  if (next > (meta.heatUnlocked | 0)) next = meta.heatUnlocked | 0;
   writeMeta({ selectedHeat: next });
   refresh();
 }
 
 function chooseMode(mode) {
-  writeMeta({ selectedMode: mode === 'daily' ? 'daily' : 'standard' });
+  writeMeta({ selectedMode: mode });
+  if (mode === 'hardcore') {
+    var op = getSelectedHardcoreOperation();
+    if (op) {
+      writeMeta({ selectedRig: op.lockedRig, selectedWeapon: op.lockedWeapon });
+    }
+  }
   refresh();
 }
 
@@ -209,28 +326,31 @@ function unlockedRigIds() {
 }
 
 function cycleRig(delta) {
-  var pick = resolveSelection();
-  var ids;
-  var index;
-  if (pick.rule) return;
-  ids = unlockedRigIds();
-  index = ids.indexOf(pick.rigId);
+  var meta = readMeta();
+  if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
+  var ids = unlockedRigIds();
+  var index = ids.indexOf(meta.selectedRig);
   if (index < 0) index = 0;
   chooseRig(ids[(index + delta + ids.length) % ids.length]);
 }
 
 function cycleWeapon(delta) {
-  var pick = resolveSelection();
-  var index;
-  if (pick.rule) return;
-  index = 0;
+  var meta = readMeta();
+  if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
+  var index = 0;
   var i;
-  for (i = 0; i < WEAPONS.length; i += 1) if (WEAPONS[i].id === pick.weaponId) index = i;
+  for (i = 0; i < WEAPONS.length; i += 1) if (WEAPONS[i].id === meta.selectedWeapon) index = i;
   chooseWeapon(WEAPONS[(index + delta + WEAPONS.length) % WEAPONS.length].id);
 }
 
-function cycleMode() {
-  chooseMode(resolveSelection().mode === 'daily' ? 'standard' : 'daily');
+function cycleMode(delta) {
+  delta = delta || 1;
+  var meta = readMeta();
+  var current = meta.selectedMode || 'standard';
+  var idx = MODES.indexOf(current);
+  if (idx === -1) idx = 0;
+  var nextMode = MODES[(idx + delta + MODES.length) % MODES.length];
+  chooseMode(nextMode);
 }
 
 function rowFromTarget(target) {
@@ -256,6 +376,9 @@ function focusRow(index) {
 
 function nudge(key) {
   var delta;
+  var meta = readMeta();
+  var currentMode = meta.selectedMode || 'standard';
+
   if (typeof document !== 'undefined' && document.activeElement) activeRow = rowFromTarget(document.activeElement);
   if (key === 'arrowup' || key === 'arrowdown') {
     delta = key === 'arrowdown' ? 1 : -1;
@@ -264,10 +387,19 @@ function nudge(key) {
     return;
   }
   delta = key === 'arrowright' ? 1 : -1;
-  if (activeRow === 0) cycleRig(delta);
-  else if (activeRow === 1) cycleWeapon(delta);
-  else if (activeRow === 2) stepHeat(delta);
-  else cycleMode();
+  if (activeRow === 0) {
+    if (currentMode !== 'hardcore') cycleRig(delta);
+  } else if (activeRow === 1) {
+    if (currentMode !== 'hardcore') cycleWeapon(delta);
+  } else if (activeRow === 2) {
+    if (currentMode === 'hardcore') {
+      cycleHardcoreOperation(delta);
+    } else {
+      stepHeat(delta);
+    }
+  } else {
+    cycleMode(delta);
+  }
   focusRow(activeRow);
 }
 
@@ -284,6 +416,10 @@ function activateFocused(root) {
 function confirmLoadout() {
   var active = document.activeElement;
   var start;
+  if (isCampaignModalOpen()) {
+    campaignModalCommand('confirm');
+    return;
+  }
   if (isCodexOpen()) {
     activateFocused(document.getElementById('codexPanel'));
     return;
@@ -292,12 +428,19 @@ function confirmLoadout() {
     openCodex();
     return;
   }
+  if (active && active.id === 'campaignSelectStageBtn') {
+    openCampaignModal(function () { refresh(); });
+    return;
+  }
   start = document.getElementById('startBtn');
   if (start && start.click) start.click();
 }
 
 export function loadoutCommand(command) {
   if (typeof document === 'undefined') return false;
+  if (isCampaignModalOpen()) {
+    return campaignModalCommand(command);
+  }
   if (!startOpen() && command !== 'cancel' && !isCodexOpen()) return false;
   if (command === 'cancel') {
     if (!isCodexOpen()) return false;
@@ -324,6 +467,7 @@ function onKey(event) {
   var key;
   var target;
   if (typeof document === 'undefined') return;
+  if (isCampaignModalOpen()) return;
   if (!startOpen() && !isCodexOpen()) return;
   key = String(event.key || '').toLowerCase();
   if (isCodexOpen()) {
@@ -360,6 +504,12 @@ function onKey(event) {
       if (target.closest('#codexOpenBtn')) {
         event.stopPropagation();
         openCodex();
+        return;
+      }
+      if (target.closest('#campaignSelectStageBtn')) {
+        event.stopPropagation();
+        openCampaignModal(function () { refresh(); });
+        return;
       }
     }
   }
@@ -378,7 +528,7 @@ function syncUnlockBanner() {
   var host;
   var list;
   var sig;
-  var restart;
+  var restartBtnNode;
   var i;
   if (!screen) return;
   list = peekRunUnlocks();
@@ -388,8 +538,8 @@ function syncUnlockBanner() {
     host = el('div', 'run-unlocks');
     host.id = 'runUnlocks';
     host.setAttribute('aria-live', 'polite');
-    restart = document.getElementById('restartBtn');
-    if (restart && restart.parentNode) restart.parentNode.insertBefore(host, restart);
+    restartBtnNode = document.getElementById('restartBtn');
+    if (restartBtnNode && restartBtnNode.parentNode) restartBtnNode.parentNode.insertBefore(host, restartBtnNode);
     else screen.appendChild(host);
   }
   if (!list.length) {
@@ -412,7 +562,6 @@ export function initLoadoutPanel() {
   var panel;
   var rigRow;
   var weaponRow;
-  var heatRow;
   var modeRow;
   var codexBtn;
   var i;
@@ -427,6 +576,7 @@ export function initLoadoutPanel() {
   statusNode.setAttribute('aria-live', 'polite');
   panel.appendChild(statusNode);
 
+  // 1. Rig Row
   rigRow = el('div', 'loadout-row');
   rigRow.setAttribute('data-loadout-row', 'rig');
   rigRow.setAttribute('role', 'radiogroup');
@@ -451,6 +601,7 @@ export function initLoadoutPanel() {
   rigRow.appendChild(rigChoices);
   panel.appendChild(rigRow);
 
+  // 2. Weapon Row
   weaponRow = el('div', 'loadout-row');
   weaponRow.setAttribute('data-loadout-row', 'weapon');
   weaponRow.setAttribute('role', 'radiogroup');
@@ -477,6 +628,7 @@ export function initLoadoutPanel() {
   weaponRow.appendChild(weaponChoices);
   panel.appendChild(weaponRow);
 
+  // 3. Heat Row
   heatRow = el('div', 'loadout-row');
   heatRow.setAttribute('data-loadout-row', 'heat');
   heatRow.setAttribute('aria-label', 'Dust Heat');
@@ -513,23 +665,51 @@ export function initLoadoutPanel() {
   heatRow.appendChild(heatChoices);
   panel.appendChild(heatRow);
 
+  // 4. Four-Mode Selection Row
   modeRow = el('div', 'loadout-row');
   modeRow.setAttribute('data-loadout-row', 'mode');
   modeRow.setAttribute('role', 'radiogroup');
   modeRow.setAttribute('aria-label', 'Run mode');
   modeRow.appendChild(el('span', 'loadout-label', 'MODE'));
   var modeChoices = el('div', 'loadout-choices loadout-choices--mode');
-  modeStandard = el('button', 'loadout-card loadout-mode', 'STANDARD');
+
+  modeStandard = el('button', 'loadout-card loadout-mode mode-tab', 'STANDARD');
   modeStandard.type = 'button';
   modeStandard.setAttribute('role', 'radio');
-  modeDaily = el('button', 'loadout-card loadout-mode', 'DAILY');
+  modeStandard.setAttribute('data-mode', 'standard');
+
+  modeCampaign = el('button', 'loadout-card loadout-mode mode-tab', 'CAMPAIGN');
+  modeCampaign.type = 'button';
+  modeCampaign.setAttribute('role', 'radio');
+  modeCampaign.setAttribute('data-mode', 'campaign');
+
+  modeHardcore = el('button', 'loadout-card loadout-mode mode-tab', 'HARDCORE');
+  modeHardcore.type = 'button';
+  modeHardcore.setAttribute('role', 'radio');
+  modeHardcore.setAttribute('data-mode', 'hardcore');
+
+  modeDaily = el('button', 'loadout-card loadout-mode mode-tab', 'DAILY');
   modeDaily.type = 'button';
   modeDaily.setAttribute('role', 'radio');
+  modeDaily.setAttribute('data-mode', 'daily');
+
   on(modeStandard, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
     activeRow = 3;
     chooseMode('standard');
+  });
+  on(modeCampaign, 'click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    activeRow = 3;
+    chooseMode('campaign');
+  });
+  on(modeHardcore, 'click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    activeRow = 3;
+    chooseMode('hardcore');
   });
   on(modeDaily, 'click', function (event) {
     event.preventDefault();
@@ -537,11 +717,52 @@ export function initLoadoutPanel() {
     activeRow = 3;
     chooseMode('daily');
   });
+
   modeChoices.appendChild(modeStandard);
+  modeChoices.appendChild(modeCampaign);
+  modeChoices.appendChild(modeHardcore);
   modeChoices.appendChild(modeDaily);
   modeRow.appendChild(modeChoices);
   panel.appendChild(modeRow);
 
+  // 5. Campaign Stage Summary Bar
+  campaignStageBar = el('div', 'campaign-stage-bar');
+  campaignStageBar.id = 'campaignStageBar';
+  campaignStageBar.hidden = true;
+
+  var stageInfo = el('div', 'campaign-stage-info');
+  var metaDiv = el('div', 'campaign-stage-meta');
+  campaignStageCode = el('span', 'campaign-stage-code', 'STAGE 1-1');
+  campaignStageStars = el('span', 'campaign-stage-stars', '[☆☆☆]');
+  metaDiv.appendChild(campaignStageCode);
+  metaDiv.appendChild(campaignStageStars);
+
+  campaignStageName = el('span', 'campaign-stage-name', '荒漠清道夫');
+  stageInfo.appendChild(metaDiv);
+  stageInfo.appendChild(campaignStageName);
+
+  campaignSelectStageBtn = el('button', 'campaign-stage-btn', 'SELECT STAGE ⊞');
+  campaignSelectStageBtn.type = 'button';
+  campaignSelectStageBtn.id = 'campaignSelectStageBtn';
+  on(campaignSelectStageBtn, 'click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    openCampaignModal(function () {
+      refresh();
+    });
+  });
+
+  campaignStageBar.appendChild(stageInfo);
+  campaignStageBar.appendChild(campaignSelectStageBtn);
+  panel.appendChild(campaignStageBar);
+
+  // 6. Hardcore Briefing Container
+  hardcoreBriefingContainer = el('div', 'hardcore-briefing-wrapper');
+  hardcoreBriefingContainer.id = 'hardcoreBriefingContainer';
+  hardcoreBriefingContainer.hidden = true;
+  panel.appendChild(hardcoreBriefingContainer);
+
+  // 7. General Rules & Scores
   ruleNode = el('p', 'loadout-rule', '');
   scoreNode = el('p', 'loadout-legacy', '');
   panel.appendChild(ruleNode);
@@ -573,6 +794,7 @@ export function updateLoadoutPanel() {
   screen = document.getElementById('startScreen');
   if (!screen || !screen.hidden) refresh();
   syncUnlockBanner();
+  if (rt.state) updateGameOverUi(rt.state);
 }
 
 onLanguageChange(function () {

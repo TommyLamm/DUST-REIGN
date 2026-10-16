@@ -12,7 +12,7 @@ import { updateInterludePanel } from './interlude-panel.js';
 import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
 import { updateTips } from './tips.js';
-import { fitGameOverOverlay } from './dom.js';
+import { fitGameOverOverlay, syncCombatLayout } from './dom.js';
 import { isChinese, onLanguageChange, tLog, tRankTitle } from '../core/i18n.js';
 
 var shownScore = null;
@@ -524,6 +524,7 @@ function actRoman(act) {
 
 export function updateDomUi() {
   if (!rt.state || !rt.ui) return;
+  syncCombatLayout();
   updateAudioBtn();
   var zh = isChinese();
   var pauseButton = typeof document !== 'undefined' ? document.getElementById('pauseBtn') : null;

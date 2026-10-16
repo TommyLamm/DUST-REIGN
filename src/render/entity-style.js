@@ -107,8 +107,8 @@ export function drawHpBar(ctx, x, y, w, ratio) {
 export function outline(ctx, width) {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#0e0c09';
-  ctx.lineWidth = isHighContrast() ? Math.max(2.4, (width || 1.5) + 0.9) : (width || 1.5);
+  ctx.strokeStyle = '#080605';
+  ctx.lineWidth = isHighContrast() ? Math.max(2.6, (width || 1.6) + 1.2) : (width || 1.6);
   ctx.stroke();
 }
 

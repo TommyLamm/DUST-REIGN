@@ -23,14 +23,14 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | --- | --- |
 | `index.html`、`css/` | HTML 介面與樣式。CSS 疊加順序以 `index.html` 的 `<link>` 為準；`css/animations.css` 在 `css/responsive.css` 與 `css/high-contrast.css` 之前，後兩者覆寫動效與對比。 |
 | `src/main.js` | 初始化、RAF 主迴圈、暫停／恢復、銷毀及公開 API。 |
-| `src/config.js`、`src/data/` | 共用常數，以及升級、敵人、路線、合約、突變、機體、熱度與每日規則資料。 |
+| `src/config.js`、`src/data/` | 共用常數，以及升級、敵人、路線、合約、突變、機體、熱度、每日規則資料，以及闖關關卡（`campaign-stages.js`）與極限作戰（`hardcore-operations.js`）。 |
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
-| `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料。 |
+| `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
-| `src/core/meta-store.js` | 局外存檔、v2 最高分、每日成績與提示紀錄的 `localStorage` 入口。 |
+| `src/core/meta-store.js` | 局外存檔、v2 最高分、每日成績、提示紀錄，以及闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
@@ -42,7 +42,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
 | `src/render/entity-style.js` | 受擊閃白等逐實體視覺暫存。 |
 | `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段色調、畫質預算與自動降級、預渲染光暈／雜訊貼圖快取。 |
-| `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
+| `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
 | `src/audio/audio-fx.js` | Web Audio 程序合成音效、音訊解鎖及音量／靜音偏好。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績橋接與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
@@ -56,7 +56,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `rt.renderTime` 與 `rt.renderDt` 由 `src/main.js` 的 `frame()` 每幀寫入，暫停與 hitstop 時仍前進。`rt.fxEvents` 在 `src/core/runtime.js` 初始為 `null`，由 `pushFxEvent`／`drainFxEvents` 首次使用時建立上限 64 的環形佇列（滿額覆寫最舊一筆）。事件只供視覺使用。種類與欄位以呼叫處及 `src/render/fx.js` 的處理為準：`kill`、`crit`、`core`、`barrel`、`mortar`、`emp`、`spire`、`dash`、`graze`、`playerHit`、`titanPhase`、`bounty`、`surge`、`burst`。
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 只由 `src/render/entity-style.js` 的 `tickFlash` 維護；傷害數字的 `numHp` 只由 `src/render/fx.js` 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
 - `src/main.js` 與 `src/ui/` 可以匯入 render。`src/systems/**` 不得讀取 `entity.fx`，也不得 import `src/render/**`。系統透過共用 `rt.state` 協作，並會呼叫 UI 與音效；這些目錄是責任分工，並非互相隔離的單向分層。
-- 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料與 v2 最高分只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。
+- 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 首領身份是 `isBoss`。Titan 左右零件仍以 `kind === 'titan'` 判斷。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
 - `isStormFront()` 在波末風暴窗或場上仍存活的 Storm Sovereign 時為真。位移用 `stormWind()`：有首領風向時用該風向，否則用固定風暴方向。
 - 既有模組存在循環 import。跨循環依賴的匯出應在函式執行時使用，避免在模組頂層讀取尚未初始化的值或呼叫相依模組。啟動、偏好讀取、音訊物件建立及 SDK 載入的頂層初始化分別由對應模組管理。
@@ -80,7 +80,7 @@ index.html → src/main.js → init()
 
 `frame()` 使用以上一幀時間差計算、設有上限的 `dt`，並把同一值寫入 `rt.renderDt`、累加到 `rt.renderTime`。這兩個欄位在暫停與 hitstop 時仍前進，`sampleFrame()` 也仍會取樣；戰鬥擺動與彈道仍使用 `rt.state.waveTime`。`src/render/fx.js` 的 `updateFx` 在 `draw()` 開頭排空視覺事件，hitstop 期間暫停戰鬥視覺粒子。`update()` 先處理暫停、結算演出、幕間與 hitstop，再依原始碼順序執行模擬步驟；共用幀參數為 `{ p, boundW, boundH }`，分別代表玩家參照與場地邊界。步驟順序由 `src/systems/update.js` 統一決定：波次時鐘、突變、危險區、玩家、生成、玩家彈、掉落物、敵人、敵彈、砲擊落點、效果、合約。修改碰撞、生成或傷害時需核對前後步驟的狀態依賴。
 
-疊放順序以 `src/render/draw.js` 為準。震屏變換內是世界座標第 1–11 層：地表、貼花、遠浮塵、接地陰影、場景物件、危險區、敵人與玩家、lightmap、加法光暈與玩家彈、近大氣、可讀性層（敵彈、預警、戰場可讀性標記、高對比標記、傷害數字）。變換外是螢幕座標：第 12 層 `drawScreenPost` 與 `drawScreenFlashes`，第 13 層 Canvas HUD 與覆蓋層。HTML HUD 由 `src/ui/hud.js` 同步。尺寸、DPR 與玩家邊界調整集中於 `src/ui/dom.js` 的 `resize()`；尺寸或 DPR 改變時呼叫 `clearSpriteCache()`。
+疊放順序以 `src/render/draw.js` 為準。震屏變換內是世界座標第 1–11 層：地表、貼花、遠浮塵、接地陰影、場景物件、危險區、敵人與玩家、lightmap、加法光暈與玩家彈、近大氣、可讀性層（敵彈、預警、戰場可讀性標記、高對比標記、傷害數字）。變換外是螢幕座標：第 12 層 `drawScreenPost` 與 `drawScreenFlashes`，第 13 層 Canvas HUD 與覆蓋層。HTML HUD 由 `src/ui/hud.js` 同步。尺寸、DPR、戰鬥側欄自動隱藏（`syncCombatLayout()` 於戰鬥中切換 `.is-in-combat` 全寬並隱藏任務側欄）與玩家邊界調整集中於 `src/ui/dom.js` 的 `resize()`；尺寸或 DPR 改變時呼叫 `clearSpriteCache()`。
 
 ### 單局流程
 
@@ -92,7 +92,7 @@ index.html → src/main.js → init()
 | 遊玩／手動暫停 | `src/systems/flow.js` 的 `togglePause()` 同步旗標與暫停面板；公開 API 的 `pause()`／`resume()` 控制暫停旗標與 HUD。 |
 | 升級選卡 | `src/systems/progression.js` 的 `addXp()` 暫停並產生選項；`chooseUpgrade()` 套用升級，處理後續待選升級後才恢復。`rt.ui` 為空時不建立面板。 |
 | 幕間 | 首領清除後由 `src/systems/interlude.js` 暫停戰鬥，處理路線、軍械庫與第 15 波的撤離或深入。 |
-| 結束 | `triggerGameOver()` 先結算延後的撤離分，再設定 `over`、記錄 v2 最高分、提交帳號成績一次並啟動結算演出。`update()` 控制結算面板顯示時機。 |
+| 結束 | `triggerGameOver()` 先結算延後的撤離分，再設定 `over`。若為 standard/daily 模式則記錄 v2 最高分並提交帳號成績一次；若為 campaign 或 hardcore 模式則記錄星級評級與徽章，結算面板支援下一關（NEXT SECTOR）與重試雙重出口。`update()` 控制結算面板顯示時機。 |
 | 重新開始 | `restart()` 以 `makeState()` 重建單局資料並回到開始／配裝畫面，不開始帳號局次。下一局由 `beginRun()` 開始。 |
 | 無盡 | 選擇深入後戰鬥繼續；帳號成績留到最終 `triggerGameOver()` 才提交。 |
 | 銷毀 | `destroy()` 停止 RAF、移除已註冊事件、斷開尺寸觀察，清除 runtime 參照與自動建立的 DOM。 |

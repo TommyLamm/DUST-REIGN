@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/interlude.css" />
   <link rel="stylesheet" href="css/contracts.css" />
   <link rel="stylesheet" href="css/codex.css" />
+  <link rel="stylesheet" href="css/campaign.css" />
   <link rel="stylesheet" href="css/responsive.css" />
   <link rel="stylesheet" href="css/high-contrast.css" />
   <script type="module" src="src/main.js"></script>
@@ -187,9 +188,23 @@
                   <span aria-hidden="true">✓</span>
                   <span>RECORDED TO PLAYROOM</span>
                 </div>
+                <div id="victoryStarsContainer" class="victory-stars-container" hidden></div>
                 <button id="restartBtn" class="action-button action-button--primary" data-restart type="button">
                   <span>RUN IT BACK</span><b aria-hidden="true">↻</b>
                 </button>
+                <div id="dualExitGroup" class="dual-exit-group" hidden>
+                  <button id="nextSectorBtn" class="action-button action-button--primary action-button--next" type="button">
+                    <span>NEXT SECTOR</span><b aria-hidden="true">➔</b>
+                  </button>
+                  <div class="dual-exit-row">
+                    <button id="replayBtn" class="action-button action-button--replay" type="button">
+                      <span>REPLAY</span><b aria-hidden="true">↻</b>
+                    </button>
+                    <button id="stageSelectBtn" class="action-button action-button--stage-select" type="button">
+                      <span>STAGE SELECT</span><b aria-hidden="true">⊞</b>
+                    </button>
+                  </div>
+                </div>
                 <div class="overlay-foot"><span>NOTHING OUT THERE STAYS DEAD</span><span>PRESS R OR CLICK RUN IT BACK</span></div>
               </div>
             </div>
@@ -227,6 +242,45 @@
             <div id="interludePanel" hidden></div>
             <div id="extractPanel" hidden></div>
             <div id="codexPanel" hidden></div>
+
+            <section id="campaignModal" class="overlay overlay--campaign" role="dialog" aria-modal="true"
+              aria-labelledby="campaignModalTitle" hidden>
+              <div class="overlay-inner campaign-modal-inner">
+                <div class="campaign-modal-header">
+                  <div class="overlay-stamp">CAMPAIGN OPERATIONS <span>//</span> SECTOR GRID</div>
+                  <h2 id="campaignModalTitle">SECTOR <span>CAMPAIGN</span></h2>
+                  <p class="overlay-kicker">SELECT OBJECTIVE &amp; DEPLOY INTO THE WASTES</p>
+                  <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="Close stage select">✕</button>
+                </div>
+                <div class="campaign-summary-bar">
+                  <div class="campaign-star-count">TOTAL STARS: <strong id="campaignTotalStars">0</strong> / 45</div>
+                  <div class="campaign-milestone-hint" id="campaignMilestoneHint">NEXT REWARD: <strong>5★ 戰術晶片【急救超頻】</strong></div>
+                </div>
+                <nav id="sectorTabs" class="sector-tabs" role="tablist" aria-label="Sector Navigation">
+                  <button class="sector-tab is-active" data-sector="1" type="button" role="tab" aria-selected="true">
+                    <span>SEC 01 暮沙</span><small>DUSK BASIN</small>
+                  </button>
+                  <button class="sector-tab" data-sector="2" type="button" role="tab" aria-selected="false">
+                    <span>SEC 02 鐵鏽</span><small>8★ REQUIRED</small>
+                  </button>
+                  <button class="sector-tab" data-sector="3" type="button" role="tab" aria-selected="false">
+                    <span>SEC 03 暴風</span><small>18★ REQUIRED</small>
+                  </button>
+                  <button class="sector-tab" data-sector="4" type="button" role="tab" aria-selected="false">
+                    <span>SEC EX 試煉</span><small>28★ REQUIRED</small>
+                  </button>
+                </nav>
+                <div id="stageGrid" class="stage-grid" role="region" aria-label="Stage Cards">
+                  <!-- Dynamically populated by campaign-modal.js -->
+                </div>
+                <div class="campaign-modal-foot">
+                  <span class="campaign-foot-hint">D-PAD / ARROWS NAVIGATE · ENTER SELECT · ESC CLOSE</span>
+                  <button id="campaignConfirmBtn" class="action-button action-button--primary" type="button">
+                    <span>CONFIRM &amp; RETURN</span><b aria-hidden="true">↵</b>
+                  </button>
+                </div>
+              </div>
+            </section>
 
             <section id="pauseModal" class="overlay overlay--pause" role="dialog" aria-modal="true"
               aria-labelledby="pauseTitle" hidden>

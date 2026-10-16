@@ -23,7 +23,7 @@ import { applyLoadout } from './systems/meta.js';
 import { spawnEnemy } from './systems/spawning.js';
 import { update } from './systems/update.js';
 import { cycleWeaponMode } from './systems/weapons.js';
-import { resize, setupDom } from './ui/dom.js';
+import { resize, setupDom, syncCombatLayout } from './ui/dom.js';
 import { updateDomUi } from './ui/hud.js';
 import { renderBuildInspector, updateSettingsUi } from './ui/pause-menu.js';
 
@@ -53,6 +53,7 @@ function init(options) {
   }
   syncStaticHtml(getLanguage());
   updateSettingsUi();
+  syncCombatLayout();
   rt.state = makeState(960, 640);
   resize();
   rt.state = makeState(rt.ui.width, rt.ui.height);
@@ -93,6 +94,14 @@ function destroy() {
   rt.input.mouse.down = false;
   if (rt.ui && rt.ui.createdOverlay && rt.ui.overlay.parentNode) rt.ui.overlay.parentNode.removeChild(rt.ui.overlay);
   if (rt.ui && rt.ui.createdCanvas && rt.ui.canvas.parentNode) rt.ui.canvas.parentNode.removeChild(rt.ui.canvas);
+  if (rt.ui && rt.ui.gameLayout && rt.ui.gameLayout.classList) {
+    rt.ui.gameLayout.classList.remove('is-in-combat');
+    rt.ui.gameLayout.removeAttribute('data-run-state');
+  }
+  if (rt.ui && rt.ui.gameFrame && rt.ui.gameFrame.classList) {
+    rt.ui.gameFrame.classList.remove('is-in-combat');
+    rt.ui.gameFrame.removeAttribute('data-run-state');
+  }
   rt.ui = null;
   rt.state = null;
 }
