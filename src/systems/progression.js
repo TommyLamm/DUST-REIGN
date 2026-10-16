@@ -52,7 +52,7 @@ function eligibleFusions(state) {
   var p = state && state.player;
   return FUSION_CHIPS.filter(function (fc) {
     if (cardIsBanned(state, fc.id)) return false;
-    if (p && p[toPropName(fc.id)]) return false;
+    if (p && (p[toPropName(fc.id)] || (fc.aliases && fc.aliases.some(function (a) { return p[toPropName(a)]; })))) return false;
     return fc.required.every(function (id) { return hasCard(state, id); });
   });
 }
@@ -149,6 +149,13 @@ export function randomUpgradeChoices() {
       used[relaxed.id] = true;
       picks.push(relaxed);
     }
+  }
+
+  // When a fusion card is available, guarantee it at slot 1 (index 0) with golden streamer
+  if (picks.length > 0 && picks[0].category === 'FUSION') {
+    var nonFusions = picks.slice(1);
+    shufflePicks(nonFusions);
+    return [picks[0]].concat(nonFusions);
   }
 
   return shufflePicks(picks);

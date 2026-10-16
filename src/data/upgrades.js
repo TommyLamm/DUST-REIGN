@@ -283,84 +283,99 @@ export var UPGRADES = [
 
 export var FUSION_CHIPS = [
   {
-    id: 'static-tempest',
+    id: 'prismatic-flak',
+    aliases: ['kinetic-shrapnel'],
     category: 'FUSION',
-    title: 'STATIC TEMPEST // 靜電風暴',
-    text: 'Tesla discharge overloads shockwave dash into lightning storm',
-    required: ['tesla-coil', 'shockwave-dash'],
-    apply: function (s) { s.player.staticTempest = true; }
-  },
-  {
-    id: 'kinetic-shrapnel',
-    category: 'FUSION',
-    title: 'KINETIC SHRAPNEL // 動能破片',
-    text: 'Piercing rail slugs shatter into ricocheting shrapnel upon impact',
+    title: 'PRISMATIC FLAK // 稜鏡碎裂彈',
+    text: 'Piercing slugs shatter into 2 prismatic shards at 60°; multiple hits trigger 8% lost HP true damage',
     required: ['rail-slug', 'ricochet'],
-    apply: function (s) { s.player.kineticShrapnel = true; }
+    apply: function (s) {
+      s.player.prismaticFlak = true;
+      s.player.kineticShrapnel = true;
+    }
   },
   {
-    id: 'overcharge-retaliation',
+    id: 'thermal-shock',
     category: 'FUSION',
-    title: 'OVERCHARGE RETALIATION // 超載反擊',
-    text: 'Reactive armor counter-pulse critically overcharges and vaporizes foes',
-    required: ['reactive-armor', 'high-caliber'],
-    apply: function (s) { s.player.overchargeRetaliation = true; }
+    title: 'THERMAL SHOCK // 熱能衝擊',
+    text: 'Bullets apply overheating burn; EMP triggers thermal fracture dealing all burn + 15% max HP blast & 70% slow',
+    required: ['hot-load', 'emp-amplifier'],
+    apply: function (s) {
+      s.player.thermalShock = true;
+    }
   },
   {
-    id: 'vulcan-meltdown',
+    id: 'apocalypse-thor',
+    aliases: ['static-tempest'],
     category: 'FUSION',
-    title: 'VULCAN MELTDOWN // 火神融火',
-    text: 'High-velocity incendiary torrent ignites ground with residual firestorm',
-    required: ['rapid-fire', 'hot-load'],
-    apply: function (s) { s.player.vulcanMeltdown = true; }
+    title: 'APOCALYPSE THOR // 天罰雷暴陣列',
+    text: 'Every 3 arc hits summon an orbital ion thunderbolt dealing 180 AoE damage and leaving ionized ground',
+    required: ['arc-lattice', 'tesla-coil'],
+    apply: function (s) {
+      s.player.apocalypseThor = true;
+      s.player.staticTempest = true;
+    }
   },
   {
-    id: 'graviton-bulwark',
+    id: 'singularity-mine',
+    aliases: ['overcharge-retaliation'],
     category: 'FUSION',
-    title: 'GRAVITON BULWARK // 重力偏折',
-    text: 'Heavy armor creates a magnetic gravitational ward deflecting danger',
-    required: ['heavy-plating', 'magnet-core'],
-    apply: function (s) { s.player.gravitonBulwark = true; }
+    title: 'SINGULARITY MINE // 奇點黑洞地雷',
+    text: 'Taking damage generates a 180px gravity well pulling foes and absorbing bullets, collapsing into 150% reflected damage',
+    required: ['scrap-singularity', 'reactive-armor'],
+    apply: function (s) {
+      s.player.singularityMine = true;
+      s.player.overchargeRetaliation = true;
+    }
   },
   {
-    id: 'plasma-meltdown',
+    id: 'mirage-overdrive',
+    aliases: ['kinetic-ballet'],
     category: 'FUSION',
-    title: 'PLASMA MELTDOWN CORE // 電漿融核',
-    text: 'Scatter blasts during Overdrive ignite high-density plasma burst fields',
-    required: ['overdrive-injector', 'scatter-shot'],
-    apply: function (s) { s.player.plasmaMeltdown = true; }
+    title: 'MIRAGE OVERDRIVE // 幻影過載誘餌',
+    text: 'Dash deploys a holographic decoy taunting enemies and firing toward cursor (60% dmg), splitting into missiles on expiry',
+    required: ['dash-capacitor', 'overdrive-injector'],
+    apply: function (s) {
+      s.player.mirageOverdrive = true;
+      s.player.kineticBallet = true;
+    }
   },
   {
-    id: 'kinetic-ballet',
+    id: 'aegis-stance',
+    aliases: ['graviton-bulwark', 'fortress-protocol'],
     category: 'FUSION',
-    title: 'KINETIC BALLET // 動能芭蕾',
-    text: 'Each dash launches 3 homing micro-missiles',
-    required: ['dash-capacitor', 'afterburner'],
-    apply: function (s) { s.player.kineticBallet = true; }
+    title: 'AEGIS STANCE // 鋼鐵風暴壁壘',
+    text: 'Stationary 0.4s deploys a 160° frontal aegis reflecting enemy bullets at 2x dmg, +45% fire rate, and 35% rear damage reduction',
+    required: ['heavy-plating', 'ablative-mesh'],
+    apply: function (s) {
+      s.player.aegisStance = true;
+      s.player.gravitonBulwark = true;
+      s.player.fortressProtocol = true;
+    }
   },
   {
-    id: 'fortress-protocol',
+    id: 'bloodhound-reaper',
+    aliases: ['executioner'],
     category: 'FUSION',
-    title: 'FORTRESS PROTOCOL // 堡壘協議',
-    text: 'At 50+ battery, damage taken ×0.75. EMP grants a 30 shield for 2s',
-    required: ['ablative-mesh', 'capacitor-bank'],
-    apply: function (s) { s.player.fortressProtocol = true; }
+    title: 'BLOODHOUND REAPER // 血性收割協議',
+    text: 'Executes foes below 35% HP for 250% damage with metal scrap gore; executing boss parts or elites guarantees Overdrive Orbs',
+    required: ['hollow-point', 'salvage-protocol'],
+    apply: function (s) {
+      s.player.bloodhoundReaper = true;
+      s.player.executioner = true;
+    }
   },
   {
-    id: 'executioner',
+    id: 'solar-afterburner',
+    aliases: ['storm-rider'],
     category: 'FUSION',
-    title: 'EXECUTIONER // 處刑者',
-    text: 'EMP-stunned foes take +50% damage. Non-bosses below 15% HP are executed',
-    required: ['hollow-point', 'emp-amplifier'],
-    apply: function (s) { s.player.executioner = true; }
-  },
-  {
-    id: 'storm-rider',
-    category: 'FUSION',
-    title: 'STORM RIDER // 風暴騎手',
-    text: 'In the storm: +20% move speed, bullets catch ×3 wind, kills heal 1 HP',
-    required: ['servo-legs', 'salvage-protocol'],
-    apply: function (s) { s.player.stormRider = true; }
+    title: 'SOLAR AFTERBURNER // 日冕風暴羽翼',
+    text: 'Dash lays an incandescent fire trench vaporizing enemy bullets, burning foes and fanning out in sandstorms',
+    required: ['afterburner', 'servo-legs'],
+    apply: function (s) {
+      s.player.solarAfterburner = true;
+      s.player.stormRider = true;
+    }
   }
 ];
 
@@ -390,7 +405,10 @@ export function stackCount(state, id) {
 export function findUpgrade(id) {
   var i;
   for (i = 0; i < UPGRADES.length; i += 1) {
-    if (UPGRADES[i].id === id) return UPGRADES[i];
+    if (UPGRADES[i].id === id || (UPGRADES[i].aliases && UPGRADES[i].aliases.indexOf(id) !== -1)) return UPGRADES[i];
+  }
+  for (i = 0; i < FUSION_CHIPS.length; i += 1) {
+    if (FUSION_CHIPS[i].id === id || (FUSION_CHIPS[i].aliases && FUSION_CHIPS[i].aliases.indexOf(id) !== -1)) return FUSION_CHIPS[i];
   }
   return null;
 }
@@ -436,7 +454,7 @@ export function completesFusionName(state, cardId) {
   for (i = 0; i < FUSION_CHIPS.length; i += 1) {
     var fc = FUSION_CHIPS[i];
     if (!fc.required || fc.required.length !== 2) continue;
-    if (p && p[toPropName(fc.id)]) continue;
+    if (p && (p[toPropName(fc.id)] || (fc.aliases && fc.aliases.some(function (a) { return p[toPropName(a)]; })))) continue;
     if (fc.required[0] !== cardId && fc.required[1] !== cardId) continue;
     var other = fc.required[0] === cardId ? fc.required[1] : fc.required[0];
     if (stackCount(state, other) > 0) return fc.title;

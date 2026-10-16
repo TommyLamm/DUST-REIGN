@@ -180,6 +180,38 @@ var UPGRADES_I18N = {
 };
 
 var FUSIONS_I18N = {
+  'prismatic-flak': {
+    title: { zh: '稜鏡碎裂彈', en: 'PRISMATIC FLAK' },
+    text: { zh: '穿透與撞牆時以 60° 爆散 2 枚次級稜鏡破片；同目標受多重稜鏡命中觸發 8% 損失血量真傷', en: 'Piercing slugs shatter into 2 prismatic shards at 60°; multiple hits trigger 8% lost HP true damage' }
+  },
+  'thermal-shock': {
+    title: { zh: '熱能衝擊', en: 'THERMAL SHOCK' },
+    text: { zh: '子彈附加過熱灼燒；EMP 觸發熱應力碎裂結算所有真傷 + 15% 最大 HP 碎冰爆震與 70% 減速', en: 'Bullets apply overheating burn; EMP triggers thermal fracture dealing all burn + 15% max HP blast & 70% slow' }
+  },
+  'apocalypse-thor': {
+    title: { zh: '天罰雷暴陣列', en: 'APOCALYPSE THOR' },
+    text: { zh: '電弧連擊 3 次召喚垂直離子天雷轟擊 180 範圍傷害，地面留下感電焦土', en: 'Every 3 arc hits summon an orbital ion thunderbolt dealing 180 AoE damage and leaving ionized ground' }
+  },
+  'singularity-mine': {
+    title: { zh: '奇點黑洞地雷', en: 'SINGULARITY MINE' },
+    text: { zh: '受創生成 180px 引力視界吸附敵兵與非首領子彈，內爆反彈 150% 吸收傷害', en: 'Taking damage generates a 180px gravity well pulling foes and absorbing bullets, collapsing into 150% reflected damage' }
+  },
+  'mirage-overdrive': {
+    title: { zh: '幻影過載誘餌', en: 'MIRAGE OVERDRIVE' },
+    text: { zh: '衝刺留下全息分身嘲諷怪群並同步朝游標開火（60% 傷害），消散時分裂追蹤飛彈', en: 'Dash deploys a holographic decoy taunting enemies and firing toward cursor (60% dmg), splitting into missiles on expiry' }
+  },
+  'aegis-stance': {
+    title: { zh: '鋼鐵風暴壁壘', en: 'AEGIS STANCE' },
+    text: { zh: '停步 0.4s 架設正面 160° 蜂巢護盾反彈敵彈為雙倍友軍彈，射速 +45%，背部獲 35% 免傷', en: 'Stationary 0.4s deploys a 160° frontal aegis reflecting enemy bullets at 2x dmg, +45% fire rate, and 35% rear damage reduction' }
+  },
+  'bloodhound-reaper': {
+    title: { zh: '血性收割協議', en: 'BLOODHOUND REAPER' },
+    text: { zh: '對低於 35% HP 敵人造成 250% 處決傷害並觸發金屬血爆；首領部位/精英處決必掉超頻球', en: 'Executes foes below 35% HP for 250% damage with metal scrap gore; executing boss parts or elites guarantees Overdrive Orbs' }
+  },
+  'solar-afterburner': {
+    title: { zh: '日冕風暴羽翼', en: 'SOLAR AFTERBURNER' },
+    text: { zh: '衝刺鋪設白熾火徑蒸發敵彈，焚燒踩踏敵軍並在風暴中扇形擴散', en: 'Dash lays an incandescent fire trench vaporizing enemy bullets, burning foes and fanning out in sandstorms' }
+  },
   'static-tempest': {
     title: { zh: '靜電風暴', en: 'STATIC TEMPEST' },
     text: { zh: '特斯拉放電使衝擊波衝刺超載為狂暴雷暴', en: 'Tesla discharge overloads shockwave dash into lightning storm' }

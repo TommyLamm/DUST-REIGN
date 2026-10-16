@@ -1,6 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { qa } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
+import { triggerTacticalAuxiliary } from '../systems/tactical.js';
 import { beginRun, restart, togglePause } from '../systems/flow.js';
 import { beginBanish, chooseUpgrade, rerollUpgrades, skipUpgrade } from '../systems/progression.js';
 import { isCodexOpen } from '../ui/codex-panel.js';
@@ -289,8 +290,11 @@ function pollGamepadInner(dt) {
     releaseGamepadFire();
   }
 
-  // EMP button: LB (buttons[4]) or B (buttons[1])
-  if (justPressed(4) || justPressed(1)) triggerEmp();
+  // EMP button: B (buttons[1])
+  if (justPressed(1)) triggerEmp();
+
+  // Tactical Auxiliary slot: X (buttons[2]) or LB (buttons[4])
+  if (justPressed(2) || justPressed(4)) triggerTacticalAuxiliary();
 
   // Dash button: LT (buttons[6]) or A (buttons[0])
   if (justPressed(6) || justPressed(0)) dash();

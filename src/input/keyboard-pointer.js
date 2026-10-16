@@ -3,6 +3,7 @@ import { rt } from '../core/runtime.js';
 import { isHapticsEnabled, isHighContrast, isReducedMotion, setHapticsEnabled, setHighContrast, setMotionReduction, cycleVisualQuality } from '../core/settings.js';
 import { clamp, on } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
+import { triggerTacticalAuxiliary } from '../systems/tactical.js';
 import { beginRun, restart, togglePause } from '../systems/flow.js';
 import { isCodexOpen } from '../ui/codex-panel.js';
 import { chooseUpgrade } from '../systems/progression.js';
@@ -40,7 +41,7 @@ export function bindInput() {
       key === ' '
     );
 
-    if (!isFormNavKey && (key === 'w' || key === 'a' || key === 's' || key === 'd' || key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright' || key === ' ' || key === 'q' || key === 'e' || key === 't')) {
+    if (!isFormNavKey && (key === 'w' || key === 'a' || key === 's' || key === 'd' || key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright' || key === ' ' || key === 'q' || key === 'e' || key === 'f' || key === 't')) {
       event.preventDefault();
     }
     rt.input.keys.add(key);
@@ -50,8 +51,11 @@ export function bindInput() {
     if (key === 'shift' && !event.repeat && !isFormInput) {
       if (!rt.state || !rt.state.paused) dash();
     }
-    if ((key === 'q' || key === 'e') && !event.repeat) {
+    if (key === 'q' && !event.repeat) {
       if (!rt.state || !rt.state.paused) triggerEmp();
+    }
+    if ((key === 'e' || key === 'f') && !event.repeat) {
+      if (!rt.state || !rt.state.paused) triggerTacticalAuxiliary();
     }
     if (key === 'm' && !event.repeat) { AudioFX.toggleMute(); updateAudioBtn(); }
     if ((key === 'p' || key === 'escape') && !event.repeat && !(rt.state && rt.state.banishPicking)) togglePause();
@@ -318,6 +322,8 @@ export function bindInput() {
   }
   var touchDash = document.getElementById('touchDash');
   if (touchDash) on(touchDash, 'pointerdown', function (event) { event.preventDefault(); rt.input.touchMode = true; dash(); });
+  var touchAux = document.getElementById('touchAux');
+  if (touchAux) on(touchAux, 'pointerdown', function (event) { event.preventDefault(); rt.input.touchMode = true; triggerTacticalAuxiliary(); });
 
   var touchSpecial = (rt.ui && rt.ui.touchSpecial) || document.getElementById('touchSpecial');
   var empPointerId = null;

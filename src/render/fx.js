@@ -488,6 +488,22 @@ function pushNumber(owner, dmg, x, y) {
   return slot;
 }
 
+export function spawnCombatText(x, y, text, isCrit) {
+  ensurePools();
+  var slot = allocNumber();
+  var n = numbers[slot];
+  n.active = true;
+  n.owner = null;
+  n.x = x;
+  n.y = y;
+  n.vy = -36;
+  n.life = 0.85;
+  n.maxLife = 0.85;
+  n.value = 0;
+  n.crit = Boolean(isCrit);
+  n.text = text;
+}
+
 function markCritNumber(n) {
   if (!n || n.crit) return;
   n.crit = true;

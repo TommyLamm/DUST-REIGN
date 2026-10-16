@@ -34,7 +34,8 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
-| `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果。 |
+| `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
+| `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
 | `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap、接地陰影。 |
@@ -57,7 +58,9 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 只由 `src/render/entity-style.js` 的 `tickFlash` 維護；傷害數字的 `numHp` 只由 `src/render/fx.js` 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
 - `src/main.js` 與 `src/ui/` 可以匯入 render。`src/systems/**` 不得讀取 `entity.fx`，也不得 import `src/render/**`。系統透過共用 `rt.state` 協作，並會呼叫 UI 與音效；這些目錄是責任分工，並非互相隔離的單向分層。
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
-- 首領身份是 `isBoss`。Titan 左右零件仍以 `kind === 'titan'` 判斷。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
+- 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
+- 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
+- 首領身份是 `isBoss`。Titan 拆解部位（左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
 - `isStormFront()` 在波末風暴窗或場上仍存活的 Storm Sovereign 時為真。位移用 `stormWind()`：有首領風向時用該風向，否則用固定風暴方向。
 - 既有模組存在循環 import。跨循環依賴的匯出應在函式執行時使用，避免在模組頂層讀取尚未初始化的值或呼叫相依模組。啟動、偏好讀取、音訊物件建立及 SDK 載入的頂層初始化分別由對應模組管理。
 - `selfCheck()` 會暫時替換 `rt.state`／`rt.ui`；新增邏輯須保留無 DOM 環境的自檢入口。核心遊戲程式沿用 `var`／`function` 與 ES module 的組織方式。
@@ -109,9 +112,10 @@ index.html → src/main.js → init()
 | 突變、合約、掉落與持續效果 | `src/systems/mutators.js`、`src/systems/contracts.js`、`src/systems/drops.js`、`src/systems/card-effects.js`、`src/ui/contracts-hud.js` |
 | 配裝、熱度、每日與成就 | `src/systems/meta.js`、`src/core/meta-store.js`、`src/ui/loadout-panel.js`、`src/ui/codex-panel.js` |
 | 武器、射擊、彈道與擦彈 | `src/systems/weapons.js`、`src/systems/sim/bullets.js`、`src/systems/sim/enemy-bullets.js` |
+| 戰術輔助槽位與裝備實體 | `src/systems/tactical.js`、`src/ui/hud.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`css/hud.css`、`css/touch.css` |
 | 衝刺、EMP、傷害、擊殺與掉落生成 | `src/systems/abilities.js`、`src/systems/combat.js` |
 | 環境危險與掉落物拾取 | `src/systems/sim/hazards.js`、`src/systems/sim/orbs.js` |
-| 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
+| 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/systems/card-effects.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
 | 輸入映射與玩家移動 | `src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`src/systems/sim/player.js` |
 | 地表、大氣與光影 | `src/render/` 的 `draw.js`、`terrain.js`、`atmosphere.js`、`lighting.js`、`shadows.js`、`palette.js` |
 | 實體造型與彈體外觀 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |

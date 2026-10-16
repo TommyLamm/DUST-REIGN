@@ -342,7 +342,7 @@ export function renderBuildInspector() {
 
   var activeFusions = 0;
   var matrixHtml = FUSION_CHIPS.map(function (fc) {
-    var isUnlocked = Boolean(p[toPropName(fc.id)]);
+    var isUnlocked = Boolean(p[toPropName(fc.id)]) || (fc.aliases && fc.aliases.some(function (a) { return Boolean(p[toPropName(a)]); }));
     if (isUnlocked) activeFusions += 1;
     var hasA = hasCard(fc.required[0]);
     var hasB = hasCard(fc.required[1]);

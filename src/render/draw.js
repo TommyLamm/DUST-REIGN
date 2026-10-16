@@ -11,6 +11,7 @@ import { drawContactShadows } from './shadows.js';
 import { beginGlowBatch, endGlowBatch } from './sprites.js';
 import { drawDecals, drawGround } from './terrain.js';
 import { drawBarrels, drawCasings, drawCores, drawFieldReadability, drawOrb, drawSpires } from './world.js';
+import { drawTacticalEntities } from '../systems/tactical.js';
 
 export function draw() {
   if (!rt.ui || !rt.state) return;
@@ -40,6 +41,7 @@ export function draw() {
   drawMoltenZones(ctx);
   drawPlasmaZones(ctx);
   drawVortices(ctx);
+  drawTacticalEntities(ctx);
   var enemyList = rt.state.enemies;
   var ei;
   if (enemyList) {

@@ -83,6 +83,7 @@
 .touch-button--dash { --ring: var(--mint); }
 .touch-button--special { --ring: #5be7ff; }
 .touch-button--fire { --ring: var(--amber); }
+.touch-button--aux { --ring: #ffd27d; }
 
 .touch-actions .touch-button::after {
   content: "";

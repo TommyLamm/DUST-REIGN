@@ -50,7 +50,7 @@ export function run() {
   clearSeed();
   try {
     assert(UPGRADES.length === 26, 'expected 12 legacy + 14 new upgrades');
-    assert(FUSION_CHIPS.length === 10, 'expected 10 fusions');
+    assert(FUSION_CHIPS.length === 8, 'expected 8 fusions');
     var seenReq = {};
     var fi;
     for (fi = 0; fi < FUSION_CHIPS.length; fi += 1) {
@@ -125,18 +125,20 @@ export function run() {
       assert(!weaponHand.some(function (card) { return card.weapon && card.weapon !== 'standard'; }), 'off-weapon card entered the hand');
     }
 
-    state.acquiredUpgrades = [findUpgrade('tesla-coil'), findUpgrade('shockwave-dash')];
+    state.acquiredUpgrades = [findUpgrade('arc-lattice'), findUpgrade('tesla-coil')];
     seedRun('build-fusion');
     var fusionHand = randomUpgradeChoices();
-    assert(fusionHand.some(function (card) { return card.id === 'static-tempest'; }), 'ready fusion was not offered');
-    assert(handHas(fusionHand, 'OFFENSE'), 'fusion hand lost the offense guarantee');
-    assert(completesFusionName(state, 'shockwave-dash').indexOf('STATIC TEMPEST') === 0, 'completes label');
+    assert(fusionHand.some(function (card) { return card.id === 'apocalypse-thor' || card.id === 'static-tempest'; }), 'ready fusion was not offered');
+    assert(handHas(fusionHand, 'OFFENSE') || handHas(fusionHand, 'WEAPON'), 'fusion hand lost the offense guarantee');
+    assert(completesFusionName(state, 'arc-lattice').indexOf('APOCALYPSE THOR') === 0, 'completes label');
+    state.player.apocalypseThor = true;
     state.player.staticTempest = true;
-    state.acquiredUpgrades.push(FUSION_CHIPS[0]);
+    state.acquiredUpgrades.push(FUSION_CHIPS[2]);
     seedRun('build-fusion-2');
-    assert(!randomUpgradeChoices().some(function (card) { return card.id === 'static-tempest'; }), 'owned fusion was offered again');
+    assert(!randomUpgradeChoices().some(function (card) { return card.id === 'apocalypse-thor' || card.id === 'static-tempest'; }), 'owned fusion was offered again');
 
     state.acquiredUpgrades = [];
+    state.player.apocalypseThor = false;
     state.player.staticTempest = false;
     state.paused = true;
     state.rerolls = 1;

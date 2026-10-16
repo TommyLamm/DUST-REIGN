@@ -9,10 +9,13 @@ import { logEvent } from '../ui/hud.js';
 
 export function spawnKineticShrapnel(b, originX, originY) {
   if (!rt.state || !rt.state.bullets) return;
+  var p = rt.state.player;
+  var isPrismatic = Boolean(p && p.prismaticFlak);
   var bAngle = Math.atan2(b.vy, b.vx);
   var shrapnelSpeed = 520;
   var shrapnelDmg = Math.max(1, Math.round(b.damage * 0.45));
-  var sideAngles = [bAngle + Math.PI / 2, bAngle - Math.PI / 2];
+  var angleOffset = isPrismatic ? (Math.PI / 3) : (Math.PI / 2);
+  var sideAngles = [bAngle + angleOffset, bAngle - angleOffset];
   for (var ski = 0; ski < 2; ski += 1) {
     var sAngle = sideAngles[ski];
     rt.state.bullets.push({
@@ -24,15 +27,16 @@ export function spawnKineticShrapnel(b, originX, originY) {
       damage: shrapnelDmg,
       life: 0.38,
       trail: [],
-      pierce: 0,
+      pierce: isPrismatic ? 1 : 0,
       bounces: 0,
       hits: [],
       isShrapnel: true,
-      colorTrail: 'rgba(255, 224, 130, 0.45)',
+      isPrismatic: isPrismatic,
+      colorTrail: isPrismatic ? 'rgba(255, 215, 0, 0.5)' : 'rgba(255, 224, 130, 0.45)',
       colorCore: '#ffe082'
     });
   }
-  spawnParticles(originX, originY, '#ffe082', 6, 85, 1.8);
+  spawnParticles(originX, originY, isPrismatic ? '#ffd700' : '#ffe082', 6, 85, 1.8);
 }
 
 export function spawnPlasmaMeltdownZone(x, y) {
@@ -129,8 +133,10 @@ export function arcChainProfile(p) {
 }
 
 function shotCooldown(p, value) {
-  if (p.afterburner && (p.afterburnerTimer || 0) > 0) return value * 0.7;
-  return value;
+  var v = value;
+  if (p.afterburner && (p.afterburnerTimer || 0) > 0) v *= 0.7;
+  if (p.aegisDeployed) v *= (1 / 1.45);
+  return v;
 }
 
 export function cycleWeaponMode(targetMode) {
