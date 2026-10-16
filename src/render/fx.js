@@ -6,8 +6,9 @@ import { fxRand, fxRandSigned } from './fx-rand.js';
 import { clearVisualBolts, spawnVisualBolt, stepVisualBolts } from './projectiles.js';
 import { getBudget } from './quality.js';
 import { drawGlow } from './sprites.js';
+import { renderDamageNumbers } from './overlay.js';
 
-var POOL_MAX = 900;
+var POOL_MAX = 600;
 var NUM_MAX = 32;
 var GHOST_MAX = 8;
 var MARK_MAX = 10;
@@ -22,7 +23,7 @@ var KIND_FLASH = 4;
 var KIND_RING = 5;
 var KIND = { spark: 0, smoke: 1, ember: 2, shard: 3, flash: 4, ring: 5 };
 var DEFAULT_COLOR = ['#ffd36b', '#5a5148', '#ffb15a', '#c4b39a', '#fff6e4', '#ffd36b'];
-var DEFAULT_LIFE = [0.32, 0.8, 0.7, 0.65, 0.08, 0.28];
+var DEFAULT_LIFE = [0.18, 0.45, 0.45, 0.35, 0.08, 0.22];
 var FONT_NUM = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
 var FONT_CRIT = '700 18px ui-monospace, SFMono-Regular, Consolas, monospace';
 var EMPTY = {};
@@ -30,112 +31,112 @@ var EMPTY = {};
 var PRESETS = {
   explosionLarge: [
     { kind: 'flash', count: 1, radius: 90, color: '#fff6e8', life: 0.08 },
-    { kind: 'smoke', count: 24, speed: 60, color: '#5c5148', life: 0.9, size: 14 },
-    { kind: 'spark', count: 40, speed: 320, color: '#ff6a3d', life: 0.4 },
-    { kind: 'ember', count: 12, speed: 40, color: '#ffd36b', life: 0.8 },
-    { kind: 'ring', count: 1, maxRadius: 140, color: '#ffd36b', life: 0.35, size: 2 }
+    { kind: 'smoke', count: 12, speed: 55, color: '#5c5148', life: 0.45, size: 12 },
+    { kind: 'spark', count: 22, speed: 300, color: '#ff6a3d', life: 0.20 },
+    { kind: 'ember', count: 7, speed: 40, color: '#ffd36b', life: 0.45 },
+    { kind: 'ring', count: 1, maxRadius: 130, color: '#ffd36b', life: 0.28, size: 2 }
   ],
   deathSmall: [
     { kind: 'flash', count: 1, radius: 26, color: '#fff4bd', life: 0.07 },
-    { kind: 'spark', count: 10, speed: 210, color: '#ff6a3d', life: 0.3 },
-    { kind: 'shard', count: 4, speed: 130, color: '#8d7861', life: 0.55 },
-    { kind: 'ring', count: 1, maxRadius: 34, color: '#ff6a3d', life: 0.2, size: 1.4 }
+    { kind: 'spark', count: 7, speed: 210, color: '#ff6a3d', life: 0.18 },
+    { kind: 'shard', count: 3, speed: 130, color: '#8d7861', life: 0.35 },
+    { kind: 'ring', count: 1, maxRadius: 34, color: '#ff6a3d', life: 0.18, size: 1.4 }
   ],
   deathRusher: [
     { kind: 'flash', count: 1, radius: 22, color: '#ffe7b0', life: 0.06 },
-    { kind: 'spark', count: 12, speed: 340, color: '#e1a644', life: 0.26 },
-    { kind: 'shard', count: 3, speed: 180, color: '#c4b39a', life: 0.4 }
+    { kind: 'spark', count: 8, speed: 320, color: '#e1a644', life: 0.18 },
+    { kind: 'shard', count: 2, speed: 180, color: '#c4b39a', life: 0.3 }
   ],
   deathArtillery: [
     { kind: 'flash', count: 1, radius: 40, color: '#fff1d2', life: 0.08 },
-    { kind: 'smoke', count: 12, speed: 50, color: '#5a5148', life: 0.85, size: 12 },
-    { kind: 'spark', count: 16, speed: 220, color: '#ff8a3d', life: 0.34 },
-    { kind: 'shard', count: 6, speed: 140, color: '#d69e2e', life: 0.6 },
-    { kind: 'ember', count: 6, speed: 36, color: '#ffb15a', life: 0.7 }
+    { kind: 'smoke', count: 6, speed: 48, color: '#5a483c', life: 0.45, size: 11 },
+    { kind: 'spark', count: 10, speed: 220, color: '#ff8a3d', life: 0.20 },
+    { kind: 'shard', count: 4, speed: 140, color: '#d69e2e', life: 0.40 },
+    { kind: 'ember', count: 4, speed: 36, color: '#ffb15a', life: 0.45 }
   ],
   deathBrute: [
     { kind: 'flash', count: 1, radius: 46, color: '#fff0dc', life: 0.08 },
-    { kind: 'smoke', count: 8, speed: 48, color: '#5a463c', life: 0.75, size: 12 },
-    { kind: 'spark', count: 16, speed: 240, color: '#ff6a3d', life: 0.34 },
-    { kind: 'shard', count: 10, speed: 160, color: '#bd573f', life: 0.7 },
-    { kind: 'ring', count: 1, maxRadius: 70, color: '#ed6842', life: 0.28, size: 2 }
+    { kind: 'smoke', count: 4, speed: 45, color: '#5a463c', life: 0.42, size: 11 },
+    { kind: 'spark', count: 10, speed: 220, color: '#ff6a3d', life: 0.18 },
+    { kind: 'shard', count: 5, speed: 150, color: '#bd573f', life: 0.40 },
+    { kind: 'ring', count: 1, maxRadius: 70, color: '#ed6842', life: 0.24, size: 2 }
   ],
   deathElite: [
     { kind: 'flash', count: 1, radius: 54, color: '#f4fffb', life: 0.08 },
-    { kind: 'smoke', count: 10, speed: 55, color: '#4d5854', life: 0.8, size: 13 },
-    { kind: 'spark', count: 18, speed: 260, color: '#7cf0c8', life: 0.36 },
-    { kind: 'shard', count: 8, speed: 150, color: '#9dbeb0', life: 0.65 },
-    { kind: 'ember', count: 6, speed: 40, color: '#c8fff0', life: 0.6 },
-    { kind: 'ring', count: 1, maxRadius: 130, color: '#7cf0c8', life: 0.62, wobble: 2.5, size: 2 }
+    { kind: 'smoke', count: 5, speed: 52, color: '#4d5854', life: 0.45, size: 12 },
+    { kind: 'spark', count: 12, speed: 260, color: '#7cf0c8', life: 0.20 },
+    { kind: 'shard', count: 5, speed: 150, color: '#9dbeb0', life: 0.42 },
+    { kind: 'ember', count: 4, speed: 40, color: '#c8fff0', life: 0.45 },
+    { kind: 'ring', count: 1, maxRadius: 130, color: '#7cf0c8', life: 0.45, wobble: 2.5, size: 2 }
   ],
   deathTitan: [
-    { kind: 'flash', count: 1, radius: 96, color: '#fff6e8', life: 0.1 },
-    { kind: 'smoke', count: 24, speed: 70, color: '#5c5148', life: 1, size: 16 },
-    { kind: 'spark', count: 36, speed: 340, color: '#ff6a3d', life: 0.45 },
-    { kind: 'ember', count: 14, speed: 48, color: '#ffd36b', life: 0.9 },
-    { kind: 'shard', count: 14, speed: 180, color: '#e69535', life: 0.8 },
-    { kind: 'ring', count: 1, maxRadius: 210, color: '#ffd36b', life: 0.7, wobble: 3, size: 2.4 }
+    { kind: 'flash', count: 1, radius: 96, color: '#fff6e8', life: 0.08 },
+    { kind: 'smoke', count: 14, speed: 65, color: '#5c5148', life: 0.48, size: 14 },
+    { kind: 'spark', count: 22, speed: 320, color: '#ff6a3d', life: 0.22 },
+    { kind: 'ember', count: 8, speed: 45, color: '#ffd36b', life: 0.45 },
+    { kind: 'shard', count: 8, speed: 170, color: '#e69535', life: 0.42 },
+    { kind: 'ring', count: 1, maxRadius: 200, color: '#ffd36b', life: 0.45, wobble: 3, size: 2.4 }
   ],
   core: [
     { kind: 'flash', count: 1, radius: 78, color: '#fff8ea', life: 0.08 },
-    { kind: 'smoke', count: 16, speed: 58, color: '#5c5148', life: 0.85, size: 14 },
-    { kind: 'spark', count: 26, speed: 280, color: '#ff9a3c', life: 0.36 },
-    { kind: 'ember', count: 10, speed: 42, color: '#ffd36b', life: 0.75 },
-    { kind: 'ring', count: 1, maxRadius: 130, color: '#f5a623', life: 0.32, size: 2 }
+    { kind: 'smoke', count: 8, speed: 55, color: '#5c5148', life: 0.45, size: 13 },
+    { kind: 'spark', count: 16, speed: 280, color: '#ff9a3c', life: 0.22 },
+    { kind: 'ember', count: 6, speed: 40, color: '#ffd36b', life: 0.45 },
+    { kind: 'ring', count: 1, maxRadius: 130, color: '#f5a623', life: 0.28, size: 2 }
   ],
   barrel: [
     { kind: 'flash', count: 1, radius: 60, color: '#fff1e4', life: 0.08 },
-    { kind: 'smoke', count: 14, speed: 52, color: '#5a4038', life: 0.95, size: 13 },
-    { kind: 'spark', count: 18, speed: 240, color: '#ff4422', life: 0.34 },
-    { kind: 'ember', count: 14, speed: 36, color: '#ffaa33', life: 1.15 },
-    { kind: 'ring', count: 1, maxRadius: 100, color: '#ff6633', life: 0.3, size: 2 }
+    { kind: 'smoke', count: 7, speed: 48, color: '#5a4038', life: 0.45, size: 12 },
+    { kind: 'spark', count: 11, speed: 230, color: '#ff4422', life: 0.20 },
+    { kind: 'ember', count: 7, speed: 36, color: '#ffaa33', life: 0.50 },
+    { kind: 'ring', count: 1, maxRadius: 95, color: '#ff6633', life: 0.26, size: 2 }
   ],
   barrelKicked: [
-    { kind: 'flash', count: 1, radius: 72, color: '#fff6ea', life: 0.09 },
-    { kind: 'smoke', count: 16, speed: 64, color: '#5a4038', life: 1, size: 14 },
-    { kind: 'spark', count: 26, speed: 300, color: '#ff4422', life: 0.38 },
-    { kind: 'ember', count: 16, speed: 44, color: '#ffaa33', life: 1.2 },
-    { kind: 'ring', count: 1, maxRadius: 120, color: '#ff6633', life: 0.34, size: 2.2 }
+    { kind: 'flash', count: 1, radius: 72, color: '#fff6ea', life: 0.08 },
+    { kind: 'smoke', count: 8, speed: 58, color: '#5a4038', life: 0.48, size: 13 },
+    { kind: 'spark', count: 15, speed: 280, color: '#ff4422', life: 0.22 },
+    { kind: 'ember', count: 8, speed: 40, color: '#ffaa33', life: 0.50 },
+    { kind: 'ring', count: 1, maxRadius: 115, color: '#ff6633', life: 0.28, size: 2.2 }
   ],
   mortar: [
     { kind: 'flash', count: 1, radius: 48, color: '#fff0dc', life: 0.07 },
-    { kind: 'smoke', count: 10, speed: 48, color: '#5c463c', life: 0.7, size: 11 },
-    { kind: 'spark', count: 14, speed: 200, color: '#ed6842', life: 0.3 },
-    { kind: 'ember', count: 6, speed: 30, color: '#ffb15a', life: 0.6 },
-    { kind: 'ring', count: 1, maxRadius: 72, color: '#ed6842', life: 0.24, size: 1.8 }
+    { kind: 'smoke', count: 6, speed: 48, color: '#5c463c', life: 0.45, size: 11 },
+    { kind: 'spark', count: 10, speed: 200, color: '#ed6842', life: 0.18 },
+    { kind: 'ember', count: 4, speed: 30, color: '#ffb15a', life: 0.45 },
+    { kind: 'ring', count: 1, maxRadius: 72, color: '#ed6842', life: 0.22, size: 1.8 }
   ],
   emp: [
     { kind: 'flash', count: 1, radius: 64, color: '#f3fdff', life: 0.08 },
-    { kind: 'spark', count: 16, speed: 240, color: '#5be7ff', life: 0.28 },
-    { kind: 'spark', count: 6, speed: 120, color: '#ffffff', life: 0.18 },
-    { kind: 'ember', count: 6, speed: 40, color: '#bdf4ff', life: 0.45 }
+    { kind: 'spark', count: 12, speed: 240, color: '#5be7ff', life: 0.20 },
+    { kind: 'spark', count: 5, speed: 120, color: '#ffffff', life: 0.15 },
+    { kind: 'ember', count: 4, speed: 40, color: '#bdf4ff', life: 0.35 }
   ],
   spire: [
-    { kind: 'flash', count: 1, radius: 80, color: '#f4feff', life: 0.1 },
-    { kind: 'smoke', count: 8, speed: 40, color: '#3d4a50', life: 0.8, size: 12 },
-    { kind: 'spark', count: 28, speed: 360, color: '#5be7ff', life: 0.36 },
-    { kind: 'ember', count: 10, speed: 50, color: '#d6fbff', life: 0.6 },
-    { kind: 'ring', count: 1, maxRadius: 200, color: '#5be7ff', life: 0.45, size: 2 }
+    { kind: 'flash', count: 1, radius: 80, color: '#f4feff', life: 0.08 },
+    { kind: 'smoke', count: 5, speed: 40, color: '#3d4a50', life: 0.45, size: 11 },
+    { kind: 'spark', count: 18, speed: 340, color: '#5be7ff', life: 0.22 },
+    { kind: 'ember', count: 6, speed: 50, color: '#d6fbff', life: 0.45 },
+    { kind: 'ring', count: 1, maxRadius: 190, color: '#5be7ff', life: 0.35, size: 2 }
   ],
   dashDust: [
-    { kind: 'ring', count: 1, maxRadius: 26, color: '#d9c7a4', life: 0.28, size: 1.5 },
-    { kind: 'smoke', count: 5, speed: 36, color: '#6a5b48', life: 0.45, size: 7 },
-    { kind: 'shard', count: 3, speed: 60, color: '#8d7b62', life: 0.35 }
+    { kind: 'ring', count: 1, maxRadius: 26, color: '#d9c7a4', life: 0.22, size: 1.5 },
+    { kind: 'smoke', count: 3, speed: 36, color: '#6a5b48', life: 0.35, size: 6 },
+    { kind: 'shard', count: 2, speed: 60, color: '#8d7b62', life: 0.25 }
   ],
   playerHit: [
     { kind: 'flash', count: 1, radius: 18, color: '#ff8a62', life: 0.06 },
-    { kind: 'spark', count: 7, speed: 150, color: '#ed6842', life: 0.22 }
+    { kind: 'spark', count: 6, speed: 150, color: '#ed6842', life: 0.18 }
   ],
   pillar: [
-    { kind: 'flash', count: 1, radius: 28, color: '#fff1c4', life: 0.1 },
-    { kind: 'spark', count: 14, speed: 78, color: '#ffd36b', life: 0.7, up: 1 },
-    { kind: 'ring', count: 1, maxRadius: 54, color: '#ffd36b', life: 0.35, size: 1.6 },
-    { kind: 'ring', count: 1, maxRadius: 28, color: '#fff6d8', life: 0.22, size: 1.2 }
+    { kind: 'flash', count: 1, radius: 28, color: '#fff1c4', life: 0.08 },
+    { kind: 'spark', count: 10, speed: 78, color: '#ffd36b', life: 0.45, up: 1 },
+    { kind: 'ring', count: 1, maxRadius: 54, color: '#ffd36b', life: 0.28, size: 1.6 },
+    { kind: 'ring', count: 1, maxRadius: 28, color: '#fff6d8', life: 0.18, size: 1.2 }
   ],
   pillarMint: [
-    { kind: 'flash', count: 1, radius: 28, color: '#e7fff6', life: 0.1 },
-    { kind: 'spark', count: 14, speed: 78, color: '#7cf0c8', life: 0.7, up: 1 },
-    { kind: 'ring', count: 1, maxRadius: 54, color: '#7cf0c8', life: 0.35, size: 1.6 }
+    { kind: 'flash', count: 1, radius: 28, color: '#e7fff6', life: 0.08 },
+    { kind: 'spark', count: 10, speed: 78, color: '#7cf0c8', life: 0.45, up: 1 },
+    { kind: 'ring', count: 1, maxRadius: 54, color: '#7cf0c8', life: 0.28, size: 1.6 }
   ]
 };
 
@@ -413,7 +414,7 @@ function emitHitSparks(x, y, crit) {
   var color = crit ? '#ffd36b' : '#fff1c9';
   emitFx('flash', x, y, { radius: crit ? 26 : 13, color: color, life: 0.07 });
   for (var i = 0; i < n; i += 1) {
-    emitFx('spark', x, y, { speed: crit ? 260 : 170, color: color, life: 0.22 });
+    emitFx('spark', x, y, { speed: crit ? 280 : 180, color: color, life: crit ? 0.20 : 0.16 });
   }
 }
 
@@ -1017,6 +1018,11 @@ function drawPoolPass(ctx, soft) {
   if (!pool || !liveN) return;
   ctx.globalCompositeOperation = soft ? 'source-over' : 'lighter';
   var n;
+  var pl = rt.state && rt.state.player;
+  var plX = pl ? pl.x : 0;
+  var plY = pl ? pl.y : 0;
+  var hasPl = Boolean(pl);
+
   for (n = 0; n < liveN; n += 1) {
     var p = pool[live[n]];
     if (!p.active) continue;
@@ -1025,26 +1031,50 @@ function drawPoolPass(ctx, soft) {
     var alpha = p.maxLife ? p.life / p.maxLife : 1;
     if (alpha <= 0.03) continue;
     if (alpha > 1) alpha = 1;
+
+    // 玩家中心 120px 徑向視線保護圈（Player Proximity Fade / Alpha Culling）
+    // Tier 1（Flash、Ring）永不消隱；Tier 2（Spark）保持清晰度；Tier 3（Smoke、Shard、Ember）執行消音
+    var pAlpha = alpha;
+    if (hasPl && (softKind || p.kind === KIND_EMBER)) {
+      var pdx = p.x - plX;
+      var pdy = p.y - plY;
+      var pDist = Math.hypot(pdx, pdy);
+      if (pDist < 60) {
+        // 致命貼身半徑：黑煙透明度降為 0.08 或直接剔除，徹底杜絕黑煙貼臉致盲！
+        if (p.kind === KIND_SMOKE) pAlpha *= 0.08;
+        else if (p.kind === KIND_SHARD) pAlpha *= 0.15;
+        else if (p.kind === KIND_EMBER) pAlpha *= 0.20;
+      } else if (pDist < 120) {
+        // 60px <= d < 120px：透明度漸衰 (d - 60) / 60
+        var decayFactor = (pDist - 60) / 60;
+        if (p.kind === KIND_SMOKE) pAlpha *= (0.08 + 0.92 * decayFactor);
+        else if (p.kind === KIND_SHARD) pAlpha *= (0.15 + 0.85 * decayFactor);
+        else if (p.kind === KIND_EMBER) pAlpha *= (0.20 + 0.80 * decayFactor);
+      }
+    }
+    if (pAlpha <= 0.02) continue;
+
     if (p.kind === KIND_SMOKE) {
-      ctx.globalAlpha = alpha * 0.14;
+      ctx.globalAlpha = pAlpha * 0.14;
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * 1.35, 0, TAU);
       ctx.fill();
-      ctx.globalAlpha = alpha * 0.22;
+      ctx.globalAlpha = pAlpha * 0.22;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, TAU);
       ctx.fill();
     } else if (p.kind === KIND_SHARD) {
-      drawShard(ctx, p, alpha);
+      drawShard(ctx, p, pAlpha);
     } else if (p.kind === KIND_SPARK) {
+      // Tier 2 命中火花：拉長為速度向量線，壽命縮減至 0.15~0.22 秒
       var mag = Math.hypot(p.vx, p.vy);
-      var len = mag * 0.03;
-      if (len < p.size) len = p.size;
-      if (len > 16) len = 16;
-      ctx.globalAlpha = alpha;
+      var len = mag * 0.045;
+      if (len < p.size * 1.5) len = p.size * 1.5;
+      if (len > 24) len = 24;
+      ctx.globalAlpha = pAlpha;
       ctx.strokeStyle = p.color;
-      ctx.lineWidth = p.size > 2.4 ? 2.4 : p.size;
+      ctx.lineWidth = p.size > 2.2 ? 2.2 : (p.size < 1.2 ? 1.2 : p.size);
       ctx.beginPath();
       ctx.moveTo(p.x, p.y);
       if (mag > 1) ctx.lineTo(p.x - p.vx * (len / mag), p.y - p.vy * (len / mag));
@@ -1053,21 +1083,23 @@ function drawPoolPass(ctx, soft) {
     } else if (p.kind === KIND_EMBER) {
       var flick = frameReduced ? 1 : (0.62 + 0.38 * Math.sin((rt.renderTime || 0) * 18 + p.seed));
       if (frameKey) {
-        ctx.globalAlpha = alpha * flick;
+        ctx.globalAlpha = pAlpha * flick;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.size, p.size);
       } else {
-        drawGlow(ctx, p.x, p.y, p.size * 2.4, p.color, alpha * flick);
+        drawGlow(ctx, p.x, p.y, p.size * 2.4, p.color, pAlpha * flick);
       }
     } else if (p.kind === KIND_RING) {
-      drawRing(ctx, p, alpha * 0.9);
+      // Tier 1 破盾震波/衝擊光環：最高圖層，永不消隱
+      drawRing(ctx, p, pAlpha * 0.9);
     } else if (p.kind === KIND_FLASH) {
-      ctx.globalAlpha = alpha;
+      // Tier 1 受擊閃白：純白覆蓋 0.08s，最高圖層，永不消隱
+      ctx.globalAlpha = pAlpha;
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, Math.max(2, p.radius * 0.26), 0, TAU);
       ctx.fill();
-      drawGlow(ctx, p.x, p.y, p.radius, p.color, alpha);
+      drawGlow(ctx, p.x, p.y, p.radius, p.color, pAlpha);
     }
   }
 }
@@ -1128,34 +1160,7 @@ export function drawAdditiveFx(ctx) {
 }
 
 export function drawDamageNumbers(ctx) {
-  if (!ctx || !numbers) return;
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
-  for (var i = 0; i < NUM_MAX; i += 1) {
-    var n = numbers[i];
-    if (!n.active) continue;
-    var alpha = n.maxLife ? n.life / n.maxLife : 1;
-    if (alpha < 0) alpha = 0;
-    if (alpha > 1) alpha = 1;
-    var label = n.text;
-    if (!label) {
-      var v = Math.round(n.value);
-      if (v < 0) v = 0;
-      if (v > 99999) v = 99999;
-      label = n.crit ? ('CRIT ' + v) : String(v);
-      n.text = label;
-    }
-    ctx.globalAlpha = alpha;
-    ctx.font = n.crit ? FONT_CRIT : FONT_NUM;
-    ctx.lineWidth = frameContrast ? 4 : 3;
-    ctx.strokeStyle = '#140e0a';
-    ctx.fillStyle = n.crit ? '#ffd36b' : (frameContrast ? '#ffffff' : '#e8e0c6');
-    ctx.strokeText(label, n.x, n.y);
-    ctx.fillText(label, n.x, n.y);
-  }
-  ctx.restore();
+  renderDamageNumbers(ctx, numbers, NUM_MAX);
 }
 
 export function drawScreenFlashes(ctx) {
