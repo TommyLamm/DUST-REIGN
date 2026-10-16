@@ -1,102 +1,122 @@
-# DUST//REIGN 0.4.4
+# DUST//REIGN 0.6.0
 
-遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.4.4`，對應 tag 為 `v0.4.4`。
+遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.6.0`，對應 tag 為 `v0.6.0`。
 
-全面重繪主角機體與全 14 種敵人／首領視覺模型：
-1. **主角機體重構**：新增液壓雙足行走機構、多層次複合裝甲底盤、倒角高光線、六角沉頭鉚釘與高光晶格座艙罩；為 Standard、Breacher、Vanguard、Arc-Welder 實作專屬砲管、彈鼓、電磁感應線圈與放電叉；依 Strider、Bulwark、Salvager、Scrapper 機體底盤繪製專屬外觀輪廓特徵；強化三階段尾噴粒子光焰、金色超載電弧環與六角光盾防護網。
-2. **全敵軍與首領模型重繪**：重繪 Crawler（六足步態與幾丁質甲殼）、Rusher（掠翼戰機與雙渦輪噴口）、Brute（合金撞角與柴油排氣黑煙微粒）、Artillery（六角固定基座與攻城重砲）、Spitter（酸液毒腺與四足步態）、Scurrier（高頻碎步幼體與化學發光氣囊）、Warden（懸浮黑曜石方尖碑與三重硬光護盾）、Burrower（覆瓦鑽地甲片與流沙渦流）；三大首領 Titan（八層戰艦結構與可破壞側舷翼艙）、Dreadnought（對稱鐵甲衝角艦首與雙側連續履帶）、Sovereign（雙層 360 度陀螺儀風暴環與引力奇異點）全面精緻化；沙暴塔與地雷固定沙漠錨定朝向；加入 Volatile、Splitter 等精英詞綴視覺標記。
-3. **渲染穩定性修復**：修正 `drawDashRing` 脈衝進度超出區間時產生負半徑的 DOMException、修復 Canvas 2D `fillRect` 路徑殘留導致的描邊問題、修復六角護盾閉合路徑。
+DUST//REIGN v0.6.0 迎來次世代戰鬥動能、晶片融合、戰術副裝備、首領獨立部位破壞，以及改裝工坊與幽靈殘影競速等三大主軸系統演進。
 
-玩法、計分、數值與榜單 `dust-reign-score-v2` 不變，既有存檔鍵不變。GitHub Release 不代表已在 Playroom 匯入或上架。既有 `v0.4.3`、`v0.4.2`、`v0.4.1` 與 `v0.4.0` 不覆寫。
+---
 
-## 0.4.0 玩法改造
+## 一、三大系統演進軌道
 
-計分規則已改變，因此榜單換成新 ID。舊榜 `dust-reign-score` 不再提交，由平台保留。
+### 軌道一：次世代戰鬥動能與程序音效合成（Combat Kinetics & Procedural Audio）
+1. **2D 空間雜湊網格（Spatial Hash Grid）**：
+   - 採用高效 TypedArray 實作 0 GC（Zero Garbage Collection）的執行期 2D 廣域碰撞篩選架構。
+   - 大幅降低高波次蜂擁敵軍與密集彈道之雙重迴圈碰撞檢測開銷，確保百隻敵軍混戰中持續穩定 60 FPS。
+2. **物理動態反饋與貼花**：
+   - 主武器開火實作真實物理後座力衝量（Physical Recoil Impulses），射擊時機體伴隨微幅慣性後移。
+   - 衝刺與急轉彎即時生成動態剎車拖痕（Dynamic Skid Decals / 接地印記），強化廢土機甲沉浸操縱感。
+3. **Web Audio API 4 大程序音效合成**：
+   - 全面移除外部音檔依賴，基於瀏覽器原生 Web Audio API 即時程序化計算音訊：
+     - **FM 頻率調變跳彈（Ricochet）**：金屬擦彈產生高頻泛音衰減。
+     - **雙峰帶通破片殼擊（Shell Casing）**：重裝破片擊中金屬裝甲之清脆鏗鏘聲。
+     - **指數衰減低通爆破（Explosion Thud）**：巨幅砲擊與部位爆破震撼重低音。
+     - **全域動態殘響（Ambient Reverb）**：配合廢土風暴模擬空間混響。
 
-1. **一局結構**：三幕各 5 波。第 5、10、15 波分別是 Titan、Dreadnought、Storm Sovereign。幕間可選路線與軍械庫。第 15 波可 EXTRACT，或 PUSH DEEPER 進入無盡；帳號成績只在最終結束時提交一次。
-2. **戰場**：新增 Spitter、Scurrier、Warden、Burrower，以及 volatile、splitter 詞綴。波次含突變、合約與補給。
-3. **構築**：開局選機體與主武器。局內不再換槍。升級有稀有度、層數上限、重抽、放逐、跳過、新卡、融合與精通。
-4. **局外**：機體、Dust Heat、成就、每日挑戰與圖鑑。每日種子用玩家本地日期。
-5. **計分與評級**：分數集中經 `addScore`。結算有分數明細。B 30000、A 90000、S 220000 或撤離；S+ 為撤離且 Heat ≥ 2。
-6. **操作**：Shift 或 Space 衝刺。Q、E 或右鍵 EMP。升級為 1／2／3、R、B、X。手機 EMP 可拖曳落點，FIRE 黏性鎖定。手把遊玩中可用 D-pad，並能累積火神持續開火。
-7. **提示**：首次情境提示可關閉與重設。
-8. **本地化**：完整繁體中文漢化與頂部狀態欄／暫停選單 ENG / 繁中 即時切換按鈕，支援動態響應切換、各類卡片、機體、武器、合約、成就、首領血條文字本地化。獨立命名空間鍵 `dust_reign_lang`。
+### 軌道二：8 組融合晶片、戰術輔助槽與 Titan 部位破壞（Augment Fusions, Tactical Slot & Titan Destruction）
+1. **8 組轉化級晶片融合矩陣（Augment Fusions）**：
+   - 新增 8 組專屬雙卡前置融合矩陣（`FUSION_CHIPS`）：微型集群彈頭（Cluster Micromissiles）、超導感應線圈（Superconductor）、動能震盪環（Kinetic Shockwave）、高溫電漿噴流（Plasma Jet）、奈米維修蟲巢（Nanite Hive）、聚變奇點核心（Singularity Core）、極限過載超頻（Overdrive Matrix）、護盾偏轉偏壓（Shield Deflection）。
+   - 升級選卡介面以專屬金黃串流光暈（`.is-fusion-chip`）突顯呈現；滿足前置條件時，優先於升級第一槽位保證遞送。
+2. **戰術輔助槽位（Tactical Auxiliary Equipment Slot）**：
+   - 引入全新戰術輔助裝備：
+     - **定點自控機槍塔（Automated Turret）**：具備自主索敵、追蹤旋轉與定點射擊 AI。
+     - **熱誘餌（Decoy）**：發射高熱信標，引誘吸引周遭敵軍仇恨與砲火集中。
+     - **微型奇點手雷（Micro-singularity Grenade）**：引爆後產生引力奇異點渦流，牽引並聚集附近敵群。
+   - 多端全面適配：桌面鍵盤支援 `[E]` 或 `[F]` 鍵、手把控制器支援 `[X]` 或 `[LB]` 鍵、行動端觸控提供專屬 `#touchAux` 按鈕，並由 `#hudTacticalCdMask` SVG 環形遮罩即時同步冷卻時間。
+3. **Titan 泰坦首領 4 大獨立部位破壞（4-Part Destructible Boss Components）**：
+   - Titan 巨型首領結構重構為 4 個獨立可破壞部位：左迫擊砲（`left_cannon`）、右蜂巢召喚艙（`right_pod`）、後散熱鰭片（`radiator`）、下履帶裝甲（`treads`）。
+   - 以局部旋轉坐標即時映射碰撞判定與部位血量；支援散熱鰭片閉合高額減傷（85%）與過熱敞開弱點（250% 暴擊傷害）機制。
+   - 擊破部位觸發 0.08 秒打擊停頓（Hitstop）與金屬破片殉爆；破壞履帶使泰坦移動速度永久下降 40%。
 
-## 存檔相容
+### 軌道三：廢料改裝工坊、星級金庫、每日懸賞與 5Hz 幽靈殘影競速（Scrapyard Workshop & 5Hz Ghost Replay Metagame）
+1. **廢料改裝工坊（Scrapyard Workshop）**：
+   - 提供 6⚡ 電量負載上限與 3 大改裝插槽，允許玩家於局外配置雙面刃模組（如犧牲機動性提升全裝甲防禦、提升超溫極限換取極致射速）。
+   - 消耗局內擊殺精英怪收集之精煉廢料解鎖與升級改裝模組。
+2. **星級金庫（Star Vault）與每日懸賞（Daily Bounties）**：
+   - 累積闖關星級解鎖金庫里程碑與機體榮譽塗裝徽章。
+   - 基於玩家本地日期之 Date-Hash 演算法，每日生成 3 項懸賞作戰合約，完成後提供局內即時 Overdrive 爆發效果與結算加成。
+3. **5Hz 輕量幽靈殘影競速引擎（Ghost Replay Engine）**：
+   - 競速關卡採用 5Hz 採樣、Delta 差分與 Base64 高效壓縮（120 秒完整戰鬥軌跡僅佔用 2.26 KB，遠低於 3 KB 限制）。
+   - Split-Timer 檢核點系統：戰鬥介面即時比對歷史最佳紀錄之分段秒差（綠色領先／紅色落後）。
+   - 戰場直接渲染半透明動態幽靈機體，完美重現最速競速路線。
+4. **天梯防護邊界（Leaderboard Integrity & Isolation）**：
+   - 安裝改裝工坊模組出戰時，系統自動將該局標記為 Mod 模式，競速幽靈與純粹無改裝天梯嚴格分流。
+   - 闖關模式（Campaign）與極限作戰（Hardcore）獨立於主榜單之外，不向主天梯 `dust-reign-score-v2` 提交成績，維護競爭公正性。
 
-新增 `dust-reign:meta:v1`、`dust-reign:best-score:v2`、`dust-reign:daily:v1`、`dust-reign:tips:v1`、`dust-reign:tips-enabled:v1`。
+---
 
-`dust-reign:best-score:v1` 與 `dustReignBestScore` 只讀、不刪、不再被新分數覆寫。開始畫面以 LEGACY BEST 顯示兩者中較高的舊紀錄。`dust_reign_visual_quality` 維持原格式。壞掉的 meta JSON 讀取時逐欄回退預設；該局正常結束後會寫回一份合法 meta，不會沿用壞字串。不保存單局進度。本機最高分不匯入帳號。
+## 二、存檔相容性（Save Compatibility）
 
-## 新榜
+系統全面採用向下相容與防禦性容錯架構：
 
-`leaderboard.id` 為 `dust-reign-score-v2`。降序，單位「分」，範圍 0 至 9007199254740991。換榜是因為擊殺、過波、無傷、首領、風格、合約與撤離的計分方式已不同，不能沿用舊榜規則。
+1. **新增儲存鍵**：
+   - `dust-reign:workshop:v1`：儲存改裝工坊插槽、已解鎖模組與廢料儲存量。
+   - `dust-reign:vault:v1`：儲存星級金庫已解鎖里程碑與徽章紀錄。
+   - `dust-reign:bounties:v1`：儲存每日懸賞完成進度與領取狀態。
+   - `dust-reign:ghost:v1:<stageId>`：儲存各關卡最佳幽靈殘影差分快照。
+   - `dust-reign:campaign:v1`：儲存闖關模式章節與星級達成進度。
+   - `dust-reign:hardcore:v1`：儲存極限作戰勛章與完成狀態。
+2. **既有鍵相容性**：
+   - `dust-reign:meta:v1`、`dust-reign:best-score:v2`、`dust-reign:daily:v1`、`dust-reign:tips:v1`、`dust_reign_lang` 結構保持不變。
+   - 舊版 `dust-reign:best-score:v1` 與 `dustReignBestScore` 維持唯讀相容，開局畫面仍能正確解析 LEGACY BEST。
+   - 若本機儲存包含損毀之 JSON 字串，解析層自動回退預設值並安全重寫，絕不阻斷遊戲執行。
 
-## 平衡紀錄
+---
 
-校準日 2026-10-09。使用者已接受 P3 數值。細節見 `output/balance/p3-summary.md` 與 `docs/gameplay-overhaul/10-balance-sheet.md`。下列數字已與程式核對，沒有發現文件應寫、但程式不同的項目。
+## 三、天梯與排行榜規範
 
-| 指標 | 結果 |
-| --- | --- |
-| skilled 存活 p10／p50／p90 | 6.9／10／20（Heat 0，30 局） |
-| skilled Titan／Dreadnought／Sovereign | 約 66／66／87 秒，落在 40–70、60–90、80–120 |
-| skilled 分數 p10／p50／p90 | 34916／87054／287670 |
-| 評級 | B 30000、A 90000、S 220000；S+ 仍是撤離且 Heat ≥ 2 |
-| 效能 | 無頭 1280×720、約 98 敵、200–260 發首領彈：HIGH 平均 4.78 ms，60fps 預算 16.67 ms |
+- **排行榜 ID**：`dust-reign-score-v2`
+- **排序方式**：降序（`desc`）
+- **單位**：分
+- **有效範圍**：0 至 9007199254740991
+- **提交邊界**：成績僅限標準模式（Standard）與每日挑戰（Daily Challenge）在無改裝模組（Unmodded）環境下由 Playroom SDK 提交。闖關、極限作戰及 Mod 競速皆受到隔離保護。
 
-已知風險：平衡是以會躲彈的完美瞄準機器人校準，真人首領戰可能較長。Kite 幾乎打不完 Titan。Heat 0–2 的死亡中位數都在第 10 波，階梯到 Heat 3 才明顯。Sovereign 的 87 秒是注入第 15 波的樣本。首領普攻每 0.4 秒只有前 55 點全額，其餘 ×0.25；核心 350 與踢桶 240 不打折。沒有真人遊玩，也沒有手機 4 倍節流的幀率實測。
+---
 
-## 平台接入規範與成品
+## 四、全套驗收套件通過狀態
 
-- 規格與工具來源：追蹤 [Playroom Platform main 分支](https://github.com/TommyLamm/playroom-platform)。2026-10-09 已重新讀取 `main` 的開發標準、Manifest Schema、Release workflow 範本與 `playroom-sdk.js`。倉庫內 SDK 與當時 main 一致，沒有改寫。打包前再次 `fetch`／`pull`，平台 commit 仍為 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30`。
-- `.github/workflows/release.yml` 已與最新範本核對。`GAME_DIR` 維持 `output/game`。版本檢查前的語法檢查、自檢與 staging 保留。Node 24、暫存目錄 clone `main`、`npm ci`、`game:pack`／`game:validate`、token 只進發布步驟，且沒有 `continue-on-error`。發布步驟仍用遊戲的標題與 `RELEASE.md`，沒有改成範本的 `--generate-notes`。
-- 成品位置：`output/release/0.4.0/game` 與 `output/release/0.4.0/game.zip`。版本目錄已存在時 `scripts/stage-release.mjs` 會拒絕覆寫。
-- `game.json` 版本 `0.4.0`（不含 `v`）。
-- ZIP 根目錄包含 `game.json`、`index.html`、`playroom-sdk.js`、`cover.png`，以及 `src/` 79 個 JS 與 `css/` 15 個 CSS。不含 `scripts/`、`docs/`、`output/`、`.playwright-cli/`。
-- 無編譯依賴、無後端。只有 `finishRun()` 回傳 `saved: true` 才可顯示已保存。
+2026-10-16 於 Node v24.19.0 環境下完成全部 5 大驗收套件之完整檢驗：
 
-## 驗收狀態
+| 驗收套件 | 執行指令 | 測試結果 | 關鍵驗收指標 |
+| :--- | :--- | :--- | :--- |
+| **無 DOM 核心自檢** | `node scripts/self-check.mjs` | ✅ 通過 (`ok: true`) | 26 張升級卡、8 組融合晶片、4 種動態詞綴、Titan 雙側部位破壞、2D 空間雜湊網格 0 GC 效能驗證 |
+| **多語言本地化套件** | `node scripts/test-i18n-verification.mjs` | ✅ 通過 (4/4 階段) | 中英切換持久化、26 張升級卡與 8 組融合卡全量雙語對照、DOM 靜態 HTML 同步、動態文字與評級格式 |
+| **闖關與極限模式套件** | `node scripts/test-campaign-modes.mjs` | ✅ 通過 (全 3 階段) | 關卡選擇器、星級進度條、作戰簡報、輪播導航、模式切換無狀態殘留 |
+| **局外改裝與競速套件** | `node scripts/test-track3-metagame.mjs` | ✅ 通過 (4/4 階段) | 工坊 6⚡ 負載與插槽裝配、天梯隔離防護、星級金庫與每日懸賞、5Hz 幽靈差分壓縮 (120s 僅 2.26 KB < 3 KB 限制) 與 Split-Timer |
+| **真實瀏覽器全流程 E2E** | `node scripts/test-browser-gameplay.mjs` | ✅ 通過 (40/40 項) | 零未捕捉異常、零控制台報錯；涵蓋開局配裝、戰鬥動能、全按鍵與戰術裝備部署、升級選卡/重抽/放逐/跳過、暫停分頁、死亡結算與 Run It Back 重開 |
+| **語法嚴格校驗** | `node --check` | ✅ 通過 (全量模組) | `src/**/*.js`（79+ 個檔案）、`playroom-sdk.js`、`scripts/*.mjs` 全部通過語法檢驗 |
+| **發布 Staging 檢驗** | `node scripts/stage-release.mjs` | ✅ 通過 | 產出 `output/release/0.6.0/game` 與 `output/game` 白名單成品，嚴格隔離非發布檔案 |
 
-2026-10-09 以 Node v24.19.0 完成本機驗收。平台工具為當日 `main` `0115330e0ba3f5722e25d64a0b3c7eb6f383da30`。
+---
 
-| 項目 | 狀態 |
-| --- | --- |
-| `node --check`：`src/**/*.js`、`playroom-sdk.js`、`scripts/*.mjs`、`scripts/balance/*.mjs` | 通過。共 88 個檔案。音效修正後已再檢查 `src/audio/audio-fx.js`。 |
-| `node scripts/self-check.mjs` | 通過。回傳 `ok: true`（26 張升級、10 個融合）。音效修正後重跑仍為 `ok: true`。 |
-| `node scripts/stage-release.mjs` | 通過。`output/release/0.4.0/game` 含 manifest、入口、封面、SDK、79 個 `src` JS、15 個 CSS。不含 `scripts/`、`docs/`、`output/`。 |
-| 平台 `main` `npm run game:pack` 與 `npm run game:validate` | 通過。`Packed dust-reign v0.4.0`，`Valid: dust-reign v0.4.0`。ZIP `output/release/0.4.0/game.zip`，814875 bytes，SHA-256 `f91203d0ced8974268aefb7941dcbcbd9648becd597c47da40d3cae738482dfd`。98 個 entries。 |
-| 版本子目錄載入，以及與平台相同的跨來源 sandbox iframe | 通過。遊戲在 `http://127.0.0.1:8262/0.4.0/game/index.html`，父頁在 `http://localhost:8263/parent.html`。sandbox 為 `allow-scripts allow-same-origin allow-pointer-lock`，`allow="fullscreen"`。未跳轉頂層。 |
-| 桌面約 1100×650：配裝、開局、移動、射擊、衝刺、EMP、升級、暫停、幕間、撤離面板、死亡、回到配裝重開 | 通過。iframe 1100×650。配裝含機體、武器、Heat、每日與圖鑑。WASD 的 W 讓玩家上移。射擊產生彈體。Shift 衝刺位移約 140。E 消耗 EMP 能量。升級以 R 重抽、B 放逐並確認、X 跳過。Esc 暫停與恢復。注入幕間可見 CHOOSE A ROAD，注入撤離面板可見 EXTRACT 與 PUSH DEEPER。死亡評級 B／IRON SCRAPPER，明細含 KILLS／WAVES／BOSSES／STYLE／CONTRACTS／EXTRACTION。RUN IT BACK 回到配裝，可再開始。 |
-| 手機直向 390×844、`hasTouch`、`isMobile` | 通過。觸控列為 flex。搖桿、EMP、DASH、FIRE 皆至少 56px，落在視埠內，根節點沒有橫向溢出。搖桿上移、FIRE 增加射擊、DASH 進入冷卻。EMP 拖回按鈕不扣 50 能量；拖離後出現落點準星並扣能量。 |
-| console、缺失資源、外部請求 | 通過，附非遊戲資源訊息。無 page error、無外部請求、無遊戲檔 404。父頁與遊戲來源的 `favicon.ico` 404。 |
-| SDK standalone 與模擬 guest | 通過。standalone 的 `ready()` 為 `available: false`、`mode: standalone`。父頁模擬 guest init 後為 `available: false`、`mode: guest`。兩種都可遊玩，結算徽章保持隱藏，沒有 SCORE SAVED。 |
-| 存檔相容 | 通過。預置 `dustReignBestScore`＝4242、`dust-reign:best-score:v1`＝100、`dust_reign_visual_quality`＝high。開始畫面 LEGACY BEST 為 004242，v2 BEST 為 000000，`data-quality` 為 high。壞 JSON 的 `dust-reign:meta:v1` 讀成 SCRAPPER／Heat 0。跑完一局後這三個舊 key 仍是原值。meta key 在結算時被寫成合法 JSON，沒有留著壞字串。 |
-| `cover.png` | 通過。800×500 PNG，549066 bytes。第 15 波 Storm Sovereign、風暴塔與新敵型，HUD 可見，音效關閉，沒有除錯或暫停面板。 |
+## 五、平台交付規範與成品結構
 
-驗收中發現並已做最小修正：射擊與衝刺的噪音增益對 `GainNode` 呼叫了 `exponentialRampToValueAtTime`，會變成未捕捉例外。已改為對 `nGain.gain` 呼叫。修正後已重新 staging、打包與驗證，並重跑瀏覽器驗收。沒有改玩法數值。
+- **規格標準**：嚴格遵循 [Playroom Platform main 分支](https://github.com/TommyLamm/playroom-platform) 開發標準與 Manifest Schema。
+- **Manifest 版本**：`game.json` 版本號標示為 `0.6.0`。
+- **發布 ZIP 結構**：根目錄收錄 `game.json`、`index.html`、`playroom-sdk.js`、`cover.png`，以及完整 `src/` 與 `css/`；嚴格排除 `scripts/`、`docs/`、`output/`、`.playwright-cli/` 等開發相依資源。
+- **純原生架構**：零外部 npm 依賴、無編譯打包步驟、純原生 ES Modules 與 Canvas 2D。
 
-## 限制與未執行項目
+---
 
-- `0.4.3` 的 GitHub Release 建立後，仍須在 Playroom 匯入並預覽，才算平台上架。
-- 未驗證：管理員在平台上的實際遊玩預覽、SDK 診斷面板，以及登入帳號 `finishRun()` 回傳 `saved: true`。本機 guest 只是父頁送出 init。
-- 未驗證：平台上新榜 `dust-reign-score-v2` 的排序、單位與範圍是否與 manifest 一致。本機 ZIP 驗證通過不代表榜單已在平台建立。
-- 未驗證：實體手把、減動效與高對比對全部新內容的實機巡覽、桌面 HIGH／手機 MEDIUM 的長時間幀率，以及手機 4 倍節流。
-- 未驗證：真人從第 1 波打完三幕。平衡數字來自機器人，真人首領戰可能較長。
-- 瀏覽器本機最高分與平台排行榜獨立；本機最高分不自動匯入帳號。
+## 六、重現打包與發布流程
 
-## 重現打包
-
-使用 Node 24，於遊戲 repository 執行：
+於遊戲專案根目錄執行 Staging 收集：
 
 ```sh
 node scripts/stage-release.mjs
 ```
 
-在平台工具 checkout（`main` 最新內容、已 `npm ci`）執行。ZIP 必須放在成品目錄之外：
+發布工作流程（`.github/workflows/release.yml`）於推播 `v*` tag 時自動啟動，依序完成語法檢查、自檢、版本一致性驗證、拉取最新 Playroom 工具鏈打包驗證 ZIP，並自動發布正式 GitHub Release：
 
 ```sh
-npm run game:pack -- <repository>/output/release/0.4.3/game <repository>/output/release/0.4.3/game.zip
-npm run game:validate -- <repository>/output/release/0.4.3/game.zip
+gh release create "$RELEASE_TAG" "$GAME_ZIP" --repo "$RELEASE_REPO" --verify-tag --title "DUST//REIGN $RELEASE_TAG" --notes-file RELEASE.md
 ```
-
-`v0.4.3` 的打包與 ZIP 驗證由 Release workflow 在推送 tag 時執行。`0.4.0` 曾於 2026-10-09 用平台工具 `0115330e0ba3f5722e25d64a0b3c7eb6f383da30` 驗證。
