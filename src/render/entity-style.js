@@ -104,11 +104,113 @@ export function drawHpBar(ctx, x, y, w, ratio) {
   }
 }
 
+// Specular Rimlight Color Constants (0-GC static strings)
+var RIM_DEFAULT = '#d8c8b4';
+var RIM_CRAWLER = 'rgba(216, 200, 180, 0.75)';
+var RIM_RUSHER = '#ff8c42';
+var RIM_BRUTE = '#93c5fd';
+var RIM_ELITE_MIRROR = '#38bdf8';
+var RIM_ELITE_VORTEX = '#c084fc';
+var RIM_ELITE_COMMAND = '#f59e0b';
+var RIM_ELITE_BLINK = '#34d399';
+var RIM_BOSS_CRIMSON = '#ff3322';
+var RIM_BOSS_GOLD = '#ffe880';
+var RIM_ACID = '#ccff00';
+var RIM_ARTILLERY = '#ff5500';
+var HALO_BLACK = '#030204';
+
+export function getSpecularRimColor(kind, options) {
+  if (!kind) return RIM_DEFAULT;
+  if (kind === 'rusher' || kind === 'arming') return RIM_RUSHER;
+  if (kind === 'brute' || kind === 'warden') return RIM_BRUTE;
+  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') return RIM_BOSS_CRIMSON;
+  if (kind === 'elite') {
+    var affix = options && (typeof options === 'string' ? options : (options.affix || options.affix2));
+    if (affix === 'mirror') return RIM_ELITE_MIRROR;
+    if (affix === 'vortex') return RIM_ELITE_VORTEX;
+    if (affix === 'command') return RIM_ELITE_COMMAND;
+    if (affix === 'blink') return RIM_ELITE_BLINK;
+    return RIM_ELITE_COMMAND;
+  }
+  if (kind === 'spitter') return RIM_ACID;
+  if (kind === 'artillery') return RIM_ARTILLERY;
+  if (kind === 'crawler' || kind === 'scurrier' || kind === 'burrower') return RIM_CRAWLER;
+  return RIM_DEFAULT;
+}
+
+export function drawDualOutline(ctx, r, kind, options) {
+  var outerW = 3.8;
+  var rimW = 1.6;
+  var rimColor = RIM_DEFAULT;
+  var isBoss = false;
+
+  if (typeof kind === 'string' && (kind.charCodeAt(0) === 35 /* # */ || kind.charCodeAt(0) === 114 /* r */)) {
+    // Signature: drawDualOutline(ctx, outerW, rimColor, rimW)
+    outerW = typeof r === 'number' ? r : 3.8;
+    rimColor = kind;
+    rimW = typeof options === 'number' ? options : 1.6;
+  } else {
+    // Signature: drawDualOutline(ctx, r, kind, options)
+    if (typeof kind === 'string') {
+      rimColor = getSpecularRimColor(kind, options);
+      if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') {
+        outerW = 4.8;
+        rimW = 2.0;
+        isBoss = true;
+      } else if (typeof r === 'number' && r > 20) {
+        outerW = 4.2;
+        rimW = 1.8;
+      }
+    } else if (kind && typeof kind === 'object') {
+      var actualKind = kind.kind;
+      rimColor = getSpecularRimColor(actualKind, kind);
+      if (actualKind === 'titan' || actualKind === 'sovereign' || actualKind === 'dreadnought' || kind.isBoss) {
+        outerW = 4.8;
+        rimW = 2.0;
+        isBoss = true;
+      }
+    }
+    if (options && typeof options === 'object') {
+      if (options.outerW != null) outerW = options.outerW;
+      if (options.rimW != null) rimW = options.rimW;
+      if (options.rimColor != null) rimColor = options.rimColor;
+      if (options.isBoss) isBoss = true;
+    }
+  }
+
+  var hc = isHighContrast();
+  var finalOuterW = hc ? Math.max(4.6, outerW + 1.2) : outerW;
+  var finalRimW = hc ? Math.max(2.2, rimW + 0.6) : rimW;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // 1. Outer Inky Dark Halo (3.6~4.2px, #030204, alpha 1.0)
+  ctx.strokeStyle = HALO_BLACK;
+  ctx.lineWidth = finalOuterW;
+  ctx.stroke();
+
+  // 2. Inner Specular Rimlight (1.4~1.8px)
+  if (rimColor) {
+    ctx.strokeStyle = rimColor;
+    ctx.lineWidth = finalRimW;
+    ctx.stroke();
+  }
+
+  // 3. Boss specular core accent (Titan / Sovereign / Dreadnought: crimson + core yellow #ffe880)
+  if (isBoss) {
+    ctx.strokeStyle = RIM_BOSS_GOLD;
+    ctx.lineWidth = hc ? 1.4 : 0.8;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function outline(ctx, width) {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#080605';
-  ctx.lineWidth = isHighContrast() ? Math.max(2.6, (width || 1.6) + 1.2) : (width || 1.6);
+  ctx.strokeStyle = HALO_BLACK;
+  ctx.lineWidth = isHighContrast() ? Math.max(2.8, (width || 1.6) + 1.2) : (width || 1.6);
   ctx.stroke();
 }
 
