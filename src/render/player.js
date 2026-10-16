@@ -1,7 +1,7 @@
 import { DASH_PULSE_DURATION, DASH_PULSE_RADIUS, TAU } from '../config.js';
 import { addVisualDecal } from './terrain.js';
 import { rt } from '../core/runtime.js';
-import { isReducedMotion } from '../core/settings.js';
+import { isHighContrast, isReducedMotion } from '../core/settings.js';
 import { clamp } from '../core/utils.js';
 import { ensureFx, keyGlowsOnly, outline, tickFlash, trackStep } from './entity-style.js';
 import { PALETTE } from './palette.js';
@@ -312,6 +312,14 @@ function drawWeapon(ctx, p, kick, flashing) {
     ctx.fill();
     outline(ctx, 1.4);
 
+    // Barrel Specular Ridge (1.2px #ffffff central spine)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(bx + 4, 0);
+    ctx.lineTo(bx + blen - 4, 0);
+    ctx.stroke();
+
     // Perforated heat-shield cooling holes
     if (!flashing) {
       ctx.fillStyle = '#18140f';
@@ -379,6 +387,14 @@ function drawWeapon(ctx, p, kick, flashing) {
     ctx.fillRect(vx + 2, -2.8, vlen - 4, 1.4);
     ctx.fillRect(vx + 2, 1.4, vlen - 4, 1.4);
 
+    // Barrel Specular Ridge (1.2px #ffffff central rail axis)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(vx + 4, 0);
+    ctx.lineTo(vx + vlen - 4, 0);
+    ctx.stroke();
+
     // Segmented magnetic capacitor rings
     var seg;
     for (seg = 0; seg < 5; seg += 1) {
@@ -445,6 +461,14 @@ function drawWeapon(ctx, p, kick, flashing) {
     ctx.arc(tip, 8.5, 2.6, 0, TAU);
     ctx.fill();
 
+    // Barrel Specular Ridge (1.2px #ffffff central emitter axis)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(ax, 0);
+    ctx.lineTo(tip - 4, 0);
+    ctx.stroke();
+
     if ((p.recoil || 0) > 0.05) drawMuzzle(ctx, mode, tip + 4, 0, p.recoil);
     else drawIdleArc(ctx, tip);
     return;
@@ -469,6 +493,16 @@ function drawWeapon(ctx, p, kick, flashing) {
   ctx.lineWidth = 1.2;
   ctx.strokeRect(x0, -5.4, len, 3.6);
   ctx.strokeRect(x0, 1.8, len, 3.6);
+
+  // Barrel Specular Ridge (1.2px #ffffff on each barrel centerline)
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(x0 + 4, -3.6);
+  ctx.lineTo(x0 + len - 4, -3.6);
+  ctx.moveTo(x0 + 4, 3.6);
+  ctx.lineTo(x0 + len - 4, 3.6);
+  ctx.stroke();
 
   // Barrel cooling flutes
   if (!flashing) {
@@ -736,11 +770,33 @@ function drawTurret(ctx, p, flashing, reduced) {
     ctx.lineTo(r * 0.08, -r * 0.14);
     ctx.stroke();
 
-    // Internal HUD targeting ocular diode (radiant center)
+    // Cockpit Optical Core (3.2px dual-tier core, center #ffffff, pulses on fire/dash)
+    var isCorePulse = (p.recoil || 0) > 0.05 || (p.dashPulse || 0) > 0;
+    var coreScale = isCorePulse ? 1.35 : 1.0;
+    var coreR = 3.2 * coreScale;
+    var hc = isHighContrast();
+
+    // Dark outline halo
+    ctx.fillStyle = '#030204';
+    ctx.beginPath();
+    ctx.arc(r * 0.12, 0, coreR + (hc ? 1.8 : 1.2), 0, TAU);
+    ctx.fill();
+
+    // High-saturation tech cyan outer core
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(r * 0.12, 0, coreR, 0, TAU);
+    ctx.fill();
+
+    // Pure white optical core
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(r * 0.12, 0, 2.0, 0, TAU);
+    ctx.arc(r * 0.12, 0, Math.max(1.4, coreR * 0.55), 0, TAU);
     ctx.fill();
+
+    if (isCorePulse && !keyGlowsOnly()) {
+      drawGlow(ctx, r * 0.12, 0, coreR * 2.5, '#00f0ff', 0.6);
+    }
 
     // Central Reactor Hub (mounted on torso)
     ctx.fillStyle = '#0e1c19';
@@ -925,6 +981,41 @@ function drawCosmeticSkin(ctx, p, fx, flashing, reduced) {
   }
 }
 
+function drawAimChevron(ctx, p) {
+  var dist = (p.r || 16) + 14;
+  var hc = isHighContrast();
+  ctx.save();
+  ctx.translate(dist, 0);
+
+  // 1. Outer dark frame (2.2px #030204)
+  ctx.beginPath();
+  ctx.moveTo(5, 0);
+  ctx.lineTo(-4, -5);
+  ctx.lineTo(-2, 0);
+  ctx.lineTo(-4, 5);
+  ctx.closePath();
+  ctx.strokeStyle = '#030204';
+  ctx.lineWidth = hc ? 3.0 : 2.2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // 2. High-saturation tech cyan body
+  ctx.fillStyle = '#00f0ff';
+  ctx.fill();
+
+  // 3. Pure white forward apex tip
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(5, 0);
+  ctx.lineTo(0.5, -2.2);
+  ctx.lineTo(1.8, 0);
+  ctx.lineTo(0.5, 2.2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawMech(ctx, p, fx, flashing, reduced) {
   var move = fx.moveAng == null ? p.aim : fx.moveAng;
   ctx.save();
@@ -935,6 +1026,7 @@ function drawMech(ctx, p, fx, flashing, reduced) {
   ctx.rotate(fx.aim != null ? fx.aim : (p.aim || 0));
   drawTurret(ctx, p, flashing, reduced);
   drawCosmeticSkin(ctx, p, fx, flashing, reduced);
+  drawAimChevron(ctx, p);
   ctx.restore();
 }
 
@@ -1109,6 +1201,32 @@ function drawStatus(ctx, p, reduced) {
   }
 }
 
+var NAV_RING_CYAN = '#00f0ff';
+var NAV_RING_BLACK = '#030204';
+
+export function drawTacticalNavRing(ctx, p, reduced) {
+  var r = (p.r || 16) * 1.35;
+  var t = rt.renderTime || 0;
+  var pulse = reduced ? 0.75 : (0.55 + 0.3 * (0.5 + 0.5 * Math.sin(t * 5)));
+  var hc = isHighContrast();
+  ctx.save();
+  // 1. 2.8px pure black base ring (360° isolation)
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, TAU);
+  ctx.strokeStyle = NAV_RING_BLACK;
+  ctx.lineWidth = hc ? 3.8 : 2.8;
+  ctx.stroke();
+
+  // 2. 1.4px tech bright cyan dynamic micro-ring
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, TAU);
+  ctx.strokeStyle = NAV_RING_CYAN;
+  ctx.globalAlpha = pulse;
+  ctx.lineWidth = hc ? 2.0 : 1.4;
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawPlayer(ctx) {
   if (!ctx || !rt.state || !rt.state.player) return;
   var p = rt.state.player;
@@ -1146,6 +1264,9 @@ export function drawPlayer(ctx) {
   ctx.ellipse(0, p.r * 0.15, p.r * 1.08, p.r * 0.72, 0, 0, TAU);
   ctx.fill();
   ctx.restore();
+
+  // 1. Tactical Nav Footing Ring (above ground shadow, below legs)
+  drawTacticalNavRing(ctx, p, reduced);
 
   drawMech(ctx, p, fx, flashing, reduced);
   drawStatus(ctx, p, reduced);

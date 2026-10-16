@@ -5,6 +5,7 @@ import { isHighContrast, isReducedMotion } from '../core/settings.js';
 import { clamp } from '../core/utils.js';
 import {
   decay,
+  drawDualOutline,
   drawDustRing,
   drawHpBar,
   ensureFx,
@@ -172,7 +173,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 2.0);
+  drawDualOutline(ctx, r, 'crawler');
 
   if (!flashing) {
     // Posterior dorsal plate
@@ -229,7 +230,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   ctx.lineTo(r * 0.45, r * 0.35);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.4);
+  drawDualOutline(ctx, r * 0.5, 'crawler');
 
   // Mandible ivory/amber tips
   ctx.fillStyle = flashing ? '#ffffff' : '#fff2d6';
@@ -285,7 +286,7 @@ function drawRusherShape(ctx, r, flashing, hot) {
   ctx.closePath();
   ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#9a3412' : '#22120a');
   ctx.fill();
-  outline(ctx, 2.2);
+  drawDualOutline(ctx, r, 'rusher');
 
   if (!flashing) {
     // Twin forward-swept scythe blades
@@ -408,7 +409,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   ctx.lineTo(-r * 0.88, -r * 0.82);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 2.4);
+  drawDualOutline(ctx, r, 'brute');
 
   if (!flashing) {
     // Frontal ballistic battering ram shield (forged industrial alloy)
@@ -568,7 +569,7 @@ function drawArtilleryBody(ctx, e, flashing) {
   ctx.closePath();
   ctx.fillStyle = flashing ? '#ffffff' : '#4a3818';
   ctx.fill();
-  outline(ctx, 1.8);
+  drawDualOutline(ctx, r, 'artillery');
 
   if (!flashing) {
     // Upper turret ring with sloped plates
@@ -771,7 +772,7 @@ function drawEliteBody(ctx, e, flashing, reduced) {
   ctx.closePath();
   ctx.fillStyle = flashing ? '#ffffff' : '#142c28';
   ctx.fill();
-  outline(ctx, 2);
+  drawDualOutline(ctx, r, 'elite', e);
 
   if (!flashing) {
     // Imperial jade/obsidian composite plates
@@ -887,7 +888,7 @@ function drawTitanGun(ctx, y, alive, enraged, flashing, hp, maxHp, wreckSpark) {
     ctx.beginPath();
     ctx.rect(-6, y - 5, 48, 10);
     ctx.fill();
-    outline(ctx, 1.4);
+    drawDualOutline(ctx, 24, 'titan');
 
     // Rotary barrels / missile cells
     ctx.fillStyle = flashing ? '#ffffff' : '#4a3d31';
@@ -960,10 +961,10 @@ function drawTitanTreads(ctx, r, intact, flashing) {
       }
     } else {
       ctx.fillStyle = flashing ? '#ffffff' : '#2a221a';
-      ctx.fillRect(-r * 0.75, ty - 5, r * 1.5, 10);
-      ctx.strokeStyle = flashing ? '#ffffff' : '#4a3826';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-r * 0.75, ty - 5, r * 1.5, 10);
+      ctx.beginPath();
+      ctx.rect(-r * 0.75, ty - 5, r * 1.5, 10);
+      ctx.fill();
+      drawDualOutline(ctx, r, 'titan');
       ctx.fillStyle = '#14110e';
       for (var seg = -r * 0.7; seg <= r * 0.65; seg += 8) {
         ctx.fillRect(seg, ty - 4, 5, 8);
@@ -991,6 +992,7 @@ function drawTitanRadiator(ctx, r, intact, exposed, flashing, hp, maxHp) {
     ctx.lineTo(rx, -10);
     ctx.closePath();
     ctx.fill();
+    drawDualOutline(ctx, 16, 'titan');
 
     ctx.beginPath();
     ctx.moveTo(rx + 6, 16);
@@ -999,6 +1001,7 @@ function drawTitanRadiator(ctx, r, intact, exposed, flashing, hp, maxHp) {
     ctx.lineTo(rx, 10);
     ctx.closePath();
     ctx.fill();
+    drawDualOutline(ctx, 16, 'titan');
 
     ctx.fillStyle = '#ff4d2e';
     ctx.fillRect(rx - 4, -8, 8, 16);
@@ -1013,10 +1016,10 @@ function drawTitanRadiator(ctx, r, intact, exposed, flashing, hp, maxHp) {
     ctx.stroke();
   } else {
     ctx.fillStyle = flashing ? '#ffffff' : '#3d3024';
-    ctx.fillRect(rx, -12, 10, 24);
-    ctx.strokeStyle = '#5a4634';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(rx, -12, 10, 24);
+    ctx.beginPath();
+    ctx.rect(rx, -12, 10, 24);
+    ctx.fill();
+    drawDualOutline(ctx, r, 'titan');
     ctx.fillStyle = '#1e2832';
     ctx.fillRect(rx + 2, -9, 4, 18);
   }
@@ -1049,7 +1052,7 @@ function drawTitanBody(ctx, e, flashing, reduced) {
   ctx.closePath();
   ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#4a2016' : '#342a1e');
   ctx.fill();
-  outline(ctx, 2.4);
+  drawDualOutline(ctx, r, 'titan');
 
   if (!flashing) {
     // Multi-tiered battleship sloped armor plates
@@ -1173,7 +1176,7 @@ function drawSpitterBody(ctx, e, flashing) {
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 1.08, r * 0.85, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.8);
+  drawDualOutline(ctx, r, 'spitter');
 
   if (!flashing) {
     // Swollen translucent acid reservoir abdomen
@@ -1265,7 +1268,7 @@ function drawScurrierBody(ctx, e, flashing, reduced) {
   ctx.beginPath();
   ctx.ellipse(-r * 0.15, 0, r * 0.85, r * 0.72, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.6);
+  drawDualOutline(ctx, r, hot ? 'arming' : 'scurrier');
 
   if (!flashing) {
     ctx.fillStyle = hot ? '#ffb878' : '#a85226';
@@ -1282,6 +1285,7 @@ function drawScurrierBody(ctx, e, flashing, reduced) {
   ctx.lineTo(r * 0.35, r * 0.3);
   ctx.closePath();
   ctx.fill();
+  drawDualOutline(ctx, r * 0.5, hot ? 'arming' : 'scurrier');
 
   // Glowing compound eyes / detonator core
   ctx.fillStyle = hot ? '#ffffff' : (flashing ? '#ffffff' : '#ff4d2e');
@@ -1308,7 +1312,7 @@ function drawWardenBody(ctx, e, flashing, reduced) {
   ctx.lineTo(0, -r * 0.76);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 2.2);
+  drawDualOutline(ctx, r, 'warden');
 
   if (!flashing) {
     // Inner ceramic facet plates (high-luminance cold ice ceramic)
@@ -1373,7 +1377,7 @@ function drawBurrowerBody(ctx, e, flashing) {
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 1.08, r * 0.82, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 2.2);
+  drawDualOutline(ctx, r, 'crawler');
 
   if (!flashing) {
     ctx.fillStyle = '#6e4c2e';
@@ -1411,7 +1415,7 @@ function drawBurrowerBody(ctx, e, flashing) {
   ctx.lineTo(r * 0.35, r * 0.2);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.8);
+  drawDualOutline(ctx, r * 0.5, 'crawler');
 
   // Sand vibration sonar sensory pits
   ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
@@ -1474,7 +1478,7 @@ function drawDreadnoughtBody(ctx, e, flashing, reduced) {
   ctx.lineTo(r * 0.22, -r * 0.78);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 2.2);
+  drawDualOutline(ctx, r, 'dreadnought');
 
   if (!flashing) {
     // Superstructure deck plating
@@ -1508,7 +1512,7 @@ function drawDreadnoughtBody(ctx, e, flashing, reduced) {
   ctx.lineTo(r * 0.75, -r * 0.3);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.4);
+  drawDualOutline(ctx, r * 0.4, 'dreadnought');
 
   // Rear Engine Compartment & Exposed Weakpoint Turbine
   var turbineCol = e.empTimer > 0 ? '#fff6e8' : (enraged ? '#ff4020' : '#ff8a38');
@@ -1516,7 +1520,7 @@ function drawDreadnoughtBody(ctx, e, flashing, reduced) {
   ctx.beginPath();
   ctx.arc(-r * 0.76, 0, r * 0.3, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.5);
+  drawDualOutline(ctx, r * 0.3, 'dreadnought');
 
   // Rotating turbine cooling blades
   var turbineSpin = reduced ? 0.3 : (rt.renderTime || 0) * 8;
@@ -1588,7 +1592,7 @@ function drawSovereignBody(ctx, e, flashing, reduced) {
   ctx.beginPath();
   ctx.arc(0, 0, r * 0.52, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.6);
+  drawDualOutline(ctx, r * 0.52, 'sovereign');
 
   // Blinding Plasma Tempest Singularity
   ctx.fillStyle = flashing ? '#ffffff' : '#ffffff';
@@ -1629,7 +1633,7 @@ function drawStormTowerBody(ctx, e, flashing, reduced) {
   ctx.lineTo(-r * 0.58, r * 0.78);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.8);
+  drawDualOutline(ctx, r, 'warden');
 
   if (!flashing) {
     // Stacked electromagnetic induction capacitor rings
@@ -1696,7 +1700,7 @@ function drawMineBody(ctx, e, flashing, reduced) {
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 2.0);
+  drawDualOutline(ctx, r, hot ? 'arming' : 'rusher');
 
   // Hazard warning chevron stripe ring
   if (!flashing) {
@@ -1987,7 +1991,7 @@ function drawFieldTelegraphs(ctx) {
 function drawEnemyContrastBase(ctx, e) {
   var r = e.r || 12;
   ctx.save();
-  ctx.fillStyle = 'rgba(6, 6, 8, 0.72)';
+  ctx.fillStyle = '#030204';
   ctx.beginPath();
   if (e.kind === 'rusher') {
     ctx.moveTo(r * 1.55, 0);
@@ -2275,46 +2279,61 @@ function drawRusherTelegraph(ctx, e) {
     var chargeRatio = 1 - (e.burstCd / 0.35);
     var x1 = e.x + Math.cos(tAngle) * 160;
     var y1 = e.y + Math.sin(tAngle) * 160;
+    var reduced = isReducedMotion();
+    var offset = reduced ? 0 : -((rt.renderTime || 0) * 36) % 14;
     ctx.save();
     ctx.lineCap = 'round';
-    // Dark contrast backing beam
+
+    // 1. 底層 6.5px 深黑底帶 (#030204)
     ctx.beginPath();
     ctx.moveTo(e.x, e.y);
     ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'rgba(6, 6, 8, 0.85)';
+    ctx.strokeStyle = '#030204';
     ctx.lineWidth = 6.5;
     ctx.stroke();
-    // Colored outer laser guide
+
+    // 2. 中層 4.0px 鮮橙帶 (#ff5500)
     ctx.beginPath();
     ctx.moveTo(e.x, e.y);
     ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'rgba(255, 60, 20, 0.45)';
-    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = 'rgba(255, 90, 0, ' + (0.75 + chargeRatio * 0.25) + ')';
+    ctx.lineWidth = 4.0;
     ctx.stroke();
-    // Inner dashed guide with bright white-hot center
+
+    // 3. 頂層 2.2px 動態向前流動的斑馬虛線
     ctx.setLineDash(DASH_6);
-    ctx.strokeStyle = 'rgba(255, 120, 50, ' + (0.7 + chargeRatio * 0.3) + ')';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.8 + chargeRatio * 0.2) + ')';
-    ctx.lineWidth = 1.2;
+    ctx.lineDashOffset = offset;
+    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.85 + chargeRatio * 0.15) + ')';
+    ctx.lineWidth = 2.2;
     ctx.stroke();
     ctx.setLineDash(NO_DASH);
-    // Arrowhead reticle with dark border
-    ctx.fillStyle = 'rgba(6, 6, 8, 0.85)';
+    ctx.lineDashOffset = 0;
+
+    // Arrowhead reticle: 3-tier high-contrast solid arrowhead (black border + orange body + white apex)
+    ctx.fillStyle = '#030204';
     ctx.beginPath();
     ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - Math.cos(tAngle - 0.4) * 12, y1 - Math.sin(tAngle - 0.4) * 12);
-    ctx.lineTo(x1 - Math.cos(tAngle + 0.4) * 12, y1 - Math.sin(tAngle + 0.4) * 12);
+    ctx.lineTo(x1 - Math.cos(tAngle - 0.4) * 14, y1 - Math.sin(tAngle - 0.4) * 14);
+    ctx.lineTo(x1 - Math.cos(tAngle + 0.4) * 14, y1 - Math.sin(tAngle + 0.4) * 14);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = 'rgba(255, 220, 180, ' + (0.6 + chargeRatio * 0.4) + ')';
+
+    ctx.fillStyle = '#ff7700';
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x1 - Math.cos(tAngle - 0.4) * 10, y1 - Math.sin(tAngle - 0.4) * 10);
     ctx.lineTo(x1 - Math.cos(tAngle + 0.4) * 10, y1 - Math.sin(tAngle + 0.4) * 10);
     ctx.closePath();
     ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - Math.cos(tAngle - 0.3) * 5, y1 - Math.sin(tAngle - 0.3) * 5);
+    ctx.lineTo(x1 - Math.cos(tAngle + 0.3) * 5, y1 - Math.sin(tAngle + 0.3) * 5);
+    ctx.closePath();
+    ctx.fill();
+
     ctx.restore();
   }
   if (e.burstTime !== undefined && e.burstTime > 0) {

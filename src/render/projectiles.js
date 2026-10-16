@@ -18,6 +18,34 @@ var BY2 = new Float32Array(24);
 var mainN = 0;
 var branchN = 0;
 
+// Strict Hostile Color Isolation & Contrast Constants (0-GC static strings)
+var HOSTILE_MAGENTA = '#ff0055';
+var HOSTILE_MAGENTA_ALT = '#ff2244';
+var HOSTILE_ORANGE = '#ff5500';
+var HOSTILE_LIME = '#ccff00';
+var HOSTILE_VIOLET = '#c300ff';
+var DARK_HALO_BULLET = '#040306';
+var PURE_WHITE = '#ffffff';
+var ZEBRA_DASH = [7, 6];
+
+export function getHostileBulletColor(b) {
+  if (!b) return HOSTILE_MAGENTA;
+  var t = b.type || 'basic';
+  if (t === 'acid') return HOSTILE_LIME;
+  if (t === 'heavy' || t === 'plasma' || t === 'boss' || t === 'mortar') return HOSTILE_ORANGE;
+  if (t === 'void' || t === 'gravity') return HOSTILE_VIOLET;
+  return HOSTILE_MAGENTA;
+}
+
+export function getHostileGlowColor(b) {
+  if (!b) return HOSTILE_MAGENTA;
+  var t = b.type || 'basic';
+  if (t === 'acid') return HOSTILE_LIME;
+  if (t === 'heavy' || t === 'plasma' || t === 'boss' || t === 'mortar') return HOSTILE_ORANGE;
+  if (t === 'void' || t === 'gravity') return HOSTILE_VIOLET;
+  return HOSTILE_MAGENTA;
+}
+
 var budStamp = -1;
 var bud = { depth: 1, key: false, reduced: false, contrast: false, tier: 'low' };
 
@@ -338,45 +366,75 @@ export function drawEnemyBullets(ctx) {
   var i;
   ctx.save();
   ctx.lineCap = 'round';
-  ctx.globalAlpha = 0.85;
+
+  // 1. Double-tier comet tail: 4.0px deep dark base + 2.0px neon vector line
+  ctx.beginPath();
+  var anyTrail = false;
+  for (i = 0; i < n; i += 1) {
+    var eb = list[i];
+    if (!eb) continue;
+    var vx = eb.vx || 0;
+    var vy = eb.vy || 0;
+    var spd = vx * vx + vy * vy;
+    if (!(spd > 64)) continue;
+    var inv = 11 / Math.sqrt(spd);
+    ctx.moveTo(eb.x, eb.y);
+    ctx.lineTo(eb.x - vx * inv, eb.y - vy * inv);
+    anyTrail = true;
+  }
+  if (anyTrail) {
+    ctx.strokeStyle = DARK_HALO_BULLET;
+    ctx.lineWidth = 4.0;
+    ctx.globalAlpha = 1.0;
+    ctx.stroke();
+  }
+
   var pass;
   for (pass = 0; pass < 2; pass += 1) {
     var wantGlow = pass === 0;
     ctx.beginPath();
-    var trailCount = 0;
-    var trailColor = wantGlow ? '#ff381e' : '#75d1b0';
-    var trailWidth = 2.4;
+    var passCount = 0;
+    var trailColor = wantGlow ? HOSTILE_ORANGE : HOSTILE_MAGENTA;
     for (i = 0; i < n; i += 1) {
-      var eb = list[i];
-      if (!eb || !!eb.glow !== wantGlow) continue;
-      var vx = eb.vx || 0;
-      var vy = eb.vy || 0;
-      var spd = vx * vx + vy * vy;
-      if (!(spd > 64)) continue;
-      var inv = 11 / Math.sqrt(spd);
-      if (!trailCount) {
-        trailColor = eb.color || trailColor;
-        trailWidth = Math.max(2.4, (eb.r || 4) * 0.6);
+      var eb2 = list[i];
+      if (!eb2 || !!eb2.glow !== wantGlow) continue;
+      var vx2 = eb2.vx || 0;
+      var vy2 = eb2.vy || 0;
+      var spd2 = vx2 * vx2 + vy2 * vy2;
+      if (!(spd2 > 64)) continue;
+      var inv2 = 11 / Math.sqrt(spd2);
+      if (!passCount) {
+        var rawCol = eb2.color;
+        if (rawCol && rawCol !== '#75d1b0' && rawCol !== '#7cf0c8') {
+          trailColor = rawCol;
+        } else {
+          trailColor = getHostileBulletColor(eb2);
+        }
       }
-      ctx.moveTo(eb.x, eb.y);
-      ctx.lineTo(eb.x - vx * inv, eb.y - vy * inv);
-      trailCount += 1;
+      ctx.moveTo(eb2.x, eb2.y);
+      ctx.lineTo(eb2.x - vx2 * inv2, eb2.y - vy2 * inv2);
+      passCount += 1;
     }
-    if (trailCount) {
+    if (passCount) {
       ctx.strokeStyle = trailColor;
-      ctx.lineWidth = trailWidth;
+      ctx.lineWidth = 2.0;
+      ctx.globalAlpha = 0.95;
       ctx.stroke();
     }
   }
+
+  // Under-bullet solid dark silhouette
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#0e0806';
+  ctx.fillStyle = DARK_HALO_BULLET;
   ctx.beginPath();
   for (i = 0; i < n; i += 1) {
     var dark = list[i];
     if (!dark) continue;
-    disc(ctx, dark.x, dark.y, (dark.r || 4) + 2.2);
+    disc(ctx, dark.x, dark.y, (dark.r || 4) + (view.contrast ? 3.8 : 2.6));
   }
   ctx.fill();
+
+  // Glow batch
   ctx.globalCompositeOperation = 'lighter';
   beginGlowBatch();
   for (i = 0; i < n; i += 1) {
@@ -384,41 +442,49 @@ export function drawEnemyBullets(ctx) {
     if (!glowB) continue;
     var gr = glowB.r || 4;
     var hostile = !!glowB.glow;
-    var glow = glowB.glowColor || (hostile ? '#ff3b1e' : '#7cf0c8');
+    var rawGlow = glowB.glowColor;
+    var glow = (rawGlow && rawGlow !== '#7cf0c8' && rawGlow !== '#75d1b0')
+      ? rawGlow
+      : (hostile ? HOSTILE_ORANGE : getHostileGlowColor(glowB));
     drawGlow(ctx, glowB.x, glowB.y, gr + (hostile ? 16 : 12), glow, hostile ? 0.92 : 0.82);
   }
   endGlowBatch();
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
+
+  // Three-Tier Visibility Sandwich
   for (i = 0; i < n; i += 1) {
     var body = list[i];
     if (!body) continue;
     var br = body.r || 4;
     var bodyHostile = !!body.glow;
-    var color = body.color || (bodyHostile ? '#ff381e' : '#75d1b0');
+    var rawBodyCol = body.color;
+    var color = (rawBodyCol && rawBodyCol !== '#75d1b0' && rawBodyCol !== '#7cf0c8')
+      ? rawBodyCol
+      : getHostileBulletColor(body);
     var pulse = view.reduced ? 1 : (0.84 + 0.16 * (0.5 + 0.5 * Math.sin(time * 6 + i * 1.3)));
 
-    // Solid dark contrast rim hugging bullet body
-    ctx.fillStyle = '#080504';
+    // Tier 1: Outer inky dark halo (br + 2.6px, solid #040306)
+    ctx.fillStyle = DARK_HALO_BULLET;
     ctx.beginPath();
-    ctx.arc(body.x, body.y, br + 1.8, 0, TAU);
+    ctx.arc(body.x, body.y, br + (view.contrast ? 3.8 : 2.6), 0, TAU);
     ctx.fill();
 
-    // Vibrant body core
+    // Tier 2: Mid high-saturation neon hazard ring (br)
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(body.x, body.y, br, 0, TAU);
     ctx.fill();
 
-    // High-luminance white-hot core
-    ctx.fillStyle = '#ffffff';
+    // Tier 3: Inner white-hot optical core (br * 0.6, #ffffff)
+    ctx.fillStyle = PURE_WHITE;
     ctx.beginPath();
-    ctx.arc(body.x, body.y, Math.max(1.8, br * 0.58 * pulse), 0, TAU);
+    ctx.arc(body.x, body.y, Math.max(1.8, br * 0.6 * pulse), 0, TAU);
     ctx.fill();
 
     if (bodyHostile && (body.type || 'basic') === 'basic') {
       var rot = view.reduced ? 0.6 : time * 2.4 + i;
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = PURE_WHITE;
       ctx.lineWidth = 1.4;
       strokeBox(ctx, body.x, body.y, rot, br + 2.8, br * 0.42);
     }
@@ -427,7 +493,7 @@ export function drawEnemyBullets(ctx) {
     if (view.contrast) {
       ctx.beginPath();
       ctx.arc(body.x, body.y, br + 1.6, 0, TAU);
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = PURE_WHITE;
       ctx.lineWidth = 1.6;
       ctx.stroke();
     }
@@ -436,9 +502,9 @@ export function drawEnemyBullets(ctx) {
   for (i = 0; i < n; i += 1) {
     var ring = list[i];
     if (!ring) continue;
-    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 2.4));
+    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 2.6));
   }
-  ctx.strokeStyle = view.contrast ? '#ffffff' : '#080504';
+  ctx.strokeStyle = view.contrast ? PURE_WHITE : DARK_HALO_BULLET;
   ctx.lineWidth = view.contrast ? 3.2 : 2.2;
   ctx.stroke();
   ctx.restore();
@@ -480,7 +546,7 @@ export function drawShockRings(ctx) {
     if (life > 1) life = 1;
     var progress = 1 - life;
     var radius = ring.r + ((ring.maxR || ring.r) - ring.r) * progress;
-    var color = ring.color || '#75d1b0';
+    var color = (ring.color && ring.color !== '#75d1b0') ? ring.color : '#5be7ff';
     var wobble = view.reduced ? 0 : 2.4;
     strokeRing(ctx, ring.x, ring.y, radius, 6.5, color, life * 0.28, wobble, time + i);
     strokeRing(ctx, ring.x, ring.y, radius * 0.94, 1.7, '#fffaf0', life * 0.9, 0, time);
@@ -538,61 +604,62 @@ export function drawArtilleryTelegraphs(ctx) {
     if (remain < 0) remain = 0;
     if (remain > 1) remain = 1;
     var urgent = at.timer <= 0.2;
-    var pulse = view.reduced ? 0.9 : (0.55 + 0.45 * (0.5 + 0.5 * Math.sin(time * 9)));
-    var ringA = (0.55 + (1 - remain) * 0.45).toFixed(3);
+    var isFlashWhite = view.reduced ? true : (Math.floor((rt.renderTime || 0) * 20) % 2 === 0);
+    var flashColor = isFlashWhite ? '#ffffff' : '#ff0033';
     ctx.save();
 
-    // 1. Contrast backing dark rim for artillery impact zone
+    // 1. 外圈深黑阻光底圈（4.8px 黑底）
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(6, 6, 8, 0.88)';
-    ctx.lineWidth = (urgent ? 4.8 : 3.8) + (view.contrast ? 1.6 : 0);
+    ctx.strokeStyle = DARK_HALO_BULLET;
+    ctx.lineWidth = (urgent ? 5.4 : 4.8) + (view.contrast ? 1.6 : 0);
     ctx.stroke();
 
-    // 2. High-contrast dashed alert ring
+    // 2. 外圈黑白/紅白反相斑馬警戒圈（2.6px 白/紅斑馬虛線 [7, 6]）
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
-    ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = urgent ? '#ffffff' : ('rgba(255, 115, 75, ' + ringA + ')');
-    ctx.lineWidth = (urgent ? 2.8 : 2.0) + (view.contrast ? 1.3 : 0);
+    ctx.setLineDash(ZEBRA_DASH);
+    ctx.strokeStyle = urgent ? flashColor : 'rgba(255, 60, 80, 0.95)';
+    ctx.lineWidth = (urgent ? 3.0 : 2.6) + (view.contrast ? 1.2 : 0);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // 3. Imminent impact danger zone fill
-    var fillR = Math.max(4, at.r * remain);
+    // 3. 倒數收縮圓：半徑從 at.r 縮向 0，透明度嚴格維持在 alpha <= 0.22（透光不遮怪）
+    var fillR = Math.max(3, at.r * remain);
+    var fillAlpha = (0.08 + (1 - remain) * 0.14).toFixed(3);
     ctx.beginPath();
     ctx.arc(at.x, at.y, fillR, 0, TAU);
-    ctx.fillStyle = 'rgba(235, 60, 36, ' + (0.2 + (1 - remain) * 0.45).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(235, 60, 36, ' + fillAlpha + ')';
     ctx.fill();
 
-    // 4. Crosshair dark contrast backing
+    // 4. Crosshair dark contrast backing (4.2px)
+    ctx.beginPath();
+    ctx.moveTo(at.x - 10, at.y);
+    ctx.lineTo(at.x + 10, at.y);
+    ctx.moveTo(at.x, at.y - 10);
+    ctx.lineTo(at.x, at.y + 10);
+    ctx.strokeStyle = 'rgba(4, 3, 6, 0.95)';
+    ctx.lineWidth = 4.2;
+    ctx.stroke();
+
+    // 5. Crosshair targeting line (pure white / 20Hz flash)
     ctx.beginPath();
     ctx.moveTo(at.x - 9, at.y);
     ctx.lineTo(at.x + 9, at.y);
     ctx.moveTo(at.x, at.y - 9);
     ctx.lineTo(at.x, at.y + 9);
-    ctx.strokeStyle = 'rgba(6, 6, 8, 0.9)';
-    ctx.lineWidth = (view.contrast ? 2.4 : 1.4) + 2.2;
-    ctx.stroke();
-
-    // 5. Crosshair targeting line
-    ctx.beginPath();
-    ctx.moveTo(at.x - 8, at.y);
-    ctx.lineTo(at.x + 8, at.y);
-    ctx.moveTo(at.x, at.y - 8);
-    ctx.lineTo(at.x, at.y + 8);
-    ctx.strokeStyle = urgent ? '#ffffff' : 'rgba(255, 120, 80, 0.95)';
-    ctx.lineWidth = view.contrast ? 2.4 : 1.4;
+    ctx.strokeStyle = urgent ? flashColor : PURE_WHITE;
+    ctx.lineWidth = view.contrast ? 2.4 : 1.8;
     ctx.stroke();
 
     // 6. Bullseye core
     ctx.beginPath();
     ctx.arc(at.x, at.y, 4.4, 0, TAU);
-    ctx.fillStyle = 'rgba(6, 6, 8, 0.85)';
+    ctx.fillStyle = DARK_HALO_BULLET;
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(at.x, at.y, 3.4, 0, TAU);
-    ctx.fillStyle = urgent ? '#ffffff' : ('rgba(255, 220, 160, ' + pulse.toFixed(3) + ')');
+    ctx.arc(at.x, at.y, 3.0, 0, TAU);
+    ctx.fillStyle = urgent ? flashColor : PURE_WHITE;
     ctx.fill();
 
     ctx.restore();
