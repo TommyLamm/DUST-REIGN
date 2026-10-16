@@ -23,7 +23,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | --- | --- |
 | `index.html`、`css/` | HTML 介面與樣式。CSS 疊加順序以 `index.html` 的 `<link>` 為準；`css/animations.css` 在 `css/responsive.css` 與 `css/high-contrast.css` 之前，後兩者覆寫動效與對比。 |
 | `src/main.js` | 初始化、RAF 主迴圈、暫停／恢復、銷毀及公開 API。 |
-| `src/config.js`、`src/data/` | 共用常數，以及升級、敵人、路線、合約、突變、機體、熱度、每日規則資料，以及闖關關卡（`campaign-stages.js`）與極限作戰（`hardcore-operations.js`）。 |
+| `src/config.js`、`src/data/` | 共用常數，以及升級、敵人、路線、合約、突變、機體、熱度、每日規則資料，闖關關卡（`campaign-stages.js`）、極限作戰（`hardcore-operations.js`）、改裝工坊模組（`modules.js`）與每日懸賞（`bounties.js`）。 |
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
@@ -37,6 +37,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
+| `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
 | `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap、接地陰影。 |
@@ -44,7 +45,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
 | `src/render/entity-style.js` | 受擊閃白等逐實體視覺暫存。 |
 | `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段色調、畫質預算與自動降級、預渲染光暈／雜訊貼圖快取。 |
-| `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
+| `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、改裝工坊（`workshop-panel.js`）、星級金庫（`vault-panel.js`）、每日懸賞（`bounties-panel.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
 | `src/audio/audio-fx.js` | 原生 Web Audio API 程序合成音效（FM 合成跳彈、雙峰帶通破片殼擊、指數衰減低通與全域殘響）、音訊解鎖及音量／靜音偏好。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績橋接與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
@@ -62,6 +63,8 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
 - 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
 - 首領身份是 `isBoss`。Titan 拆解部位（左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
+- 廢料改裝工坊（Scrapyard Workshop）以 6⚡ 負載上限與 3 大改裝插槽運作，模組雙面刃數值在開局前注入玩家屬性；安裝改裝模組進行競速時自動標記為 Mod 模式，與純粹無改裝幽靈競速榜分流隔離。
+- 幽靈殘影競速以 5Hz 取樣、Delta 差分及 Base64 壓縮儲存於 localStorage（< 3KB），由 Split-Timer 於戰鬥中即時比對檢核點秒差。
 - `isStormFront()` 在波末風暴窗或場上仍存活的 Storm Sovereign 時為真。位移用 `stormWind()`：有首領風向時用該風向，否則用固定風暴方向。
 - 既有模組存在循環 import。跨循環依賴的匯出應在函式執行時使用，避免在模組頂層讀取尚未初始化的值或呼叫相依模組。啟動、偏好讀取、音訊物件建立及 SDK 載入的頂層初始化分別由對應模組管理。
 - `selfCheck()` 會暫時替換 `rt.state`／`rt.ui`；新增邏輯須保留無 DOM 環境的自檢入口。核心遊戲程式沿用 `var`／`function` 與 ES module 的組織方式。
@@ -111,7 +114,8 @@ index.html → src/main.js → init()
 | 幕間、路線、撤離與無盡 | `src/systems/interlude.js`、`src/systems/director.js`、`src/ui/interlude-panel.js` |
 | 敵人、首領、波次與生成 | `src/systems/director.js`、`src/systems/spawning.js`、`src/systems/sim/timers-wave.js`、`src/systems/sim/enemies.js`、`src/systems/sim/bosses.js`、`src/systems/sim/new-enemies.js`、`src/systems/sim/enemy-defense.js` |
 | 突變、合約、掉落與持續效果 | `src/systems/mutators.js`、`src/systems/contracts.js`、`src/systems/drops.js`、`src/systems/card-effects.js`、`src/ui/contracts-hud.js` |
-| 配裝、熱度、每日與成就 | `src/systems/meta.js`、`src/core/meta-store.js`、`src/ui/loadout-panel.js`、`src/ui/codex-panel.js` |
+| 配裝、改裝工坊、金庫、懸賞、熱度、每日與成就 | `src/systems/meta.js`、`src/data/modules.js`、`src/data/bounties.js`、`src/core/meta-store.js`、`src/ui/loadout-panel.js`、`src/ui/workshop-panel.js`、`src/ui/vault-panel.js`、`src/ui/bounties-panel.js`、`src/ui/codex-panel.js` |
+| 幽靈殘影競速與分段計時 | `src/systems/ghost.js`、`src/render/ghost.js`、`src/ui/hud.js` |
 | 武器、射擊、彈道與擦彈 | `src/systems/weapons.js`、`src/systems/sim/bullets.js`、`src/systems/sim/enemy-bullets.js` |
 | 戰術輔助槽位與裝備實體 | `src/systems/tactical.js`、`src/ui/hud.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`css/hud.css`、`css/touch.css` |
 | 衝刺、EMP、傷害、擊殺與掉落生成 | `src/systems/abilities.js`、`src/systems/combat.js` |
@@ -148,7 +152,7 @@ index.html → src/main.js → init()
 | 資料 | 契約來源與相容性 |
 | --- | --- |
 | 最高分 | HUD 與單局 `bestScore` 讀寫 `src/core/meta-store.js` 的 v2 key。`src/config.js` 的 v1 key 與 `dustReignBestScore` 仍可讀、不再由單局寫入。 |
-| 局外進度 | `src/core/meta-store.js` 的 meta、每日與提示 key。格式與預設值以該模組為準。 |
+| 局外進度 | `src/core/meta-store.js` 的 meta、每日、提示、改裝工坊（`dust-reign:workshop:v1`）、金庫（`dust-reign:vault:v1`）、懸賞（`dust-reign:bounties:v1`）與幽靈競速（`dust-reign:ghost:v1:<stageId>`）key。格式與預設值以該模組為準。 |
 | 音量與靜音 | `src/audio/audio-fx.js` 定義 key、格式與預設值。 |
 | 觸覺、減動效與高對比 | `src/core/settings.js` 定義 key、格式與回退行為。 |
 | 畫質分級 | `src/core/settings.js` 的 `dust_reign_visual_quality`（`auto`、`high`、`medium`、`low`；未設定或無法辨識時為 `auto`）。有效等級、自動降級與預算由 `src/render/quality.js` 提供。 |
