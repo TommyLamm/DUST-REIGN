@@ -220,6 +220,35 @@ function stepAcidPools(dt, frame) {
   } else if (p && p.acidSlow > 0) {
     p.acidSlow = Math.max(0, p.acidSlow - dt);
   }
+
+  // Enemy acid pool interaction: 32 true damage every 0.5s & armor breakdown (+40% dmg taken)
+  var foes = rt.state.enemies;
+  if (foes && pools.length > 0) {
+    for (var ei = foes.length - 1; ei >= 0; ei -= 1) {
+      var foe = foes[ei];
+      if (!foe || foe.hp <= 0 || foe.burrowed) continue;
+      var inAcid = false;
+      for (var pi = 0; pi < pools.length; pi += 1) {
+        var ap = pools[pi];
+        if (Math.hypot(foe.x - ap.x, foe.y - ap.y) <= ap.r + foe.r) {
+          inAcid = true;
+          break;
+        }
+      }
+      if (inAcid) {
+        foe.armorBreakTimer = Math.max(foe.armorBreakTimer || 0, 1.0);
+        foe.acidTick = (foe.acidTick || 0) + dt;
+        if (foe.acidTick >= 0.5) {
+          foe.acidTick -= 0.5;
+          damageEnemy(foe, 32, { source: 'acid', x: foe.x, y: foe.y });
+          spawnParticles(foe.x, foe.y, '#c6e35a', 4, 80, 2);
+          if (foe.hp <= 0) killEnemy(foe, 'acid');
+        }
+      } else {
+        foe.acidTick = 0;
+      }
+    }
+  }
 }
 
 function stepPendingBlasts(dt) {
@@ -435,7 +464,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.arming = false;
         e.hp = 0;
         e.deathCause = 'other';
-        blastAt(e.x, e.y, 70, Math.round(22 * dmgScale()), 0, '#e07a3d');
+        blastAt(e.x, e.y, 70, Math.round(22 * dmgScale()), 65, '#e07a3d');
         return { dx: dx, dy: dy, d: dist, speed: 0 };
       }
       return { dx: dx, dy: dy, d: dist, speed: 0 };

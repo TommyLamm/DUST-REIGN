@@ -3,9 +3,10 @@ import { spawnParticles } from '../../core/pools.js';
 import { pushFxEvent } from '../../core/fx-events.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
-import { triggerHaptic } from '../../core/settings.js';
+import { isReducedMotion, triggerHaptic } from '../../core/settings.js';
+import { getEnemyById, populateEnemyGrid, queryGrid } from '../../core/spatial-grid.js';
 import { clamp, dist2 } from '../../core/utils.js';
-import { triggerSpireMicroResonance } from '../abilities.js';
+import { triggerSpireAbsorption, triggerSpireMicroResonance } from '../abilities.js';
 import { applyEnemySlow, stepCardEffects } from '../card-effects.js';
 import { damageEnemy, explodeBarrel, explodeCore, killEnemy } from '../combat.js';
 import { stormWind } from '../flow.js';
@@ -13,6 +14,8 @@ import { addScore } from '../scoring.js';
 import { noteMetaEvent } from '../meta.js';
 import { arcChainProfile, spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
 import { logEvent } from '../../ui/hud.js';
+
+var queriedEnemyIds = [];
 
 function notePartDestroyed() {
   addScore(200, 'style');
@@ -123,6 +126,7 @@ export function stepBullets(dt, frame) {
   var boundW = frame.boundW;
   var boundH = frame.boundH;
   stepCardEffects(dt);
+  populateEnemyGrid(rt.state.enemies);
   for (var bi = rt.state.bullets.length - 1; bi >= 0; bi -= 1) {
     var b = rt.state.bullets[bi];
     steerHoming(b, dt);
@@ -245,6 +249,7 @@ export function stepBullets(dt, frame) {
         b.vx *= 0.9;
         b.vy *= 0.9;
         b.bounces -= 1;
+        if (AudioFX && typeof AudioFX.ricochet === 'function') AudioFX.ricochet();
         if (p.kineticShrapnel && !b.isShrapnel) {
           spawnKineticShrapnel(b, b.x, b.y);
         }
@@ -315,9 +320,23 @@ export function stepBullets(dt, frame) {
       }
     }
 
+    if (!hitSomething && rt.state.spires) {
+      for (var spIdx = rt.state.spires.length - 1; spIdx >= 0; spIdx -= 1) {
+        var spTarget = rt.state.spires[spIdx];
+        if (dist2(b.x, b.y, spTarget.x, spTarget.y) <= (b.r + (spTarget.r || 18)) * (b.r + (spTarget.r || 18))) {
+          triggerSpireAbsorption(spTarget, b);
+          if (AudioFX && typeof AudioFX.ricochet === 'function') AudioFX.ricochet();
+          hitSomething = true;
+          break;
+        }
+      }
+    }
+
     if (!hitSomething) {
-      for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
-        var enemy = rt.state.enemies[ei];
+      queryGrid(b.x, b.y, b.r + 32, queriedEnemyIds);
+      for (var qi = 0; qi < queriedEnemyIds.length; qi += 1) {
+        var enemy = getEnemyById(queriedEnemyIds[qi]);
+        if (!enemy || enemy.hp <= 0) continue;
         if (b.hits && b.hits.indexOf(enemy) !== -1) continue;
         if (enemy.burrowed || enemy.untargetable) continue;
         if (dist2(b.x, b.y, enemy.x, enemy.y) <= (b.r + enemy.r) * (b.r + enemy.r)) {
@@ -375,6 +394,7 @@ export function stepBullets(dt, frame) {
                   e.leftCannonHp = 0;
                   e.leftCannonDestroyed = true;
                   e.empTimer = Math.max(e.empTimer || 0, 1.8);
+                  if (!isReducedMotion()) rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.083);
                   notePartDestroyed();
                   rt.state.orbs.push({ kind: 'repair', x: lcX, y: lcY, vx: (rng('loot') - 0.5) * 85, vy: (rng('loot') - 0.5) * 85, r: 10, value: 0, life: 25 });
                   AudioFX.blast();
@@ -397,6 +417,7 @@ export function stepBullets(dt, frame) {
                   e.rightPodHp = 0;
                   e.rightPodDestroyed = true;
                   e.empTimer = Math.max(e.empTimer || 0, 1.8);
+                  if (!isReducedMotion()) rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.083);
                   notePartDestroyed();
                   rt.state.orbs.push({ kind: 'overdrive', x: rpX, y: rpY, vx: (rng('loot') - 0.5) * 95, vy: (rng('loot') - 0.5) * 95, r: 11, value: 0, life: 25 });
                   AudioFX.blast();
@@ -432,6 +453,12 @@ export function stepBullets(dt, frame) {
             p.energy = Math.min(cap, (p.energy || 0) + 4.0);
             spawnParticles(enemy.x, enemy.y, '#fbda8a', 8, 140, 3);
             AudioFX.critHit();
+            if (!isReducedMotion()) {
+              rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.033);
+            }
+            enemy.jitterTimer = 0.033;
+            enemy.jitterAngle = Math.atan2(b.vy, b.vx);
+            enemy.jitterAmount = 3.5;
           } else {
             spawnParticles(b.x, b.y, b.isArcWelder ? '#5be7ff' : '#f7d48a', 4, 80, 2);
             if (enemy.hp <= 0) {} else AudioFX.hit();
@@ -470,11 +497,7 @@ export function stepBullets(dt, frame) {
                 }
                 spawnParticles(tgt.x, tgt.y, '#5be7ff', 4, 85, 2);
                 if (tgt.hp <= 0) {
-                  var tgtIdx = rt.state.enemies.indexOf(tgt);
-                  if (tgtIdx !== -1) {
-                    killEnemy(tgt, 'bullet');
-                    if (tgtIdx < ei) ei -= 1;
-                  }
+                  killEnemy(tgt, 'bullet');
                 }
               }
             }
@@ -495,8 +518,7 @@ export function stepBullets(dt, frame) {
           if (isCrit) pushFxEvent('crit', enemy.x, enemy.y, null);
 
           if (enemy.hp <= 0) {
-            var mainIdx = rt.state.enemies.indexOf(enemy);
-            if (mainIdx !== -1) killEnemy(enemy, 'bullet');
+            killEnemy(enemy, 'bullet');
           }
 
           if (isCrit && b.masteryRicochet && !b.didMasteryBounce) {

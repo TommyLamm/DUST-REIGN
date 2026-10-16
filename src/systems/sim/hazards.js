@@ -4,8 +4,10 @@ import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { clamp, dist2 } from '../../core/utils.js';
+import { triggerSpireResonance } from '../abilities.js';
 import { damageEnemy, explodeBarrel, killEnemy } from '../combat.js';
 import { noteContractEvent } from '../contracts.js';
+import { isStormFront } from '../flow.js';
 import { noteMetaEvent } from '../meta.js';
 
 function armBarrelChain(x, y, radius, depth) {
@@ -16,7 +18,7 @@ function armBarrelChain(x, y, radius, depth) {
     if (!barrel || barrel.chainFuse > 0) continue;
     var reach = radius + (barrel.r || 14);
     if (Math.hypot(barrel.x - x, barrel.y - y) <= reach) {
-      barrel.chainFuse = 0.2;
+      barrel.chainFuse = 0.18;
       barrel.chainDepth = (depth || 1) + 1;
     }
   }
@@ -221,6 +223,20 @@ export function stepHazards(dt, frame) {
           color: '#5be7ff',
           gravity: 0
         });
+      }
+    }
+
+    if (isStormFront()) {
+      for (var ssi = 0; ssi < rt.state.spires.length; ssi += 1) {
+        var sSpire = rt.state.spires[ssi];
+        if (!sSpire.stormEmpTriggered && sSpire.resonanceTimer <= 0) {
+          sSpire.stormEmpTriggered = true;
+          triggerSpireResonance(sSpire);
+        }
+      }
+    } else {
+      for (var rsi = 0; rsi < rt.state.spires.length; rsi += 1) {
+        rt.state.spires[rsi].stormEmpTriggered = false;
       }
     }
   }

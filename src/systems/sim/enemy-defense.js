@@ -1,3 +1,5 @@
+import { AudioFX } from '../../audio/audio-fx.js';
+import { pushFxEvent } from '../../core/fx-events.js';
 import { rt } from '../../core/runtime.js';
 import { addScore } from '../scoring.js';
 
@@ -105,11 +107,19 @@ export function filterEnemyDamage(e, amount, info) {
   if (e.kind === 'burrower' && e.burrowed && !e.forceEmerge) return 0;
   if (e.kind === 'sovereign' && refreshSovereignShield(e)) return 0;
   if (e.kind === 'stormTower' && (info.source === 'emp' || info.source === 'spire')) left *= 3;
+  if (e.armorBreakTimer > 0) left *= 1.4;
   if (e.shieldHp > 0) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;
     e.shieldHp -= absorb;
     left -= absorb;
-    if (e.shieldHp <= 0) clearEnemyShields(e);
+    if (e.shieldHp <= 0) {
+      clearEnemyShields(e);
+      if (rt.state) {
+        rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.050);
+      }
+      pushFxEvent('shieldBreak', e.x, e.y, { kind: e.kind, color: '#5be7ff' });
+      if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
+    }
   }
   if (e.kind === 'dreadnought' && info.source === 'bullet' && info.x != null && info.y != null) {
     var hitAng = Math.atan2(info.y - e.y, info.x - e.x);

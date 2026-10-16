@@ -32,6 +32,8 @@ export function stepEnemies(dt, frame) {
   for (var j = rt.state.enemies.length - 1; j >= 0; j -= 1) {
     var e = rt.state.enemies[j];
     if (!e || e.hp <= 0) continue;
+    if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
+    if (e.armorBreakTimer > 0) e.armorBreakTimer = Math.max(0, e.armorBreakTimer - dt);
     var dx = p.x - e.x;
     var dy = p.y - e.y;
     var d = Math.hypot(dx, dy) || 1;

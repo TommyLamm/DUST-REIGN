@@ -135,7 +135,232 @@ export var AudioFX = (function () {
     return Boolean(ctx && !muted && ctx.state !== 'closed');
   }
 
-  function shoot() {
+  var vanguardChargeOsc = null;
+  var vanguardChargeGain = null;
+
+  function shootBreacher() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+
+    // Layer 1: Transient needle/click punch (540Hz rapidly dropping to 75Hz in 0.02s)
+    var oscPunch = ctx.createOscillator();
+    var gainPunch = ctx.createGain();
+    oscPunch.type = 'triangle';
+    oscPunch.frequency.setValueAtTime(540, t);
+    oscPunch.frequency.exponentialRampToValueAtTime(75, t + 0.02);
+    gainPunch.gain.setValueAtTime(0.48, t);
+    gainPunch.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+    oscPunch.connect(gainPunch);
+    route(gainPunch);
+    oscPunch.start(t);
+    oscPunch.stop(t + 0.025);
+
+    // Layer 2: 36Hz Sub-bass punch (110Hz sliding to 36Hz over 0.22s)
+    var oscSub = ctx.createOscillator();
+    var gainSub = ctx.createGain();
+    oscSub.type = 'sine';
+    oscSub.frequency.setValueAtTime(110, t);
+    oscSub.frequency.exponentialRampToValueAtTime(36, t + 0.22);
+    gainSub.gain.setValueAtTime(0.55, t);
+    gainSub.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    oscSub.connect(gainSub);
+    route(gainSub);
+    oscSub.start(t);
+    oscSub.stop(t + 0.22);
+
+    // Layer 3: Dual-peak bandpass shell eject metallic clink (1850Hz & 4100Hz, Q=9.0)
+    if (noiseBuffer) {
+      var nSrc = ctx.createBufferSource();
+      nSrc.buffer = noiseBuffer;
+
+      var bp1 = ctx.createBiquadFilter();
+      bp1.type = 'bandpass';
+      bp1.frequency.setValueAtTime(1850, t);
+      bp1.Q.setValueAtTime(9.0, t);
+
+      var bp2 = ctx.createBiquadFilter();
+      bp2.type = 'bandpass';
+      bp2.frequency.setValueAtTime(4100, t);
+      bp2.Q.setValueAtTime(9.0, t);
+
+      var nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.38, t);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+      nSrc.connect(bp1);
+      nSrc.connect(bp2);
+      bp1.connect(nGain);
+      bp2.connect(nGain);
+      route(nGain);
+
+      nSrc.start(t);
+      nSrc.stop(t + 0.11);
+    }
+  }
+
+  function vanguardChargeStart(duration) {
+    if (!canPlay()) return;
+    vanguardChargeStop();
+    var t = ctx.currentTime;
+    var d = duration > 0 ? duration : 0.6;
+    vanguardChargeOsc = ctx.createOscillator();
+    vanguardChargeGain = ctx.createGain();
+    vanguardChargeOsc.type = 'sawtooth';
+    vanguardChargeOsc.frequency.setValueAtTime(120, t);
+    vanguardChargeOsc.frequency.linearRampToValueAtTime(1180, t + d);
+    vanguardChargeGain.gain.setValueAtTime(0.001, t);
+    vanguardChargeGain.gain.linearRampToValueAtTime(0.22, t + 0.05);
+    vanguardChargeGain.gain.linearRampToValueAtTime(0.32, t + d);
+    vanguardChargeOsc.connect(vanguardChargeGain);
+    route(vanguardChargeGain);
+    vanguardChargeOsc.start(t);
+  }
+
+  function vanguardChargeStop() {
+    if (vanguardChargeOsc && ctx) {
+      try {
+        var t = ctx.currentTime;
+        vanguardChargeGain.gain.setValueAtTime(vanguardChargeGain.gain.value, t);
+        vanguardChargeGain.gain.linearRampToValueAtTime(0.001, t + 0.03);
+        vanguardChargeOsc.stop(t + 0.03);
+      } catch (e) {}
+      vanguardChargeOsc = null;
+      vanguardChargeGain = null;
+    }
+  }
+
+  function shootVanguard() {
+    if (!canPlay()) return;
+    vanguardChargeStop();
+    var t = ctx.currentTime;
+
+    // Laser discharge: Bandpass sweep 6500Hz -> 400Hz + Sub-bass 38Hz
+    var oscSub = ctx.createOscillator();
+    var gainSub = ctx.createGain();
+    oscSub.type = 'sine';
+    oscSub.frequency.setValueAtTime(95, t);
+    oscSub.frequency.exponentialRampToValueAtTime(38, t + 0.35);
+    gainSub.gain.setValueAtTime(0.50, t);
+    gainSub.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    oscSub.connect(gainSub);
+    route(gainSub);
+    oscSub.start(t);
+    oscSub.stop(t + 0.35);
+
+    var oscLaser = ctx.createOscillator();
+    var filterLaser = ctx.createBiquadFilter();
+    var gainLaser = ctx.createGain();
+    oscLaser.type = 'sawtooth';
+    oscLaser.frequency.setValueAtTime(1400, t);
+    oscLaser.frequency.exponentialRampToValueAtTime(220, t + 0.28);
+    filterLaser.type = 'bandpass';
+    filterLaser.frequency.setValueAtTime(6500, t);
+    filterLaser.frequency.exponentialRampToValueAtTime(400, t + 0.28);
+    filterLaser.Q.setValueAtTime(4.0, t);
+    gainLaser.gain.setValueAtTime(0.40, t);
+    gainLaser.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    oscLaser.connect(filterLaser);
+    filterLaser.connect(gainLaser);
+    route(gainLaser);
+    oscLaser.start(t);
+    oscLaser.stop(t + 0.28);
+
+    if (noiseBuffer) {
+      var nSrc = ctx.createBufferSource();
+      nSrc.buffer = noiseBuffer;
+      var nFilter = ctx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.setValueAtTime(4500, t);
+      nFilter.frequency.exponentialRampToValueAtTime(600, t + 0.22);
+      nFilter.Q.setValueAtTime(3.5, t);
+      var nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.30, t);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      nSrc.connect(nFilter);
+      nFilter.connect(nGain);
+      route(nGain);
+      nSrc.start(t);
+      nSrc.stop(t + 0.22);
+    }
+  }
+
+  function ricochet(detune) {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    var carrier = ctx.createOscillator();
+    var modulator = ctx.createOscillator();
+    var modGain = ctx.createGain();
+    var outGain = ctx.createGain();
+
+    var cents = (typeof detune === 'number') ? detune : (Math.random() - 0.5) * 120;
+    carrier.type = 'sine';
+    carrier.frequency.setValueAtTime(2380, t);
+    carrier.detune.setValueAtTime(cents, t);
+
+    modulator.type = 'sine';
+    modulator.frequency.setValueAtTime(3570, t); // 1:1.5 non-harmonic FM ratio!
+    modulator.detune.setValueAtTime(cents, t);
+
+    modGain.gain.setValueAtTime(2380 * 1.5, t);
+    modGain.gain.exponentialRampToValueAtTime(0.01, t + 0.035);
+
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+
+    outGain.gain.setValueAtTime(0.34, t);
+    outGain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+
+    carrier.connect(outGain);
+    route(outGain);
+
+    carrier.start(t);
+    modulator.start(t);
+    carrier.stop(t + 0.035);
+    modulator.stop(t + 0.035);
+  }
+
+  function shieldShatter() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(3200, t);
+    osc.frequency.exponentialRampToValueAtTime(1400, t + 0.08);
+    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(gain);
+    route(gain);
+    osc.start(t);
+    osc.stop(t + 0.08);
+
+    if (noiseBuffer) {
+      var nSrc = ctx.createBufferSource();
+      nSrc.buffer = noiseBuffer;
+      var nFilter = ctx.createBiquadFilter();
+      nFilter.type = 'highpass';
+      nFilter.frequency.setValueAtTime(2400, t);
+      var nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.30, t);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      nSrc.connect(nFilter);
+      nFilter.connect(nGain);
+      route(nGain);
+      nSrc.start(t);
+      nSrc.stop(t + 0.08);
+    }
+  }
+
+  function shoot(mode) {
+    if (mode === 'breacher') {
+      shootBreacher();
+      return;
+    }
+    if (mode === 'vanguard') {
+      shootVanguard();
+      return;
+    }
     if (!canPlay()) return;
     var t = ctx.currentTime;
     var osc = ctx.createOscillator();
@@ -350,9 +575,9 @@ export var AudioFX = (function () {
     var osc1 = ctx.createOscillator();
     var gain1 = ctx.createGain();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(56, t);
-    osc1.frequency.exponentialRampToValueAtTime(36, t + 0.09);
-    gain1.gain.setValueAtTime(0.36, t);
+    osc1.frequency.setValueAtTime(45, t);
+    osc1.frequency.exponentialRampToValueAtTime(28, t + 0.09);
+    gain1.gain.setValueAtTime(0.42, t);
     gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
     osc1.connect(gain1);
     route(gain1);
@@ -362,9 +587,9 @@ export var AudioFX = (function () {
     var osc2 = ctx.createOscillator();
     var gain2 = ctx.createGain();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(46, t + 0.14);
-    osc2.frequency.exponentialRampToValueAtTime(30, t + 0.14 + 0.08);
-    gain2.gain.setValueAtTime(0.26, t + 0.14);
+    osc2.frequency.setValueAtTime(38, t + 0.14);
+    osc2.frequency.exponentialRampToValueAtTime(24, t + 0.14 + 0.08);
+    gain2.gain.setValueAtTime(0.32, t + 0.14);
     gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.14 + 0.08);
     osc2.connect(gain2);
     route(gain2);
@@ -574,6 +799,12 @@ export var AudioFX = (function () {
     setLowpass: setLowpass,
     click: click,
     shoot: shoot,
+    shootBreacher: shootBreacher,
+    shootVanguard: shootVanguard,
+    vanguardChargeStart: vanguardChargeStart,
+    vanguardChargeStop: vanguardChargeStop,
+    ricochet: ricochet,
+    shieldShatter: shieldShatter,
     hit: hit,
     critHit: critHit,
     blast: blast,

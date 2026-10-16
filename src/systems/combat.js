@@ -208,7 +208,8 @@ export function killEnemy(enemyOrIndex, cause) {
     AudioFX.blast();
     triggerHaptic([30, 40, 50, 60, 80]);
     if (!isReducedMotion()) {
-      rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.055);
+      rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.120);
+      rt.state.hitstopDilation = 0.120;
     }
     processEnemyDrops(e);
     addDecal(e.x, e.y, 28, 20, 0.45, '#1b1715');

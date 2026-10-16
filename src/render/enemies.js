@@ -1949,8 +1949,16 @@ export function drawEnemy(ctx, e) {
     var spd = Math.hypot(e.vx || 0, e.vy || 0);
     lean = Math.min(2.2, spd / 90);
   }
+  var jx = 0;
+  var jy = 0;
+  if (!reduced && e.jitterTimer > 0) {
+    var jDist = Math.sin((e.jitterTimer / 0.033) * Math.PI * 4) * (e.jitterAmount || 3.5);
+    var jAng = e.jitterAngle || 0;
+    jx = Math.cos(jAng) * jDist;
+    jy = Math.sin(jAng) * jDist;
+  }
   ctx.save();
-  ctx.translate(e.x, e.y);
+  ctx.translate(e.x + jx, e.y + jy);
   if (pose.dust > 0) drawDustRing(ctx, e.r * (e.kind === 'titan' || e.kind === 'brute' ? 1.5 : 1), pose.dust);
 
   // Static building structures & mines do not rotate with player facing

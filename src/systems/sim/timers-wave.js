@@ -172,7 +172,15 @@ export function stepWaveClock(dt, frame) {
   rt.state.grazeTimer = Math.max(0, (rt.state.grazeTimer || 0) - dt);
   if (rt.state.grazeTimer === 0) rt.state.grazeCombo = 0;
 
-  if (p.hp / p.maxHp < 0.35 && !rt.state.over) {
+  var hpRatio = p.hp / p.maxHp;
+  if (hpRatio < 0.25 && !rt.state.over) {
+    AudioFX.setLowpass(480);
+    rt.state.heartbeatTimer = (rt.state.heartbeatTimer || 0) - dt;
+    if (rt.state.heartbeatTimer <= 0) {
+      AudioFX.playHeartbeat();
+      rt.state.heartbeatTimer = 0.85;
+    }
+  } else if (hpRatio < 0.35 && !rt.state.over) {
     AudioFX.setLowpass(1400);
     rt.state.heartbeatTimer = (rt.state.heartbeatTimer || 0) - dt;
     if (rt.state.heartbeatTimer <= 0) {

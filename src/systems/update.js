@@ -27,13 +27,26 @@ export function update(dt) {
     return;
   }
   if (rt.state.interlude) { updateDomUi(); return; }
-  if (isReducedMotion()) rt.state.hitstop = 0;
+  if (isReducedMotion()) {
+    rt.state.hitstop = 0;
+    rt.state.hitstopDilation = 0;
+  }
   if (rt.state.hitstop > 0) {
     var freeze = Math.min(dt, rt.state.hitstop);
     rt.state.hitstop -= freeze;
     dt -= freeze;
   }
   if (dt <= 0) { updateDomUi(); return; }
+
+  if (rt.state.hitstopDilation > 0) {
+    var dilationLeft = rt.state.hitstopDilation;
+    rt.state.hitstopDilation = Math.max(0, rt.state.hitstopDilation - dt);
+    var progress = 1.0 - (dilationLeft / 0.120);
+    if (progress < 0) progress = 0;
+    if (progress > 1) progress = 1;
+    var timeScale = 0.35 + 0.65 * (progress * progress);
+    dt *= timeScale;
+  }
 
   var frame = {
     p: rt.state.player,

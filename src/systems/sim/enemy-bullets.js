@@ -7,7 +7,7 @@ import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
 import { clamp, dist2 } from '../../core/utils.js';
 import { triggerReactiveArmor } from '../abilities.js';
-import { damagePlayer } from '../combat.js';
+import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { noteContractEvent } from '../contracts.js';
 import { addScore } from '../scoring.js';
 import { logEvent } from '../../ui/hud.js';
@@ -223,6 +223,25 @@ export function stepArtilleryTargets(dt, frame) {
               }
             }
           }
+
+          // Mortar friendly fire to enemy swarms
+          if (rt.state.enemies) {
+            for (var mei = rt.state.enemies.length - 1; mei >= 0; mei -= 1) {
+              var mFoe = rt.state.enemies[mei];
+              if (!mFoe || mFoe.hp <= 0 || mFoe.burrowed) continue;
+              if (dist2(at.x, at.y, mFoe.x, mFoe.y) <= (at.r + mFoe.r) * (at.r + mFoe.r)) {
+                var mFoeDmg = Math.round(55 + (at.wave || 1) * 1.8);
+                damageEnemy(mFoe, mFoeDmg, { source: 'mortar', x: at.x, y: at.y });
+                var mdx = mFoe.x - at.x;
+                var mdy = mFoe.y - at.y;
+                var md = Math.hypot(mdx, mdy) || 1;
+                mFoe.x += (mdx / md) * 30;
+                mFoe.y += (mdy / md) * 30;
+                spawnParticles(mFoe.x, mFoe.y, '#ed6842', 6, 120, 2);
+                if (mFoe.hp <= 0) killEnemy(mFoe, 'mortar');
+              }
+            }
+          }
         }
       } else if (at.state === 'molten') {
         var pMoltenDist = Math.hypot(p.x - at.x, p.y - at.y);
@@ -245,6 +264,19 @@ export function stepArtilleryTargets(dt, frame) {
           }
         } else {
           at.damageTickTimer = 0;
+        }
+
+        // Molten burn friendly fire
+        if (rt.state.enemies && at.damageTickTimer >= 0.5) {
+          for (var fmi = rt.state.enemies.length - 1; fmi >= 0; fmi -= 1) {
+            var moltenFoe = rt.state.enemies[fmi];
+            if (!moltenFoe || moltenFoe.hp <= 0 || moltenFoe.burrowed) continue;
+            if (dist2(at.x, at.y, moltenFoe.x, moltenFoe.y) <= (at.r + moltenFoe.r) * (at.r + moltenFoe.r)) {
+              damageEnemy(moltenFoe, 15, { source: 'molten', x: at.x, y: at.y });
+              spawnParticles(moltenFoe.x, moltenFoe.y, '#df4028', 3, 70, 1.8);
+              if (moltenFoe.hp <= 0) killEnemy(moltenFoe, 'molten');
+            }
+          }
         }
         if (at.timer <= 0) {
           rt.state.artilleryTargets.splice(ati, 1);

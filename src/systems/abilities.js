@@ -201,8 +201,8 @@ export function dash() {
       var barrel = rt.state.barrels[bi];
       if (barrel.state === 'idle' && dist2(p.x, p.y, barrel.x, barrel.y) <= pulseRadius * pulseRadius) {
         barrel.state = 'flying';
-        barrel.vx = dirX * 480;
-        barrel.vy = dirY * 480;
+        barrel.vx = dirX * 540;
+        barrel.vy = dirY * 540;
         barrel.flyingTimer = 1.2;
         AudioFX.critHit();
         spawnParticles(barrel.x, barrel.y, '#ff8833', 14, 180, 3);
@@ -366,9 +366,9 @@ export function triggerEmp() {
   pushFxEvent('emp', empX, empY, { r: empR });
 }
 
-function triggerSpireResonance(spire) {
+export function triggerSpireResonance(spire) {
   if (!rt.state || !spire) return;
-  var megaR = 260;
+  var megaR = 280;
   spire.resonanceTimer = 1.5;
 
   if (rt.state.enemyBullets) {
@@ -433,9 +433,57 @@ function triggerSpireResonance(spire) {
   if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
   if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
 
-  logEvent('CONDUCTION SPIRE // MEGA EMP DETONATED 260PX');
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'CONDUCTION SPIRE RESONANCE // MEGA EMP 260PX [STUN 3.0s]';
+  logEvent('CONDUCTION SPIRE // MEGA EMP DETONATED 280PX');
+  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'CONDUCTION SPIRE RESONANCE // MEGA EMP 280PX [STUN 3.0s]';
   pushFxEvent('spire', spire.x, spire.y, { r: megaR });
+}
+
+export function triggerSpireAbsorption(spire, b) {
+  if (!rt.state || !spire) return;
+  spire.resonanceTimer = Math.max(spire.resonanceTimer || 0, 0.6);
+  spire.overload = (spire.overload || 0) + 1;
+  spawnParticles(spire.x, spire.y, '#5be7ff', 8, 130, 2.5);
+
+  // Refract 3 chain lightning arcs to nearby enemies
+  if (rt.state.enemies && rt.state.enemies.length > 0) {
+    var candidates = [];
+    for (var i = 0; i < rt.state.enemies.length; i += 1) {
+      var foe = rt.state.enemies[i];
+      if (!foe || foe.hp <= 0 || foe.burrowed) continue;
+      var d = dist2(spire.x, spire.y, foe.x, foe.y);
+      if (d <= 220 * 220) {
+        candidates.push({ foe: foe, dist2: d });
+      }
+    }
+    candidates.sort(function (e1, e2) { return e1.dist2 - e2.dist2; });
+    var targetCount = Math.min(3, candidates.length);
+    for (var ci = 0; ci < targetCount; ci += 1) {
+      var tgt = candidates[ci].foe;
+      if (rt.state.lightningArcs) {
+        rt.state.lightningArcs.push({
+          x1: spire.x,
+          y1: spire.y,
+          x2: tgt.x,
+          y2: tgt.y,
+          life: 0.16,
+          maxLife: 0.16,
+          color: '#5be7ff'
+        });
+      }
+      var arcDmg = Math.max(15, Math.round((b ? b.damage : 25) * 0.8));
+      damageEnemy(tgt, arcDmg, { source: 'spire', x: spire.x, y: spire.y });
+      tgt.empTimer = Math.max(tgt.empTimer || 0, 0.8);
+      onEnemyEmp(tgt);
+      spawnParticles(tgt.x, tgt.y, '#5be7ff', 5, 90, 2);
+      if (tgt.hp <= 0) killEnemy(tgt, 'spire');
+    }
+  }
+
+  // Trigger 280px mega EMP on overload (>= 5 bullets absorbed)
+  if (spire.overload >= 5) {
+    spire.overload = 0;
+    triggerSpireResonance(spire);
+  }
 }
 
 export function triggerSpireMicroResonance(spire, srcX, srcY) {

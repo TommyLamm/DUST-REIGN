@@ -146,6 +146,8 @@ export function cycleWeaponMode(targetMode) {
   rt.state.weaponId = p.weaponMode;
   p.chargeTime = 0;
   p.isCharging = false;
+  p.recoilVx = 0;
+  p.recoilVy = 0;
   if (p.weaponMode !== previous) {
     p.masteryBase = 0;
     resyncMastery(p, rt.state);
@@ -155,6 +157,24 @@ export function cycleWeaponMode(targetMode) {
   if (AudioFX && typeof AudioFX.click === 'function') AudioFX.click();
   logEvent('WEAPON CHASSIS // ' + p.weaponMode.toUpperCase());
   if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'WEAPON CHASSIS // ' + p.weaponMode.toUpperCase();
+}
+
+export function getChassisMass(rigId) {
+  if (rigId === 'strider') return 0.75;
+  if (rigId === 'bulwark') return 1.85;
+  if (rigId === 'salvager') return 1.15;
+  return 1.0;
+}
+
+export function applyWeaponRecoil(p, impulse, lambda) {
+  if (!p) return;
+  var rigId = (rt.state && rt.state.rigId) || p.rigId || 'scrapper';
+  var mass = getChassisMass(rigId);
+  var speed = impulse / mass;
+  p.recoilVx = (p.recoilVx || 0) - Math.cos(p.aim) * speed;
+  p.recoilVy = (p.recoilVy || 0) - Math.sin(p.aim) * speed;
+  p.recoilLambda = lambda;
+  p.recoil = 1.0;
 }
 
 export function shoot() {
@@ -233,10 +253,11 @@ export function shoot() {
     p.y -= Math.sin(p.aim) * 4.5;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
+    applyWeaponRecoil(p, 340, 11.0);
     ejectCasing(p);
     ejectCasing(p);
     if (isVulcan) { ejectCasing(p); ejectCasing(p); }
-    AudioFX.shoot();
+    AudioFX.shoot('breacher');
     spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#f7d48a'), 12, 130, 2.5);
     if (isVulcan) spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, '#ffd700', 8, 110, 2);
     rt.state.shake = Math.max(rt.state.shake, 4.5);
@@ -277,9 +298,10 @@ export function shoot() {
     p.y -= Math.sin(p.aim) * 3.5;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
+    applyWeaponRecoil(p, 480, 8.5);
     ejectCasing(p);
     if (isVulcan) ejectCasing(p);
-    AudioFX.shoot();
+    AudioFX.shoot('vanguard');
     spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#5be7ff'), 10, 160, 3);
     if (isVulcan) spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, '#ffd700', 8, 120, 2);
     rt.state.shake = Math.max(rt.state.shake, 6.0);
@@ -313,6 +335,7 @@ export function shoot() {
       isPlasmaMeltdown: isPlasma
     });
     p.cooldown = shotCooldown(p, p.fireRate * 0.45 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+    applyWeaponRecoil(p, 25, 22.0);
     p.recoil = 0.5;
     p.x -= Math.cos(p.aim) * 0.5;
     p.y -= Math.sin(p.aim) * 0.5;
@@ -320,7 +343,7 @@ export function shoot() {
     p.y = clamp(p.y, p.r, boundH - p.r);
     ejectCasing(p);
     if (isVulcan) ejectCasing(p);
-    AudioFX.shoot();
+    AudioFX.shoot('arc-welder');
     spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#5be7ff'), 4, 100, 2);
     if (isVulcan) spawnParticles(p.x + Math.cos(baseAngle) * 24, p.y + Math.sin(baseAngle) * 24, '#ffd700', 6, 90, 2);
     rt.state.shake = Math.max(rt.state.shake, 1.5);
@@ -371,16 +394,15 @@ export function shoot() {
       rt.state.bullets.push(stdBullet);
     }
     p.cooldown = shotCooldown(p, p.fireRate * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
-
     p.recoil = 1.0;
     p.x -= Math.cos(p.aim) * 1.4;
     p.y -= Math.sin(p.aim) * 1.4;
     p.x = clamp(p.x, p.r, boundW - p.r);
     p.y = clamp(p.y, p.r, boundH - p.r);
-
+    applyWeaponRecoil(p, 65, 16.0);
     ejectCasing(p);
     if (isVulcan) ejectCasing(p);
-    AudioFX.shoot();
+    AudioFX.shoot('standard');
 
     spawnParticles(p.x + Math.cos(angle) * 24, p.y + Math.sin(angle) * 24, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#f7d48a'), 4, 90, 2);
     if (isVulcan) spawnParticles(p.x + Math.cos(angle) * 24, p.y + Math.sin(angle) * 24, '#ffd700', 6, 90, 2);

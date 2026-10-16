@@ -27,6 +27,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
+| `src/core/spatial-grid.js` | 2D 空間雜湊網格（Spatial Hash Grid），以 TypedArray 達成 0 GC 執行期廣域碰撞篩選。 |
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
@@ -35,7 +36,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果。 |
-| `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`。 |
+| `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
 | `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap、接地陰影。 |
 | `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家、敵人、場景物件、彈體，以及 Canvas HUD／覆蓋層。 |
@@ -43,7 +44,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/render/entity-style.js` | 受擊閃白等逐實體視覺暫存。 |
 | `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段色調、畫質預算與自動降級、預渲染光暈／雜訊貼圖快取。 |
 | `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
-| `src/audio/audio-fx.js` | Web Audio 程序合成音效、音訊解鎖及音量／靜音偏好。 |
+| `src/audio/audio-fx.js` | 原生 Web Audio API 程序合成音效（FM 合成跳彈、雙峰帶通破片殼擊、指數衰減低通與全域殘響）、音訊解鎖及音量／靜音偏好。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績橋接與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
 | `scripts/balance-sim.mjs` | 無頭長流程模擬。 |
