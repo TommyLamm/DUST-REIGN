@@ -60,7 +60,7 @@ function paintNoise(ctx, tile, w, h, tileSize, alpha, op, ox, oy) {
 }
 
 function paintDunes(ctx, w, h, colors, detail) {
-  var bands = detail ? 8 : 4;
+  var bands = detail ? 6 : 3;
   var reach = Math.hypot(w, h) + 48;
   var steps = detail ? 22 : 10;
   var px = -SIN_W;
@@ -77,15 +77,15 @@ function paintDunes(ctx, w, h, colors, detail) {
     var s;
     for (s = 0; s <= steps; s += 1) {
       var u = (s / steps - 0.5) * reach;
-      var wobble = Math.sin(s * 0.62 + i * 1.7) * (detail ? 16 : 8);
+      var wobble = Math.sin(s * 0.62 + i * 1.7) * (detail ? 12 : 6);
       var x = cx + COS_W * u + px * wobble;
       var y = cy + SIN_W * u + py * wobble;
       if (s === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.strokeStyle = i % 2 === 0 ? colors.light : colors.dark;
-    ctx.globalAlpha = i % 2 === 0 ? 0.62 : 0.4;
-    ctx.lineWidth = (detail ? 28 : 16) + (i % 3) * 8;
+    ctx.globalAlpha = i % 2 === 0 ? 0.18 : 0.12;
+    ctx.lineWidth = (detail ? 12 : 8) + (i % 2) * 4;
     ctx.stroke();
   }
   ctx.restore();
@@ -106,7 +106,7 @@ function strokeCrack(ctx, p, q, colors) {
   ctx.lineTo(q.x, q.y);
   ctx.stroke();
   ctx.strokeStyle = colors.hi;
-  ctx.globalAlpha = 0.28;
+  ctx.globalAlpha = 0.18;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(p.x + nx * 1.5, p.y + ny * 1.5);
@@ -154,14 +154,14 @@ function paintShadow(ctx, size) {
   ctx.save();
   ctx.translate(size * 0.32, size * 0.38);
   ctx.scale(1, 0.4);
-  ctx.fillStyle = 'rgba(6,10,14,0.4)';
+  ctx.fillStyle = 'rgba(2,3,5,0.45)';
   ctx.beginPath();
   ctx.arc(0, 0, size * 0.95, 0, TAU);
   ctx.fill();
   ctx.restore();
 }
 
-function paintRock(ctx, size, seed, colors, detail) {
+function paintRock(ctx, size, seed, colors) {
   var n = 5 + (seed % 2);
   var i;
   ctx.fillStyle = colors.dark;
@@ -176,22 +176,12 @@ function paintRock(ctx, size, seed, colors, detail) {
   }
   ctx.closePath();
   ctx.fill();
-  if (!detail) return;
-  ctx.fillStyle = colors.light;
-  ctx.globalAlpha = 0.55;
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.2, -size * 0.55);
-  ctx.lineTo(size * 0.22, -size * 0.12);
-  ctx.lineTo(-size * 0.05, size * 0.12);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
 }
 
 function paintScrap(ctx, size, variant, colors, detail) {
   var kind = detail ? variant % 4 : variant % 2;
   if (kind === 1) {
-    ctx.strokeStyle = colors.light;
+    ctx.strokeStyle = colors.dark;
     ctx.lineWidth = Math.max(2, size * 0.34);
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -199,7 +189,7 @@ function paintScrap(ctx, size, variant, colors, detail) {
     ctx.lineTo(size * 0.15, -size * 0.05);
     ctx.lineTo(size, -size * 0.4);
     ctx.stroke();
-    ctx.strokeStyle = colors.dark;
+    ctx.strokeStyle = colors.crack;
     ctx.lineWidth = Math.max(1, size * 0.12);
     ctx.stroke();
     return;
@@ -210,7 +200,7 @@ function paintScrap(ctx, size, variant, colors, detail) {
     ctx.beginPath();
     ctx.arc(0, 0, size * 0.72, 0, TAU);
     ctx.stroke();
-    ctx.strokeStyle = colors.light;
+    ctx.strokeStyle = colors.dark;
     ctx.lineWidth = 1.25;
     ctx.beginPath();
     ctx.arc(0, 0, size * 0.32, 0, TAU);
@@ -218,8 +208,7 @@ function paintScrap(ctx, size, variant, colors, detail) {
     return;
   }
   if (kind === 3) {
-    ctx.strokeStyle = colors.hi;
-    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = colors.dark;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-size, size * 0.1);
@@ -228,15 +217,10 @@ function paintScrap(ctx, size, variant, colors, detail) {
     ctx.moveTo(-size * 0.1, -size * 0.55);
     ctx.lineTo(size * 0.15, size * 0.45);
     ctx.stroke();
-    ctx.globalAlpha = 1;
     return;
   }
   ctx.fillStyle = colors.dark;
   ctx.fillRect(-size, -size * 0.32, size * 2, size * 0.64);
-  ctx.fillStyle = colors.light;
-  ctx.globalAlpha = 0.8;
-  ctx.fillRect(-size * 0.55, -size * 0.5, size * 0.85, size * 0.2);
-  ctx.globalAlpha = 1;
   if (!detail) return;
   ctx.fillStyle = colors.crack;
   ctx.fillRect(-size * 0.72, -size * 0.08, 1.6, 1.6);
@@ -248,8 +232,9 @@ function paintProps(ctx, colors, detail) {
   var pieces = rt.terrain || [];
   var i;
   ctx.save();
-  ctx.globalAlpha = 0.68;
+  ctx.globalAlpha = 0.28;
   for (i = 0; i < pieces.length; i += 1) {
+    if ((i % 5) >= 2) continue;
     var piece = pieces[i];
     if (!piece) continue;
     var size = piece.size || 8;
@@ -259,14 +244,14 @@ function paintProps(ctx, colors, detail) {
     ctx.rotate(piece.rot || 0);
     paintShadow(ctx, size);
     if (piece.kind === 'scrap') paintScrap(ctx, size, seed, colors, detail);
-    else paintRock(ctx, size, seed, colors, detail);
+    else paintRock(ctx, size, seed, colors);
     ctx.restore();
   }
   ctx.restore();
 }
 
 function paintGrid(ctx, w, h) {
-  var grid = 56;
+  var grid = 64;
   var cx = w * 0.5;
   var cy = h * 0.5;
   var halfW = w * 0.5 || 1;
@@ -276,9 +261,9 @@ function paintGrid(ctx, w, h) {
   var x;
   for (x = grid; x < w; x += grid) {
     var dx = Math.abs(x - cx) / halfW;
-    var ax = (1 - dx) * (1 - dx) * 0.12;
-    if (ax < 0.02) continue;
-    ctx.strokeStyle = 'rgba(210,186,140,' + ax.toFixed(3) + ')';
+    var ax = (1 - dx) * (1 - dx) * 0.035;
+    if (ax < 0.008) continue;
+    ctx.strokeStyle = 'rgba(180,160,130,' + ax.toFixed(3) + ')';
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
@@ -287,9 +272,9 @@ function paintGrid(ctx, w, h) {
   var y;
   for (y = grid; y < h; y += grid) {
     var dy = Math.abs(y - cy) / halfH;
-    var ay = (1 - dy) * (1 - dy) * 0.12;
-    if (ay < 0.02) continue;
-    ctx.strokeStyle = 'rgba(210,186,140,' + ay.toFixed(3) + ')';
+    var ay = (1 - dy) * (1 - dy) * 0.035;
+    if (ay < 0.008) continue;
+    ctx.strokeStyle = 'rgba(180,160,130,' + ay.toFixed(3) + ')';
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(w, y);
@@ -305,18 +290,15 @@ function paintGround(ctx, w, h, sector, detail) {
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = colors.base;
   ctx.fillRect(0, 0, w, h);
-  ctx.globalAlpha = sector === 'night' ? 0.52 : sector === 'rust' ? 0.46 : 0.44;
-  ctx.fillStyle = colors.light;
-  ctx.fillRect(0, 0, w, h);
-  ctx.globalAlpha = 1;
-  paintNoise(ctx, tile, w, h, detail ? 420 : 520, 0.42, 'overlay', 12, 20);
-  paintNoise(ctx, tile, w, h, detail ? 168 : 240, 0.28, 'soft-light', 40, 16);
-  if (detail) paintNoise(ctx, tile, w, h, 84, 0.16, 'overlay', 8, 36);
+  paintNoise(ctx, tile, w, h, detail ? 420 : 520, 0.12, 'soft-light', 12, 20);
+  if (detail) {
+    paintNoise(ctx, tile, w, h, 168, 0.06, 'soft-light', 40, 16);
+  }
   paintDunes(ctx, w, h, colors, detail);
   var shade = ctx.createLinearGradient(0, 0, w, h);
-  shade.addColorStop(0, 'rgba(255,214,160,0.08)');
-  shade.addColorStop(0.46, 'rgba(0,0,0,0)');
-  shade.addColorStop(1, 'rgba(0,0,0,0.24)');
+  shade.addColorStop(0, 'rgba(255,220,170,0.03)');
+  shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+  shade.addColorStop(1, 'rgba(0,0,0,0.22)');
   ctx.fillStyle = shade;
   ctx.fillRect(0, 0, w, h);
   paintCracks(ctx, w, h, colors, detail, sector);

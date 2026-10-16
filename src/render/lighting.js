@@ -264,6 +264,8 @@ export function drawLightmap(ctx) {
   }
   var storm = stormBlend(rt.state.waveTime || 0);
   var tint = sectorTint(rt.state.wave || 1, rt.state.waveTime || 0, storm);
+  // Ambient shade lift floor is maintained at >= 0.74 (min 0.65 in storms) to protect
+  // negative space floor contrast and prevent crushing dark armor silhouettes into pitch black.
   var shade = ambientShade(tint, storm);
   mapCtx.setTransform(1, 0, 0, 1, 0, 0);
   mapCtx.globalCompositeOperation = 'source-over';

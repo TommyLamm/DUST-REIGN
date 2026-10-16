@@ -2,9 +2,11 @@ import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
 
 export var PALETTE = {
-  ground: { base: '#241f18', light: '#423524', dark: '#120f0b', crack: '#0a0806' },
-  shadow: 'rgba(4, 6, 10, 0.62)',
-  ambient: { dusk: '#3a2a1e', storm: '#3b1712', night: '#0d1420' },
+  ground: { base: '#13100d', light: '#1c1712', dark: '#090706', crack: '#050403' },
+  shadow: 'rgba(2, 3, 5, 0.92)',
+  shadowPenumbra: 'rgba(4, 6, 9, 0.46)',
+  shadowFloat: 'rgba(8, 12, 16, 0.25)',
+  ambient: { dusk: '#181410', storm: '#220e0a', night: '#0a1017' },
   emissive: { player: '#7cf0c8', hostile: '#ff552e', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
   hud: { bone: '#e8e0c6', rust: '#ed6842', amber: '#e8b94e', mint: '#96baa0' }
 };
@@ -13,9 +15,9 @@ export var SECTOR_BLEND_SEC = 1.5;
 export var STORM_BLEND_SEC = 0.6;
 
 var GROUND_SECTORS = {
-  dusk: { base: '#241f18', light: '#4a3a28', dark: '#120f0b', crack: '#0a0806', hi: '#c2b08e' },
-  rust: { base: '#2c1a12', light: '#542c1e', dark: '#140c08', crack: '#0c0705', hi: '#c8926e' },
-  night: { base: '#182230', light: '#3a4e6c', dark: '#0e1420', crack: '#080c14', hi: '#a2bcd8' }
+  dusk: { base: '#13100d', light: '#1c1712', dark: '#090706', crack: '#050403', hi: '#251e18' },
+  rust: { base: '#140d0a', light: '#1f130e', dark: '#080504', crack: '#040202', hi: '#281711' },
+  night: { base: '#090e14', light: '#101722', dark: '#04070a', crack: '#020305', hi: '#172230' }
 };
 
 function hexToRgb(hex) {
@@ -98,13 +100,14 @@ export function ambientShade(tint, storm) {
   var s = typeof storm === 'number' ? storm : storm ? 1 : 0;
   if (s < 0) s = 0;
   if (s > 1) s = 1;
-  var lift = 0.62 - nightW * 0.06 - s * 0.05;
+  var lift = 0.74 - nightW * 0.05 - s * 0.04;
+  if (lift < 0.65) lift = 0.65;
   var r = tint ? tint.r : 58;
   var g = tint ? tint.g : 42;
   var b = tint ? tint.b : 30;
   return {
-    r: (r + (255 - r) * lift) | 0,
-    g: (g + (255 - g) * lift) | 0,
-    b: (b + (255 - b) * lift) | 0
+    r: Math.min(255, (r + (255 - r) * lift) | 0),
+    g: Math.min(255, (g + (255 - g) * lift) | 0),
+    b: Math.min(255, (b + (255 - b) * lift) | 0)
   };
 }
