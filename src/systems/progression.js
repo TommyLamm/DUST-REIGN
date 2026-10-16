@@ -193,7 +193,9 @@ function openUpgradePick() {
 export function addXp(amount) {
   var p = rt.state.player;
   syncXpCurve(rt.state);
-  rt.state.xp += Math.max(1, Math.round(amount * p.xpMult));
+  var gain = Math.max(1, Math.round(amount * p.xpMult));
+  rt.state.totalScrapCollected = (rt.state.totalScrapCollected || 0) + gain;
+  rt.state.xp += gain;
   if (rt.state.xp >= rt.state.xpNext) {
     if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) return;
     rt.state.xp -= rt.state.xpNext;

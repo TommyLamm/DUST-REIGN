@@ -10,6 +10,9 @@ import { isCampaignModalOpen, openCampaignModal, campaignModalCommand } from './
 import { closeCodex, cycleCodexTab, isCodexOpen, openCodex } from './codex-panel.js';
 import { updateGameOverUi } from './game-over.js';
 import { cycleHardcoreOperation, getSelectedHardcoreOperation, renderHardcoreBriefing } from './hardcore-briefing.js';
+import { createWorkshopPanel, refreshWorkshopPanel } from './workshop-panel.js';
+import { createVaultPanel, refreshVaultPanel } from './vault-panel.js';
+import { createBountiesPanel, refreshBountiesPanel } from './bounties-panel.js';
 
 var WEAPONS = [
   { id: 'standard', name: 'STANDARD', rate: '0.18s', pattern: 'DIRECT', line: 'Steady rifle. Stay mobile.' },
@@ -22,6 +25,15 @@ var ROWS = ['rig', 'weapon', 'heat', 'mode'];
 
 var built = false;
 var activeRow = 0;
+var activeNavTab = 'loadout';
+var tabBtnLoadout;
+var tabBtnWorkshop;
+var tabBtnVault;
+var tabBtnBounties;
+var tabPanelLoadout;
+var tabPanelWorkshop;
+var tabPanelVault;
+var tabPanelBounties;
 var rigButtons = [];
 var weaponButtons = [];
 var heatRow;
@@ -276,6 +288,15 @@ function refresh() {
   if (hintNode) hintNode.textContent = zh ? '方向鍵 選擇 · TAB 切換 · ENTER 開始' : 'ARROWS SELECT · TAB MOVES · ENTER STARTS';
   var codexOpenBtn = document.getElementById('codexOpenBtn');
   if (codexOpenBtn) codexOpenBtn.textContent = zh ? '檔案庫' : 'CODEX';
+
+  if (tabBtnLoadout) tabBtnLoadout.textContent = zh ? '[1] 出擊配置' : '[1] LOADOUT';
+  if (tabBtnWorkshop) tabBtnWorkshop.textContent = zh ? '[2] 改裝工坊 ⚡' : '[2] WORKSHOP ⚡';
+  if (tabBtnVault) tabBtnVault.textContent = zh ? '[3] 星級寶庫 ★' : '[3] STAR VAULT ★';
+  if (tabBtnBounties) tabBtnBounties.textContent = zh ? '[4] 每日賞金 ⚙' : '[4] BOUNTIES ⚙';
+
+  if (activeNavTab === 'workshop') refreshWorkshopPanel(tabPanelWorkshop);
+  else if (activeNavTab === 'vault') refreshVaultPanel(tabPanelVault);
+  else if (activeNavTab === 'bounties') refreshBountiesPanel(tabPanelBounties);
 }
 
 function chooseRig(id) {
@@ -558,6 +579,24 @@ function syncUnlockBanner() {
   for (i = 0; i < list.length; i += 1) host.appendChild(el('p', 'run-unlocks-line', list[i].label));
 }
 
+function switchNavTab(tabId) {
+  activeNavTab = tabId;
+  if (tabBtnLoadout) tabBtnLoadout.classList.toggle('is-active', tabId === 'loadout');
+  if (tabBtnWorkshop) tabBtnWorkshop.classList.toggle('is-active', tabId === 'workshop');
+  if (tabBtnVault) tabBtnVault.classList.toggle('is-active', tabId === 'vault');
+  if (tabBtnBounties) tabBtnBounties.classList.toggle('is-active', tabId === 'bounties');
+
+  if (tabPanelLoadout) tabPanelLoadout.hidden = (tabId !== 'loadout');
+  if (tabPanelWorkshop) tabPanelWorkshop.hidden = (tabId !== 'workshop');
+  if (tabPanelVault) tabPanelVault.hidden = (tabId !== 'vault');
+  if (tabPanelBounties) tabPanelBounties.hidden = (tabId !== 'bounties');
+
+  if (tabId === 'workshop') refreshWorkshopPanel(tabPanelWorkshop);
+  else if (tabId === 'vault') refreshVaultPanel(tabPanelVault);
+  else if (tabId === 'bounties') refreshBountiesPanel(tabPanelBounties);
+  else refresh();
+}
+
 export function initLoadoutPanel() {
   var panel;
   var rigRow;
@@ -571,10 +610,39 @@ export function initLoadoutPanel() {
   panel.classList.add('loadout-panel');
   panel.setAttribute('role', 'group');
   panel.setAttribute('aria-label', 'Run loadout');
-  panel.appendChild(el('p', 'loadout-kicker', 'LOADOUT'));
+
+  // Top Nav Tabs
+  var navTabs = el('div', 'loadout-nav-tabs');
+  tabBtnLoadout = el('button', 'loadout-nav-tab is-active', '[1] LOADOUT');
+  tabBtnLoadout.type = 'button';
+  tabBtnWorkshop = el('button', 'loadout-nav-tab', '[2] WORKSHOP ⚡');
+  tabBtnWorkshop.type = 'button';
+  tabBtnVault = el('button', 'loadout-nav-tab', '[3] STAR VAULT ★');
+  tabBtnVault.type = 'button';
+  tabBtnBounties = el('button', 'loadout-nav-tab', '[4] BOUNTIES ⚙');
+  tabBtnBounties.type = 'button';
+
+  on(tabBtnLoadout, 'click', function (e) { e.preventDefault(); e.stopPropagation(); switchNavTab('loadout'); });
+  on(tabBtnWorkshop, 'click', function (e) { e.preventDefault(); e.stopPropagation(); switchNavTab('workshop'); });
+  on(tabBtnVault, 'click', function (e) { e.preventDefault(); e.stopPropagation(); switchNavTab('vault'); });
+  on(tabBtnBounties, 'click', function (e) { e.preventDefault(); e.stopPropagation(); switchNavTab('bounties'); });
+
+  navTabs.appendChild(tabBtnLoadout);
+  navTabs.appendChild(tabBtnWorkshop);
+  navTabs.appendChild(tabBtnVault);
+  navTabs.appendChild(tabBtnBounties);
+  panel.appendChild(navTabs);
+
+  // Tab Panels
+  tabPanelLoadout = el('div', 'loadout-tab-panel');
+  tabPanelWorkshop = createWorkshopPanel();
+  tabPanelVault = createVaultPanel();
+  tabPanelBounties = createBountiesPanel();
+
+  tabPanelLoadout.appendChild(el('p', 'loadout-kicker', 'LOADOUT'));
   statusNode = el('p', 'loadout-status', '');
   statusNode.setAttribute('aria-live', 'polite');
-  panel.appendChild(statusNode);
+  tabPanelLoadout.appendChild(statusNode);
 
   // 1. Rig Row
   rigRow = el('div', 'loadout-row');
@@ -599,7 +667,7 @@ export function initLoadoutPanel() {
     })(RIGS[i]);
   }
   rigRow.appendChild(rigChoices);
-  panel.appendChild(rigRow);
+  tabPanelLoadout.appendChild(rigRow);
 
   // 2. Weapon Row
   weaponRow = el('div', 'loadout-row');
@@ -626,7 +694,7 @@ export function initLoadoutPanel() {
     })(WEAPONS[i]);
   }
   weaponRow.appendChild(weaponChoices);
-  panel.appendChild(weaponRow);
+  tabPanelLoadout.appendChild(weaponRow);
 
   // 3. Heat Row
   heatRow = el('div', 'loadout-row');
@@ -663,7 +731,7 @@ export function initLoadoutPanel() {
   heatChoices.appendChild(heatValue);
   heatChoices.appendChild(heatUp);
   heatRow.appendChild(heatChoices);
-  panel.appendChild(heatRow);
+  tabPanelLoadout.appendChild(heatRow);
 
   // 4. Four-Mode Selection Row
   modeRow = el('div', 'loadout-row');
@@ -723,7 +791,7 @@ export function initLoadoutPanel() {
   modeChoices.appendChild(modeHardcore);
   modeChoices.appendChild(modeDaily);
   modeRow.appendChild(modeChoices);
-  panel.appendChild(modeRow);
+  tabPanelLoadout.appendChild(modeRow);
 
   // 5. Campaign Stage Summary Bar
   campaignStageBar = el('div', 'campaign-stage-bar');
@@ -754,20 +822,20 @@ export function initLoadoutPanel() {
 
   campaignStageBar.appendChild(stageInfo);
   campaignStageBar.appendChild(campaignSelectStageBtn);
-  panel.appendChild(campaignStageBar);
+  tabPanelLoadout.appendChild(campaignStageBar);
 
   // 6. Hardcore Briefing Container
   hardcoreBriefingContainer = el('div', 'hardcore-briefing-wrapper');
   hardcoreBriefingContainer.id = 'hardcoreBriefingContainer';
   hardcoreBriefingContainer.hidden = true;
-  panel.appendChild(hardcoreBriefingContainer);
+  tabPanelLoadout.appendChild(hardcoreBriefingContainer);
 
   // 7. General Rules & Scores
   ruleNode = el('p', 'loadout-rule', '');
   scoreNode = el('p', 'loadout-legacy', '');
-  panel.appendChild(ruleNode);
-  panel.appendChild(scoreNode);
-  panel.appendChild(el('p', 'loadout-hint', 'ARROWS SELECT · TAB MOVES · ENTER STARTS'));
+  tabPanelLoadout.appendChild(ruleNode);
+  tabPanelLoadout.appendChild(scoreNode);
+  tabPanelLoadout.appendChild(el('p', 'loadout-hint', 'ARROWS SELECT · TAB MOVES · ENTER STARTS'));
 
   codexBtn = el('button', 'loadout-codex', 'CODEX');
   codexBtn.type = 'button';
@@ -778,7 +846,12 @@ export function initLoadoutPanel() {
     event.stopPropagation();
     openCodex();
   });
-  panel.appendChild(codexBtn);
+  tabPanelLoadout.appendChild(codexBtn);
+
+  panel.appendChild(tabPanelLoadout);
+  panel.appendChild(tabPanelWorkshop);
+  panel.appendChild(tabPanelVault);
+  panel.appendChild(tabPanelBounties);
 
   on(window, 'keydown', onKey, true);
   panel.hidden = false;

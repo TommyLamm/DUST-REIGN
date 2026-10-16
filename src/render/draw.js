@@ -6,6 +6,7 @@ import { drawAdditiveFx, drawDamageNumbers, drawScreenFlashes, updateFx } from '
 import { drawLightmap } from './lighting.js';
 import { drawHud, drawOverlay } from './overlay.js';
 import { drawPlayer } from './player.js';
+import { drawGhostMecha, drawGhostSplitTimer } from './ghost.js';
 import { drawArtilleryTelegraphs, drawEnemyBullets, drawLightningArcs, drawMoltenZones, drawOpticalFlashes, drawPlasmaZones, drawPlayerBullets, drawShockRings, drawVortices } from './projectiles.js';
 import { drawContactShadows } from './shadows.js';
 import { beginGlowBatch, endGlowBatch } from './sprites.js';
@@ -47,6 +48,7 @@ export function draw() {
   if (enemyList) {
     for (ei = 0; ei < enemyList.length; ei += 1) drawEnemy(ctx, enemyList[ei]);
   }
+  drawGhostMecha(ctx);
   drawPlayer(ctx);
 
   ctx.save();
@@ -100,5 +102,6 @@ export function draw() {
   drawScreenPost(ctx);
   drawScreenFlashes(ctx);
   drawHud(ctx);
+  drawGhostSplitTimer(ctx);
   drawOverlay(ctx);
 }

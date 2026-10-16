@@ -1,6 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { stepContracts } from './contracts.js';
+import { stepGhost } from './ghost.js';
 import { stepMutators } from './mutators.js';
 import { stepBullets } from './sim/bullets.js';
 import { stepEffects } from './sim/effects.js';
@@ -68,5 +69,6 @@ export function update(dt) {
   stepTactical(dt, frame);
   stepEffects(dt, frame);
   stepContracts(frame);
+  stepGhost(dt);
   updateDomUi();
 }

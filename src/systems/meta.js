@@ -1,4 +1,18 @@
-import { readBestScoreV2, readDaily, readMeta, writeBestScoreV2, writeDaily, writeMeta } from '../core/meta-store.js';
+import {
+  addScrap,
+  getCosmetics,
+  getWorkshopState,
+  readBestScoreV2,
+  readDaily,
+  readDailyBounties,
+  readMeta,
+  readModdedBestScore,
+  saveDailyBounties,
+  writeBestScoreV2,
+  writeDaily,
+  writeMeta,
+  writeModdedBestScore
+} from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { clearSeed, seedRun } from '../core/rng.js';
 import { getDailyRule, localDateKey } from '../data/daily.js';
@@ -25,6 +39,10 @@ function emptySession() {
     bestFlawless: 0,
     barrelChain: 0,
     parts: 0,
+    pointBlankBreacherKills: 0,
+    vanguardMultiKills: 0,
+    arcChainKills: 0,
+    repairBoxPicked: false,
     startedAt: 0
   };
 }
@@ -128,6 +146,99 @@ export function applyLoadout(state, dateKey) {
       writeMeta({ selectedRig: pick.rigId, selectedWeapon: pick.weaponId, selectedHeat: pick.heat });
     }
   }
+
+  // Workshop modules & mode guardrails
+  var wsState = getWorkshopState();
+  var isHardcore = state.mode === 'hardcore';
+  var hasModules = !!(wsState.loadout.propulsion || wsState.loadout.armor || wsState.loadout.tactical);
+  state.isModded = (!isHardcore && state.mode === 'standard' && hasModules);
+
+  if (!isHardcore) {
+    var p = state.player;
+    var unlocked = wsState.unlockedModules || {};
+
+    // 1. Propulsion module
+    var propId = wsState.loadout.propulsion;
+    var propTier = propId && unlocked[propId];
+    if (propTier > 0) {
+      if (propId === 'm_phase_bearing') {
+        p.speed *= 0.95;
+        p.justDashWindowBonus = propTier >= 2 ? 0.40 : 0.25;
+        p.dashInvulnBonus = propTier >= 2 ? 0.10 : 0;
+        if (propTier >= 3) p.justDashCooldownReset = true;
+      } else if (propId === 'm_vector_thruster') {
+        p.dashDistanceMult = 1.15;
+        p.speed *= (propTier >= 2 ? 1.18 : 1.12);
+        if (propTier >= 2) {
+          p.plasmaTrail = { duration: 1.5, dps: 40, slow: propTier >= 3 ? 0.35 : 0 };
+        }
+      } else if (propId === 'm_kinetic_turbine') {
+        p.grazeRadiusMult = 0.90;
+        p.grazeKineticCharge = true;
+        p.kineticCharges = 0;
+        if (propTier >= 2) p.dashDetonateKinetic = true;
+        if (propTier >= 3) p.kineticKnockbackDamage = 0.15;
+      }
+    }
+
+    // 2. Armor module
+    var armId = wsState.loadout.armor;
+    var armTier = armId && unlocked[armId];
+    if (armTier > 0) {
+      if (armId === 'b_reactive_plasma') {
+        p.hitboxRadiusMult = 1.06;
+        p.r = Math.round(p.r * 1.06);
+        p.reactiveMicroEmp = {
+          radius: armTier >= 2 ? 160 : 120,
+          cd: armTier >= 2 ? 12 : 18,
+          timer: 0,
+          stun: armTier >= 3 ? 1.0 : 0
+        };
+      } else if (armId === 'b_scrap_bulkhead') {
+        p.repairPickupRadiusMult = 0.85;
+        p.tempArmorCap = armTier >= 2 ? 30 : 15;
+        if (armTier >= 3) p.shieldCollisionDamageReduction = 0.20;
+      } else if (armId === 'b_aegis_core') {
+        p.maxHp = Math.max(1, Math.round(p.maxHp * 0.85));
+        p.hp = p.maxHp;
+        p.aegisProtocol = {
+          invuln: armTier >= 2 ? 2.5 : 1.5,
+          burstSpeed: armTier >= 2 ? 1.6 : 1.0,
+          refillEmp: armTier >= 3,
+          used: false
+        };
+      }
+    }
+
+    // 3. Tactical module
+    var tacId = wsState.loadout.tactical;
+    var tacTier = tacId && unlocked[tacId];
+    if (tacTier > 0) {
+      if (tacId === 'c_resonance_fc') {
+        p.resonanceFireControl = {
+          tier: tacTier,
+          streakPenaltyTimer: 0
+        };
+      } else if (tacId === 'c_flux_condenser') {
+        p.recoilMult = 1.20;
+        p.chargeTimeMult = tacTier >= 2 ? 0.65 : 0.80;
+        p.bulletSpeedMult = tacTier >= 2 ? 1.25 : 1.0;
+        if (tacTier >= 3) p.shatterArmorPierced = true;
+      } else if (tacId === 'c_surge_unit') {
+        p.surgeUnit = {
+          tier: tacTier,
+          active: false,
+          timer: 0
+        };
+      }
+    }
+  }
+
+  // Cosmetics
+  var cosmetics = getCosmetics();
+  state.player.selectedSkin = cosmetics.selectedSkin || 'default';
+  state.player.selectedTrail = cosmetics.selectedTrail || 'default';
+
   session = emptySession();
   session.startedAt = Date.now();
 }
@@ -181,6 +292,14 @@ export function noteMetaEvent(kind, data) {
   } else if (kind === 'parts') {
     parts = data.count || 0;
     if (parts > session.parts) session.parts = parts;
+  } else if (kind === 'repair-pickup') {
+    session.repairBoxPicked = true;
+  } else if (kind === 'breacher-pointblank') {
+    session.pointBlankBreacherKills = (session.pointBlankBreacherKills || 0) + (data.count || 1);
+  } else if (kind === 'vanguard-multikill') {
+    session.vanguardMultiKills = (session.vanguardMultiKills || 0) + (data.count || 1);
+  } else if (kind === 'arc-kill') {
+    session.arcChainKills = (session.arcChainKills || 0) + (data.count || 1);
   }
 }
 
@@ -375,9 +494,72 @@ export function onRunEnd(state) {
     achievements: meta.achievements,
     stats: meta.stats
   });
+
+  // 1. Refined Scrap Economy: Single-run conversion floor(scrap / 60)
+  var singleRunScrap = state.totalScrapCollected || state.scrapCollectedInStage || state.xp || 0;
+  var refinedScrap = Math.floor(singleRunScrap / 60);
+  if (refinedScrap > 0) {
+    addScrap(refinedScrap);
+  }
+  state.refinedScrapEarned = refinedScrap;
+
+  // 2. Daily Bounties Progress Update
+  var dc = readDailyBounties();
+  if (dc && Array.isArray(dc.bounties)) {
+    var dcChanged = false;
+    for (var bi = 0; bi < dc.bounties.length; bi += 1) {
+      var b = dc.bounties[bi];
+      if (b.claimed) continue;
+      var curProg = b.progress || 0;
+      if (b.id === 'bounty_clean_streak') {
+        var streakSec = Math.max(session.bestFlawless * 4, flawless * 4);
+        if (streakSec > curProg) { b.progress = Math.min(b.goal, streakSec); dcChanged = true; }
+      } else if (b.id === 'bounty_just_master') {
+        var justCount = Math.max(session.justDashes, just);
+        if (justCount > curProg) { b.progress = Math.min(b.goal, justCount); dcChanged = true; }
+      } else if (b.id === 'bounty_graze_king') {
+        var grazes = statNum(state, 'grazes');
+        if (grazes > curProg) { b.progress = Math.min(b.goal, grazes); dcChanged = true; }
+      } else if (b.id === 'bounty_breacher_pointblank') {
+        var pbKills = curProg + (session.pointBlankBreacherKills || 0);
+        if (pbKills !== curProg) { b.progress = Math.min(b.goal, pbKills); dcChanged = true; }
+      } else if (b.id === 'bounty_vanguard_pierce') {
+        var vgKills = curProg + (session.vanguardMultiKills || 0);
+        if (vgKills !== curProg) { b.progress = Math.min(b.goal, vgKills); dcChanged = true; }
+      } else if (b.id === 'bounty_arc_conductor') {
+        var arcK = curProg + (session.arcChainKills || 0);
+        if (arcK !== curProg) { b.progress = Math.min(b.goal, arcK); dcChanged = true; }
+      } else if (b.id === 'bounty_high_heat_rush') {
+        if (state.heat >= 1 && waveReached >= 5 && !session.repairBoxPicked) {
+          b.progress = b.goal;
+          dcChanged = true;
+        }
+      } else if (b.id === 'bounty_titan_breaker') {
+        if (parts >= 2) {
+          b.progress = b.goal;
+          dcChanged = true;
+        }
+      } else if (b.id === 'bounty_speed_sector') {
+        if (state.mode === 'campaign' && state.stageCleared && (state.stageElapsed || 0) <= 60) {
+          b.progress = b.goal;
+          dcChanged = true;
+        }
+      }
+    }
+    if (dcChanged) {
+      saveDailyBounties(dc);
+    }
+  }
+
+  // 3. High score handling (Standard vanilla vs modded score separation)
   score = clampInt(Math.round(Number(state.score) || 0));
-  prevBest = readBestScoreV2();
-  if (score > prevBest) writeBestScoreV2(score);
+  if (!state.isModded) {
+    prevBest = readBestScoreV2();
+    if (score > prevBest) writeBestScoreV2(score);
+  } else {
+    var curModBest = readModdedBestScore();
+    if (score > curModBest) writeModdedBestScore(score);
+  }
   if (dailyRun) {
     dailySaved = readDaily();
     if (dailySaved.date !== state.daily.date) dailySaved = { date: state.daily.date, best: 0, runs: 0 };

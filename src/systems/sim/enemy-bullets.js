@@ -159,11 +159,14 @@ export function stepEnemyBullets(dt, frame) {
           if (p.reactiveArmor || p.overchargeRetaliation) triggerReactiveArmor(eb.x, eb.y);
         }
       }
-    } else if (!eb.noGraze && eb.type !== 'acid' && ebDist <= (hitRadius + 18) && !eb.grazed) {
+    } else if (!eb.noGraze && eb.type !== 'acid' && ebDist <= (hitRadius + 18 * (typeof p.grazeRadiusMult === 'number' ? p.grazeRadiusMult : 1)) && !eb.grazed) {
       eb.grazed = true;
       if (rt.state.stats) rt.state.stats.grazes += 1;
       addScore(15, 'graze');
       noteContractEvent('graze', { x: eb.x, y: eb.y });
+      if (p.grazeKineticCharge) {
+        p.kineticCharges = Math.min(10, (p.kineticCharges || 0) + 1);
+      }
       var grazeCap = (typeof p.batteryMax === 'number') ? p.batteryMax : (p.maxEnergy || 100);
       p.energy = Math.min(grazeCap, (p.energy || 0) + 8.0);
       rt.state.grazeCombo = (rt.state.grazeCombo || 0) + 1;

@@ -201,6 +201,25 @@ export function updateGameOverUi(state) {
     if (restartBtn) restartBtn.hidden = false;
     if (dualExitGroup) dualExitGroup.hidden = true;
   }
+
+  var metaReward = document.getElementById('metaGameOverReward');
+  if (!metaReward) {
+    metaReward = el('div', 'game-over-meta-reward');
+    metaReward.id = 'metaGameOverReward';
+    var anchor = screenElement.querySelector('.overlay-stats') || screenElement.querySelector('.stats-table') || restartBtn || screenElement;
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(metaReward, anchor.nextSibling);
+    else screenElement.appendChild(metaReward);
+  }
+  while (metaReward.firstChild) metaReward.removeChild(metaReward.firstChild);
+  var refinedEarned = state.singleRunRefinedScrapEarned || Math.floor((state.totalScrapCollected || 0) / 60);
+  if (refinedEarned > 0) {
+    var scrapP = el('div', 'meta-scrap-reward', (zh ? '獲得精煉廢料: +' : 'REFINED SCRAP: +') + refinedEarned + ' ⚙');
+    metaReward.appendChild(scrapP);
+  }
+  if (state.isModded) {
+    var modP = el('div', 'meta-mod-badge', zh ? '[MOD] 改裝裝備運行 (非官方榜單)' : '[MOD] MODDED RUN (UNRANKED)');
+    metaReward.appendChild(modP);
+  }
 }
 
 export function initGameOverUi() {

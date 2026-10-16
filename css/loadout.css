@@ -233,3 +233,745 @@ html.reduced-motion .loadout-codex {
 .game-root.is-high-contrast .loadout-card.is-selected {
   outline: 2px solid #fff;
 }
+
+/* =========================================================================
+   Track 3 Metagame Styles: Nav Tabs, Workshop, Vault, Bounties, and Rewards
+   ========================================================================= */
+
+/* Top Navigation Tabs */
+.loadout-nav-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+
+.loadout-nav-tab {
+  background: rgba(18, 22, 28, 0.85);
+  border: 1px solid rgba(91, 231, 255, 0.25);
+  color: #a8b8c0;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.loadout-nav-tab:hover {
+  background: rgba(28, 36, 48, 0.95);
+  border-color: rgba(91, 231, 255, 0.6);
+  color: #fff;
+}
+
+.loadout-nav-tab.is-active {
+  background: rgba(0, 243, 255, 0.15);
+  border-color: #00f3ff;
+  color: #00f3ff;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+}
+
+/* Common Header Styles */
+.workshop-header, .vault-header, .bounties-header {
+  background: rgba(14, 18, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.workshop-title-row, .vault-title-row, .bounties-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.workshop-title, .vault-title, .bounties-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #fff;
+}
+
+.workshop-scrap-badge, .bounties-scrap-badge {
+  background: rgba(255, 170, 0, 0.18);
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  color: #ffa022;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.workshop-meter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.workshop-meter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8be0ff;
+}
+
+.workshop-wattage-pips {
+  display: flex;
+  gap: 4px;
+}
+
+.wattage-pip {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.wattage-pip.is-used {
+  color: #00f3ff;
+  text-shadow: 0 0 6px rgba(0, 243, 255, 0.7);
+}
+
+.workshop-notice {
+  margin: 8px 0 0 0;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+
+.workshop-notice.is-hardcore {
+  background: rgba(255, 50, 50, 0.15);
+  border-left: 3px solid #ff4444;
+  color: #ff8888;
+}
+
+.workshop-notice.is-modded {
+  background: rgba(255, 170, 0, 0.15);
+  border-left: 3px solid #ffa022;
+  color: #ffd08a;
+}
+
+.workshop-notice.is-campaign {
+  background: rgba(0, 243, 255, 0.12);
+  border-left: 3px solid #00f3ff;
+  color: #a8f5e5;
+}
+
+.workshop-section-title, .vault-section-title, .bounties-section-title {
+  margin: 12px 0 8px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8fa0b0;
+  text-transform: uppercase;
+}
+
+/* Sockets Grid */
+.workshop-sockets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.workshop-socket-card {
+  background: rgba(16, 20, 28, 0.8);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workshop-socket-card.has-module {
+  border: 1px solid rgba(0, 243, 255, 0.4);
+  background: rgba(0, 243, 255, 0.05);
+}
+
+.socket-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.socket-branch-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8fa0b0;
+}
+
+.socket-wattage-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #00f3ff;
+}
+
+.socket-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.socket-mod-title {
+  font-size: 11px;
+  color: #fff;
+}
+
+.socket-tier-badge {
+  font-size: 10px;
+  color: #ffa022;
+  font-weight: 800;
+}
+
+.socket-empty-text {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  padding: 6px 0;
+}
+
+.workshop-detach-btn {
+  background: rgba(255, 60, 60, 0.15);
+  border: 1px solid rgba(255, 60, 60, 0.4);
+  color: #ff8888;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 2px;
+  margin-top: 4px;
+}
+
+.workshop-detach-btn:hover {
+  background: rgba(255, 60, 60, 0.35);
+  color: #fff;
+}
+
+/* Modules Catalog Grid */
+.workshop-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.module-card {
+  background: rgba(14, 18, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.module-card.is-equipped {
+  border-color: #00f3ff;
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
+}
+
+.module-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.module-code-name {
+  display: flex;
+  flex-direction: column;
+}
+
+.module-code {
+  font-size: 9px;
+  font-weight: 800;
+  color: #ffa022;
+}
+
+.module-name {
+  font-size: 11px;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.module-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.module-branch-badge {
+  font-size: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: #8fa0b0;
+}
+
+.module-wattage-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #00f3ff;
+}
+
+.module-tier-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 800;
+  color: #ffd08a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 4px;
+}
+
+.module-stats-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  min-height: 44px;
+}
+
+.module-bonus-text {
+  margin: 0;
+  color: #00f3ff;
+  line-height: 1.3;
+}
+
+.module-penalty-text {
+  margin: 0;
+  color: #ff9e3b;
+  line-height: 1.3;
+}
+
+.module-actions-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.module-action-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 5px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.module-action-btn.is-equip {
+  background: rgba(0, 243, 255, 0.15);
+  border: 1px solid rgba(0, 243, 255, 0.45);
+  color: #00f3ff;
+}
+
+.module-action-btn.is-equip:hover:not(:disabled) {
+  background: rgba(0, 243, 255, 0.35);
+  color: #fff;
+}
+
+.module-action-btn.is-detach {
+  background: rgba(255, 60, 60, 0.15);
+  border: 1px solid rgba(255, 60, 60, 0.45);
+  color: #ff8888;
+}
+
+.module-action-btn.is-detach:hover {
+  background: rgba(255, 60, 60, 0.35);
+  color: #fff;
+}
+
+.module-action-btn.is-upgrade {
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  color: #ffa022;
+}
+
+.module-action-btn.is-upgrade:hover:not(:disabled) {
+  background: rgba(255, 170, 0, 0.35);
+  color: #fff;
+}
+
+.module-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #666;
+}
+
+/* Vault & Milestones Styles */
+.vault-star-badge {
+  background: rgba(255, 215, 0, 0.18);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  color: #ffd700;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.vault-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.vault-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9e3b, #ffd700);
+  transition: width 0.3s ease;
+}
+
+.vault-milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.milestone-card {
+  background: rgba(16, 20, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.milestone-card.is-unlocked {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.06);
+}
+
+.milestone-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.milestone-star-req {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd700;
+}
+
+.milestone-status-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: #8fa0b0;
+}
+
+.milestone-card.is-unlocked .milestone-status-tag {
+  color: #00f3ff;
+}
+
+.milestone-name {
+  font-size: 11px;
+  color: #fff;
+}
+
+.milestone-desc {
+  margin: 0;
+  font-size: 9px;
+  color: #8fa0b0;
+  line-height: 1.3;
+}
+
+/* Cosmetics Picker Grid */
+.cosmetics-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cosmetic-card {
+  background: rgba(14, 18, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 10px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cosmetic-card.is-equipped {
+  border-color: #00f3ff;
+  box-shadow: 0 0 6px rgba(0, 243, 255, 0.25);
+}
+
+.cosmetic-name {
+  font-size: 11px;
+  color: #fff;
+}
+
+.cosmetic-desc {
+  margin: 0;
+  font-size: 9px;
+  color: #8fa0b0;
+  line-height: 1.3;
+  min-height: 24px;
+}
+
+.cosmetic-select-btn {
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  background: rgba(0, 243, 255, 0.15);
+  border: 1px solid rgba(0, 243, 255, 0.4);
+  color: #00f3ff;
+  margin-top: 4px;
+}
+
+.cosmetic-select-btn.is-current {
+  background: rgba(0, 243, 255, 0.35);
+  border-color: #00f3ff;
+  color: #fff;
+  cursor: default;
+}
+
+.cosmetic-select-btn:disabled:not(.is-current) {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #666;
+}
+
+/* Bounties Styles */
+.bounties-meta-row {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8fa0b0;
+  margin-top: 4px;
+}
+
+.bounties-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.bounty-card {
+  background: rgba(14, 18, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bounty-card.is-ready {
+  border-color: #00f3ff;
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.25);
+}
+
+.bounty-card.is-claimed {
+  opacity: 0.65;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.bounty-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bounty-category-tag {
+  font-size: 9px;
+  font-weight: 800;
+  color: #8fa0b0;
+}
+
+.bounty-reward-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffa022;
+}
+
+.bounty-title {
+  font-size: 12px;
+  color: #fff;
+}
+
+.bounty-desc {
+  margin: 0;
+  font-size: 10px;
+  color: #a0b0c0;
+  line-height: 1.35;
+  min-height: 38px;
+}
+
+.bounty-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bounty-progress-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bounty-progress-fill {
+  height: 100%;
+  background: #00f3ff;
+  transition: width 0.25s ease;
+}
+
+.bounty-progress-text {
+  font-size: 9px;
+  color: #8fa0b0;
+  font-weight: 700;
+  align-self: flex-end;
+}
+
+.bounty-action-btn {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.bounty-action-btn.is-claimable {
+  background: rgba(255, 170, 0, 0.25);
+  border: 1px solid #ffa022;
+  color: #ffd08a;
+  animation: bountyPulse 1.5s infinite alternate;
+}
+
+@keyframes bountyPulse {
+  0% { box-shadow: 0 0 4px rgba(255, 170, 0, 0.3); }
+  100% { box-shadow: 0 0 12px rgba(255, 170, 0, 0.7); }
+}
+
+.bounty-action-btn.is-pending, .bounty-action-btn.is-claimed {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Grand Slam Card */
+.grand-slam-card {
+  background: rgba(20, 16, 12, 0.95);
+  border: 1px dashed rgba(255, 170, 0, 0.35);
+  padding: 12px 14px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grand-slam-card.is-ready {
+  border: 1px solid #ffa022;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.3);
+}
+
+.grand-slam-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grand-slam-title {
+  font-size: 12px;
+  color: #ffd700;
+}
+
+.grand-slam-reward-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffa022;
+}
+
+.grand-slam-desc {
+  margin: 0;
+  font-size: 10px;
+  color: #d0c0a0;
+  line-height: 1.35;
+}
+
+.grand-slam-btn {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.grand-slam-btn.is-claimable {
+  background: rgba(255, 215, 0, 0.25);
+  border: 1px solid #ffd700;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.grand-slam-btn.is-pending, .grand-slam-btn.is-claimed {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Game Over Meta Rewards Row */
+.game-over-meta-reward {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.meta-scrap-reward {
+  background: rgba(255, 170, 0, 0.18);
+  border: 1px solid rgba(255, 170, 0, 0.5);
+  color: #ffa022;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 3px;
+}
+
+.meta-mod-badge {
+  background: rgba(255, 80, 80, 0.18);
+  border: 1px solid rgba(255, 80, 80, 0.5);
+  color: #ff8888;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 3px;
+}

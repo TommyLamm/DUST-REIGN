@@ -62,6 +62,10 @@ export function damagePlayer(amount, source, threatX, threatY) {
     requested = Math.round(p.maxHp * 0.50);
   }
 
+  if (source === 'collision' && p.shieldCollisionDamageReduction && (p.shield || 0) > 0) {
+    requested = Math.round(requested * (1 - p.shieldCollisionDamageReduction));
+  }
+
   var mult = (typeof p.damageTakenMult === 'number') ? p.damageTakenMult : 1;
   if (p.fortressProtocol && (p.energy || 0) >= 50) mult *= 0.75;
   if (p.aegisStance && typeof threatX === 'number' && typeof threatY === 'number') {
@@ -89,9 +93,59 @@ export function damagePlayer(amount, source, threatX, threatY) {
     p.hp = 1;
     p.phoenix = false;
     saved = true;
+  } else if (p.aegisProtocol && !p.aegisProtocol.used && p.hp - remaining <= 0) {
+    p.aegisProtocol.used = true;
+    applied = Math.max(0, p.hp - 1);
+    p.hp = 1;
+    p.invulnerable = p.aegisProtocol.invuln || 1.5;
+    if (p.aegisProtocol.burstSpeed > 1) {
+      p.speedBoostTimer = 2.0;
+      p.speedBoostMult = p.aegisProtocol.burstSpeed;
+    }
+    if (p.aegisProtocol.refillEmp) {
+      p.empCooldown = 0;
+      p.empCharged = true;
+    }
+    saved = true;
+    AudioFX.blast();
+    triggerHaptic([60, 80, 100]);
+    rt.state.shake = Math.max(rt.state.shake, 16);
+    logEvent('AEGIS PROTOCOL // FATAL BLOW PREVENTED');
+    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'AEGIS PROTOCOL ACTIVATED // EMERGENCY SHIELD ENGAGED';
+    spawnParticles(p.x, p.y, '#00f3ff', 30, 220, 4);
   } else {
     p.hp -= remaining;
   }
+
+  // B-01 Reactive Plasma Plating micro-EMP
+  if (p.reactiveMicroEmp && (p.reactiveMicroEmp.timer || 0) <= 0) {
+    p.reactiveMicroEmp.timer = p.reactiveMicroEmp.cd;
+    var microR = p.reactiveMicroEmp.radius;
+    if (rt.state.enemyBullets) {
+      for (var mbi = rt.state.enemyBullets.length - 1; mbi >= 0; mbi -= 1) {
+        var meb = rt.state.enemyBullets[mbi];
+        if (dist2(meb.x, meb.y, p.x, p.y) <= microR * microR) {
+          spawnParticles(meb.x, meb.y, '#5be7ff', 4, 90, 2);
+          rt.state.enemyBullets.splice(mbi, 1);
+        }
+      }
+    }
+    if (p.reactiveMicroEmp.stun > 0 && rt.state.enemies) {
+      for (var mei = rt.state.enemies.length - 1; mei >= 0; mei -= 1) {
+        var menemy = rt.state.enemies[mei];
+        if (dist2(menemy.x, menemy.y, p.x, p.y) <= (microR + menemy.r) * (microR + menemy.r)) {
+          menemy.empTimer = Math.max(menemy.empTimer || 0, p.reactiveMicroEmp.stun);
+          spawnParticles(menemy.x, menemy.y, '#5be7ff', 6, 120, 2);
+        }
+      }
+    }
+    if (rt.state.shockRings) {
+      rt.state.shockRings.push({ x: p.x, y: p.y, r: 8, maxR: microR, life: 0.25, maxLife: 0.25, color: '#5be7ff' });
+    }
+    AudioFX.emp();
+    logEvent('REACTIVE PLASMA // MICRO-EMP DETONATED');
+  }
+
   if (isStormFront()) rt.state.stormHurt = true;
   rt.state.waveDamageTaken = (rt.state.waveDamageTaken || 0) + applied;
   rt.state.damageTakenInStage = (rt.state.damageTakenInStage || 0) + applied;
@@ -282,6 +336,33 @@ export function killEnemy(enemyOrIndex, cause) {
   onKill(e, killInfo);
   noteContractEvent('kill', killInfo);
   noteMetaEvent('kill', killInfo);
+
+  // C-03 Black-Market Surge Unit kill extension (+0.5s per kill, max +3s extra)
+  var p = rt.state.player;
+  if (p && p.surgeUnit && p.surgeUnit.active) {
+    if ((p.surgeUnit.bonusTime || 0) < 3.0) {
+      var addSec = Math.min(0.5, 3.0 - (p.surgeUnit.bonusTime || 0));
+      p.surgeUnit.bonusTime = (p.surgeUnit.bonusTime || 0) + addSec;
+      p.surgeUnit.timer += addSec;
+    }
+  }
+
+  // C-01 Resonance Fire Control T3 crit kill chain explosion (60 AoE in 90px)
+  if (why === 'bullet' && rt.state.lastHitWasCrit && p && p.resonanceFireControl && p.resonanceFireControl.tier >= 3) {
+    var blastR = 90;
+    if (rt.state.shockRings) {
+      rt.state.shockRings.push({ x: e.x, y: e.y, r: 8, maxR: blastR, life: 0.25, maxLife: 0.25, color: '#ff4d2e' });
+    }
+    spawnParticles(e.x, e.y, '#ff4d2e', 16, 180, 3.5);
+    for (var cfi = rt.state.enemies.length - 1; cfi >= 0; cfi -= 1) {
+      var foe = rt.state.enemies[cfi];
+      if (foe && foe !== e && dist2(foe.x, foe.y, e.x, e.y) <= (blastR + foe.r) * (blastR + foe.r)) {
+        damageEnemy(foe, 60, { source: 'chain-explosion', x: e.x, y: e.y });
+        if (foe.hp <= 0) killEnemy(foe, 'chain-explosion');
+      }
+    }
+  }
+
   if (e.isBoss) onBossDefeated(e);
   if (rt.state && (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore')) {
     checkStageVictory(rt.state, 0);

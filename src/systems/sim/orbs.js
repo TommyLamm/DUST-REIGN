@@ -9,6 +9,7 @@ import { onPickup } from '../card-effects.js';
 import { resolveConvoyHits } from '../mutators.js';
 import { addXp } from '../progression.js';
 import { addScore } from '../scoring.js';
+import { noteMetaEvent } from '../meta.js';
 import { logEvent } from '../../ui/hud.js';
 
 function isCrate(orb) {
@@ -21,6 +22,16 @@ function applyCrate(orb, p) {
   if (id === 'repair') {
     var healed = Math.max(0, Math.min(amount || 30, p.maxHp - p.hp));
     p.hp += healed;
+    var leftoverCrate = (amount || 30) - healed;
+    if (leftoverCrate > 0 && p.tempArmorCap) {
+      var curShield = p.shield || 0;
+      var shieldGain = Math.min(leftoverCrate, Math.max(0, p.tempArmorCap - curShield));
+      if (shieldGain > 0) {
+        p.shield = curShield + shieldGain;
+        logEvent('SCRAP BULKHEAD // +' + Math.round(shieldGain) + ' TEMP SHIELD');
+      }
+    }
+    noteMetaEvent('repair-pickup', { healed: healed });
     AudioFX.pickup('repair');
     if (healed > 0) logEvent('SUPPLY CRATE // +' + Math.round(healed) + ' HULL');
     else logEvent('SUPPLY CRATE // HULL FULL');
@@ -54,8 +65,12 @@ export function stepOrbs(dt, frame) {
     var odx = p.x - orb.x;
     var ody = p.y - orb.y;
     var od = Math.hypot(odx, ody) || 1;
-    if (!crate && od < magnetReach) {
-      var pull = (1 - od / magnetReach) * 520;
+    var reach = magnetReach;
+    if (orb.kind === 'repair' && typeof p.repairPickupRadiusMult === 'number') {
+      reach *= p.repairPickupRadiusMult;
+    }
+    if (!crate && od < reach) {
+      var pull = (1 - od / reach) * 520;
       orb.vx += (odx / od) * pull * dt;
       orb.vy += (ody / od) * pull * dt;
     }
@@ -79,6 +94,16 @@ export function stepOrbs(dt, frame) {
         var healCap = getHeatModifiers(rt.state.heat || 0).repairHeal + ((typeof p.repairBonus === 'number') ? p.repairBonus : 0);
         var healed = Math.max(0, Math.min(healCap, p.maxHp - p.hp));
         p.hp += healed;
+        var leftoverHeal = healCap - healed;
+        if (leftoverHeal > 0 && p.tempArmorCap) {
+          var curShield = p.shield || 0;
+          var shieldGain = Math.min(leftoverHeal, Math.max(0, p.tempArmorCap - curShield));
+          if (shieldGain > 0) {
+            p.shield = curShield + shieldGain;
+            logEvent('SCRAP BULKHEAD // +' + Math.round(shieldGain) + ' TEMP SHIELD');
+          }
+        }
+        noteMetaEvent('repair-pickup', { healed: healed });
         AudioFX.pickup('repair');
         if (healed > 0) {
           if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'REPAIR SCRAP +' + Math.round(healed) + ' HULL';
