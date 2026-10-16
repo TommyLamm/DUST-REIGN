@@ -40,11 +40,11 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
-| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap、接地陰影。 |
-| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家、敵人、場景物件、彈體，以及 Canvas HUD／覆蓋層。 |
-| `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
-| `src/render/entity-style.js` | 受擊閃白等逐實體視覺暫存。 |
-| `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段色調、畫質預算與自動降級、預渲染光暈／雜訊貼圖快取。 |
+| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取（負空間地表、低頻沙丘、減噪防偽警報碎石與座標網格）與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻）、三階接地陰影（Core AO 咬合、Penumbra 柔影、Z-Elevation 浮空縮放）。 |
+| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點（導航基座環、朝向標、反應核、砲管脊線）、敵型雙層反差描邊、街機立體戰利品（廢料浮空脈衝與救命光柱）、敵我色譜隔離與三層三明治彈體（阻光盾＋霓虹環＋光核）及斑馬預警軌道、Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）。 |
+| `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子（3-Tier 優先級架構與玩家 120px 徑向視線保護圈 Alpha Culling）、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
+| `src/render/entity-style.js` | 受擊閃白與雙層反差描邊等逐實體視覺暫存。 |
+| `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段負空間地表色調（$L^* \in [4.6\%, 13.5\%]$）、畫質預算（粒子池 HIGH 600 / MEDIUM 350 / LOW 180）與自動降級、預渲染光暈／雜訊貼圖快取。 |
 | `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、改裝工坊（`workshop-panel.js`）、星級金庫（`vault-panel.js`）、每日懸賞（`bounties-panel.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
 | `src/audio/audio-fx.js` | 原生 Web Audio API 程序合成音效（FM 合成跳彈、雙峰帶通破片殼擊、指數衰減低通與全域殘響）、音訊解鎖及音量／靜音偏好。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績橋接與平台訊息協定。 |
@@ -57,7 +57,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 
 - `rt` 保存跨模組會重新賦值的資料，包括 `state`、`ui`、輸入、RAF／事件資源與帳號局次。單局資料放在 `rt.state`；只由單一模組管理的狀態留在該模組，以函式提供存取。
 - `rt.renderTime` 與 `rt.renderDt` 由 `src/main.js` 的 `frame()` 每幀寫入，暫停與 hitstop 時仍前進。`rt.fxEvents` 在 `src/core/runtime.js` 初始為 `null`，由 `pushFxEvent`／`drainFxEvents` 首次使用時建立上限 64 的環形佇列（滿額覆寫最舊一筆）。事件只供視覺使用。種類與欄位以呼叫處及 `src/render/fx.js` 的處理為準：`kill`、`crit`、`core`、`barrel`、`mortar`、`emp`、`spire`、`dash`、`graze`、`playerHit`、`titanPhase`、`bounty`、`surge`、`burst`。
-- `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 只由 `src/render/entity-style.js` 的 `tickFlash` 維護；傷害數字的 `numHp` 只由 `src/render/fx.js` 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
+- `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 與雙層描邊快取只由 `src/render/entity-style.js` 的 `tickFlash` 維護；怪物血條滯後白條（`ghostHp`、`ghostTimer`）與傷害數字的 `numHp` 只由 render 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
 - `src/main.js` 與 `src/ui/` 可以匯入 render。`src/systems/**` 不得讀取 `entity.fx`，也不得 import `src/render/**`。系統透過共用 `rt.state` 協作，並會呼叫 UI 與音效；這些目錄是責任分工，並非互相隔離的單向分層。
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
@@ -123,8 +123,8 @@ index.html → src/main.js → init()
 | 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/systems/card-effects.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
 | 輸入映射與玩家移動 | `src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`src/systems/sim/player.js` |
 | 地表、大氣與光影 | `src/render/` 的 `draw.js`、`terrain.js`、`atmosphere.js`、`lighting.js`、`shadows.js`、`palette.js` |
-| 實體造型與彈體外觀 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |
-| 戰鬥視覺特效 | `src/render/` 的 `fx.js`、`fx-rand.js`、`sprites.js`，以及 `src/core/fx-events.js`；模擬粒子與焦痕見 `src/core/pools.js`、`src/systems/sim/effects.js` |
+| 實體造型、彈體與戰利品 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |
+| 戰鬥視覺特效與覆蓋層 | `src/render/` 的 `fx.js`、`fx-rand.js`、`sprites.js`、`overlay.js`，以及 `src/core/fx-events.js`；模擬粒子與焦痕見 `src/core/pools.js`、`src/systems/sim/effects.js` |
 | 畫質分級 | `src/core/settings.js`、`src/render/quality.js`、`src/ui/pause-menu.js`、`src/input/keyboard-pointer.js`、`src/ui/dom.js` |
 | 頁面、HUD 與 iframe／觸控版面 | `index.html`、`src/ui/dom.js`、`src/ui/hud.js`、`css/animations.css`、`css/layout-fit.css`、`css/touch.css`、`css/responsive.css`、`css/loadout.css`、`css/codex.css`、`css/interlude.css`、`css/contracts.css` |
 | 音訊、觸覺、減動效與高對比 | `src/audio/audio-fx.js`、`src/core/settings.js`、`src/ui/pause-menu.js`、`css/high-contrast.css`、`css/animations.css` 及對應 render 模組 |

@@ -22,6 +22,7 @@
 | [09-phases.md](09-phases.md) | 實作階段與每階段的檢查 |
 | [10-acceptance.md](10-acceptance.md) | 驗收清單 |
 | [11-risks.md](11-risks.md) | 風險與對策 |
+| [12-combat-entities-and-projectiles-clarity.md](12-combat-entities-and-projectiles-clarity.md) | 戰鬥實體、剪影輪廓光與預警彈道一眼秒辨識設計案 |
 
 ## 建議閱讀順序
 
