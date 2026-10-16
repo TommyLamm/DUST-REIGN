@@ -6,9 +6,9 @@ var QUALITY_LIMIT = 0.019;
 var STALL_GAP = 1;
 
 var BUDGETS = {
-  high: { lightmap: true, grain: true, maxParticles: 900, motes: 140, terrainDetail: true, arcDepth: 3, keyGlowsOnly: false },
-  medium: { lightmap: false, grain: false, maxParticles: 500, motes: 70, terrainDetail: true, arcDepth: 2, keyGlowsOnly: false },
-  low: { lightmap: false, grain: false, maxParticles: 260, motes: 0, terrainDetail: false, arcDepth: 1, keyGlowsOnly: true }
+  high: { lightmap: true, grain: true, maxParticles: 600, motes: 140, terrainDetail: true, arcDepth: 3, keyGlowsOnly: false },
+  medium: { lightmap: false, grain: false, maxParticles: 350, motes: 70, terrainDetail: true, arcDepth: 2, keyGlowsOnly: false },
+  low: { lightmap: false, grain: false, maxParticles: 180, motes: 0, terrainDetail: false, arcDepth: 1, keyGlowsOnly: true }
 };
 
 var autoTier = '';

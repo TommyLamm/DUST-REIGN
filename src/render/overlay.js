@@ -1,4 +1,4 @@
-import { COMBO_WINDOW, OVERDRIVE_DURATION, WAVE_LENGTH } from '../config.js';
+import { COMBO_WINDOW, OVERDRIVE_DURATION, WAVE_LENGTH, TAU } from '../config.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { clamp } from '../core/utils.js';
@@ -49,6 +49,75 @@ function fillDeathNoise(ctx) {
   ctx.restore();
 }
 
+function drawPartBadge(ctx, x, y, w, h, label, destroyed, exposed) {
+  ctx.save();
+  if (destroyed) {
+    // 部位破壞狀態標籤：深黑底 + 紅框 + 劃線徽章
+    ctx.fillStyle = 'rgba(12, 4, 4, 0.96)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#ff2233';
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ff6666';
+    ctx.fillText(label, x + w / 2, y + h / 2);
+
+    // Strikethrough line (劃線徽章)
+    ctx.strokeStyle = '#ff2233';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + h / 2);
+    ctx.lineTo(x + w - 2, y + h / 2);
+    ctx.stroke();
+  } else if (exposed) {
+    // 弱點過熱時：金色準心 + 高亮金邊
+    var pulse = isReducedMotion() ? 1 : (0.7 + 0.3 * Math.sin((rt.renderTime || 0) * 12));
+    ctx.fillStyle = 'rgba(28, 20, 6, 0.96)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(255, 215, 0, ' + pulse.toFixed(2) + ')';
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.font = '900 8.5px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText(label, x + 13, y + h / 2);
+
+    // 金色準心 (Golden Crosshair)
+    var cx = x + 6.5;
+    var cy = y + h / 2;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3.2, 0, TAU);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 4.5, cy);
+    ctx.lineTo(cx + 4.5, cy);
+    ctx.moveTo(cx, cy - 4.5);
+    ctx.lineTo(cx, cy + 4.5);
+    ctx.stroke();
+  } else {
+    // Normal intact part
+    ctx.fillStyle = 'rgba(16, 14, 12, 0.88)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(110, 95, 80, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#c8bcab';
+    ctx.fillText(label, x + w / 2, y + h / 2);
+  }
+  ctx.restore();
+}
+
 function drawTitanBar(ctx, titan) {
   if (titanRef !== titan) {
     titanRef = titan;
@@ -59,19 +128,28 @@ function drawTitanBar(ctx, titan) {
   if (isReducedMotion() || hpRatio >= titanLag) titanLag = hpRatio;
   else titanLag += (hpRatio - titanLag) * Math.min(1, dt * 2.4);
 
+  var hasParts = Boolean(
+    titan.leftCannonDestroyed != null ||
+    titan.rightPodDestroyed != null ||
+    titan.radiatorDestroyed != null ||
+    titan.treadDestroyed != null ||
+    titan.kind === 'titan'
+  );
+
   var barW = Math.min(360, rt.ui.width * 0.65);
   var barH = 12;
   var barX = (rt.ui.width - barW) / 2;
   var barY = 20;
+  var boxExtraH = hasParts ? 20 : 0;
   var enraged = Boolean(titan.phase2Triggered);
   var stroke = enraged ? hudColor('emissive', 'hostile', '#ff6a3d') : hudColor('emissive', 'gold', '#ffd36b');
   var fill = enraged ? '#ff4d2e' : '#d4af37';
 
-  ctx.fillStyle = 'rgba(14, 12, 10, 0.92)';
-  ctx.fillRect(barX - 6, barY - 14, barW + 12, barH + 20);
+  ctx.fillStyle = 'rgba(14, 12, 10, 0.94)';
+  ctx.fillRect(barX - 6, barY - 14, barW + 12, barH + 20 + boxExtraH);
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(barX - 6, barY - 14, barW + 12, barH + 20);
+  ctx.strokeRect(barX - 6, barY - 14, barW + 12, barH + 20 + boxExtraH);
 
   ctx.font = '900 10px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
   ctx.textAlign = 'left';
@@ -109,10 +187,24 @@ function drawTitanBar(ctx, titan) {
   ctx.fillRect(barX, barY, barW * hpRatio, barH);
   if (!isReducedMotion()) drawGlow(ctx, barX + barW * hpRatio, barY + barH / 2, 16, fill, 0.4);
 
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(barX + barW * 0.25, barY, 1.5, barH);
-  ctx.fillRect(barX + barW * 0.50, barY, 2, barH);
-  ctx.fillRect(barX + barW * 0.75, barY, 1.5, barH);
+  // 25%, 50%, 75% tick marks (pure black dividers)
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(barX + barW * 0.25 - 0.75, barY, 1.5, barH);
+  ctx.fillRect(barX + barW * 0.50 - 1, barY, 2, barH);
+  ctx.fillRect(barX + barW * 0.75 - 0.75, barY, 1.5, barH);
+
+  // 部位破壞藥丸徽章 (Part destruction pill badges)
+  if (hasParts) {
+    var badgeY = barY + barH + 5;
+    var badgeH = 13;
+    var badgeGap = 5;
+    var badgeW = (barW - badgeGap * 3) / 4;
+
+    drawPartBadge(ctx, barX, badgeY, badgeW, badgeH, zh ? '左迫砲' : 'L-CANNON', Boolean(titan.leftCannonDestroyed), false);
+    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 1, badgeY, badgeW, badgeH, zh ? '右蜂巢' : 'R-POD', Boolean(titan.rightPodDestroyed), false);
+    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 2, badgeY, badgeW, badgeH, zh ? '鰭片' : 'FINS', Boolean(titan.radiatorDestroyed), Boolean(titan.radiatorExposed));
+    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 3, badgeY, badgeW, badgeH, zh ? '履帶' : 'TREADS', Boolean(titan.treadDestroyed), false);
+  }
 }
 
 function drawWaveBanner(ctx) {
@@ -300,3 +392,175 @@ export function drawOverlay(ctx) {
     ctx.restore();
   }
 }
+
+export function drawHpBar(ctx, x, y, w, ratio, ghostRatio) {
+  if (!(w > 0)) return;
+  var left = Math.round(x - w * 0.5);
+  var top = Math.round(y);
+  var barH = 6;
+  var pad = 2;
+
+  // 1. 2px 深黑底槽襯底 (rgba(4, 4, 6, 0.96))
+  ctx.fillStyle = 'rgba(4, 4, 6, 0.96)';
+  ctx.fillRect(left - pad, top - pad, w + pad * 2, barH + pad * 2);
+
+  // 2. 底槽背景色
+  ctx.fillStyle = '#1c1712';
+  ctx.fillRect(left, top, w, barH);
+
+  // 3. 受擊滯後白條（Damage Ghost Bar）：扣血瞬間保留 0.22 秒亮白/黃色滯後殘影
+  var curRatio = clamp(ratio, 0, 1);
+  var gRatio = ghostRatio != null ? clamp(ghostRatio, 0, 1) : curRatio;
+  if (gRatio > curRatio) {
+    ctx.fillStyle = 'rgba(255, 244, 210, 0.92)';
+    ctx.fillRect(left, top, w * gRatio, barH);
+  }
+
+  // 4. 當前血條 (高反差血條)
+  ctx.fillStyle = PALETTE.hud.rust;
+  ctx.fillRect(left, top, Math.max(0, w * curRatio), barH);
+
+  // 5. 刻度垂直黑線標記 25%、50%、75% 分段
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(left + Math.round(w * 0.25) - 0.75, top, 1.5, barH);
+  ctx.fillRect(left + Math.round(w * 0.50) - 0.75, top, 1.5, barH);
+  ctx.fillRect(left + Math.round(w * 0.75) - 0.75, top, 1.5, barH);
+}
+
+export function updateEntityGhostHp(e, dt) {
+  if (!e) return 1;
+  if (!e.fx || typeof e.fx !== 'object') e.fx = {};
+  var fx = e.fx;
+  var curHp = e.hp || 0;
+  var maxHp = e.maxHp || 1;
+  if (fx.ghostHp == null) {
+    fx.ghostHp = curHp;
+    fx.ghostTimer = 0;
+  }
+  if (curHp < fx.ghostHp) {
+    if (fx.ghostTimer == null || fx.ghostTimer <= 0) {
+      fx.ghostTimer = 0.22; // 0.22s 亮白/黃色滯後殘影
+    } else {
+      fx.ghostTimer -= dt;
+      if (fx.ghostTimer <= 0) {
+        fx.ghostHp += (curHp - fx.ghostHp) * Math.min(1, dt * 10);
+      }
+    }
+  } else {
+    fx.ghostHp = curHp;
+    fx.ghostTimer = 0;
+  }
+  return fx.ghostHp / maxHp;
+}
+
+export function drawOverheadBars(ctx) {
+  if (!ctx || !rt.state) return;
+  var dt = rt.renderDt || 0.016;
+  var list = rt.state.enemies;
+  var i;
+  if (list) {
+    for (i = 0; i < list.length; i += 1) {
+      var e = list[i];
+      if (!(e.maxHp > 0) || !(e.hp < e.maxHp)) continue;
+      var gRatio = updateEntityGhostHp(e, dt);
+      drawHpBar(ctx, e.x, e.y - e.r - 12, Math.max(18, e.r * 2), e.hp / e.maxHp, gRatio);
+    }
+  }
+  var cores = rt.state.volatileCores;
+  if (cores) {
+    for (i = 0; i < cores.length; i += 1) {
+      var c = cores[i];
+      if (!(c.maxHp > 0) || !(c.hp < c.maxHp)) continue;
+      var gRatioC = updateEntityGhostHp(c, dt);
+      drawHpBar(ctx, c.x, c.y - c.r * 1.3 - 10, c.r * 2.4, c.hp / c.maxHp, gRatioC);
+    }
+  }
+  var barrels = rt.state.barrels;
+  if (barrels) {
+    for (i = 0; i < barrels.length; i += 1) {
+      var b = barrels[i];
+      if (!(b.maxHp > 0) || !(b.hp < b.maxHp)) continue;
+      var gRatioB = updateEntityGhostHp(b, dt);
+      drawHpBar(ctx, b.x, b.y - b.r - 10, b.r * 2, b.hp / b.maxHp, gRatioB);
+    }
+  }
+}
+
+var FONT_NUM = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
+var FONT_CRIT = '700 18px ui-monospace, SFMono-Regular, Consolas, monospace';
+
+export function renderDamageNumbers(ctx, numbers, numMax) {
+  if (!ctx) return;
+  drawOverheadBars(ctx);
+
+  if (!numbers) return;
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  var maxN = numMax || numbers.length;
+  var reduced = isReducedMotion();
+
+  for (var i = 0; i < maxN; i += 1) {
+    var n = numbers[i];
+    if (!n || !n.active) continue;
+    var alpha = n.maxLife ? n.life / n.maxLife : 1;
+    if (alpha <= 0) continue;
+    if (alpha > 1) alpha = 1;
+
+    var label = n.text;
+    if (!label) {
+      var v = Math.round(n.value);
+      if (v < 0) v = 0;
+      if (v > 99999) v = 99999;
+      label = n.crit ? ('CRIT ' + v) : String(v);
+      n.text = label;
+    }
+
+    var isCrit = Boolean(n.crit);
+    var popScale = 1;
+    if (isCrit && !reduced) {
+      var alive = (n.maxLife || 0.68) - n.life;
+      if (alive < 0.08) {
+        popScale = 1 + 0.25 * (1 - alive / 0.08);
+      }
+    }
+
+    // Colors:
+    // 普通傷害純白字 #ffffff (13px 粗體)
+    // 暴擊傷害金黃 #ffd700 (18px 粗體 + 0.08s 1.25x Pop-in 彈跳)
+    // 玩家受傷刺目紅 #ff2233
+    var textColor = '#ffffff';
+    if (n.owner && (n.owner === (rt.state && rt.state.player) || n.owner.isPlayer || n.isPlayerHurt)) {
+      textColor = '#ff2233';
+    } else if (isCrit) {
+      textColor = '#ffd700';
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(n.x, n.y);
+    if (popScale !== 1) {
+      ctx.scale(popScale, popScale);
+    }
+    ctx.font = isCrit ? FONT_CRIT : FONT_NUM;
+
+    // 雙層高反差描邊：
+    // 外層：lineWidth = 4.5, strokeStyle = '#000000', 深黑護城河阻隔一切火光與電漿
+    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = '#000000';
+    ctx.strokeText(label, 0, 0);
+
+    // 內層：文字本體
+    ctx.fillStyle = textColor;
+    ctx.fillText(label, 0, 0);
+
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+export function drawDamageNumbers(ctx) {
+  renderDamageNumbers(ctx, null, 0);
+}
+
