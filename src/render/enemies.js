@@ -105,58 +105,59 @@ function drawPixelGhost(ctx, x, y, t) {
   ctx.restore();
 }
 
-function drawRusherShape(ctx, r, flashing, hot) {
-  ctx.fillStyle = hot ? '#fff4e4' : '#2a1c14';
-  ctx.fillRect(-r * 0.95, -r * 0.62, r * 0.42, r * 0.24);
-  ctx.fillRect(-r * 0.95, r * 0.38, r * 0.42, r * 0.24);
-  ctx.beginPath();
-  ctx.moveTo(r * 1.35, 0);
-  ctx.lineTo(-r * 0.55, r * 0.95);
-  ctx.lineTo(-r * 0.15, 0);
-  ctx.lineTo(-r * 0.55, -r * 0.95);
-  ctx.closePath();
-  ctx.fillStyle = flashing ? '#ffffff' : '#5a3018';
-  ctx.fill();
-  if (!flashing) {
-    ctx.fillStyle = '#e0a05a';
-    ctx.beginPath();
-    ctx.moveTo(r * 1.35, 0);
-    ctx.lineTo(r * 0.15, r * 0.32);
-    ctx.lineTo(r * 0.15, -r * 0.32);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.beginPath();
-  ctx.moveTo(r * 1.35, 0);
-  ctx.lineTo(-r * 0.55, r * 0.95);
-  ctx.lineTo(-r * 0.15, 0);
-  ctx.lineTo(-r * 0.55, -r * 0.95);
-  ctx.closePath();
-  outline(ctx, 1.6);
-}
-
 function drawCrawlerLeg(ctx, r, i, step, flashing, reduced) {
   var side = i < 3 ? -1 : 1;
   var slot = i % 3;
   var along = (slot - 1) * r * 0.58;
-  var phase = reduced ? 0 : Math.sin(step * 0.28 + slot + (side > 0 ? 1.4 : 0));
+  var phase = reduced ? 0 : Math.sin(step * 0.28 + slot * 1.2 + (side > 0 ? 1.5 : 0));
   var hipX = along * 0.85;
-  var hipY = side * r * 0.72;
-  var kneeX = along + phase * r * 0.32;
+  var hipY = side * r * 0.65;
+  var kneeX = along + phase * r * 0.25;
   var kneeY = side * r * 1.05;
-  var footX = along + phase * r * 0.12;
-  var footY = side * r * 1.36;
-  ctx.strokeStyle = flashing ? '#ffffff' : '#2c241c';
-  ctx.lineWidth = 3.4;
+  var footX = along + phase * r * 0.45;
+  var footY = side * r * 1.38;
+
+  // Upper leg (femur) with chitin spine
+  ctx.strokeStyle = flashing ? '#ffffff' : '#221810';
+  ctx.lineWidth = 3.6;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(hipX, hipY);
   ctx.lineTo(kneeX, kneeY);
+  ctx.stroke();
+
+  ctx.strokeStyle = flashing ? '#ffffff' : '#4a3626';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(hipX, hipY);
+  ctx.lineTo(kneeX, kneeY);
+  ctx.stroke();
+
+  // Knee joint
+  ctx.fillStyle = flashing ? '#ffffff' : '#18120c';
+  ctx.beginPath();
+  ctx.arc(kneeX, kneeY, 2.2, 0, TAU);
+  ctx.fill();
+
+  // Lower leg (tibia & sharp claw)
+  ctx.strokeStyle = flashing ? '#ffffff' : '#221810';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.moveTo(kneeX, kneeY);
   ctx.lineTo(footX, footY);
   ctx.stroke();
-  ctx.fillStyle = flashing ? '#ffffff' : '#1a1612';
+
+  ctx.strokeStyle = flashing ? '#ffffff' : '#8c684a';
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(footX, footY, 2, 0, TAU);
+  ctx.moveTo(kneeX, kneeY);
+  ctx.lineTo(footX, footY);
+  ctx.stroke();
+
+  // Sharp clawed foot tip
+  ctx.fillStyle = flashing ? '#ffffff' : '#d8b488';
+  ctx.beginPath();
+  ctx.arc(footX, footY, 1.8, 0, TAU);
   ctx.fill();
 }
 
@@ -165,38 +166,169 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   var step = (e.fx && e.fx.step) || 0;
   var i;
   for (i = 0; i < 6; i += 1) drawCrawlerLeg(ctx, r, i, step, flashing, reduced);
-  ctx.fillStyle = flashing ? '#ffffff' : '#3a3028';
+
+  // Main abdominal segmented carapace: Outer base
+  ctx.fillStyle = flashing ? '#ffffff' : '#261c14';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.6);
+  outline(ctx, 1.8);
+
   if (!flashing) {
-    ctx.fillStyle = '#6a5644';
+    // Posterior dorsal plate
+    ctx.fillStyle = '#4a3828';
     ctx.beginPath();
-    ctx.ellipse(r * 0.12, -r * 0.08, r * 0.72, r * 0.48, -0.3, 0, TAU);
+    ctx.ellipse(-r * 0.28, 0, r * 0.58, r * 0.72, 0, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = '#4e3c30';
+    ctx.strokeStyle = '#18120c';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Mid dorsal plate
+    ctx.fillStyle = '#6a523c';
     ctx.beginPath();
-    ctx.ellipse(-r * 0.28, r * 0.08, r * 0.42, r * 0.62, 0.2, 0, TAU);
+    ctx.ellipse(r * 0.05, 0, r * 0.62, r * 0.58, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = '#241c16';
+    ctx.strokeStyle = '#18120c';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Anterior thoracic crest / carapace ridge
+    ctx.fillStyle = '#8c6c50';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.25, 0, r * 0.44, r * 0.42, 0, 0, TAU);
+    ctx.fill();
+
+    // Chitin spinal ridges
+    ctx.strokeStyle = '#bfa07a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.6, 0);
+    ctx.lineTo(r * 0.48, 0);
+    ctx.stroke();
+
+    // Lateral segmental suture lines
+    ctx.strokeStyle = '#1e140d';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(-r * 0.15, -r * 0.72);
-    ctx.lineTo(-r * 0.05, r * 0.72);
-    ctx.moveTo(r * 0.28, -r * 0.6);
-    ctx.lineTo(r * 0.36, r * 0.55);
+    ctx.moveTo(-r * 0.15, -r * 0.68);
+    ctx.lineTo(-r * 0.05, r * 0.68);
+    ctx.moveTo(r * 0.22, -r * 0.52);
+    ctx.lineTo(r * 0.28, r * 0.52);
     ctx.stroke();
   }
-  ctx.fillStyle = flashing ? '#ffffff' : '#e8b94e';
+
+  // Cephalothorax head & curved mandibles
+  var twitch = reduced ? 0 : Math.sin(step * 0.3) * 0.15;
+  ctx.fillStyle = flashing ? '#ffffff' : '#1e1610';
   ctx.beginPath();
-  ctx.arc(r * 0.62, 0, Math.max(2.2, r * 0.2), 0, TAU);
+  ctx.moveTo(r * 0.45, -r * 0.35);
+  ctx.lineTo(r * 0.95, -r * 0.18 + twitch * 2);
+  ctx.lineTo(r * 0.8, 0);
+  ctx.lineTo(r * 0.95, r * 0.18 - twitch * 2);
+  ctx.lineTo(r * 0.45, r * 0.35);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#24180a';
+  outline(ctx, 1.2);
+
+  // Mandible ivory/amber tips
+  ctx.fillStyle = flashing ? '#ffffff' : '#e0b878';
   ctx.beginPath();
-  ctx.arc(r * 0.7, 0, Math.max(1, r * 0.08), 0, TAU);
+  ctx.moveTo(r * 0.8, -r * 0.2 + twitch * 2);
+  ctx.lineTo(r * 1.08, -r * 0.12 + twitch * 2);
+  ctx.lineTo(r * 0.88, 0);
+  ctx.lineTo(r * 1.08, r * 0.12 - twitch * 2);
+  ctx.lineTo(r * 0.8, r * 0.2 - twitch * 2);
+  ctx.closePath();
   ctx.fill();
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, r * 0.62, 0, r * 0.7, PALETTE.hud.amber, 0.45);
+
+  // Arachnid Multi-Eye Cluster: 2 primary forward eyes, 2 lateral
+  ctx.fillStyle = flashing ? '#ffffff' : '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(r * 0.58, -r * 0.15, Math.max(1.8, r * 0.16), 0, TAU);
+  ctx.arc(r * 0.58, r * 0.15, Math.max(1.8, r * 0.16), 0, TAU);
+  ctx.fill();
+
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
+  ctx.beginPath();
+  ctx.arc(r * 0.64, -r * 0.15, Math.max(1, r * 0.08), 0, TAU);
+  ctx.arc(r * 0.64, r * 0.15, Math.max(1, r * 0.08), 0, TAU);
+  ctx.fill();
+
+  ctx.fillStyle = flashing ? '#ffffff' : '#d97706';
+  ctx.beginPath();
+  ctx.arc(r * 0.42, -r * 0.3, Math.max(1.2, r * 0.1), 0, TAU);
+  ctx.arc(r * 0.42, r * 0.3, Math.max(1.2, r * 0.1), 0, TAU);
+  ctx.fill();
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, r * 0.6, 0, r * 0.8, PALETTE.hud.amber, 0.45);
+  }
+}
+
+function drawRusherShape(ctx, r, flashing, hot) {
+  // Dual raked turbine housings
+  ctx.fillStyle = hot ? '#ffe8d0' : '#1e140d';
+  ctx.fillRect(-r * 1.05, -r * 0.65, r * 0.52, r * 0.28);
+  ctx.fillRect(-r * 1.05, r * 0.37, r * 0.52, r * 0.28);
+  ctx.strokeStyle = '#0e0c09';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(-r * 1.05, -r * 0.65, r * 0.52, r * 0.28);
+  ctx.strokeRect(-r * 1.05, r * 0.37, r * 0.52, r * 0.28);
+
+  // Main delta hull base
+  ctx.beginPath();
+  ctx.moveTo(r * 1.45, 0);
+  ctx.lineTo(-r * 0.6, r * 0.98);
+  ctx.lineTo(-r * 0.22, 0);
+  ctx.lineTo(-r * 0.6, -r * 0.98);
+  ctx.closePath();
+  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#8a3c1c' : '#562816');
+  ctx.fill();
+  outline(ctx, 1.8);
+
+  if (!flashing) {
+    // Twin forward-swept scythe blades
+    ctx.fillStyle = hot ? '#ffb080' : '#e0a05a';
+    ctx.beginPath();
+    ctx.moveTo(r * 1.45, 0);
+    ctx.lineTo(r * 0.2, r * 0.38);
+    ctx.lineTo(-r * 0.1, r * 0.16);
+    ctx.lineTo(r * 0.3, 0);
+    ctx.lineTo(-r * 0.1, -r * 0.16);
+    ctx.lineTo(r * 0.2, -r * 0.38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff0d0';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Dorsal armor plate & spine
+    ctx.fillStyle = hot ? '#ff7e42' : '#8c4224';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.8, 0);
+    ctx.lineTo(-r * 0.35, r * 0.45);
+    ctx.lineTo(-r * 0.15, 0);
+    ctx.lineTo(-r * 0.35, -r * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    // Racing/hazard thermal stripes
+    ctx.strokeStyle = hot ? '#ffffff' : '#ffa660';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.3, -r * 0.6);
+    ctx.lineTo(r * 0.1, -r * 0.22);
+    ctx.moveTo(-r * 0.3, r * 0.6);
+    ctx.lineTo(r * 0.1, r * 0.22);
+    ctx.stroke();
+  }
+
+  // Forward predatory visor slit
+  ctx.fillStyle = hot ? '#ffffff' : (flashing ? '#ffffff' : '#ff4d2e');
+  ctx.beginPath();
+  ctx.ellipse(r * 0.72, 0, Math.max(2.2, r * 0.22), Math.max(1.2, r * 0.1), 0, 0, TAU);
+  ctx.fill();
 }
 
 function drawRusherBody(ctx, e, flashing, reduced) {
@@ -204,28 +336,51 @@ function drawRusherBody(ctx, e, flashing, reduced) {
   var bursting = e.burstTime !== undefined && e.burstTime > 0;
   var hot = charging || bursting;
   var chargeRatio = charging ? 1 - e.burstCd / 0.35 : (bursting ? 1 : 0);
-  if (hot && !reduced) ctx.translate(Math.sin((rt.state.waveTime || 0) * 46) * 1.5, 0);
+  if (hot && !reduced) ctx.translate(Math.sin((rt.state.waveTime || 0) * 46) * 1.8, 0);
   drawRusherShape(ctx, e.r, flashing, hot && chargeRatio > 0.45);
+
   var eyeHot = hot && (reduced || bursting || Math.sin((rt.state.waveTime || 0) * 12) > 0);
-  ctx.fillStyle = eyeHot ? '#fff6e8' : (hot ? '#ffb080' : '#4a3022');
-  ctx.beginPath();
-  ctx.arc(e.r * 0.72, 0, Math.max(1.6, e.r * 0.16), 0, TAU);
-  ctx.fill();
   if (hot && !keyGlowsOnly()) {
-    drawGlow(ctx, -e.r * 0.78, -e.r * 0.5, e.r * 0.9, eyeHot ? '#fff4e0' : PALETTE.emissive.hostile, 0.55);
-    drawGlow(ctx, -e.r * 0.78, e.r * 0.5, e.r * 0.9, eyeHot ? '#fff4e0' : PALETTE.emissive.hostile, 0.55);
+    drawGlow(ctx, -e.r * 0.85, -e.r * 0.5, e.r * 1.1, eyeHot ? '#fff4e0' : PALETTE.emissive.hostile, 0.65);
+    drawGlow(ctx, -e.r * 0.85, e.r * 0.5, e.r * 1.1, eyeHot ? '#fff4e0' : PALETTE.emissive.hostile, 0.65);
+    drawGlow(ctx, e.r * 0.75, 0, e.r * 0.8, '#ff6a3d', 0.5);
   }
+
+  // Multi-tier jet thruster afterburner flames
   if (hot) {
+    var flameLen = e.r * (0.6 + chargeRatio * 0.8);
+    // Upper flame
     ctx.fillStyle = eyeHot ? '#fff6e8' : '#ff8a4a';
     ctx.beginPath();
-    ctx.moveTo(-e.r * 1.05, -e.r * 0.5);
-    ctx.lineTo(-e.r * (1.45 + chargeRatio * 0.4), -e.r * 0.22);
-    ctx.lineTo(-e.r * 1.05, -e.r * 0.38);
+    ctx.moveTo(-e.r * 1.05, -e.r * 0.62);
+    ctx.lineTo(-e.r * 1.05 - flameLen, -e.r * 0.51);
+    ctx.lineTo(-e.r * 1.05, -e.r * 0.4);
+    ctx.closePath();
     ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(-e.r * 1.05, e.r * 0.5);
-    ctx.lineTo(-e.r * (1.45 + chargeRatio * 0.4), e.r * 0.22);
-    ctx.lineTo(-e.r * 1.05, e.r * 0.38);
+    ctx.moveTo(-e.r * 1.05, -e.r * 0.58);
+    ctx.lineTo(-e.r * 1.05 - flameLen * 0.5, -e.r * 0.51);
+    ctx.lineTo(-e.r * 1.05, -e.r * 0.44);
+    ctx.closePath();
+    ctx.fill();
+
+    // Lower flame
+    ctx.fillStyle = eyeHot ? '#fff6e8' : '#ff8a4a';
+    ctx.beginPath();
+    ctx.moveTo(-e.r * 1.05, e.r * 0.4);
+    ctx.lineTo(-e.r * 1.05 - flameLen, e.r * 0.51);
+    ctx.lineTo(-e.r * 1.05, e.r * 0.62);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-e.r * 1.05, e.r * 0.44);
+    ctx.lineTo(-e.r * 1.05 - flameLen * 0.5, e.r * 0.51);
+    ctx.lineTo(-e.r * 1.05, e.r * 0.58);
+    ctx.closePath();
     ctx.fill();
   }
 }
@@ -233,75 +388,123 @@ function drawRusherBody(ctx, e, flashing, reduced) {
 function drawBruteBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var step = (e.fx && e.fx.step) || 0;
-  var piston = reduced ? 0 : Math.sin(step * 0.22) * r * 0.12;
-  var puff = reduced ? 0.4 : ((rt.renderTime || 0) * 1.4) % 1;
-  ctx.fillStyle = flashing ? '#ffffff' : '#4a2a24';
+  var piston = reduced ? 0 : Math.sin(step * 0.24) * r * 0.16;
+  var puff = reduced ? 0.4 : ((rt.renderTime || 0) * 1.6) % 1;
+
+  // Main heavy armored hull base
+  ctx.fillStyle = flashing ? '#ffffff' : '#321812';
   ctx.beginPath();
-  ctx.moveTo(r * 0.15, -r * 0.9);
-  ctx.lineTo(r * 0.72, -r * 0.48);
-  ctx.lineTo(r, 0);
-  ctx.lineTo(r * 0.72, r * 0.48);
-  ctx.lineTo(r * 0.15, r * 0.9);
-  ctx.lineTo(-r * 0.82, r * 0.78);
-  ctx.lineTo(-r, 0);
-  ctx.lineTo(-r * 0.82, -r * 0.78);
+  ctx.moveTo(r * 0.18, -r * 0.95);
+  ctx.lineTo(r * 0.76, -r * 0.5);
+  ctx.lineTo(r * 1.05, 0);
+  ctx.lineTo(r * 0.76, r * 0.5);
+  ctx.lineTo(r * 0.18, r * 0.95);
+  ctx.lineTo(-r * 0.88, r * 0.82);
+  ctx.lineTo(-r * 1.05, 0);
+  ctx.lineTo(-r * 0.88, -r * 0.82);
   ctx.closePath();
   ctx.fill();
+  outline(ctx, 2);
+
   if (!flashing) {
-    ctx.fillStyle = '#8a4638';
+    // Frontal ballistic battering ram shield
+    ctx.fillStyle = '#6e2c20';
     ctx.beginPath();
-    ctx.moveTo(r, 0);
-    ctx.lineTo(r * 0.72, -r * 0.48);
-    ctx.lineTo(r * 0.2, -r * 0.2);
-    ctx.lineTo(r * 0.2, 0);
+    ctx.moveTo(r * 1.05, 0);
+    ctx.lineTo(r * 0.74, -r * 0.5);
+    ctx.lineTo(r * 0.22, -r * 0.35);
+    ctx.lineTo(r * 0.3, 0);
+    ctx.lineTo(r * 0.22, r * 0.35);
+    ctx.lineTo(r * 0.74, r * 0.5);
     ctx.closePath();
     ctx.fill();
-  }
-  ctx.beginPath();
-  ctx.moveTo(r * 0.15, -r * 0.9);
-  ctx.lineTo(r * 0.72, -r * 0.48);
-  ctx.lineTo(r, 0);
-  ctx.lineTo(r * 0.72, r * 0.48);
-  ctx.lineTo(r * 0.15, r * 0.9);
-  ctx.lineTo(-r * 0.82, r * 0.78);
-  ctx.lineTo(-r, 0);
-  ctx.lineTo(-r * 0.82, -r * 0.78);
-  ctx.closePath();
-  outline(ctx, 1.7);
-  if (!flashing) {
-    ctx.strokeStyle = '#e7d3a8';
+
+    // Shield reinforced bevel rim
+    ctx.strokeStyle = '#e8b088';
     ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(r * 0.72, -r * 0.48);
-    ctx.lineTo(r, 0);
-    ctx.lineTo(r * 0.72, r * 0.48);
+    ctx.moveTo(r * 0.74, -r * 0.5);
+    ctx.lineTo(r * 1.05, 0);
+    ctx.lineTo(r * 0.74, r * 0.5);
+    ctx.stroke();
+
+    // Side armor skirt plates
+    ctx.fillStyle = '#4e2018';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.18, -r * 0.92);
+    ctx.lineTo(-r * 0.82, -r * 0.78);
+    ctx.lineTo(-r * 0.6, -r * 0.4);
+    ctx.lineTo(r * 0.1, -r * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#180c08';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(r * 0.18, r * 0.92);
+    ctx.lineTo(-r * 0.82, r * 0.78);
+    ctx.lineTo(-r * 0.6, r * 0.4);
+    ctx.lineTo(r * 0.1, r * 0.5);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
   }
-  ctx.fillStyle = flashing ? '#ffffff' : '#c4a574';
-  ctx.fillRect(-r * 0.15, -r * 0.55, r * 0.22, r * 0.28 + piston);
-  ctx.fillRect(-r * 0.15, r * 0.22 - piston, r * 0.22, r * 0.28);
+
+  // Active hydraulic cylinders on flanks
+  ctx.fillStyle = flashing ? '#ffffff' : '#221410';
+  ctx.fillRect(-r * 0.22, -r * 0.58, r * 0.3, r * 0.32);
+  ctx.fillRect(-r * 0.22, r * 0.26, r * 0.3, r * 0.32);
+
+  // Chrome sliding piston rods
+  ctx.fillStyle = flashing ? '#ffffff' : '#d8dcd8';
+  ctx.fillRect(-r * 0.15, -r * 0.54, r * 0.16, r * 0.24 + piston);
+  ctx.fillRect(-r * 0.15, r * 0.3 - piston, r * 0.16, r * 0.24);
+
+  // Brass cylinder gland nuts
+  ctx.fillStyle = flashing ? '#ffffff' : '#c89e58';
+  ctx.fillRect(-r * 0.2, -r * 0.56, r * 0.26, 3);
+  ctx.fillRect(-r * 0.2, r * 0.53, r * 0.26, 3);
+
+  // Piloting slit visor behind armored bars (balanced spacing)
+  ctx.fillStyle = flashing ? '#ffffff' : '#ff4d2e';
+  ctx.fillRect(r * 0.18, -r * 0.16, 5, r * 0.32);
+  if (!flashing) {
+    ctx.fillStyle = '#180c08';
+    ctx.fillRect(r * 0.18, -r * 0.05, 5, 2.2);
+  }
+
+  // Dual angled industrial diesel smokestacks
   ctx.fillStyle = flashing ? '#ffffff' : '#1a100e';
-  ctx.fillRect(-r * 0.72, -r * 0.7, r * 0.28, r * 0.22);
-  ctx.fillRect(-r * 0.72, r * 0.48, r * 0.28, r * 0.22);
+  ctx.fillRect(-r * 0.82, -r * 0.76, r * 0.32, r * 0.24);
+  ctx.fillRect(-r * 0.82, r * 0.52, r * 0.32, r * 0.24);
+  ctx.strokeStyle = '#0e0c09';
+  ctx.lineWidth = 1.3;
+  ctx.strokeRect(-r * 0.82, -r * 0.76, r * 0.32, r * 0.24);
+  ctx.strokeRect(-r * 0.82, r * 0.52, r * 0.32, r * 0.24);
+
+  // Diesel exhaust smoke & embers (deterministic, no Math.random)
   ctx.save();
-  ctx.globalAlpha = 0.28 * (1 - puff * 0.4);
+  ctx.globalAlpha = 0.35 * (1 - puff * 0.4);
   ctx.fillStyle = '#1a1410';
   ctx.beginPath();
-  ctx.arc(-r * 0.85 - puff * r * 0.35, -r * 0.58, 3 + puff * 4, 0, TAU);
+  ctx.arc(-r * 0.95 - puff * r * 0.4, -r * 0.65, 3.5 + puff * 5, 0, TAU);
+  ctx.arc(-r * 0.9 - puff * r * 0.35, r * 0.65, 3 + puff * 4.5, 0, TAU);
   ctx.fill();
-  ctx.beginPath();
-  ctx.arc(-r * 0.8 - puff * r * 0.28, r * 0.6, 2.5 + puff * 3.5, 0, TAU);
-  ctx.fill();
-  ctx.restore();
-  if (flashing) {
-    ctx.strokeStyle = '#fff4d2';
-    ctx.lineWidth = 1.3;
+
+  // Hot ember sparks using deterministic wave
+  if (!reduced && Math.sin((rt.renderTime || 0) * 14) > 0.1) {
+    var emberY = Math.sin((rt.renderTime || 0) * 22) * 3;
+    ctx.fillStyle = '#ffd36b';
     ctx.beginPath();
-    ctx.moveTo(r * 0.55, -r * 0.18);
-    ctx.lineTo(r * 0.95, -r * 0.34);
-    ctx.moveTo(r * 0.6, r * 0.12);
-    ctx.lineTo(r * 1.02, r * 0.22);
-    ctx.stroke();
+    ctx.arc(-r * 0.9 - puff * r * 0.6, -r * 0.6 + emberY, 1.4, 0, TAU);
+    ctx.arc(-r * 0.85 - puff * r * 0.5, r * 0.6 - emberY, 1.4, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, r * 0.2, 0, r * 0.65, PALETTE.emissive.hostile, 0.4);
   }
 }
 
@@ -310,26 +513,35 @@ function drawArtilleryBody(ctx, e, flashing) {
   var deploy = 1;
   if (e.deployed) deploy = e.siegeTimer > 0 ? clamp(1 - e.siegeTimer / 0.9, 0, 1) : 1;
   else deploy = 0.15;
+
   var legI;
+  // 4 Outrigger stabilizer legs
   ctx.strokeStyle = flashing ? '#ffffff' : '#6a5428';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 3.8;
   ctx.lineCap = 'round';
   for (legI = 0; legI < 4; legI += 1) {
     var legA = (legI / 4) * TAU + Math.PI / 4;
-    var ext = 2 + deploy * (r * 0.55);
-    var x0 = Math.cos(legA) * (r * 0.62);
-    var y0 = Math.sin(legA) * (r * 0.62);
-    var x1 = Math.cos(legA) * (r * 0.7 + ext);
-    var y1 = Math.sin(legA) * (r * 0.7 + ext);
+    var ext = 3 + deploy * (r * 0.62);
+    var x0 = Math.cos(legA) * (r * 0.58);
+    var y0 = Math.sin(legA) * (r * 0.58);
+    var x1 = Math.cos(legA) * (r * 0.72 + ext);
+    var y1 = Math.sin(legA) * (r * 0.72 + ext);
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
     ctx.stroke();
-    ctx.fillStyle = flashing ? '#ffffff' : '#3a3018';
+
+    // Heavy ground anchor spade pad
+    ctx.fillStyle = flashing ? '#ffffff' : '#2a2010';
+    ctx.strokeStyle = '#0e0c09';
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.arc(x1, y1, 2.4, 0, TAU);
+    ctx.arc(x1, y1, 3.2, 0, TAU);
     ctx.fill();
+    ctx.stroke();
   }
+
+  // Hexagonal traversal chassis
   ctx.beginPath();
   var hi;
   for (hi = 0; hi < 6; hi += 1) {
@@ -342,51 +554,84 @@ function drawArtilleryBody(ctx, e, flashing) {
   ctx.closePath();
   ctx.fillStyle = flashing ? '#ffffff' : '#4a3818';
   ctx.fill();
+  outline(ctx, 1.8);
+
   if (!flashing) {
-    ctx.fillStyle = '#a8843a';
+    // Upper turret ring with sloped plates
+    ctx.fillStyle = '#8a6828';
     ctx.beginPath();
-    ctx.moveTo(r, 0);
-    ctx.lineTo(r * 0.5, -r * 0.86);
-    ctx.lineTo(0, -r * 0.2);
-    ctx.lineTo(0, 0);
+    for (hi = 0; hi < 6; hi += 1) {
+      var hba = (hi / 6) * TAU;
+      var hbx = Math.cos(hba) * (r * 0.78);
+      var hby = Math.sin(hba) * (r * 0.78);
+      if (hi === 0) ctx.moveTo(hbx, hby);
+      else ctx.lineTo(hbx, hby);
+    }
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#dfb868';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    // Traversal ball-bearing teeth
+    ctx.fillStyle = '#22180c';
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.52, 0, TAU);
+    ctx.fill();
   }
-  ctx.beginPath();
-  for (hi = 0; hi < 6; hi += 1) {
-    var hb = (hi / 6) * TAU;
-    if (hi === 0) ctx.moveTo(Math.cos(hb) * r, Math.sin(hb) * r);
-    else ctx.lineTo(Math.cos(hb) * r, Math.sin(hb) * r);
-  }
-  ctx.closePath();
-  outline(ctx, 1.6);
-  ctx.fillStyle = flashing ? '#ffffff' : '#2a2014';
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 0.48, 0, TAU);
-  ctx.fill();
+
+  // Heavy caliber siege cannon with dynamic recoil & thermal heat
   var kick = 0;
-  if ((e.cooldown || 0) > 3.45) kick = ((e.cooldown - 3.45) / 0.35) * 6;
+  if ((e.cooldown || 0) > 3.45) kick = ((e.cooldown - 3.45) / 0.35) * 7;
   var heat = 0;
   if (e.deployed && e.siegeTimer > 0 && e.siegeTimer < 0.4) heat = 1 - e.siegeTimer / 0.4;
   else if (e.deployed && !(e.siegeTimer > 0) && e.cooldown > 0 && e.cooldown < 0.9) heat = 1 - e.cooldown / 0.9;
-  ctx.fillStyle = flashing ? '#ffffff' : '#1c1610';
-  ctx.fillRect(r * 0.15 - kick, -3.4, r * 1.15, 6.8);
-  ctx.fillStyle = flashing ? '#ffffff' : heatPaint(heat);
-  ctx.fillRect(r * 1.15 - kick, -4, 5, 8);
-  if (heat > 0.2 && !keyGlowsOnly() && !flashing) {
-    drawGlow(ctx, r * 1.3 - kick, 0, 8 + heat * 8, PALETTE.emissive.hostile, 0.35 + heat * 0.4);
+
+  // Cannon barrel body & recoil jacket
+  ctx.fillStyle = flashing ? '#ffffff' : '#221810';
+  ctx.fillRect(r * 0.12 - kick, -4.5, r * 1.25, 9);
+  ctx.strokeStyle = '#0e0c09';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(r * 0.12 - kick, -4.5, r * 1.25, 9);
+
+  // Barrel cooling jacket slots
+  if (!flashing) {
+    ctx.fillStyle = '#44321c';
+    ctx.fillRect(r * 0.2 - kick, -3.2, r * 0.5, 6.4);
+    ctx.fillStyle = '#181008';
+    ctx.fillRect(r * 0.25 - kick, -2, 3, 4);
+    ctx.fillRect(r * 0.4 - kick, -2, 3, 4);
+    ctx.fillRect(r * 0.55 - kick, -2, 3, 4);
   }
+
+  // Slotted muzzle brake with thermal heat paint
+  ctx.fillStyle = flashing ? '#ffffff' : heatPaint(heat);
+  ctx.fillRect(r * 1.25 - kick, -5.2, 6.5, 10.4);
+  ctx.strokeStyle = '#0e0c09';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(r * 1.25 - kick, -5.2, 6.5, 10.4);
+
+  // Target acquisition optical sensor dome
+  ctx.fillStyle = flashing ? '#ffffff' : '#ff4d2e';
+  ctx.beginPath();
+  ctx.arc(-r * 0.1, -r * 0.32, 2.4, 0, TAU);
+  ctx.fill();
+
+  if (heat > 0.15 && !keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, r * 1.35 - kick, 0, 10 + heat * 10, PALETTE.emissive.hostile, 0.4 + heat * 0.45);
+  }
+
   var fx = e.fx;
   if (fx && fx.muzzle > 0) {
     var mk = 1 - fx.muzzle / 0.32;
     ctx.save();
-    ctx.globalAlpha = 0.45 * (1 - mk);
-    ctx.fillStyle = '#6a6258';
+    ctx.globalAlpha = 0.5 * (1 - mk);
+    ctx.fillStyle = '#5c544a';
     ctx.beginPath();
-    ctx.arc(r * 1.4 - kick + mk * 10, -2, 3 + mk * 4, 0, TAU);
+    ctx.arc(r * 1.45 - kick + mk * 12, -2, 3.5 + mk * 5, 0, TAU);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(r * 1.25 - kick + mk * 8, 3, 2.4 + mk * 3, 0, TAU);
+    ctx.arc(r * 1.3 - kick + mk * 10, 3, 2.8 + mk * 4, 0, TAU);
     ctx.fill();
     ctx.restore();
   }
@@ -412,136 +657,37 @@ function drawMirrorShield(ctx, e, fx) {
   if (broken) {
     ctx.setLineDash(DASH_4);
     ctx.strokeStyle = 'rgba(91, 231, 255, 0.55)';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(0, 0, e.r + 10, -1.13, 1.13);
-    ctx.stroke();
-  } else {
-    ctx.strokeStyle = PALETTE.emissive.tech;
-    ctx.lineWidth = 1.3;
-    for (i = -2; i <= 2; i += 1) {
-      var a = i * 0.42;
-      hexAt(ctx, Math.cos(a) * (e.r + 10), Math.sin(a) * (e.r + 10), 4.2);
-      ctx.stroke();
-    }
     ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.arc(0, 0, e.r + 10, -1.13, 1.13);
+    ctx.arc(0, 0, e.r + 10, -1.15, 1.15);
     ctx.stroke();
-    if (!keyGlowsOnly()) drawGlow(ctx, e.r + 8, 0, 14, PALETTE.emissive.tech, 0.4);
+  } else {
+    // Hexagonal crystalline barrier facets
+    ctx.strokeStyle = PALETTE.emissive.tech;
+    ctx.lineWidth = 1.4;
+    for (i = -2; i <= 2; i += 1) {
+      var a = i * 0.42;
+      hexAt(ctx, Math.cos(a) * (e.r + 11), Math.sin(a) * (e.r + 11), 4.8);
+      ctx.stroke();
+    }
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, e.r + 11, -1.15, 1.15);
+    ctx.stroke();
+    if (!keyGlowsOnly()) drawGlow(ctx, e.r + 9, 0, 16, PALETTE.emissive.tech, 0.45);
   }
   ctx.restore();
+
   if (fx && fx.rippleT > 0) {
     var k = 1 - fx.rippleT / 0.28;
     ctx.save();
     ctx.globalAlpha = 1 - k;
     ctx.strokeStyle = '#e8fbff';
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, e.r + 8 + k * 16, (fx.rippleAng || 0) - faceOf(e) - 0.55, (fx.rippleAng || 0) - faceOf(e) + 0.55);
+    ctx.arc(0, 0, e.r + 9 + k * 18, (fx.rippleAng || 0) - faceOf(e) - 0.55, (fx.rippleAng || 0) - faceOf(e) + 0.55);
     ctx.stroke();
     ctx.restore();
-  }
-}
-
-function drawEliteBody(ctx, e, flashing, reduced) {
-  var r = e.r;
-  var spin = reduced ? 0.4 : (rt.state.waveTime || 0) * 0.9;
-  var i;
-  ctx.save();
-  ctx.rotate(spin);
-  ctx.strokeStyle = PALETTE.emissive.gold;
-  ctx.globalAlpha = reduced ? 0.8 : 0.55;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(0, 0, r + 9, 0, TAU);
-  ctx.stroke();
-  for (i = 0; i < 6; i += 1) {
-    var ta = (i / 6) * TAU;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(ta) * (r + 6), Math.sin(ta) * (r + 6));
-    ctx.lineTo(Math.cos(ta) * (r + 12), Math.sin(ta) * (r + 12));
-    ctx.stroke();
-  }
-  ctx.restore();
-  if (e.affix === 'blink') {
-    var jig = reduced ? 1.5 : (e.blinkTelegraph ? 3.4 : 1.6);
-    ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = '#ff4040';
-    ctx.lineWidth = 1.4;
-    strokeStar(ctx, r, jig, 0);
-    ctx.strokeStyle = '#40e0ff';
-    strokeStar(ctx, r, -jig, 1);
-    ctx.restore();
-  }
-  ctx.beginPath();
-  for (i = 0; i < 8; i += 1) {
-    var sa = (i / 8) * TAU;
-    var sr = i % 2 ? r * 0.72 : r;
-    if (i === 0) ctx.moveTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
-    else ctx.lineTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
-  }
-  ctx.closePath();
-  ctx.fillStyle = flashing ? '#ffffff' : '#1e3834';
-  ctx.fill();
-  if (!flashing) {
-    ctx.fillStyle = '#3f756c';
-    ctx.beginPath();
-    ctx.moveTo(r, 0);
-    ctx.lineTo(0, -r * 0.42);
-    ctx.lineTo(-r * 0.2, 0);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.beginPath();
-  for (i = 0; i < 8; i += 1) {
-    var sb = (i / 8) * TAU;
-    var srb = i % 2 ? r * 0.72 : r;
-    if (i === 0) ctx.moveTo(Math.cos(sb) * srb, Math.sin(sb) * srb);
-    else ctx.lineTo(Math.cos(sb) * srb, Math.sin(sb) * srb);
-  }
-  ctx.closePath();
-  outline(ctx, 1.7);
-  ctx.save();
-  ctx.strokeStyle = flashing ? '#ffffff' : PALETTE.emissive.gold;
-  ctx.lineWidth = 1.1;
-  ctx.globalAlpha *= 0.85;
-  for (i = 0; i < 4; i += 1) {
-    var va = (i / 4) * TAU + spin * 0.25;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(va) * r * 0.35, Math.sin(va) * r * 0.35);
-    ctx.lineTo(Math.cos(va) * r * 0.92, Math.sin(va) * r * 0.92);
-    ctx.stroke();
-  }
-  ctx.restore();
-  ctx.fillStyle = flashing ? '#ffffff' : '#142826';
-  ctx.beginPath();
-  ctx.arc(2, 0, r * 0.36, 0, TAU);
-  ctx.fill();
-  ctx.fillStyle = flashing ? '#ffffff' : '#f5d17b';
-  ctx.fillRect(r * 0.22, -2.2, 6, 4.4);
-  if (e.affix === 'mirror') drawMirrorShield(ctx, e, e.fx);
-  if (e.affix === 'vortex') {
-    ctx.save();
-    ctx.rotate(reduced ? 0.6 : (rt.state.waveTime || 0) * 1.5);
-    ctx.strokeStyle = PALETTE.emissive.void;
-    ctx.lineWidth = 1.3;
-    ctx.beginPath();
-    ctx.ellipse(2, 0, r + 13, r + 6, 0, 0, TAU);
-    ctx.stroke();
-    ctx.rotate(1.1);
-    ctx.beginPath();
-    ctx.ellipse(-2, 1, r + 16, r + 5, 0.35, 0, TAU);
-    ctx.stroke();
-    ctx.restore();
-  }
-  if (e.affix === 'blink' && (e.blinkTelegraph || (e.blinkTimer !== undefined && e.blinkTimer <= 0.3 && e.blinkTimer > 0))) {
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.3;
-    ctx.beginPath();
-    ctx.arc(0, 0, r + 12, 0, TAU);
-    ctx.stroke();
   }
 }
 
@@ -560,46 +706,220 @@ function strokeStar(ctx, r, ox, oy) {
   ctx.stroke();
 }
 
+function drawEliteBody(ctx, e, flashing, reduced) {
+  var r = e.r;
+  var spin = reduced ? 0.4 : (rt.state.waveTime || 0) * 0.9;
+  var i;
+
+  // Floating Runic Halo Array
+  ctx.save();
+  ctx.rotate(spin);
+  ctx.strokeStyle = PALETTE.emissive.gold;
+  ctx.globalAlpha = reduced ? 0.85 : 0.65;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(0, 0, r + 10, 0, TAU);
+  ctx.stroke();
+
+  // Orbital focus nodes on halo
+  for (i = 0; i < 6; i += 1) {
+    var ta = (i / 6) * TAU;
+    var nx = Math.cos(ta) * (r + 10);
+    var ny = Math.sin(ta) * (r + 10);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(nx, ny, 1.8, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Blink Affix Chromatic Aberration Telegraph
+  if (e.affix === 'blink' || e.affix2 === 'blink') {
+    var jig = reduced ? 1.5 : (e.blinkTelegraph ? 3.8 : 1.8);
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#ff4040';
+    ctx.lineWidth = 1.5;
+    strokeStar(ctx, r, jig, 0);
+    ctx.strokeStyle = '#40e0ff';
+    strokeStar(ctx, r, -jig, 1);
+    ctx.restore();
+  }
+
+  // 8-Point Star Faceted Armor Chassis
+  ctx.beginPath();
+  for (i = 0; i < 8; i += 1) {
+    var sa = (i / 8) * TAU;
+    var sr = i % 2 ? r * 0.72 : r;
+    if (i === 0) ctx.moveTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+    else ctx.lineTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+  }
+  ctx.closePath();
+  ctx.fillStyle = flashing ? '#ffffff' : '#142c28';
+  ctx.fill();
+  outline(ctx, 2);
+
+  if (!flashing) {
+    // Imperial jade/obsidian composite plates
+    ctx.fillStyle = '#26584e';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.95, 0);
+    ctx.lineTo(0, -r * 0.45);
+    ctx.lineTo(-r * 0.35, 0);
+    ctx.lineTo(0, r * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    // Gilded gold filigree edge accents
+    ctx.strokeStyle = PALETTE.emissive.gold;
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    // Filigree ray traces
+    ctx.save();
+    ctx.strokeStyle = PALETTE.emissive.gold;
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.85;
+    for (i = 0; i < 4; i += 1) {
+      var va = (i / 4) * TAU + spin * 0.25;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(va) * r * 0.35, Math.sin(va) * r * 0.35);
+      ctx.lineTo(Math.cos(va) * r * 0.92, Math.sin(va) * r * 0.92);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Volatile affix: pulsating thermal magma veins
+    if (e.affix === 'volatile' || e.affix2 === 'volatile') {
+      var vPulse = reduced ? 0.7 : (0.5 + 0.5 * Math.sin((rt.state.waveTime || 0) * 8));
+      ctx.strokeStyle = 'rgba(255, 140, 50, ' + vPulse.toFixed(2) + ')';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.4, -r * 0.3);
+      ctx.lineTo(0, -r * 0.1);
+      ctx.lineTo(r * 0.4, -r * 0.2);
+      ctx.moveTo(-r * 0.3, r * 0.3);
+      ctx.lineTo(0, r * 0.15);
+      ctx.lineTo(r * 0.35, r * 0.25);
+      ctx.stroke();
+    }
+
+    // Splitter affix: bio-luminescent cell division suture lines
+    if (e.affix === 'splitter' || e.affix2 === 'splitter') {
+      ctx.strokeStyle = 'rgba(240, 210, 164, 0.85)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.7);
+      ctx.lineTo(0, r * 0.7);
+      ctx.stroke();
+    }
+  }
+
+  // Central Crystalline Hyper-Core
+  ctx.fillStyle = flashing ? '#ffffff' : '#0e1c1a';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.38, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = PALETTE.emissive.gold;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = flashing ? '#ffffff' : PALETTE.emissive.player;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.24, 0, TAU);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.1, 0, TAU);
+  ctx.fill();
+
+  // Forward commander optic
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
+  ctx.fillRect(r * 0.24, -2.5, 6, 5);
+
+  if (e.affix === 'mirror' || e.affix2 === 'mirror') drawMirrorShield(ctx, e, e.fx);
+  if (e.affix === 'vortex' || e.affix2 === 'vortex') {
+    ctx.save();
+    ctx.rotate(reduced ? 0.6 : (rt.state.waveTime || 0) * 1.6);
+    ctx.strokeStyle = PALETTE.emissive.void;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(2, 0, r + 14, r + 6, 0, 0, TAU);
+    ctx.stroke();
+    ctx.rotate(1.1);
+    ctx.beginPath();
+    ctx.ellipse(-2, 1, r + 17, r + 6, 0.35, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if ((e.affix === 'blink' || e.affix2 === 'blink') && (e.blinkTelegraph || (e.blinkTimer !== undefined && e.blinkTimer <= 0.3 && e.blinkTimer > 0))) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 13, 0, TAU);
+    ctx.stroke();
+  }
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, 0, 0, r * 0.9, PALETTE.emissive.gold, 0.45);
+  }
+}
+
 function drawTitanGun(ctx, y, alive, enraged, flashing, hp, maxHp, wreckSpark) {
   if (alive) {
-    ctx.fillStyle = flashing ? '#ffffff' : '#241c14';
-    ctx.fillRect(-6, y - 4, 46, 8);
+    // Heavy armored sponson housing (fixed outline path)
+    ctx.fillStyle = flashing ? '#ffffff' : '#1e1812';
+    ctx.beginPath();
+    ctx.rect(-6, y - 5, 48, 10);
+    ctx.fill();
+    outline(ctx, 1.4);
+
+    // Rotary barrels / missile cells
     ctx.fillStyle = flashing ? '#ffffff' : '#4a3d31';
-    ctx.fillRect(-2, y - 3, 40, 3);
+    ctx.fillRect(-2, y - 3.5, 42, 3.5);
+    ctx.fillRect(-2, y + 0.5, 42, 3.5);
+
+    // Energy conduits
     ctx.fillStyle = flashing ? '#ffffff' : (enraged ? PALETTE.emissive.hostile : PALETTE.emissive.tech);
-    ctx.fillRect(18, y - 3, 5, 6);
-    ctx.fillRect(30, y - 3, 5, 6);
+    ctx.fillRect(18, y - 4, 5, 8);
+    ctx.fillRect(32, y - 4, 5, 8);
+
     if (maxHp) {
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(-4, y < 0 ? y - 8 : y + 6, 30, 2.5);
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fillRect(-4, y < 0 ? y - 9 : y + 7, 32, 3);
       ctx.fillStyle = enraged ? '#ff6644' : (y < 0 ? PALETTE.emissive.tech : PALETTE.emissive.gold);
-      ctx.fillRect(-4, y < 0 ? y - 8 : y + 6, 30 * clamp((hp || 0) / maxHp, 0, 1), 2.5);
+      ctx.fillRect(-4, y < 0 ? y - 9 : y + 7, 32 * clamp((hp || 0) / maxHp, 0, 1), 3);
     }
     return;
   }
+
+  // Wrecked Sponson: Scorched and sparking destruction
   ctx.fillStyle = '#14110e';
-  ctx.fillRect(-8, y - 3, 22, 6);
+  ctx.fillRect(-8, y - 4, 24, 8);
   ctx.strokeStyle = '#4a3a2e';
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(12, y - 4);
-  ctx.lineTo(20, y);
-  ctx.lineTo(14, y + 4);
+  ctx.moveTo(12, y - 5);
+  ctx.lineTo(22, y);
+  ctx.lineTo(14, y + 5);
   ctx.stroke();
+
   ctx.save();
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.6;
   ctx.fillStyle = '#1a1410';
   ctx.beginPath();
-  ctx.arc(6, y, 5, 0, TAU);
+  ctx.arc(6, y, 6, 0, TAU);
   ctx.fill();
   ctx.restore();
-  if (Math.sin(wreckSpark) > 0.2) {
+
+  if (Math.sin(wreckSpark) > 0.15) {
     ctx.strokeStyle = Math.sin(wreckSpark * 2) > 0 ? '#ffd36b' : '#ffffff';
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(10, y);
-    ctx.lineTo(18, y - 5);
-    ctx.lineTo(16, y + 2);
+    ctx.lineTo(19, y - 6);
+    ctx.lineTo(16, y + 3);
     ctx.stroke();
   }
 }
@@ -607,10 +927,14 @@ function drawTitanGun(ctx, y, alive, enraged, flashing, hp, maxHp, wreckSpark) {
 function drawTitanBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var enraged = Boolean(e.phase2Triggered);
-  var spin = reduced ? 0.3 : (rt.state.waveTime || 0) * 1.6;
+  var spin = reduced ? 0.3 : (rt.state.waveTime || 0) * 1.8;
   var i;
-  drawTitanGun(ctx, -16, !e.leftCannonDestroyed, enraged, flashing, e.leftCannonHp, e.leftCannonMaxHp, (rt.renderTime || 0) * 9);
-  drawTitanGun(ctx, 16, !e.rightPodDestroyed, enraged, flashing, e.rightPodHp, e.rightPodMaxHp, (rt.renderTime || 0) * 9 + 2);
+
+  // Twin Heavy Sponsons
+  drawTitanGun(ctx, -17, !e.leftCannonDestroyed, enraged, flashing, e.leftCannonHp, e.leftCannonMaxHp, (rt.renderTime || 0) * 9);
+  drawTitanGun(ctx, 17, !e.rightPodDestroyed, enraged, flashing, e.rightPodHp, e.rightPodMaxHp, (rt.renderTime || 0) * 9 + 2);
+
+  // Octagonal Dreadnought Hull
   ctx.beginPath();
   for (i = 0; i < 8; i += 1) {
     var oa = (i / 8) * TAU;
@@ -618,57 +942,73 @@ function drawTitanBody(ctx, e, flashing, reduced) {
     else ctx.lineTo(Math.cos(oa) * r, Math.sin(oa) * r);
   }
   ctx.closePath();
-  ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#4a241c' : '#3a3124');
+  ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#4a2016' : '#342a1e');
   ctx.fill();
-  outline(ctx, 2);
+  outline(ctx, 2.4);
+
   if (!flashing) {
+    // Multi-tiered battleship sloped armor plates
     for (i = 0; i < 8; i += 1) {
       var a0 = (i / 8) * TAU;
       var a1 = ((i + 1) / 8) * TAU;
       var mid = (a0 + a1) * 0.5;
       ctx.beginPath();
-      ctx.moveTo(Math.cos(a0) * r * 0.9, Math.sin(a0) * r * 0.9);
-      ctx.lineTo(Math.cos(a1) * r * 0.9, Math.sin(a1) * r * 0.9);
+      ctx.moveTo(Math.cos(a0) * r * 0.92, Math.sin(a0) * r * 0.92);
+      ctx.lineTo(Math.cos(a1) * r * 0.92, Math.sin(a1) * r * 0.92);
       ctx.lineTo(Math.cos(mid) * r * 0.52, Math.sin(mid) * r * 0.52);
       ctx.closePath();
-      ctx.fillStyle = i % 2 ? '#6a5438' : '#2a2218';
+      ctx.fillStyle = i % 2 ? '#6a5238' : '#282016';
       ctx.fill();
       if (enraged) {
-        ctx.strokeStyle = 'rgba(255, 70, 40, 0.9)';
-        ctx.lineWidth = 1.3;
+        ctx.strokeStyle = 'rgba(255, 70, 40, 0.95)';
+        ctx.lineWidth = 1.5;
         ctx.stroke();
       }
     }
+
+    // Industrial hazard warning chevrons on upper & lower hull
+    ctx.fillStyle = '#d49b38';
+    ctx.fillRect(-r * 0.5, -r * 0.72, 4, 8);
+    ctx.fillRect(-r * 0.35, -r * 0.72, 4, 8);
+    ctx.fillRect(-r * 0.5, r * 0.72 - 8, 4, 8);
+    ctx.fillRect(-r * 0.35, r * 0.72 - 8, 4, 8);
   }
+
+  // Rotating Fusion Reactor Containment Rings
   ctx.save();
   ctx.rotate(spin);
   ctx.strokeStyle = flashing ? '#ffffff' : (enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold);
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.4;
   for (i = 0; i < 3; i += 1) {
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.34, (i / 3) * TAU, (i / 3) * TAU + 0.7);
+    ctx.arc(0, 0, r * 0.36, (i / 3) * TAU, (i / 3) * TAU + 0.8);
     ctx.stroke();
   }
   ctx.restore();
-  var coreR = Math.max(5, r * 0.22);
+
+  // Core Plasma Star
+  var coreR = Math.max(6, r * 0.24);
   if (!keyGlowsOnly() && !flashing) {
-    drawGlow(ctx, 0, 0, coreR + (enraged ? 18 : 12), enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.75);
+    drawGlow(ctx, 0, 0, coreR + (enraged ? 22 : 14), enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.85);
   }
-  ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#ff4d2e' : '#f5a623');
+  ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#ff4020' : '#f5a623');
   ctx.beginPath();
   ctx.arc(0, 0, coreR, 0, TAU);
   ctx.fill();
+
   ctx.fillStyle = flashing ? '#ffffff' : '#fff4bd';
   ctx.beginPath();
-  ctx.arc(0, 0, coreR * 0.45, 0, TAU);
+  ctx.arc(0, 0, coreR * 0.5, 0, TAU);
   ctx.fill();
+
+  // Enraged smoke & flame vents
   if (enraged && !flashing) {
-    var puff = reduced ? 0.3 : ((rt.renderTime || 0) * 1.2) % 1;
+    var puff = reduced ? 0.3 : ((rt.renderTime || 0) * 1.4) % 1;
     ctx.save();
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = 0.45;
     ctx.fillStyle = '#1a100e';
     ctx.beginPath();
-    ctx.arc(-r * 0.2 - puff * 8, -r * 0.15, 5 + puff * 4, 0, TAU);
+    ctx.arc(-r * 0.25 - puff * 10, -r * 0.2, 6 + puff * 5, 0, TAU);
     ctx.fill();
     ctx.restore();
   }
@@ -676,172 +1016,319 @@ function drawTitanBody(ctx, e, flashing, reduced) {
 
 function drawCommandAntenna(ctx, e, reduced) {
   var pulse = reduced ? 1 : (0.7 + 0.3 * Math.sin((rt.state.waveTime || 0) * 6));
-  var tipY = e.y - e.r - 11;
+  var tipY = e.y - e.r - 12;
   ctx.save();
   ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 1.6;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(e.x, e.y - e.r * 0.35);
   ctx.lineTo(e.x, tipY);
   ctx.stroke();
-  if (!keyGlowsOnly()) drawGlow(ctx, e.x, tipY, 8, PALETTE.emissive.gold, 0.35);
+
+  // Dual radar dish crossbars
+  ctx.beginPath();
+  ctx.moveTo(e.x - 5, tipY + 4);
+  ctx.lineTo(e.x + 5, tipY + 4);
+  ctx.stroke();
+
+  if (!keyGlowsOnly()) drawGlow(ctx, e.x, tipY, 10, PALETTE.emissive.gold, 0.45);
   ctx.fillStyle = '#ffd36b';
   ctx.beginPath();
-  ctx.arc(e.x, tipY, 2.2 + pulse * 1.2, 0, TAU);
+  ctx.arc(e.x, tipY, 2.5 + pulse * 1.2, 0, TAU);
   ctx.fill();
   ctx.restore();
 }
 
 function drawSpitterBody(ctx, e, flashing) {
   var r = e.r;
-  ctx.fillStyle = flashing ? '#ffffff' : '#3d4a22';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r * 1.05, r * 0.82, 0, 0, TAU);
-  ctx.fill();
-  outline(ctx, 1.6);
-  if (!flashing) {
-    ctx.fillStyle = '#6d8a32';
+  var step = (e.fx && e.fx.step) || 0;
+  var reduced = isReducedMotion();
+
+  // Skittering arachnid legs
+  ctx.strokeStyle = flashing ? '#ffffff' : '#1c280e';
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = 'round';
+  var li;
+  for (li = 0; li < 4; li += 1) {
+    var side = li < 2 ? -1 : 1;
+    var slot = li % 2;
+    var legPhase = reduced ? 0 : Math.sin(step * 0.25 + slot * 1.5 + (side > 0 ? 1.5 : 0));
+    var lx0 = (slot - 0.5) * r * 0.7;
+    var ly0 = side * r * 0.55;
+    var lx1 = lx0 + legPhase * 3;
+    var ly1 = side * r * 1.25;
     ctx.beginPath();
-    ctx.ellipse(r * 0.1, -r * 0.16, r * 0.62, r * 0.4, -0.2, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#2a3818';
-    ctx.beginPath();
-    ctx.ellipse(-r * 0.35, r * 0.12, r * 0.28, r * 0.46, 0.4, 0, TAU);
-    ctx.fill();
+    ctx.moveTo(lx0, ly0);
+    ctx.lineTo(lx1, ly1);
+    ctx.stroke();
   }
+
+  // Main thorax & venom sac base
+  ctx.fillStyle = flashing ? '#ffffff' : '#263414';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 1.08, r * 0.85, 0, 0, TAU);
+  ctx.fill();
+  outline(ctx, 1.8);
+
+  if (!flashing) {
+    // Swollen translucent acid reservoir abdomen
+    ctx.fillStyle = '#4c6c1e';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.15, 0, r * 0.72, r * 0.62, 0, 0, TAU);
+    ctx.fill();
+
+    // Glowing acidic bile
+    ctx.fillStyle = '#8ec432';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.22, 0, r * 0.5, r * 0.42, 0, 0, TAU);
+    ctx.fill();
+
+    // Floating bile droplets
+    ctx.fillStyle = '#d6ff6a';
+    ctx.beginPath();
+    ctx.arc(-r * 0.32, -r * 0.12, 1.8, 0, TAU);
+    ctx.arc(-r * 0.15, r * 0.15, 2.2, 0, TAU);
+    ctx.fill();
+
+    // Thoracic armor ridge
+    ctx.fillStyle = '#3a4e1a';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.28, 0, r * 0.45, r * 0.55, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#1a240c';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+
+  // Spitting maw with acid drool
   ctx.fillStyle = flashing ? '#ffffff' : '#d6ff6a';
   ctx.beginPath();
-  ctx.ellipse(r * 0.95, 0, r * 0.38, r * 0.22, 0, 0, TAU);
+  ctx.ellipse(r * 0.98, 0, r * 0.4, r * 0.24, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.2);
-  ctx.fillStyle = flashing ? '#ffffff' : '#1a140c';
+  outline(ctx, 1.3);
+
+  // Triple predatory eye cluster
+  ctx.fillStyle = flashing ? '#ffffff' : '#141c0a';
   ctx.beginPath();
-  ctx.arc(r * 0.35, -r * 0.08, Math.max(1.6, r * 0.16), 0, TAU);
+  ctx.arc(r * 0.4, -r * 0.14, Math.max(1.6, r * 0.16), 0, TAU);
+  ctx.arc(r * 0.4, r * 0.14, Math.max(1.6, r * 0.16), 0, TAU);
+  ctx.arc(r * 0.52, 0, Math.max(1.4, r * 0.14), 0, TAU);
   ctx.fill();
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, r * 0.95, 0, r * 0.9, '#c6e35a', 0.55);
+
+  ctx.fillStyle = flashing ? '#ffffff' : '#f0ff9a';
+  ctx.beginPath();
+  ctx.arc(r * 0.42, -r * 0.14, 1, 0, TAU);
+  ctx.arc(r * 0.42, r * 0.14, 1, 0, TAU);
+  ctx.arc(r * 0.54, 0, 1, 0, TAU);
+  ctx.fill();
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, r * 0.95, 0, r * 0.9, '#c6e35a', 0.6);
+  }
 }
 
 function drawScurrierBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var hot = !!e.arming;
-  var wobble = hot && !reduced ? Math.sin((rt.renderTime || 0) * 42) * 1.4 : 0;
+  var wobble = hot && !reduced ? Math.sin((rt.renderTime || 0) * 44) * 1.6 : 0;
   ctx.translate(wobble, 0);
+
+  // 6 Articulated insectoid legs with natural scuttle
+  var step = (e.fx && e.fx.step) || 0;
   var i;
-  ctx.strokeStyle = flashing ? '#ffffff' : '#4a2c1c';
-  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = flashing ? '#ffffff' : '#3a2014';
+  ctx.lineWidth = 2.4;
   ctx.lineCap = 'round';
-  for (i = 0; i < 4; i += 1) {
-    var side = i < 2 ? -1 : 1;
-    var along = (i % 2 === 0 ? -0.35 : 0.35) * r;
+  for (i = 0; i < 6; i += 1) {
+    var side = i < 3 ? -1 : 1;
+    var slot = i % 3;
+    var along = (slot - 1) * r * 0.48;
+    var legPhase = reduced ? 0 : Math.sin(step * 0.4 + slot * 1.3 + (side > 0 ? 1.5 : 0));
+    var kneeX = along + legPhase * 2.5;
+    var kneeY = side * r * 0.8;
+    var footX = along + legPhase * 4;
+    var footY = side * r * 1.3;
     ctx.beginPath();
-    ctx.moveTo(along, side * r * 0.4);
-    ctx.lineTo(along, side * r * 1.15);
+    ctx.moveTo(along, side * r * 0.35);
+    ctx.lineTo(kneeX, kneeY);
+    ctx.lineTo(footX, footY);
     ctx.stroke();
   }
-  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#ffb070' : '#8a4a28');
+
+  // Translucent chemical bomb sac abdomen
+  ctx.fillStyle = flashing ? '#ffffff' : (hot ? '#ff9a4a' : '#723a1e');
   ctx.beginPath();
-  ctx.ellipse(0, 0, r * 0.95, r * 0.72, 0, 0, TAU);
+  ctx.ellipse(-r * 0.15, 0, r * 0.85, r * 0.72, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.5);
+  outline(ctx, 1.6);
+
   if (!flashing) {
-    ctx.fillStyle = '#c46a38';
+    ctx.fillStyle = hot ? '#ffb878' : '#a85226';
     ctx.beginPath();
-    ctx.ellipse(r * 0.2, -r * 0.08, r * 0.4, r * 0.28, 0, 0, TAU);
+    ctx.ellipse(-r * 0.15, 0, r * 0.55, r * 0.45, 0, 0, TAU);
     ctx.fill();
   }
-  ctx.fillStyle = hot ? '#fff6e8' : (flashing ? '#ffffff' : '#2a140c');
+
+  // Head with needle mandibles
+  ctx.fillStyle = flashing ? '#ffffff' : '#22120a';
   ctx.beginPath();
-  ctx.arc(r * 0.55, 0, Math.max(1.4, r * 0.18), 0, TAU);
+  ctx.moveTo(r * 0.35, -r * 0.3);
+  ctx.lineTo(r * 0.95, 0);
+  ctx.lineTo(r * 0.35, r * 0.3);
+  ctx.closePath();
   ctx.fill();
-  if (hot && !keyGlowsOnly()) drawGlow(ctx, 0, 0, r * 1.4, '#ff8a3d', reduced ? 0.7 : 0.85);
+
+  // Glowing compound eyes / detonator core
+  ctx.fillStyle = hot ? '#ffffff' : (flashing ? '#ffffff' : '#ff4d2e');
+  ctx.beginPath();
+  ctx.arc(r * 0.5, -r * 0.12, Math.max(1.4, r * 0.16), 0, TAU);
+  ctx.arc(r * 0.5, r * 0.12, Math.max(1.4, r * 0.16), 0, TAU);
+  ctx.fill();
+
+  if (hot && !keyGlowsOnly()) {
+    drawGlow(ctx, 0, 0, r * 1.6, '#ff8a3d', reduced ? 0.75 : 0.9);
+  }
 }
 
 function drawWardenBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var pulse = reduced ? 0.5 : (0.5 + 0.5 * Math.sin((rt.renderTime || 0) * 3 + (e.phase || 0)));
-  ctx.fillStyle = flashing ? '#ffffff' : '#243848';
+
+  // Sleek geometric diamond ceramic armor chassis
+  ctx.fillStyle = flashing ? '#ffffff' : '#1a2c3a';
   ctx.beginPath();
-  ctx.moveTo(r, 0);
-  ctx.lineTo(0, r * 0.72);
-  ctx.lineTo(-r * 0.85, 0);
-  ctx.lineTo(0, -r * 0.72);
+  ctx.moveTo(r * 1.05, 0);
+  ctx.lineTo(0, r * 0.76);
+  ctx.lineTo(-r * 0.9, 0);
+  ctx.lineTo(0, -r * 0.76);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.6);
+  outline(ctx, 1.8);
+
   if (!flashing) {
-    ctx.fillStyle = '#4e7388';
+    // Inner ceramic facet plates
+    ctx.fillStyle = '#3a627a';
     ctx.beginPath();
-    ctx.moveTo(r * 0.55, 0);
-    ctx.lineTo(0, r * 0.38);
-    ctx.lineTo(-r * 0.2, 0);
-    ctx.lineTo(0, -r * 0.38);
+    ctx.moveTo(r * 0.6, 0);
+    ctx.lineTo(0, r * 0.42);
+    ctx.lineTo(-r * 0.25, 0);
+    ctx.lineTo(0, -r * 0.42);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#78a6c4';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    // Floating hard-light emitter pylons symmetrically on BOTH flanks
+    ctx.fillStyle = '#78a6c4';
+    ctx.fillRect(-r * 0.15, -r * 0.95, r * 0.3, 3.5);
+    ctx.fillRect(-r * 0.15, r * 0.95 - 3.5, r * 0.3, 3.5);
+    ctx.strokeStyle = '#9fd0ea';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-r * 0.15, -r * 0.95, r * 0.3, 3.5);
+    ctx.strokeRect(-r * 0.15, r * 0.95 - 3.5, r * 0.3, 3.5);
   }
+
+  // Symmetrical central harmonic shield resonator crest
   ctx.strokeStyle = flashing ? '#ffffff' : '#d5e8f5';
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(0, -r * 0.2);
-  ctx.lineTo(0, -r * 1.15);
+  ctx.moveTo(-r * 0.2, 0);
+  ctx.lineTo(r * 0.8, 0);
   ctx.stroke();
+
   ctx.fillStyle = flashing ? '#ffffff' : '#9fd0ea';
   ctx.beginPath();
-  ctx.arc(0, -r * 1.15, 2.2 + pulse, 0, TAU);
+  ctx.arc(0, 0, 2.5 + pulse * 1.2, 0, TAU);
   ctx.fill();
+
+  // Central ocular sensor
   ctx.fillStyle = flashing ? '#ffffff' : '#e8f6ff';
   ctx.beginPath();
-  ctx.arc(r * 0.35, 0, Math.max(1.5, r * 0.14), 0, TAU);
+  ctx.arc(r * 0.4, 0, Math.max(1.8, r * 0.16), 0, TAU);
   ctx.fill();
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, -r * 1.15, 8, '#9fd0ea', 0.45);
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, 0, 0, r * 0.95, '#5be7ff', 0.45);
+  }
 }
 
 function drawBurrowerBody(ctx, e, flashing) {
   var r = e.r;
-  ctx.fillStyle = flashing ? '#ffffff' : '#5c4630';
+  // Segmented armored shingle carapace
+  ctx.fillStyle = flashing ? '#ffffff' : '#4a3624';
   ctx.beginPath();
-  ctx.ellipse(0, 0, r * 1.05, r * 0.78, 0, 0, TAU);
+  ctx.ellipse(0, 0, r * 1.08, r * 0.82, 0, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.6);
+  outline(ctx, 1.8);
+
   if (!flashing) {
-    ctx.fillStyle = '#8a6a48';
+    ctx.fillStyle = '#78583a';
     ctx.beginPath();
-    ctx.ellipse(r * 0.15, -r * 0.12, r * 0.55, r * 0.36, 0, 0, TAU);
+    ctx.ellipse(r * 0.12, 0, r * 0.6, r * 0.42, 0, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = '#3a2a1c';
-    ctx.fillRect(-r * 0.1, -r * 0.55, r * 0.16, r * 1.1);
+
+    // Chitin shingle ridges
+    ctx.strokeStyle = '#22160e';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.1, -r * 0.6);
+    ctx.lineTo(-r * 0.1, r * 0.6);
+    ctx.moveTo(-r * 0.4, -r * 0.45);
+    ctx.lineTo(-r * 0.4, r * 0.45);
+    ctx.stroke();
   }
+
+  // Massive serrated fossorial digging claws / mandibles
   ctx.fillStyle = flashing ? '#ffffff' : '#e6d2a8';
   ctx.beginPath();
-  ctx.moveTo(r * 0.4, -r * 0.15);
-  ctx.lineTo(r * 1.25, -r * 0.45);
-  ctx.lineTo(r * 0.7, 0);
-  ctx.lineTo(r * 1.25, r * 0.45);
-  ctx.lineTo(r * 0.4, r * 0.15);
+  ctx.moveTo(r * 0.35, -r * 0.2);
+  ctx.lineTo(r * 1.35, -r * 0.52);
+  ctx.lineTo(r * 0.8, 0);
+  ctx.lineTo(r * 1.35, r * 0.52);
+  ctx.lineTo(r * 0.35, r * 0.2);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.2);
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, r * 0.2, 0, r * 0.45, '#e6d2a8', 0.25);
+  outline(ctx, 1.4);
+
+  // Sand vibration sonar sensory pits
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffd36b';
+  ctx.beginPath();
+  ctx.arc(r * 0.35, -r * 0.12, 1.6, 0, TAU);
+  ctx.arc(r * 0.35, r * 0.12, 1.6, 0, TAU);
+  ctx.fill();
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, r * 0.25, 0, r * 0.5, '#e6d2a8', 0.3);
+  }
 }
 
 function drawBurrowGhost(ctx, e, flashing, reduced) {
   var r = e.r;
   var pulse = reduced ? 0.65 : (0.45 + 0.25 * Math.sin((rt.renderTime || 0) * 6));
+  var rot = Math.atan2(e.vy || 0, e.vx || 1);
   ctx.save();
   ctx.translate(e.x, e.y);
-  ctx.fillStyle = 'rgba(90, 70, 40, 0.35)';
+  ctx.rotate(rot);
+
+  // Subterranean sand vortex mound aligned with movement direction
+  ctx.fillStyle = 'rgba(74, 54, 36, 0.45)';
   ctx.beginPath();
-  ctx.ellipse(0, 4, r * 1.15, r * 0.42, 0, 0, TAU);
+  ctx.ellipse(0, 0, r * 1.25, r * 0.55, 0, 0, TAU);
   ctx.fill();
+
+  // Seismic pressure rings
   ctx.strokeStyle = flashing ? '#ffffff' : 'rgba(230, 210, 168, ' + pulse.toFixed(3) + ')';
-  ctx.lineWidth = 1.6;
+  ctx.lineWidth = 1.8;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
-  ctx.ellipse(0, 2, r * 0.85, r * 0.32, 0, 0, TAU);
+  ctx.ellipse(0, 0, r * 0.95, r * 0.42, 0, 0, TAU);
   ctx.stroke();
   ctx.setLineDash(NO_DASH);
-  ctx.fillStyle = 'rgba(230, 210, 168, 0.85)';
+
+  ctx.fillStyle = 'rgba(230, 210, 168, 0.9)';
   ctx.beginPath();
-  ctx.arc(r * 0.2, 0, 2, 0, TAU);
+  ctx.arc(r * 0.25, 0, 2.4, 0, TAU);
   ctx.fill();
   ctx.restore();
 }
@@ -849,106 +1336,235 @@ function drawBurrowGhost(ctx, e, flashing, reduced) {
 function drawDreadnoughtBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var enraged = (e.bossPhase || 1) >= 3;
-  ctx.fillStyle = flashing ? '#ffffff' : '#4a3028';
+
+  // Symmetrical Heavy Ironclad Battleship Prow
+  ctx.fillStyle = flashing ? '#ffffff' : '#3a221a';
   ctx.beginPath();
-  ctx.moveTo(r * 1.15, 0);
-  ctx.lineTo(r * 0.2, r * 0.72);
-  ctx.lineTo(-r * 0.95, r * 0.58);
-  ctx.lineTo(-r * 1.05, -r * 0.58);
-  ctx.lineTo(r * 0.2, -r * 0.72);
+  ctx.moveTo(r * 1.22, 0);
+  ctx.lineTo(r * 0.22, r * 0.78);
+  ctx.lineTo(-r * 1.05, r * 0.62);
+  ctx.lineTo(-r * 1.05, -r * 0.62);
+  ctx.lineTo(r * 0.22, -r * 0.78);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.8);
+  outline(ctx, 2.2);
+
   if (!flashing) {
-    ctx.fillStyle = enraged ? '#8a4034' : '#6a4638';
+    // Superstructure deck plating
+    ctx.fillStyle = enraged ? '#8a3628' : '#5e3428';
     ctx.beginPath();
-    ctx.moveTo(r * 0.7, 0);
-    ctx.lineTo(r * 0.05, r * 0.42);
-    ctx.lineTo(-r * 0.45, 0);
-    ctx.lineTo(r * 0.05, -r * 0.42);
+    ctx.moveTo(r * 0.75, 0);
+    ctx.lineTo(r * 0.08, r * 0.46);
+    ctx.lineTo(-r * 0.48, 0);
+    ctx.lineTo(r * 0.08, -r * 0.46);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#2a1814';
-    ctx.fillRect(-r * 0.15, -r * 0.08, r * 0.7, r * 0.16);
+    ctx.strokeStyle = '#e8b088';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Symmetrical side armor skirt plating on both flanks
+    ctx.fillStyle = '#22140e';
+    ctx.fillRect(-r * 0.65, -r * 0.75, r * 0.8, r * 0.16);
+    ctx.fillRect(-r * 0.65, r * 0.59, r * 0.8, r * 0.16);
+    ctx.strokeStyle = '#0e0c09';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-r * 0.65, -r * 0.75, r * 0.8, r * 0.16);
+    ctx.strokeRect(-r * 0.65, r * 0.59, r * 0.8, r * 0.16);
   }
+
+  // Armored Ramming Beak
   ctx.fillStyle = flashing ? '#ffffff' : '#f0d2a4';
   ctx.beginPath();
-  ctx.moveTo(r * 1.15, 0);
-  ctx.lineTo(r * 0.72, r * 0.28);
-  ctx.lineTo(r * 0.72, -r * 0.28);
+  ctx.moveTo(r * 1.22, 0);
+  ctx.lineTo(r * 0.75, r * 0.3);
+  ctx.lineTo(r * 0.75, -r * 0.3);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = flashing ? '#ffffff' : (e.empTimer > 0 ? '#fff6e8' : '#ffb15a');
+  outline(ctx, 1.4);
+
+  // Rear Engine Compartment & Exposed Weakpoint Turbine
+  var turbineCol = e.empTimer > 0 ? '#fff6e8' : (enraged ? '#ff4020' : '#ff8a38');
+  ctx.fillStyle = flashing ? '#ffffff' : turbineCol;
   ctx.beginPath();
-  ctx.arc(-r * 0.72, 0, r * 0.28, 0, TAU);
+  ctx.arc(-r * 0.76, 0, r * 0.3, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.3);
-  ctx.strokeStyle = '#1a100c';
-  ctx.lineWidth = 2;
+  outline(ctx, 1.5);
+
+  // Rotating turbine cooling blades
+  var turbineSpin = reduced ? 0.3 : (rt.renderTime || 0) * 8;
+  ctx.save();
+  ctx.translate(-r * 0.76, 0);
+  ctx.rotate(turbineSpin);
+  ctx.strokeStyle = '#180c08';
+  ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.moveTo(-r * 0.95, -r * 0.16);
-  ctx.lineTo(-r * 0.5, -r * 0.16);
-  ctx.moveTo(-r * 0.95, r * 0.16);
-  ctx.lineTo(-r * 0.5, r * 0.16);
+  ctx.moveTo(-r * 0.24, 0);
+  ctx.lineTo(r * 0.24, 0);
+  ctx.moveTo(0, -r * 0.24);
+  ctx.lineTo(0, r * 0.24);
   ctx.stroke();
-  if (!keyGlowsOnly()) drawGlow(ctx, -r * 0.72, 0, r * 0.7, e.empTimer > 0 ? '#fff1c4' : '#ff6a3d', reduced ? 0.55 : 0.85);
+  ctx.restore();
+
+  // Dynamic EMP Stunned crackling lightning arcs
+  if (e.empTimer > 0 && !flashing) {
+    var empWave = Math.sin((rt.renderTime || 0) * 24) * 3;
+    ctx.strokeStyle = '#9be7ff';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, -r * 0.3 + empWave);
+    ctx.lineTo(0, -r * 0.45 - empWave);
+    ctx.lineTo(r * 0.4, empWave);
+    ctx.lineTo(-r * 0.2, r * 0.35 - empWave);
+    ctx.stroke();
+  }
+
+  if (!keyGlowsOnly()) {
+    drawGlow(ctx, -r * 0.76, 0, r * 0.85, e.empTimer > 0 ? '#fff1c4' : (enraged ? '#ff4020' : '#ff6a3d'), reduced ? 0.6 : 0.9);
+  }
 }
 
 function drawSovereignBody(ctx, e, flashing, reduced) {
   var r = e.r;
-  var spin = reduced ? 0.4 : (rt.renderTime || 0) * 0.8;
+  var spin = reduced ? 0.4 : (rt.renderTime || 0) * 0.9;
+
+  // Complete outer orbital gyroscopic ring with storm conductor spikes
+  ctx.save();
+  ctx.rotate(spin);
   ctx.strokeStyle = flashing ? '#ffffff' : '#d5e8ff';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 3.2;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.92, spin, spin + Math.PI * 1.35);
+  ctx.arc(0, 0, r * 0.95, 0, TAU);
   ctx.stroke();
+
+  // Conducting spikes on outer ring
+  ctx.fillStyle = '#ffffff';
+  var oi;
+  for (oi = 0; oi < 4; oi += 1) {
+    var oa = (oi / 4) * TAU;
+    ctx.fillRect(Math.cos(oa) * r * 0.95 - 2.5, Math.sin(oa) * r * 0.95 - 2.5, 5, 5);
+  }
+  ctx.restore();
+
+  // Complete counter-rotating inner orbital ring
+  ctx.save();
+  ctx.rotate(-spin * 1.3);
+  ctx.strokeStyle = flashing ? '#ffffff' : '#8ab8ea';
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.72, spin + Math.PI, spin + Math.PI * 2.2);
+  ctx.arc(0, 0, r * 0.74, 0, TAU);
   ctx.stroke();
-  ctx.fillStyle = flashing ? '#ffffff' : '#1c3048';
+  ctx.restore();
+
+  // Floating Central Storm Core
+  ctx.fillStyle = flashing ? '#ffffff' : '#14283c';
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.48, 0, TAU);
+  ctx.arc(0, 0, r * 0.52, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.5);
-  ctx.fillStyle = flashing ? '#ffffff' : '#f4fbff';
+  outline(ctx, 1.6);
+
+  // Blinding Plasma Tempest Singularity
+  ctx.fillStyle = flashing ? '#ffffff' : '#ffffff';
   ctx.beginPath();
-  ctx.arc(0, 0, Math.max(3, r * 0.16), 0, TAU);
+  ctx.arc(0, 0, Math.max(4, r * 0.22), 0, TAU);
   ctx.fill();
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, 0, r * 0.9, '#9ec0ea', e.shielded ? 0.9 : 0.45);
+
+  // Miniature internal lightning discharge
+  if (!reduced && Math.sin((rt.renderTime || 0) * 20) > 0.2) {
+    var lJig = Math.sin((rt.renderTime || 0) * 32) * 3;
+    ctx.strokeStyle = '#d5e8ff';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.35, lJig);
+    ctx.lineTo(0, r * 0.35 - lJig);
+    ctx.lineTo(r * 0.35, -r * 0.1 + lJig);
+    ctx.stroke();
+  }
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, 0, 0, r * 1.1, '#9ec0ea', e.shielded ? 0.95 : 0.55);
+  }
 }
 
 function drawStormTowerBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var pulse = reduced ? 1 : (0.7 + 0.3 * Math.sin((rt.renderTime || 0) * 5));
-  ctx.fillStyle = flashing ? '#ffffff' : '#2a3c52';
+
+  // 3 Anchor buttresses rooted into desert ground
+  ctx.fillStyle = flashing ? '#ffffff' : '#182432';
+  ctx.fillRect(-r * 0.65, r * 0.6, r * 1.3, 5);
+
+  // Metallic Obelisk Spire Pylon
+  ctx.fillStyle = flashing ? '#ffffff' : '#26384e';
   ctx.beginPath();
-  ctx.moveTo(0, -r);
-  ctx.lineTo(r * 0.55, r * 0.75);
-  ctx.lineTo(-r * 0.55, r * 0.75);
+  ctx.moveTo(0, -r * 1.05);
+  ctx.lineTo(r * 0.58, r * 0.78);
+  ctx.lineTo(-r * 0.58, r * 0.78);
   ctx.closePath();
   ctx.fill();
-  outline(ctx, 1.6);
+  outline(ctx, 1.8);
+
+  if (!flashing) {
+    // Stacked electromagnetic induction capacitor rings
+    ctx.fillStyle = '#6896c4';
+    ctx.fillRect(-r * 0.35, -r * 0.2, r * 0.7, 4.5);
+    ctx.fillRect(-r * 0.45, r * 0.15, r * 0.9, 4.5);
+    ctx.fillRect(-r * 0.52, r * 0.48, r * 1.04, 4.5);
+  }
+
+  // Summit Tesla Sphere & Corona
   ctx.fillStyle = flashing ? '#ffffff' : '#d5e8ff';
   ctx.beginPath();
-  ctx.arc(0, -r * 0.15, 4.2 * pulse, 0, TAU);
+  ctx.arc(0, -r * 1.05, 4.5 * pulse, 0, TAU);
   ctx.fill();
-  if (!keyGlowsOnly() && !flashing) drawGlow(ctx, 0, -r * 0.15, 12, '#d5e8ff', 0.55);
+
+  if (!keyGlowsOnly() && !flashing) {
+    drawGlow(ctx, 0, -r * 1.05, 14, '#d5e8ff', 0.65);
+  }
 }
 
 function drawMineBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var hot = !!e.arming;
   var blink = hot && !reduced ? (Math.sin((rt.renderTime || 0) * 28) > 0) : hot;
-  ctx.fillStyle = flashing ? '#ffffff' : '#5a4630';
+
+  // 8 Magnetic sensor horns / contact detonators
+  ctx.fillStyle = flashing ? '#ffffff' : '#221810';
+  var mi;
+  for (mi = 0; mi < 8; mi += 1) {
+    var ma = (mi / 8) * TAU;
+    ctx.beginPath();
+    ctx.arc(Math.cos(ma) * (r + 1.5), Math.sin(ma) * (r + 1.5), 1.8, 0, TAU);
+    ctx.fill();
+  }
+
+  // Heavy spherical casing
+  ctx.fillStyle = flashing ? '#ffffff' : '#4a3824';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
-  outline(ctx, 1.4);
-  ctx.fillStyle = blink ? '#fff6e8' : '#e0a84e';
+  outline(ctx, 1.5);
+
+  // Hazard warning chevron stripe ring
+  if (!flashing) {
+    ctx.strokeStyle = '#d49b38';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.65, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash(NO_DASH);
+  }
+
+  // Central pulsating proximity sensor eye
+  ctx.fillStyle = blink ? '#fff6e8' : (hot ? '#ff4d2e' : '#e0a84e');
   ctx.beginPath();
   ctx.arc(0, 0, r * 0.38, 0, TAU);
   ctx.fill();
-  if (hot && !keyGlowsOnly()) drawGlow(ctx, 0, 0, r * 1.6, '#ffb15a', reduced ? 0.65 : 0.9);
+
+  if (hot && !keyGlowsOnly()) {
+    drawGlow(ctx, 0, 0, r * 1.7, '#ffb15a', reduced ? 0.7 : 0.95);
+  }
 }
 
 function warnRing(ctx, x, y, radius, remain, color, reduced) {
@@ -1133,11 +1749,15 @@ export function drawEnemy(ctx, e) {
   ctx.save();
   ctx.translate(e.x, e.y);
   if (pose.dust > 0) drawDustRing(ctx, e.r * (e.kind === 'titan' || e.kind === 'brute' ? 1.5 : 1), pose.dust);
-  var facing = (e.kind === 'dreadnought' || e.kind === 'sovereign') && e.aim != null ? e.aim : faceOf(e);
+
+  // Static building structures & mines do not rotate with player facing
+  var facing = (e.kind === 'stormTower' || e.kind === 'mine') ? 0 :
+    ((e.kind === 'dreadnought' || e.kind === 'sovereign') && e.aim != null ? e.aim : faceOf(e));
   ctx.rotate(facing);
   ctx.translate(lean, 0);
   ctx.globalAlpha *= pose.alpha;
   ctx.scale(pose.scale, pose.scale);
+
   if (e.kind === 'elite') drawEliteBody(ctx, e, flashing, reduced);
   else if (e.kind === 'brute') drawBruteBody(ctx, e, flashing, reduced);
   else if (e.kind === 'rusher') drawRusherBody(ctx, e, flashing, reduced);
@@ -1152,6 +1772,7 @@ export function drawEnemy(ctx, e) {
   else if (e.kind === 'stormTower') drawStormTowerBody(ctx, e, flashing, reduced);
   else if (e.kind === 'mine') drawMineBody(ctx, e, flashing, reduced);
   else drawCrawlerBody(ctx, e, flashing, reduced);
+
   ctx.restore();
   if (e.kind === 'elite' && (e.affix === 'command' || e.affix2 === 'command')) drawCommandAntenna(ctx, e, reduced);
 }
@@ -1387,6 +2008,9 @@ export function drawHighContrastMarkers(ctx) {
 }
 
 function drawHighContrastMarker(ctx, e) {
+  // Do not reveal subterranean burrowers
+  if (e.kind === 'burrower' && e.burrowed) return;
+
   ctx.save();
   ctx.strokeStyle = '#000000';
   ctx.lineWidth = 5;
