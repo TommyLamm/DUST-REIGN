@@ -3,3 +3,4 @@ output/
 .playwright-cli/
 .release-tools/
 game.zip
+.worktrees/
