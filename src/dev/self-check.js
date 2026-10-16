@@ -310,22 +310,22 @@ export function selfCheck() {
     var noFusionOk = choicesNoPrereq.length === 3 &&
       choicesNoPrereq.every(function (c) { return c.category !== 'FUSION'; });
 
-    // Test 2: Prereqs for static-tempest met ('tesla-coil' and 'shockwave-dash')
+    // Test 2: Prereqs for apocalypse-thor met ('arc-lattice' and 'tesla-coil')
+    var latticeCard = UPGRADES.filter(function (u) { return u.id === 'arc-lattice'; })[0];
     var teslaCard = UPGRADES.filter(function (u) { return u.id === 'tesla-coil'; })[0];
-    var shockCard = UPGRADES.filter(function (u) { return u.id === 'shockwave-dash'; })[0];
-    test.acquiredUpgrades = [teslaCard, shockCard];
+    test.acquiredUpgrades = [latticeCard, teslaCard];
     var choicesWithPrereq = randomUpgradeChoices();
-    var hasStaticTempest = choicesWithPrereq.some(function (c) { return c.id === 'static-tempest' && c.category === 'FUSION'; });
+    var hasApocalypseThor = choicesWithPrereq.some(function (c) { return (c.id === 'apocalypse-thor' || c.id === 'static-tempest') && c.category === 'FUSION'; });
     var hasOffenseCard = choicesWithPrereq.some(function (c) { return c.category === 'OFFENSE' || c.category === 'WEAPON'; });
-    var fusionDrawOk = choicesWithPrereq.length === 3 && hasStaticTempest && hasOffenseCard;
+    var fusionDrawOk = choicesWithPrereq.length === 3 && hasApocalypseThor && hasOffenseCard;
 
-    // Test 3: Apply static-tempest -> state flag flipped to true & will not be drawn again
-    var staticFusion = FUSION_CHIPS.filter(function (fc) { return fc.id === 'static-tempest'; })[0];
+    // Test 3: Apply apocalypse-thor -> state flag flipped to true & will not be drawn again
+    var staticFusion = FUSION_CHIPS.filter(function (fc) { return fc.id === 'apocalypse-thor' || fc.id === 'static-tempest'; })[0];
     staticFusion.apply(test);
     test.acquiredUpgrades.push(staticFusion);
-    var staticAppliedOk = test.player.staticTempest === true;
+    var staticAppliedOk = test.player.staticTempest === true || test.player.apocalypseThor === true;
     var choicesAfterAcquired = randomUpgradeChoices();
-    var noDuplicateFusionOk = !choicesAfterAcquired.some(function (c) { return c.id === 'static-tempest'; });
+    var noDuplicateFusionOk = !choicesAfterAcquired.some(function (c) { return c.id === 'apocalypse-thor' || c.id === 'static-tempest'; });
 
     var fusionMatrixOk = fusionCountOk && fusionReqsOk && noFusionOk && fusionDrawOk && staticAppliedOk && noDuplicateFusionOk;
 
@@ -479,6 +479,7 @@ export function selfCheck() {
       });
     });
 
+    test.player.apocalypseThor = false;
     test.player.staticTempest = false;
     test.player.kineticShrapnel = false;
     test.player.overchargeRetaliation = false;
@@ -507,13 +508,14 @@ export function selfCheck() {
     var arcUiOk = mockInspectorUi.statFireRate.textContent === '12.5 RPS';
 
     test.acquiredUpgrades = [
-      { id: 'tesla-coil', title: 'TESLA COIL' },
-      { id: 'shockwave-dash', title: 'SHOCKWAVE DASH' }
+      { id: 'arc-lattice', title: 'ARC LATTICE' },
+      { id: 'tesla-coil', title: 'TESLA COIL' }
     ];
     renderBuildInspector();
     var readyUiOk = mockInspectorUi.fusionMatrixList.innerHTML.indexOf('is-ready') !== -1 &&
       mockInspectorUi.fusionMatrixList.innerHTML.indexOf('READY FOR SYNTHESIS') !== -1;
 
+    test.player.apocalypseThor = true;
     test.player.staticTempest = true;
     renderBuildInspector();
     var unlockedUiOk = mockInspectorUi.activeFusionsCount.textContent === '1' &&
@@ -691,6 +693,7 @@ export function selfCheck() {
 
     // Disable Check: shootCd expires but Left Cannon does not fire
     spawnedTitan.empTimer = 0;
+    test.hitstop = 0;
     spawnedTitan.shootCd = 0.001;
     test.enemyBullets = [];
     test.hitstop = 0;
@@ -870,6 +873,49 @@ export function selfCheck() {
     rt.input.keys = previousKeys;
     setLanguage(previousLang);
   }
-  if (firstScore !== 20 || chainScore !== 45 || lightDrop || !bruteDrop || !eliteDrop || healed !== 68 || capped !== 100 || cappedScore !== 0 || overflowScore !== REPAIR_OVERFLOW_SCORE || overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0 || repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0 || bountyScore !== 57 || secondBountyScore !== 82 || !bountyClaimed || bountySurge !== BOUNTY_SURGE_DURATION || retainedSurge !== 5 || !stormClock || !waveReset || artilleryScore !== 60 || !grazeOk || !justDashOk || !barrelKickOk || !barrelShootOk || !stormWindOk || !coreTitanOk || !barrelTitanOk || !weaponCycleOk || !breacherShootOk || !vanguardSlowOk || !vanguardShootOk || !arcChainOk || !fusionMatrixOk || !fusionExecOk || !buildInspectorUiOk || !eliteAffixSystemOk || !titanComponentsSystemOk || !conductionSpireSystemOk || !combatRankTelemetryOk || !spatialGridOk) throw new Error('LunaGame self-check failed');
-  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '10 fusions, prerequisites verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified', spatialGrid: '2d spatial hash grid zero-gc verified' };
+  var failures = [];
+  if (firstScore !== 20) failures.push('firstScore');
+  if (chainScore !== 45) failures.push('chainScore');
+  if (lightDrop) failures.push('lightDrop');
+  if (!bruteDrop) failures.push('bruteDrop');
+  if (!eliteDrop) failures.push('eliteDrop');
+  if (healed !== 68) failures.push('healed');
+  if (capped !== 100) failures.push('capped');
+  if (cappedScore !== 0) failures.push('cappedScore');
+  if (overflowScore !== REPAIR_OVERFLOW_SCORE) failures.push('overflowScore');
+  if (overflowStatus.indexOf('REPAIR SCRAP FULL +12 SCORE') !== 0) failures.push('overflowStatus');
+  if (repairStatus.indexOf('REPAIR SCRAP +18 HULL') !== 0) failures.push('repairStatus');
+  if (bountyScore !== 57) failures.push('bountyScore');
+  if (secondBountyScore !== 82) failures.push('secondBountyScore');
+  if (!bountyClaimed) failures.push('bountyClaimed');
+  if (bountySurge !== BOUNTY_SURGE_DURATION) failures.push('bountySurge');
+  if (retainedSurge !== 5) failures.push('retainedSurge');
+  if (!stormClock) failures.push('stormClock');
+  if (!waveReset) failures.push('waveReset');
+  if (artilleryScore !== 60) failures.push('artilleryScore');
+  if (!grazeOk) failures.push('grazeOk');
+  if (!justDashOk) failures.push('justDashOk');
+  if (!barrelKickOk) failures.push('barrelKickOk');
+  if (!barrelShootOk) failures.push('barrelShootOk');
+  if (!stormWindOk) failures.push('stormWindOk');
+  if (!coreTitanOk) failures.push('coreTitanOk');
+  if (!barrelTitanOk) failures.push('barrelTitanOk');
+  if (!weaponCycleOk) failures.push('weaponCycleOk');
+  if (!breacherShootOk) failures.push('breacherShootOk');
+  if (!vanguardSlowOk) failures.push('vanguardSlowOk');
+  if (!vanguardShootOk) failures.push('vanguardShootOk');
+  if (!arcChainOk) failures.push('arcChainOk');
+  if (!fusionMatrixOk) failures.push('fusionMatrixOk');
+  if (!fusionExecOk) failures.push('fusionExecOk');
+  if (!buildInspectorUiOk) failures.push('buildInspectorUiOk');
+  if (!eliteAffixSystemOk) failures.push('eliteAffixSystemOk');
+  if (!titanComponentsSystemOk) failures.push('titanComponentsSystemOk');
+  if (!conductionSpireSystemOk) failures.push('conductionSpireSystemOk');
+  if (!combatRankTelemetryOk) failures.push('combatRankTelemetryOk');
+  if (!spatialGridOk) failures.push('spatialGridOk');
+  if (failures.length > 0) {
+    console.error('Self-check failures:', failures);
+    throw new Error('LunaGame self-check failed: ' + failures.join(', '));
+  }
+  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '8 fusions, prerequisites verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified', spatialGrid: '2d spatial hash grid zero-gc verified' };
 }

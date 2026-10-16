@@ -11,6 +11,7 @@ import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { noteContractEvent } from '../contracts.js';
 import { addScore } from '../scoring.js';
 import { logEvent } from '../../ui/hud.js';
+import { spawnCombatText } from '../../render/fx.js';
 
 var EB_CAP = 260;
 
@@ -116,10 +117,38 @@ export function stepEnemyBullets(dt, frame) {
     var hitPlayer = false;
     var ebDist = Math.sqrt(ebDist2);
     var hitRadius = p.r + eb.r;
+    if (p.aegisDeployed && ebDist <= (hitRadius + 18)) {
+      var ebAngle = Math.atan2(eb.y - p.y, eb.x - p.x);
+      var angleDiff = Math.abs(Math.atan2(Math.sin(ebAngle - (p.aim || 0)), Math.cos(ebAngle - (p.aim || 0))));
+      if (angleDiff <= (80 * Math.PI / 180)) {
+        var refAng = (p.aim || 0) + (rng('combat') - 0.5) * 0.12;
+        var refSpd = Math.max(520, Math.hypot(eb.vx, eb.vy) * 1.25);
+        if (!rt.state.bullets) rt.state.bullets = [];
+        rt.state.bullets.push({
+          x: eb.x,
+          y: eb.y,
+          vx: Math.cos(refAng) * refSpd,
+          vy: Math.sin(refAng) * refSpd,
+          r: 4.0,
+          damage: (eb.damage || 15) * 2.0,
+          pierce: 1,
+          bounces: 0,
+          life: 1.2,
+          colorCore: '#5be7ff',
+          trail: [],
+          reflected: true
+        });
+        spawnParticles(eb.x, eb.y, '#5be7ff', 8, 120, 2);
+        if (AudioFX && typeof AudioFX.shoot === 'function') AudioFX.shoot();
+        spawnCombatText(eb.x, eb.y - 10, 'AEGIS REFLECT 2X', true);
+        rt.state.enemyBullets.splice(ebi, 1);
+        continue;
+      }
+    }
     if (ebDist <= hitRadius) {
       hitPlayer = true;
       if (p.invulnerable <= 0) {
-        var bulletHit = damagePlayer(eb.damage, 'bullet');
+        var bulletHit = damagePlayer(eb.damage, 'bullet', eb.x, eb.y);
         if (bulletHit > 0) {
           p.invulnerable = 0.5;
           AudioFX.hurt();

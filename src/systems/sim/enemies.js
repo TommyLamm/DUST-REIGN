@@ -152,6 +152,18 @@ export function stepEnemies(dt, frame) {
     }
     e.touchCooldown = Math.max(0, e.touchCooldown - dt);
 
+    if (e.burnStacks > 0) {
+      e.burnTimer = (e.burnTimer || 3.0) - dt;
+      e.burnTick = (e.burnTick || 0) + dt;
+      if (e.burnTick >= 0.5) {
+        e.burnTick = 0;
+        damageEnemy(e, e.burnStacks * 12, { source: 'burn', x: e.x, y: e.y });
+        spawnParticles(e.x, e.y, '#ff4d2e', 3, 60, 1.5);
+        if (e.hp <= 0) { killEnemy(e, 'burn'); continue; }
+      }
+      if (e.burnTimer <= 0) e.burnStacks = 0;
+    }
+
     if (e.kind === 'elite') {
       if (e.affix === 'mirror' || e.affix2 === 'mirror') {
         e.shieldAngle = Math.atan2(p.y - e.y, p.x - e.x);
@@ -253,6 +265,16 @@ export function stepEnemies(dt, frame) {
     }
 
     if (e.kind === 'titan') {
+      if (e.treadDestroyed) {
+        e.speed = (e.baseSpeed || 50) * 0.6;
+      }
+      if (e.radiatorExposeTimer > 0) {
+        e.radiatorExposeTimer -= dt;
+        if (e.radiatorExposeTimer <= 0) {
+          e.radiatorExposed = false;
+        }
+      }
+
       if (!empFrozen && !e.leftCannonDestroyed) {
         e.shootCd = (e.shootCd || 2.8) - dt;
         if (e.shootCd <= 0) {
@@ -322,6 +344,11 @@ export function stepEnemies(dt, frame) {
         if (e.spiralCd <= 0) {
           e.spiralCd = 3.2;
           e.spiralAngle = (e.spiralAngle || 0) + 0.38;
+          if (!e.radiatorDestroyed) {
+            e.radiatorExposed = true;
+            e.radiatorExposeTimer = 3.2;
+            spawnParticles(e.x, e.y, '#ffd27d', 10, 120, 2.5);
+          }
           for (var spi = 0; spi < 8; spi += 1) {
             var sAng = e.spiralAngle + (spi * TAU / 8);
             var spiral = scaledShot(16, 130, true);

@@ -4,6 +4,7 @@ import { rt } from '../core/runtime.js';
 import { dist2 } from '../core/utils.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { isStormFront } from './flow.js';
+import { spawnCombatText } from '../render/fx.js';
 
 var hookDepth = 0;
 
@@ -39,7 +40,7 @@ function releaseFreeEmp(x, y, radius, stun, damage) {
   pushFxEvent('burst', x, y, { preset: 'emp', scale: Math.max(0.35, radius / 140) });
 }
 
-function launchMicroMissiles(player, info) {
+export function launchMicroMissiles(player, info) {
   if (!rt.state.bullets) rt.state.bullets = [];
   var originX = info.x;
   var originY = info.y;
@@ -110,15 +111,104 @@ export function onDash(player, info) {
   if (!player) return;
   if (player.afterburner) player.afterburnerTimer = 1;
   if (player.kineticBallet && info && rt.state) launchMicroMissiles(player, info);
+  if (player.mirageOverdrive && rt.state) {
+    if (!rt.state.tacticalEntities) rt.state.tacticalEntities = [];
+    var mx = (info && typeof info.startX === 'number') ? info.startX : player.x;
+    var my = (info && typeof info.startY === 'number') ? info.startY : player.y;
+    rt.state.tacticalEntities.push({
+      kind: 'holo-mirage',
+      x: mx,
+      y: my,
+      r: 16,
+      life: 3.2,
+      maxLife: 3.2,
+      hp: 100,
+      maxHp: 100,
+      targetAngle: player.aim || 0,
+      damage: Math.max(8, Math.round((player.damage || 20) * 0.6)),
+      fireCd: 0.15,
+      fireRate: 0.22,
+      pullRadius: 280
+    });
+    pushFxEvent('burst', mx, my, { preset: 'dashDust', tint: '#ffd700', scale: 0.9 });
+  }
+  if (player.solarAfterburner && rt.state) {
+    if (!rt.state.scorchMarks) rt.state.scorchMarks = [];
+    var sx = (info && typeof info.startX === 'number') ? info.startX : player.x;
+    var sy = (info && typeof info.startY === 'number') ? info.startY : player.y;
+    var dx = player.x - sx;
+    var dy = player.y - sy;
+    var dDist = Math.hypot(dx, dy) || 1;
+    var storm = isStormFront();
+    var trenchRadius = storm ? 38 : 26;
+    var steps = Math.max(3, Math.floor(dDist / 25));
+    for (var si = 0; si <= steps; si += 1) {
+      var ratio = si / steps;
+      var tx = sx + dx * ratio;
+      var ty = sy + dy * ratio;
+      rt.state.scorchMarks.push({
+        kind: 'solar-trench',
+        x: tx,
+        y: ty,
+        r: trenchRadius,
+        life: 3.0,
+        maxLife: 3.0,
+        tick: 0,
+        dmg: Math.max(6, Math.round((player.damage || 20) * 0.45)),
+        vaporize: true
+      });
+    }
+    pushFxEvent('burst', player.x, player.y, { preset: 'dashDust', tint: '#ff7733', scale: 1.1 });
+  }
 }
 
-export function onEmp(player) {
-  if (!player || !player.fortressProtocol) return;
-  player.shield = Math.max(player.shield || 0, 30);
-  player.shieldTimer = 2;
+export function onEmp(player, info) {
+  if (!player) return;
+  if (player.fortressProtocol) {
+    player.shield = Math.max(player.shield || 0, 30);
+    player.shieldTimer = 2;
+  }
+  if (player.thermalShock && rt.state) {
+    var enemies = livingEnemies();
+    for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
+      var foe = enemies[ei];
+      var inEmp = info && typeof info.x === 'number' && typeof info.y === 'number' && typeof info.r === 'number'
+        ? dist2(info.x, info.y, foe.x, foe.y) <= (info.r + foe.r) * (info.r + foe.r)
+        : true;
+      if (((foe.burnStacks || 0) > 0 || inEmp) && foe.hp > 0) {
+        var burnRemaining = Math.max(1, (foe.burnStacks || 1)) * 36;
+        var maxHpBlast = Math.round((foe.maxHp || 100) * 0.15);
+        var fractureDmg = burnRemaining + maxHpBlast;
+        foe.burnStacks = 0;
+        foe.burnTimer = 0;
+        applyEnemySlow(foe, 2.0, 0.3);
+        damageEnemy(foe, fractureDmg, { source: 'thermal_fracture', x: foe.x, y: foe.y, crit: true });
+        spawnCombatText(foe.x, foe.y - 12, 'THERMAL FRACTURE ' + fractureDmg, true);
+        pushFxEvent('burst', foe.x, foe.y, { preset: 'emp', tint: '#ff4400', scale: 1.1 });
+        if (foe.hp <= 0) killEnemy(foe, 'thermal_fracture');
+      }
+    }
+  }
 }
 
-export function onPlayerDamaged(player, info) {}
+export function onPlayerDamaged(player, info) {
+  if (!player || !rt.state) return;
+  if (player.singularityMine) {
+    if (!rt.state.tacticalEntities) rt.state.tacticalEntities = [];
+    rt.state.tacticalEntities.push({
+      kind: 'singularity-vortex',
+      x: player.x,
+      y: player.y,
+      r: 180,
+      life: 2.0,
+      maxLife: 2.0,
+      tearTimer: 0,
+      absorbedDamage: (info && info.amount ? info.amount : 20) * 1.5,
+      hp: 999
+    });
+    pushFxEvent('burst', player.x, player.y, { preset: 'emp', tint: '#bd5bff', scale: 1.1 });
+  }
+}
 
 export function onLethal(player, info) {
   if (!player || !info || !info.saved || !rt.state) return;
@@ -145,15 +235,24 @@ export function onEnemyHit(enemy, info) {
   var maxHp = enemy.maxHp || pre || 1;
   var ratio = pre / maxHp;
   var boss = !!(enemy.isBoss || enemy.kind === 'titan');
-  var execute = !!(player.executioner && !boss && ratio < 0.15);
+  var executeThreshold = player.bloodhoundReaper ? 0.35 : 0.15;
+  var canExecBoss = !!player.bloodhoundReaper;
+  var execute = !!((player.executioner || player.bloodhoundReaper) && (!boss || canExecBoss) && ratio < executeThreshold);
   var bonus = 0;
   if (player.hollowPoint && ratio < 0.3) bonus += applied * 0.35;
   if (player.executioner && (enemy.empTimer || 0) > 0) bonus += applied * 0.5;
+  if (player.bloodhoundReaper && ratio < 0.35) bonus += applied * 1.5;
   if (!execute && !(bonus > 0)) return;
   hookDepth += 1;
   try {
-    if (execute) damageEnemy(enemy, enemy.hp, info || {});
-    else damageEnemy(enemy, bonus, info || {});
+    if (execute) {
+      var execDmg = Math.round(enemy.hp * (player.bloodhoundReaper ? 2.5 : 1));
+      spawnCombatText(enemy.x, enemy.y - 12, 'EXECUTE ' + execDmg, true);
+      pushFxEvent('burst', enemy.x, enemy.y, { preset: 'deathBrute', tint: '#ff2222', scale: 1.3 });
+      damageEnemy(enemy, execDmg, info || {});
+    } else {
+      damageEnemy(enemy, bonus, info || {});
+    }
   } finally {
     hookDepth -= 1;
   }
@@ -171,6 +270,19 @@ export function onKill(enemy) {
     if (rng('loot') < salvage) pushRepair(enemy);
   }
   if (boss) rt.state.rerolls = (rt.state.rerolls || 0) + 1;
+  if (player.bloodhoundReaper && (enemy.kind === 'elite' || enemy.isBoss || enemy.kind === 'titan' || enemy.isPart || enemy.kind === 'brute')) {
+    if (!rt.state.orbs) rt.state.orbs = [];
+    rt.state.orbs.push({
+      kind: 'overdrive',
+      x: enemy.x,
+      y: enemy.y,
+      vx: (rng('loot') - 0.5) * 80,
+      vy: (rng('loot') - 0.5) * 80,
+      r: 11,
+      life: 25
+    });
+    spawnCombatText(enemy.x, enemy.y - 20, 'OVERDRIVE ORB', true);
+  }
 }
 
 export function onPickup(orb, player) {
@@ -211,11 +323,23 @@ function pullScrapVortices(dt) {
 function tickScorch(dt) {
   var marks = rt.state.scorchMarks;
   if (!marks) return;
+  var enemyBullets = rt.state.enemyBullets || [];
   var i;
   for (i = marks.length - 1; i >= 0; i -= 1) {
     var mark = marks[i];
     mark.life -= dt;
     mark.tick = (mark.tick || 0) + dt;
+
+    if (mark.vaporize && enemyBullets.length > 0) {
+      for (var bi = enemyBullets.length - 1; bi >= 0; bi -= 1) {
+        var eb = enemyBullets[bi];
+        if (dist2(mark.x, mark.y, eb.x, eb.y) <= (mark.r + (eb.r || 4)) * (mark.r + (eb.r || 4))) {
+          pushFxEvent('spark', eb.x, eb.y, { color: '#ff6622', scale: 0.8 });
+          enemyBullets.splice(bi, 1);
+        }
+      }
+    }
+
     if (mark.tick >= 0.25) {
       mark.tick -= 0.25;
       var enemies = rt.state.enemies || [];
@@ -225,6 +349,10 @@ function tickScorch(dt) {
         var reach = (mark.r || 12) + (enemy.r || 10);
         if (dist2(mark.x, mark.y, enemy.x, enemy.y) > reach * reach) continue;
         damageEnemy(enemy, mark.dmg || 1, { source: 'zone', x: mark.x, y: mark.y });
+        if (mark.kind === 'solar-trench') {
+          enemy.burnStacks = Math.min(10, (enemy.burnStacks || 0) + 1);
+          enemy.burnTimer = 3.0;
+        }
         if (enemy.hp <= 0) killEnemy(enemy, 'zone');
       }
     }
@@ -268,6 +396,20 @@ export function stepCardEffects(dt) {
       player.moveSpeedMult = (player.moveSpeedMult || 1) / 1.2;
       player._stormSpeedOn = false;
     }
+  }
+  if (player.aegisStance) {
+    var isStill = Math.abs(player.vx || 0) < 5 && Math.abs(player.vy || 0) < 5;
+    if (isStill) {
+      player.stationaryTime = (player.stationaryTime || 0) + dt;
+      if (player.stationaryTime >= 0.4) {
+        player.aegisDeployed = true;
+      }
+    } else {
+      player.stationaryTime = 0;
+      player.aegisDeployed = false;
+    }
+  } else {
+    player.aegisDeployed = false;
   }
   tickSlows(dt);
   tickScorch(dt);

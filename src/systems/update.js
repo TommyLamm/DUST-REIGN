@@ -10,6 +10,7 @@ import { stepHazards } from './sim/hazards.js';
 import { stepOrbs } from './sim/orbs.js';
 import { stepPlayer } from './sim/player.js';
 import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
+import { stepTactical } from './tactical.js';
 import { updateDomUi } from '../ui/hud.js';
 
 export function update(dt) {
@@ -64,6 +65,7 @@ export function update(dt) {
   stepEnemies(dt, frame);
   stepEnemyBullets(dt, frame);
   stepArtilleryTargets(dt, frame);
+  stepTactical(dt, frame);
   stepEffects(dt, frame);
   stepContracts(frame);
   updateDomUi();

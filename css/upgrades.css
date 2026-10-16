@@ -222,8 +222,24 @@
   border-color: #ffd700 !important;
   border-top-color: #fff066 !important;
   background: linear-gradient(135deg, rgba(82, 60, 16, 0.95) 0%, rgba(46, 34, 12, 0.92) 100%) !important;
-  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4), inset 0 0 12px rgba(255, 215, 0, 0.18) !important;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.45), inset 0 0 12px rgba(255, 215, 0, 0.2) !important;
   animation: fusion-chip-pulse 2.2s ease-in-out infinite alternate;
+  position: relative;
+}
+
+#upgradeChoices .upgrade-choice.is-fusion-chip::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(90deg, #ffd700, #fff488, #ff8800, #ffd700);
+  background-size: 300% 300%;
+  animation: fusion-streamer 2.4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
 }
 
 .upgrade-card.is-fusion-chip:hover,
@@ -237,12 +253,29 @@
   transform: translateY(-6px);
 }
 
+.upgrade-resonance {
+  display: inline-block;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+  margin-top: 2px;
+}
+
+@keyframes fusion-streamer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 @keyframes fusion-chip-pulse {
   0% {
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.25), inset 0 0 8px rgba(255, 215, 0, 0.12);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.3), inset 0 0 8px rgba(255, 215, 0, 0.15);
   }
   100% {
-    box-shadow: 0 0 22px rgba(255, 215, 0, 0.55), inset 0 0 16px rgba(255, 215, 0, 0.25);
+    box-shadow: 0 0 26px rgba(255, 215, 0, 0.65), inset 0 0 18px rgba(255, 215, 0, 0.3);
   }
 }
 

@@ -234,15 +234,22 @@ export function ensureScriptedBoss() {
 function createTitan(boundW) {
   var stats = enemyProfile('titan', rt.state.wave, currentRecipe());
   var titanHp = stats.hp;
+  var leftPartHp = Math.round(titanHp * 0.22);
+  var rightPartHp = Math.round(titanHp * 0.22);
+  var radiatorPartHp = Math.round(titanHp * 0.18);
+  var treadPartHp = Math.round(titanHp * 0.20);
+
   return {
     kind: 'titan',
     isBoss: true,
+    isMultiPart: true,
     x: boundW / 2,
     y: -40,
     r: stats.r,
     hp: titanHp,
     maxHp: titanHp,
     speed: stats.speed,
+    baseSpeed: stats.speed,
     damage: stats.damage,
     color: stats.color,
     touchCooldown: 0,
@@ -254,16 +261,76 @@ function createTitan(boundW) {
     spiralAngle: 0,
     summonCd: 6.0,
     empTimer: 0,
-    leftCannonHp: Math.round(titanHp * 0.22),
-    leftCannonMaxHp: Math.round(titanHp * 0.22),
+    leftCannonHp: leftPartHp,
+    leftCannonMaxHp: leftPartHp,
     leftCannonDestroyed: false,
-    rightPodHp: Math.round(titanHp * 0.22),
-    rightPodMaxHp: Math.round(titanHp * 0.22),
+    rightPodHp: rightPartHp,
+    rightPodMaxHp: rightPartHp,
     rightPodDestroyed: false,
+    radiatorHp: radiatorPartHp,
+    radiatorMaxHp: radiatorPartHp,
+    radiatorDestroyed: false,
+    radiatorExposed: false,
+    radiatorExposeTimer: 0,
+    treadHp: treadPartHp,
+    treadMaxHp: treadPartHp,
+    treadDestroyed: false,
     bossName: 'TITAN',
     bossSubtitle: 'APEX THREAT',
     score: stats.score,
-    xp: stats.xp
+    xp: stats.xp,
+    parts: [
+      {
+        id: 'left_cannon',
+        name: '左肩迫擊砲塔',
+        relX: 0,
+        relY: -22,
+        r: 16,
+        hp: leftPartHp,
+        maxHp: leftPartHp,
+        destroyed: false,
+        coreAbsorption: 0.6,
+        rewardKind: 'repair'
+      },
+      {
+        id: 'right_pod',
+        name: '右肩飛彈巢',
+        relX: 0,
+        relY: 22,
+        r: 16,
+        hp: rightPartHp,
+        maxHp: rightPartHp,
+        destroyed: false,
+        coreAbsorption: 0.6,
+        rewardKind: 'overdrive'
+      },
+      {
+        id: 'radiator',
+        name: '背部散熱鰭片',
+        relX: -32,
+        relY: 0,
+        r: 15,
+        hp: radiatorPartHp,
+        maxHp: radiatorPartHp,
+        destroyed: false,
+        isWeakpoint: true,
+        vulnMultiplier: 2.5,
+        coreAbsorption: 1.0,
+        rewardKind: 'surge'
+      },
+      {
+        id: 'treads',
+        name: '履帶裝甲裙板',
+        relX: -18,
+        relY: 0,
+        r: 24,
+        hp: treadPartHp,
+        maxHp: treadPartHp,
+        destroyed: false,
+        coreAbsorption: 0.4,
+        rewardKind: 'scrap'
+      }
+    ]
   };
 }
 

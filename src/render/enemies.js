@@ -938,11 +938,102 @@ function drawTitanGun(ctx, y, alive, enraged, flashing, hp, maxHp, wreckSpark) {
   }
 }
 
+function drawTitanTreads(ctx, r, intact, flashing) {
+  var trackY = [-r * 0.72, r * 0.72];
+  for (var ti = 0; ti < 2; ti += 1) {
+    var ty = trackY[ti];
+    ctx.save();
+    if (!intact) {
+      ctx.fillStyle = '#1c1815';
+      ctx.fillRect(-r * 0.6, ty - 4, r * 0.8, 8);
+      ctx.strokeStyle = '#6a5238';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-r * 0.6, ty - 4, r * 0.8, 8);
+      var sparkTime = (rt.renderTime || 0) * 12 + ti;
+      if (Math.sin(sparkTime) > 0.3) {
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.2, ty);
+        ctx.lineTo(-r * 0.1, ty + (ti === 0 ? -6 : 6));
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = flashing ? '#ffffff' : '#2a221a';
+      ctx.fillRect(-r * 0.75, ty - 5, r * 1.5, 10);
+      ctx.strokeStyle = flashing ? '#ffffff' : '#4a3826';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-r * 0.75, ty - 5, r * 1.5, 10);
+      ctx.fillStyle = '#14110e';
+      for (var seg = -r * 0.7; seg <= r * 0.65; seg += 8) {
+        ctx.fillRect(seg, ty - 4, 5, 8);
+      }
+    }
+    ctx.restore();
+  }
+}
+
+function drawTitanRadiator(ctx, r, intact, exposed, flashing, hp, maxHp) {
+  ctx.save();
+  var rx = -r * 0.88;
+  if (!intact) {
+    ctx.fillStyle = '#140f0c';
+    ctx.fillRect(rx, -10, 8, 20);
+    ctx.strokeStyle = '#ff4d2e';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(rx, -10, 8, 20);
+  } else if (exposed) {
+    ctx.fillStyle = flashing ? '#ffffff' : '#ffd27d';
+    ctx.beginPath();
+    ctx.moveTo(rx + 6, -16);
+    ctx.lineTo(rx - 14, -22);
+    ctx.lineTo(rx - 16, -18);
+    ctx.lineTo(rx, -10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(rx + 6, 16);
+    ctx.lineTo(rx - 14, 22);
+    ctx.lineTo(rx - 16, 18);
+    ctx.lineTo(rx, 10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ff4d2e';
+    ctx.fillRect(rx - 4, -8, 8, 16);
+    ctx.fillStyle = '#fff4bd';
+    ctx.fillRect(rx - 2, -4, 4, 8);
+
+    var pR = 14 + Math.sin((rt.renderTime || 0) * 16) * 3;
+    ctx.strokeStyle = 'rgba(255, 77, 46, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(rx, 0, pR, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = flashing ? '#ffffff' : '#3d3024';
+    ctx.fillRect(rx, -12, 10, 24);
+    ctx.strokeStyle = '#5a4634';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(rx, -12, 10, 24);
+    ctx.fillStyle = '#1e2832';
+    ctx.fillRect(rx + 2, -9, 4, 18);
+  }
+  ctx.restore();
+}
+
 function drawTitanBody(ctx, e, flashing, reduced) {
   var r = e.r;
   var enraged = Boolean(e.phase2Triggered);
   var spin = reduced ? 0.3 : (rt.state.waveTime || 0) * 1.8;
   var i;
+
+  // Flanking Tread Skirts
+  drawTitanTreads(ctx, r, !e.treadDestroyed, flashing);
+
+  // Rear Heat-Sink Radiator Fins (Dynamic Weakpoint)
+  drawTitanRadiator(ctx, r, !e.radiatorDestroyed, e.radiatorExposed, flashing, e.radiatorHp, e.radiatorMaxHp);
 
   // Twin Heavy Sponsons
   drawTitanGun(ctx, -17, !e.leftCannonDestroyed, enraged, flashing, e.leftCannonHp, e.leftCannonMaxHp, (rt.renderTime || 0) * 9);
@@ -2153,11 +2244,13 @@ function drawLabels(ctx) {
         if (tag2) drawTag(ctx, e.x, y - 14, tag2, col2);
       }
     }
-    if (e.kind === 'titan' && (e.leftCannonDestroyed || e.rightPodDestroyed)) {
-      var titanTag = (e.leftCannonDestroyed ? '[L: OFF]' : '') +
-        (e.leftCannonDestroyed && e.rightPodDestroyed ? ' ' : '') +
-        (e.rightPodDestroyed ? '[R: OFF]' : '');
-      drawTag(ctx, e.x, y, titanTag, PALETTE.emissive.hostile);
+    if (e.kind === 'titan' && (e.leftCannonDestroyed || e.rightPodDestroyed || e.radiatorDestroyed || e.treadDestroyed)) {
+      var titanParts = [];
+      if (e.leftCannonDestroyed) titanParts.push('[L: OFF]');
+      if (e.rightPodDestroyed) titanParts.push('[R: OFF]');
+      if (e.radiatorDestroyed) titanParts.push('[FINS: OFF]');
+      if (e.treadDestroyed) titanParts.push('[TRK: OFF]');
+      drawTag(ctx, e.x, y, titanParts.join(' '), PALETTE.emissive.hostile);
     }
   }
   ctx.restore();

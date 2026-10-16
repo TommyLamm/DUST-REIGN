@@ -487,6 +487,17 @@ function stepSovereign(e, dt, frame, empFrozen) {
   return { dx: mx, dy: my, d: md, speed: speed };
 }
 
+export function getPartWorldPosition(boss, part, player) {
+  var p = player || (rt.state && rt.state.player);
+  var angle = (boss.angle != null) ? boss.angle : (p ? Math.atan2(p.y - boss.y, p.x - boss.x) : Math.PI / 2);
+  var cosA = Math.cos(angle);
+  var sinA = Math.sin(angle);
+  return {
+    x: boss.x + (part.relX * cosA - part.relY * sinA),
+    y: boss.y + (part.relX * sinA + part.relY * cosA)
+  };
+}
+
 export function stepBoss(e, dt, frame, empFrozen) {
   if (!e || !e.isBoss) return null;
   if (e.kind === 'dreadnought') return stepDreadnought(e, dt, frame, empFrozen);

@@ -127,6 +127,24 @@
                     <span id="energyFill" style="width: 50%"></span>
                   </div>
                 </div>
+                <div class="resource-block resource-block--tactical" id="hudTacticalBlock">
+                  <div class="tactical-slot-wrap">
+                    <div class="tactical-slot-icon-box">
+                      <span id="hudTacticalIcon" class="tactical-icon">⛨</span>
+                      <svg class="tactical-cd-svg" viewBox="0 0 36 36">
+                        <path id="hudTacticalCdMask" class="tactical-cd-circle"
+                          stroke-dasharray="100, 100"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span id="hudTacticalKey" class="tactical-key-hint">[E]</span>
+                    </div>
+                    <div class="tactical-info">
+                      <span class="tactical-label">AUX</span>
+                      <strong><span id="hudTacticalName">TURRET</span></strong>
+                      <span id="hudTacticalCdText" class="tactical-cd-text">RDY</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="hud-alert" id="hudStatus">
@@ -574,6 +592,8 @@
           <span class="joystick-guide" aria-hidden="true">MOVE</span>
         </div>
         <div class="touch-actions">
+          <button id="touchAux" class="touch-button touch-button--aux" type="button" data-action="aux"
+            aria-label="Tactical Auxiliary">AUX</button>
           <button id="touchSpecial" class="touch-button touch-button--special" type="button" data-action="special"
             aria-label="EMP Blast">EMP</button>
           <button id="touchDash" class="touch-button touch-button--dash" type="button" data-action="dash"

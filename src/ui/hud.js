@@ -162,6 +162,34 @@ function syncCooldowns() {
   var badge = rt.ui.empReady || byId('empReady');
   if (badge) badge.hidden = !ready;
   if (rt.ui && badge) rt.ui.empReady = badge;
+
+  var tac = p.tacticalSlot;
+  var touchAux = rt.ui.touchAux || byId('touchAux');
+  if (rt.ui && touchAux) rt.ui.touchAux = touchAux;
+  if (tac) {
+    var tacRatio = tac.maxCooldown > 0 ? clamp(tac.cooldown / tac.maxCooldown, 0, 1) : 0;
+    if (touchAux) setCd(touchAux, tacRatio);
+    var mask = byId('hudTacticalCdMask');
+    if (mask && mask.style) {
+      mask.style.strokeDashoffset = (tacRatio * 100).toFixed(1);
+    }
+    var cdText = byId('hudTacticalCdText');
+    if (cdText) {
+      cdText.textContent = tac.cooldown > 0 ? (tac.cooldown > 9.9 ? Math.ceil(tac.cooldown) + 's' : tac.cooldown.toFixed(1) + 's') : 'RDY';
+      cdText.style.color = tac.cooldown > 0 ? '#ff7733' : '#5be7ff';
+    }
+    var iconEl = byId('hudTacticalIcon');
+    if (iconEl && tac.icon && iconEl.textContent !== tac.icon) {
+      iconEl.textContent = tac.icon;
+    }
+    var nameEl = byId('hudTacticalName');
+    if (nameEl && tac.id) {
+      var displayName = isChinese() ? (tac.name || tac.id) : (tac.enName || tac.id.toUpperCase());
+      if (nameEl.textContent !== displayName) nameEl.textContent = displayName;
+    }
+  } else if (touchAux) {
+    setCd(touchAux, 0);
+  }
 }
 
 function syncChain() {

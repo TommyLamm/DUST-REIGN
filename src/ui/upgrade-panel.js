@@ -111,6 +111,14 @@ function paintUpgradeButton(button, upgrade, index, reroll) {
     weaponNode.hidden = true;
     weaponNode.textContent = '';
   }
+  var resBadge = ensureNode(button, 'upgrade-resonance');
+  if (cat === 'fusion') {
+    resBadge.hidden = false;
+    resBadge.textContent = zh ? '⚡ 融合共鳴 · 質變晶片' : '⚡ FUSION RESONANCE SYNTHESIS';
+  } else {
+    resBadge.hidden = true;
+    resBadge.textContent = '';
+  }
   var strong = first(['.upgrade-copy strong', '[data-upgrade-name]', 'strong'], button);
   var small = first(['.upgrade-copy small', '[data-upgrade-text]', 'small'], button);
   if (!strong) {

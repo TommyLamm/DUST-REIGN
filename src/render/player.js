@@ -913,6 +913,28 @@ function drawStatus(ctx, p, reduced) {
     ctx.restore();
   }
 
+  if (p.aegisDeployed) {
+    var tAegis = rt.renderTime || 0;
+    var aegisPulse = reduced ? 0.7 : (0.6 + 0.25 * Math.sin(tAegis * 8));
+    ctx.save();
+    ctx.rotate(p.aim || 0);
+    ctx.globalAlpha = aegisPulse;
+    ctx.strokeStyle = '#5be7ff';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    var halfArc = (160 * Math.PI / 180) / 2;
+    ctx.arc(0, 0, p.r + 14, -halfArc, halfArc);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(91, 231, 255, 0.22)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, p.r + 14, -halfArc, halfArc);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   if (!low) return;
 
   // Low HP damage: Real rising smoke puffs and electrical short-circuits

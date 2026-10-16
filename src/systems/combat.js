@@ -49,7 +49,7 @@ function shoveEnemy(enemy, dx, dy, dist) {
   enemy.y += (dy / kd) * dist;
 }
 
-export function damagePlayer(amount, source) {
+export function damagePlayer(amount, source, threatX, threatY) {
   if (!rt.state || !rt.state.player || rt.state.over) return 0;
   var p = rt.state.player;
   if (p.invulnerable > 0) return 0;
@@ -64,6 +64,13 @@ export function damagePlayer(amount, source) {
 
   var mult = (typeof p.damageTakenMult === 'number') ? p.damageTakenMult : 1;
   if (p.fortressProtocol && (p.energy || 0) >= 50) mult *= 0.75;
+  if (p.aegisStance && typeof threatX === 'number' && typeof threatY === 'number') {
+    var threatAng = Math.atan2(threatY - p.y, threatX - p.x);
+    var angDiff = Math.abs(Math.atan2(Math.sin(threatAng - (p.aim || 0)), Math.cos(threatAng - (p.aim || 0))));
+    if (angDiff > Math.PI * 0.5) {
+      mult *= 0.65;
+    }
+  }
   var remaining = requested * mult;
   if (!(remaining > 0)) return 0;
   if (p.shield > 0) {
