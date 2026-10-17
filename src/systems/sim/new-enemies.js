@@ -393,6 +393,15 @@ function emergeBurrower(e, frame, fireSpikes) {
   e.touchCooldown = 0.55;
 }
 
+var STEP_SCRATCH = { dx: 0, dy: 0, d: 0, speed: 0 };
+function setStepScratch(dx, dy, d, speed) {
+  STEP_SCRATCH.dx = dx;
+  STEP_SCRATCH.dy = dy;
+  STEP_SCRATCH.d = d;
+  STEP_SCRATCH.speed = speed;
+  return STEP_SCRATCH;
+}
+
 export function stepNewEnemy(e, dt, frame, empFrozen) {
   var p = frame.p;
   var dx = p.x - e.x;
@@ -413,11 +422,11 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         blastAt(e.x, e.y, 80, scaledShot(25, 0, true).damage, 40, '#e0a84e');
       }
     }
-    return { dx: dx, dy: dy, d: dist, speed: 0 };
+    return setStepScratch(dx, dy, dist, 0);
   }
 
   if (e.kind === 'stormTower') {
-    return { dx: 0, dy: 1, d: 1, speed: 0 };
+    return setStepScratch(0, 1, 1, 0);
   }
 
   if (e.kind === 'spitter') {
@@ -444,7 +453,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
       }
     }
     var aimD = Math.hypot(aimX, aimY) || 1;
-    return { dx: aimX, dy: aimY, d: aimD, speed: speed };
+    return setStepScratch(aimX, aimY, aimD, speed);
   }
 
   if (e.kind === 'scurrier') {
@@ -456,7 +465,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
     }
     if (e.arming) {
       if (empFrozen) {
-        return { dx: dx, dy: dy, d: dist, speed: 0 };
+        return setStepScratch(dx, dy, dist, 0);
       }
       e.armTimer -= dt;
       if (e.armTimer <= 0) {
@@ -465,11 +474,11 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.hp = 0;
         e.deathCause = 'other';
         blastAt(e.x, e.y, 70, Math.round(22 * dmgScale()), 65, '#e07a3d');
-        return { dx: dx, dy: dy, d: dist, speed: 0 };
+        return setStepScratch(dx, dy, dist, 0);
       }
-      return { dx: dx, dy: dy, d: dist, speed: 0 };
+      return setStepScratch(dx, dy, dist, 0);
     }
-    return { dx: dx, dy: dy, d: dist, speed: scurSpeed };
+    return setStepScratch(dx, dy, dist, scurSpeed);
   }
 
   if (e.kind === 'warden') {
@@ -533,7 +542,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         if (give > 0) spawnParticles(e.x, e.y, '#9fd0ea', 8, 90, 2);
       }
     }
-    return { dx: wx, dy: wy, d: wd, speed: wSpeed };
+    return setStepScratch(wx, wy, wd, wSpeed);
   }
 
   if (e.kind === 'burrower') {
@@ -541,7 +550,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
       e.forceEmerge = false;
       e.empTimer = Math.max(e.empTimer || 0, 2);
       emergeBurrower(e, frame, false);
-      return { dx: dx, dy: dy, d: dist, speed: 0 };
+      return setStepScratch(dx, dy, dist, 0);
     }
     if (!e.state) {
       e.state = 'burrow';
@@ -563,7 +572,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.warnY = p.y;
       }
       var burrowSpeed = empFrozen ? 0 : 140;
-      return { dx: dx, dy: dy, d: dist, speed: burrowSpeed };
+      return setStepScratch(dx, dy, dist, burrowSpeed);
     }
     if (e.state === 'warn') {
       e.burrowed = true;
@@ -576,9 +585,9 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.x = e.warnX;
         e.y = e.warnY;
         emergeBurrower(e, frame, true);
-        return { dx: dx, dy: dy, d: dist, speed: 0 };
+        return setStepScratch(dx, dy, dist, 0);
       }
-      return { dx: mx, dy: my, d: md, speed: empFrozen ? 0 : 140 };
+      return setStepScratch(mx, my, md, empFrozen ? 0 : 140);
     }
     e.burrowed = false;
     e.untargetable = false;
@@ -588,11 +597,11 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
       e.burrowed = true;
       e.untargetable = true;
       e.burrowT = 2.5;
-      return { dx: dx, dy: dy, d: dist, speed: 0 };
+      return setStepScratch(dx, dy, dist, 0);
     }
     var surfaceSpeed = e.speed;
     if (empFrozen) surfaceSpeed *= 0.3;
-    return { dx: dx, dy: dy, d: dist, speed: surfaceSpeed };
+    return setStepScratch(dx, dy, dist, surfaceSpeed);
   }
 
   return null;

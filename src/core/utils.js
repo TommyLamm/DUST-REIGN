@@ -32,5 +32,19 @@ export function on(target, name, handler, options) {
 }
 
 export function setText(node, value) {
-  if (node) node.textContent = String(value);
+  if (node) {
+    var str = String(value);
+    if (node._lastText !== str) {
+      node._lastText = str;
+      node.textContent = str;
+    }
+  }
 }
+
+export function fastUnorderedRemove(list, index) {
+  var len = list.length;
+  if (len === 0 || index < 0 || index >= len) return;
+  list[index] = list[len - 1];
+  list.length = len - 1;
+}
+

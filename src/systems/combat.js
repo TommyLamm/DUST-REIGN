@@ -5,7 +5,7 @@ import { pushFxEvent } from '../core/fx-events.js';
 import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../core/settings.js';
-import { clamp, dist2 } from '../core/utils.js';
+import { clamp, dist2, fastUnorderedRemove } from '../core/utils.js';
 import { triggerReactiveArmor } from './abilities.js';
 import { onEnemyHit, onKill, onLethal, onPlayerDamaged } from './card-effects.js';
 import { noteContractEvent } from './contracts.js';
@@ -126,7 +126,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
         var meb = rt.state.enemyBullets[mbi];
         if (dist2(meb.x, meb.y, p.x, p.y) <= microR * microR) {
           spawnParticles(meb.x, meb.y, '#5be7ff', 4, 90, 2);
-          rt.state.enemyBullets.splice(mbi, 1);
+          fastUnorderedRemove(rt.state.enemyBullets, mbi);
         }
       }
     }
@@ -226,9 +226,9 @@ function processEnemyDrops(e) {
     for (var i = orbs.length - 1; i >= prevLen; i -= 1) {
       if (orbs[i].kind === 'repair') {
         if (isFullHp) {
-          orbs.splice(i, 1);
+          fastUnorderedRemove(orbs, i);
         } else if (rng('loot') < 0.75) {
-          orbs.splice(i, 1);
+          fastUnorderedRemove(orbs, i);
         }
       }
     }
@@ -247,7 +247,7 @@ export function killEnemy(enemyOrIndex, cause) {
   }
   if (!e || index < 0) return;
   var why = cause || 'other';
-  rt.state.enemies.splice(index, 1);
+  fastUnorderedRemove(rt.state.enemies, index);
   rt.state.kills += 1;
   if (isStormFront()) rt.state.stormKills = (rt.state.stormKills || 0) + 1;
   var elite = e.kind === 'elite';
@@ -331,7 +331,7 @@ export function killEnemy(enemyOrIndex, cause) {
   if (!isTitan) processEnemyDrops(e);
   spawnParticles(e.x, e.y, e.color, elite ? 26 : (e.kind === 'brute' || e.kind === 'artillery') ? 22 : 11, elite ? 260 : (e.kind === 'brute' || e.kind === 'artillery') ? 220 : 150, elite ? 5 : (e.kind === 'brute' || e.kind === 'artillery') ? 5 : 3);
   rt.state.shake = Math.max(rt.state.shake, elite ? 10 : (e.kind === 'brute' || e.kind === 'artillery') ? 7 : 3);
-  pushFxEvent('kill', e.x, e.y, { kind: e.kind, color: e.color || '', elite: elite ? 1 : 0, affix: e.affix || '', hp: e.hp, ref: e });
+  pushFxEvent('kill', e.x, e.y, { kind: e.kind, color: e.color || '', elite: elite ? 1 : 0, affix: e.affix || '', hp: e.hp });
   var killInfo = { cause: why, kind: e.kind, elite: elite, isBoss: Boolean(e.isBoss) };
   onKill(e, killInfo);
   noteContractEvent('kill', killInfo);
@@ -372,7 +372,7 @@ export function killEnemy(enemyOrIndex, cause) {
 export function explodeCore(core, index) {
   if (!rt.state) return;
   if (rt.state.stats) rt.state.stats.coresDetonated += 1;
-  rt.state.volatileCores.splice(index, 1);
+  fastUnorderedRemove(rt.state.volatileCores, index);
   var p = rt.state.player;
   var blastR = 130;
   addDecal(core.x, core.y, 18, 16, 0.42, '#1b1715');
@@ -430,10 +430,10 @@ export function explodeCore(core, index) {
 export function explodeBarrel(barrel, index, isKicked) {
   if (!rt.state) return;
   if (typeof index === 'number' && index >= 0 && index < rt.state.barrels.length && rt.state.barrels[index] === barrel) {
-    rt.state.barrels.splice(index, 1);
+    fastUnorderedRemove(rt.state.barrels, index);
   } else {
     var bIdx = rt.state.barrels.indexOf(barrel);
-    if (bIdx !== -1) rt.state.barrels.splice(bIdx, 1);
+    if (bIdx !== -1) fastUnorderedRemove(rt.state.barrels, bIdx);
   }
   var p = rt.state.player;
   var blastR = isKicked ? 125 : 110;

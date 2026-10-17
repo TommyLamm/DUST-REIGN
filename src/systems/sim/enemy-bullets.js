@@ -5,7 +5,7 @@ import { pushFxEvent } from '../../core/fx-events.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
-import { clamp, dist2 } from '../../core/utils.js';
+import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerReactiveArmor } from '../abilities.js';
 import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { noteContractEvent } from '../contracts.js';
@@ -97,7 +97,7 @@ export function stepEnemyBullets(dt, frame) {
       eb.y = eb.originY + (eb.targetY - eb.originY) * u - lift;
       if (eb.age >= flight) {
         detonateAcid(eb);
-        rt.state.enemyBullets.splice(ebi, 1);
+        fastUnorderedRemove(rt.state.enemyBullets, ebi);
       }
       continue;
     }
@@ -141,7 +141,7 @@ export function stepEnemyBullets(dt, frame) {
         spawnParticles(eb.x, eb.y, '#5be7ff', 8, 120, 2);
         if (AudioFX && typeof AudioFX.shoot === 'function') AudioFX.shoot();
         spawnCombatText(eb.x, eb.y - 10, 'AEGIS REFLECT 2X', true);
-        rt.state.enemyBullets.splice(ebi, 1);
+        fastUnorderedRemove(rt.state.enemyBullets, ebi);
         continue;
       }
     }
@@ -198,7 +198,7 @@ export function stepEnemyBullets(dt, frame) {
       pushFxEvent('graze', eb.x, eb.y, { px: p.x, py: p.y });
     }
     if (hitPlayer || eb.life <= 0 || eb.x < -40 || eb.y < -40 || eb.x > boundW + 40 || eb.y > boundH + 40) {
-      rt.state.enemyBullets.splice(ebi, 1);
+      fastUnorderedRemove(rt.state.enemyBullets, ebi);
     }
   }
 }
@@ -311,7 +311,7 @@ export function stepArtilleryTargets(dt, frame) {
           }
         }
         if (at.timer <= 0) {
-          rt.state.artilleryTargets.splice(ati, 1);
+          fastUnorderedRemove(rt.state.artilleryTargets, ati);
         }
       }
     }

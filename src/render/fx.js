@@ -193,7 +193,7 @@ function blankParticle() {
 }
 
 function blankNumber() {
-  return { active: false, x: 0, y: 0, vy: 0, life: 0, maxLife: 0.68, value: 0, crit: false, text: '', owner: null };
+  return { active: false, x: 0, y: 0, vy: 0, life: 0, maxLife: 0.68, value: 0, crit: false, text: '', owner: null, ownerId: 0 };
 }
 
 function ensurePools() {
@@ -228,6 +228,7 @@ function clearVisuals() {
     for (i = 0; i < NUM_MAX; i += 1) {
       numbers[i].active = false;
       numbers[i].owner = null;
+      numbers[i].ownerId = 0;
     }
   }
   if (ghosts) {
@@ -453,12 +454,23 @@ function allocNumber() {
   return best;
 }
 
+var nextOwnerId = 1;
+function getOwnerId(owner) {
+  if (!owner) return 0;
+  if (!owner._numId) {
+    owner._numId = nextOwnerId++;
+    if (nextOwnerId >= 2147483640) nextOwnerId = 1;
+  }
+  return owner._numId;
+}
+
 function pushNumber(owner, dmg, x, y) {
   if (!(dmg > 0.5)) return -1;
+  var oid = getOwnerId(owner);
   var fx = owner && owner.fx;
   if (fx && fx.dmgWindow > 0 && fx.dmgSlot >= 0 && fx.dmgSlot < NUM_MAX) {
     var prev = numbers[fx.dmgSlot];
-    if (prev && prev.active && prev.owner === owner) {
+    if (prev && prev.active && oid > 0 && prev.ownerId === oid) {
       prev.value += dmg;
       prev.text = '';
       prev.x = x;
@@ -472,7 +484,8 @@ function pushNumber(owner, dmg, x, y) {
   var slot = allocNumber();
   var n = numbers[slot];
   n.active = true;
-  n.owner = owner || null;
+  n.owner = null;
+  n.ownerId = oid;
   n.x = x;
   n.y = y;
   n.vy = (frameReduced || frameLow) ? 0 : -36;
@@ -495,6 +508,7 @@ export function spawnCombatText(x, y, text, isCrit) {
   var n = numbers[slot];
   n.active = true;
   n.owner = null;
+  n.ownerId = 0;
   n.x = x;
   n.y = y;
   n.vy = -36;
@@ -849,6 +863,7 @@ function stepNumbers(dt) {
     if (n.life <= 0) {
       n.active = false;
       n.owner = null;
+      n.ownerId = 0;
       continue;
     }
     if (drift) n.y += n.vy * dt;

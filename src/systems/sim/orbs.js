@@ -2,7 +2,7 @@ import { AudioFX } from '../../audio/audio-fx.js';
 import { OVERDRIVE_DURATION, REPAIR_OVERFLOW_SCORE } from '../../config.js';
 import { spawnParticles } from '../../core/pools.js';
 import { rt } from '../../core/runtime.js';
-import { dist2 } from '../../core/utils.js';
+import { dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { getHeatModifiers } from '../../data/heat.js';
 import { triggerTeslaCoil } from '../abilities.js';
 import { onPickup } from '../card-effects.js';
@@ -132,7 +132,7 @@ export function stepOrbs(dt, frame) {
               var dEb = rt.state.enemyBullets[debi];
               if (dist2(p.x, p.y, dEb.x, dEb.y) <= gBurstR * gBurstR) {
                 spawnParticles(dEb.x, dEb.y, '#c77dff', 4, 80, 2);
-                rt.state.enemyBullets.splice(debi, 1);
+                fastUnorderedRemove(rt.state.enemyBullets, debi);
               }
             }
           }
@@ -169,7 +169,7 @@ export function stepOrbs(dt, frame) {
         spawnParticles(orb.x, orb.y, '#75d1b0', 6, 90, 2);
       }
       onPickup(orb, p);
-      rt.state.orbs.splice(oi, 1);
-    } else if (orb.life <= 0) rt.state.orbs.splice(oi, 1);
+      fastUnorderedRemove(rt.state.orbs, oi);
+    } else if (orb.life <= 0) fastUnorderedRemove(rt.state.orbs, oi);
   }
 }

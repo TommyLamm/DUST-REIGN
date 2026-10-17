@@ -35,6 +35,12 @@ var slamKey = '';
 var lastSector = '';
 var lastStorm = '';
 var lastQuality = '';
+var lastCachedWaveKey = '';
+var lastCachedWaveStr = '';
+var lastCachedKillsKey = '';
+var lastCachedKillsStr = '';
+var lastCachedTimerKey = '';
+var lastCachedTimerStr = '';
 
 function motionOff() {
   try { return isReducedMotion(); } catch (e) { return false; }
@@ -51,9 +57,15 @@ function pulse(el, key, value) {
   if (el._pulseKey != null && el._pulseKey !== next) {
     el.classList.remove('is-pulse');
     if (key === 'wave') el.classList.remove('is-flip');
-    void el.offsetWidth;
-    el.classList.add('is-pulse');
-    if (key === 'wave') el.classList.add('is-flip');
+    if (el._pulseRaf && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(el._pulseRaf);
+    }
+    el._pulseRaf = requestAnimationFrame(function () {
+      el._pulseRaf = 0;
+      if (!el || !el.classList) return;
+      el.classList.add('is-pulse');
+      if (key === 'wave') el.classList.add('is-flip');
+    });
   }
   el._pulseKey = next;
 }
@@ -107,7 +119,13 @@ function syncHealth() {
   if (!p) return;
   var ratio = clamp(p.hp / (p.maxHp || 1), 0, 1);
   var pct = ratio * 100;
-  if (rt.ui.healthFill && rt.ui.healthFill.style) rt.ui.healthFill.style.width = pct + '%';
+  if (rt.ui.healthFill && rt.ui.healthFill.style) {
+    var widthStr = pct + '%';
+    if (rt.ui.healthFill._lastWidth !== widthStr) {
+      rt.ui.healthFill._lastWidth = widthStr;
+      rt.ui.healthFill.style.width = widthStr;
+    }
+  }
   var lag = rt.ui.healthLag || byId('healthLag');
   if (lag && lag.style) {
     var snap = hpLagShown == null || pct >= hpLagShown - 0.2 || motionOff();
@@ -125,8 +143,13 @@ function syncHealth() {
     bar.classList.toggle('is-critical', ratio > 0 && ratio <= 0.3);
     if (hurt && !motionOff()) {
       bar.classList.remove('is-hurt');
-      void bar.offsetWidth;
-      bar.classList.add('is-hurt');
+      if (bar._hurtRaf && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(bar._hurtRaf);
+      }
+      bar._hurtRaf = requestAnimationFrame(function () {
+        bar._hurtRaf = 0;
+        if (bar && bar.classList) bar.classList.add('is-hurt');
+      });
     }
     bar._hp = pct;
   }
@@ -511,8 +534,13 @@ function syncSlam() {
   if (key === slamKey || motionOff()) return;
   slamKey = key;
   stage.classList.remove('is-rank-slam');
-  void stage.offsetWidth;
-  stage.classList.add('is-rank-slam');
+  if (stage._slamRaf && typeof cancelAnimationFrame === 'function') {
+    cancelAnimationFrame(stage._slamRaf);
+  }
+  stage._slamRaf = requestAnimationFrame(function () {
+    stage._slamRaf = 0;
+    if (stage && stage.classList) stage.classList.add('is-rank-slam');
+  });
 }
 
 export function tickHudPresentation() {
@@ -567,40 +595,105 @@ export function updateDomUi() {
   setText(rt.ui.xpMax, rt.state.xpNext);
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
-  setText(rt.ui.wave, zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
+  var waveKey = (rt.state.act || 1) + ':' + rt.state.wave + ':' + (zh ? 'zh' : 'en');
+  if (waveKey !== lastCachedWaveKey) {
+    lastCachedWaveKey = waveKey;
+    lastCachedWaveStr = zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0'));
+  }
+  setText(rt.ui.wave, lastCachedWaveStr);
   pulse(rt.ui.wave, 'wave', rt.state.wave);
   syncScore();
   setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
-  setText(rt.ui.kills, rt.state.kills + (zh ? ' 敵機' : ' HOSTILES'));
-  if (rt.ui.objectiveText) {
-    rt.ui.objectiveText.textContent = rt.state.bountyClaimed
-      ? (zh ? '懸賞已完成 — 堅守乾線邊境。' : 'BOUNTY SECURED — HOLD THE DRYLINE.')
-      : (zh ? ('擊殺 ' + rt.state.bountyTarget + ' 個目標獲取 +' + rt.state.bountyReward + ' 分數。') : ('DROP ' + rt.state.bountyTarget + ' HOSTILES FOR +' + rt.state.bountyReward + ' SCORE.'));
+  var killsKey = rt.state.kills + ':' + (zh ? 'zh' : 'en');
+  if (killsKey !== lastCachedKillsKey) {
+    lastCachedKillsKey = killsKey;
+    lastCachedKillsStr = rt.state.kills + (zh ? ' 敵機' : ' HOSTILES');
   }
-  if (rt.ui.objectiveProgress) rt.ui.objectiveProgress.style.width = (rt.state.bountyClaimed ? 100 : clamp(rt.state.bountyKills / rt.state.bountyTarget, 0, 1) * 100) + '%';
+  setText(rt.ui.kills, lastCachedKillsStr);
+  if (rt.ui.objectiveText) {
+    var objKey = rt.state.bountyClaimed ? 'claimed' : (rt.state.bountyTarget + ':' + rt.state.bountyReward + ':' + (zh ? 'zh' : 'en'));
+    if (rt.ui.objectiveText._lastObjKey !== objKey) {
+      rt.ui.objectiveText._lastObjKey = objKey;
+      rt.ui.objectiveText.textContent = rt.state.bountyClaimed
+        ? (zh ? '懸賞已完成 — 堅守乾線邊境。' : 'BOUNTY SECURED — HOLD THE DRYLINE.')
+        : (zh ? ('擊殺 ' + rt.state.bountyTarget + ' 個目標獲取 +' + rt.state.bountyReward + ' 分數。') : ('DROP ' + rt.state.bountyTarget + ' HOSTILES FOR +' + rt.state.bountyReward + ' SCORE.'));
+    }
+  }
+  if (rt.ui.objectiveProgress && rt.ui.objectiveProgress.style) {
+    var objPct = (rt.state.bountyClaimed ? 100 : clamp(rt.state.bountyKills / rt.state.bountyTarget, 0, 1) * 100) + '%';
+    if (rt.ui.objectiveProgress._lastWidth !== objPct) {
+      rt.ui.objectiveProgress._lastWidth = objPct;
+      rt.ui.objectiveProgress.style.width = objPct;
+    }
+  }
   if (rt.ui.threatIndex) {
-    rt.ui.threatIndex.textContent = zh
-      ? (rt.state.wave >= 5 ? '危急' : rt.state.wave >= 3 ? '高度' : '低度')
-      : (rt.state.wave >= 5 ? 'CRITICAL' : rt.state.wave >= 3 ? 'HIGH' : 'LOW');
+    var threatTier = rt.state.wave >= 5 ? 2 : rt.state.wave >= 3 ? 1 : 0;
+    var threatKey = threatTier + ':' + (zh ? 'zh' : 'en');
+    if (rt.ui.threatIndex._lastThreatKey !== threatKey) {
+      rt.ui.threatIndex._lastThreatKey = threatKey;
+      rt.ui.threatIndex.textContent = zh
+        ? (threatTier === 2 ? '危急' : threatTier === 1 ? '高度' : '低度')
+        : (threatTier === 2 ? 'CRITICAL' : threatTier === 1 ? 'HIGH' : 'LOW');
+    }
   }
   if (rt.ui.waveTimer) {
     var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
     var storm = isStormFront();
-    var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
-    rt.ui.waveTimer.textContent = prefix + String(seconds).padStart(2, '0') + 's';
+    var timerKey = seconds + ':' + (storm ? '1' : '0') + ':' + (zh ? 'zh' : 'en');
+    if (timerKey !== lastCachedTimerKey) {
+      lastCachedTimerKey = timerKey;
+      var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
+      lastCachedTimerStr = prefix + String(seconds).padStart(2, '0') + 's';
+    }
+    setText(rt.ui.waveTimer, lastCachedTimerStr);
   }
   syncHealth();
-  if (rt.ui.healthFill && rt.ui.healthFill.parentElement) rt.ui.healthFill.parentElement.setAttribute('aria-valuenow', String(Math.ceil(rt.state.player.hp)));
-  if (rt.ui.xpFill) rt.ui.xpFill.style.width = (clamp(rt.state.xp / rt.state.xpNext, 0, 1) * 100) + '%';
+  if (rt.ui.healthFill && rt.ui.healthFill.parentElement) {
+    var hpStr = String(Math.ceil(rt.state.player.hp));
+    var hpParent = rt.ui.healthFill.parentElement;
+    if (hpParent._lastAriaVal !== hpStr) {
+      hpParent._lastAriaVal = hpStr;
+      hpParent.setAttribute('aria-valuenow', hpStr);
+    }
+  }
+  if (rt.ui.xpFill && rt.ui.xpFill.style) {
+    var xpPct = (clamp(rt.state.xp / rt.state.xpNext, 0, 1) * 100) + '%';
+    if (rt.ui.xpFill._lastWidth !== xpPct) {
+      rt.ui.xpFill._lastWidth = xpPct;
+      rt.ui.xpFill.style.width = xpPct;
+    }
+  }
   if (rt.ui.xpFill && rt.ui.xpFill.parentElement) {
-    rt.ui.xpFill.parentElement.setAttribute('aria-valuenow', String(rt.state.xp));
-    rt.ui.xpFill.parentElement.setAttribute('aria-valuemax', String(rt.state.xpNext));
+    var xpStr = String(rt.state.xp);
+    var xpNextStr = String(rt.state.xpNext);
+    var xpParent = rt.ui.xpFill.parentElement;
+    if (xpParent._lastAriaVal !== xpStr) {
+      xpParent._lastAriaVal = xpStr;
+      xpParent.setAttribute('aria-valuenow', xpStr);
+    }
+    if (xpParent._lastAriaMax !== xpNextStr) {
+      xpParent._lastAriaMax = xpNextStr;
+      xpParent.setAttribute('aria-valuemax', xpNextStr);
+    }
   }
   var empCost = (typeof rt.state.player.empCost === 'number') ? rt.state.player.empCost : 50;
   var batteryCap = (typeof rt.state.player.batteryMax === 'number') ? rt.state.player.batteryMax : (rt.state.player.maxEnergy || 100);
-  if (rt.ui.hudEnergy) rt.ui.hudEnergy.textContent = Math.floor(rt.state.player.energy || 0);
-  if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) rt.ui.meterEnergy.setAttribute('aria-valuenow', String(Math.floor(rt.state.player.energy || 0)));
-  if (rt.ui.energyFill && rt.ui.energyFill.style) rt.ui.energyFill.style.width = (clamp((rt.state.player.energy || 0) / (batteryCap || 100), 0, 1) * 100) + '%';
+  var energyVal = Math.floor(rt.state.player.energy || 0);
+  var energyStr = String(energyVal);
+  if (rt.ui.hudEnergy) setText(rt.ui.hudEnergy, energyStr);
+  if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) {
+    if (rt.ui.meterEnergy._lastAriaVal !== energyStr) {
+      rt.ui.meterEnergy._lastAriaVal = energyStr;
+      rt.ui.meterEnergy.setAttribute('aria-valuenow', energyStr);
+    }
+  }
+  if (rt.ui.energyFill && rt.ui.energyFill.style) {
+    var energyPct = (clamp(energyVal / (batteryCap || 100), 0, 1) * 100) + '%';
+    if (rt.ui.energyFill._lastWidth !== energyPct) {
+      rt.ui.energyFill._lastWidth = energyPct;
+      rt.ui.energyFill.style.width = energyPct;
+    }
+  }
   syncCooldowns();
   if (rt.ui.touchSpecial && rt.ui.touchSpecial.classList) {
     if ((rt.state.player.energy || 0) >= empCost) {
@@ -682,6 +775,9 @@ export function updateDomUi() {
 
 if (typeof onLanguageChange === 'function') {
   onLanguageChange(function () {
+    lastCachedWaveKey = '';
+    lastCachedKillsKey = '';
+    lastCachedTimerKey = '';
     breakdownRoll.key = '';
     ensureBreakdown();
     updateDomUi();

@@ -71,6 +71,18 @@ function init(options) {
   draw();
   rt.raf = window.requestAnimationFrame(frame);
 
+  if (typeof document !== 'undefined') {
+    var onVisibilityChange = function () {
+      if (document.hidden) {
+        pause();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    rt.listeners.push(function () {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    });
+  }
+
   // Asynchronously sync cloud save progress
   loadAccountProgress().then(function (res) {
     if (res && res.data) {

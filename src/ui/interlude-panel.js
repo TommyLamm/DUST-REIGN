@@ -5,6 +5,7 @@ import { isChinese, onLanguageChange, tRouteName, tRouteReward, tRouteRule, tUpg
 var bound = false;
 var lastSig = '';
 var defaultTitle = null;
+var lastTitleKind = null;
 
 function el(tag, className, text) {
   var node = document.createElement(tag);
@@ -30,7 +31,11 @@ function syncOutcomeTitle() {
   if (!title) return;
   if (defaultTitle == null) defaultTitle = title.innerHTML;
   var zh = isChinese();
-  if (rt.state && rt.state.over && rt.state.extracted) title.innerHTML = zh ? '已撤離<br /><span>出擊順利完成。</span>' : 'EXTRACTED<br /><span>RUN SECURED.</span>';
+  var isExtracted = Boolean(rt.state && rt.state.over && rt.state.extracted);
+  var currentKind = (isExtracted ? 'extracted:' : 'default:') + (zh ? 'zh' : 'en');
+  if (lastTitleKind === currentKind) return;
+  lastTitleKind = currentKind;
+  if (isExtracted) title.innerHTML = zh ? '已撤離<br /><span>出擊順利完成。</span>' : 'EXTRACTED<br /><span>RUN SECURED.</span>';
   else title.innerHTML = defaultTitle;
 }
 
@@ -235,6 +240,7 @@ export function updateInterludePanel() {
 }
 
 onLanguageChange(function () {
+  lastTitleKind = null;
   if (rt.state && rt.state.interlude) {
     lastSig = '';
     updateInterludePanel();

@@ -317,34 +317,29 @@ export function resize() {
 
 export function fitGameOverOverlay() {
   var overlay = rt.ui && rt.ui.gameOver;
-  var inner;
-  var style;
-  var availW;
-  var availH;
-  var scale;
-  var key;
-  var hiddenCount;
-  var i;
-  if (!overlay || typeof overlay.querySelector !== 'function' || typeof getComputedStyle !== 'function') return;
-  inner = overlay.querySelector('.overlay-inner');
-  if (overlay.hidden) {
-    gameOverFitKey = '';
-    if (overlay.style) overlay.style.placeItems = '';
-    if (inner && inner.style && inner.style.transform) inner.style.transform = '';
+  if (!overlay || overlay.hidden) {
+    if (gameOverFitKey !== '') {
+      gameOverFitKey = '';
+      if (overlay && overlay.style) overlay.style.placeItems = '';
+      var prevInner = overlay && overlay.querySelector ? overlay.querySelector('.overlay-inner') : null;
+      if (prevInner && prevInner.style && prevInner.style.transform) prevInner.style.transform = '';
+    }
     return;
   }
+  if (typeof overlay.querySelector !== 'function' || typeof getComputedStyle !== 'function') return;
+  var inner = overlay.querySelector('.overlay-inner');
   if (!inner || !inner.style) return;
-  style = getComputedStyle(overlay);
-  availW = overlay.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
-  availH = overlay.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
+  var style = getComputedStyle(overlay);
+  var availW = overlay.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
+  var availH = overlay.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
   if (!(availW > 8) || !(availH > 8)) return;
-  hiddenCount = 0;
-  for (i = 0; i < inner.children.length; i += 1) {
+  var hiddenCount = 0;
+  for (var i = 0; i < inner.children.length; i += 1) {
     if (inner.children[i].hidden) hiddenCount += 1;
   }
-  key = Math.round(availW) + 'x' + Math.round(availH) + ':' + hiddenCount + ':' + inner.childElementCount + ':' + inner.offsetHeight + ':' + (inner.textContent || '').length;
+  var key = Math.round(availW) + 'x' + Math.round(availH) + ':' + hiddenCount + ':' + inner.childElementCount + ':' + inner.offsetHeight + ':' + (inner.textContent || '').length;
   if (key === gameOverFitKey) return;
-  scale = 1;
+  var scale = 1;
   if (inner.offsetHeight > availH - 4) scale = Math.min(scale, (availH - 4) / inner.offsetHeight);
   if (inner.offsetWidth > availW - 4) scale = Math.min(scale, (availW - 4) / inner.offsetWidth);
   gameOverFitKey = key;

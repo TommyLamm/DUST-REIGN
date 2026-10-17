@@ -14,6 +14,8 @@ import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
 import { stepTactical } from './tactical.js';
 import { updateDomUi } from '../ui/hud.js';
 
+var cachedFrame = { p: null, boundW: 960, boundH: 640 };
+
 export function update(dt) {
   if (!rt.state || rt.state.paused) return;
   if (rt.state.over) {
@@ -50,11 +52,10 @@ export function update(dt) {
     dt *= timeScale;
   }
 
-  var frame = {
-    p: rt.state.player,
-    boundW: (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960,
-    boundH: (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640
-  };
+  cachedFrame.p = rt.state.player;
+  cachedFrame.boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
+  cachedFrame.boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+  var frame = cachedFrame;
 
   stepWaveClock(dt, frame);
   stepMutators(frame);

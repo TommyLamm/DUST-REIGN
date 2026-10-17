@@ -2,25 +2,25 @@ import { TAU } from '../../config.js';
 import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
-import { dist2 } from '../../core/utils.js';
+import { dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { damageEnemy, killEnemy } from '../combat.js';
 
 export function stepEffects(dt, frame) {
   if (rt.state.opticalFlashes) {
     for (var ofi = rt.state.opticalFlashes.length - 1; ofi >= 0; ofi -= 1) {
       rt.state.opticalFlashes[ofi].life -= dt;
-      if (rt.state.opticalFlashes[ofi].life <= 0) rt.state.opticalFlashes.splice(ofi, 1);
+      if (rt.state.opticalFlashes[ofi].life <= 0) fastUnorderedRemove(rt.state.opticalFlashes, ofi);
     }
   }
 
   for (var sri = rt.state.shockRings.length - 1; sri >= 0; sri -= 1) {
     rt.state.shockRings[sri].life -= dt;
-    if (rt.state.shockRings[sri].life <= 0) rt.state.shockRings.splice(sri, 1);
+    if (rt.state.shockRings[sri].life <= 0) fastUnorderedRemove(rt.state.shockRings, sri);
   }
 
   for (var lai = rt.state.lightningArcs.length - 1; lai >= 0; lai -= 1) {
     rt.state.lightningArcs[lai].life -= dt;
-    if (rt.state.lightningArcs[lai].life <= 0) rt.state.lightningArcs.splice(lai, 1);
+    if (rt.state.lightningArcs[lai].life <= 0) fastUnorderedRemove(rt.state.lightningArcs, lai);
   }
 
   if (rt.state.plasmaZones) {
@@ -45,7 +45,7 @@ export function stepEffects(dt, frame) {
         spawnParticles(pz.x + (rng('combat') - 0.5) * pz.r * 1.2, pz.y + (rng('combat') - 0.5) * pz.r * 1.2, '#ff4d2e', 1, 35, 1.8);
       }
       if (pz.timer <= 0) {
-        rt.state.plasmaZones.splice(pzi, 1);
+        fastUnorderedRemove(rt.state.plasmaZones, pzi);
       }
     }
   }
@@ -55,7 +55,7 @@ export function stepEffects(dt, frame) {
       var vortex = rt.state.vortices[vi];
       vortex.life -= dt;
       if (vortex.life <= 0) {
-        rt.state.vortices.splice(vi, 1);
+        fastUnorderedRemove(rt.state.vortices, vi);
         continue;
       }
       var vr = vortex.r || 160;
@@ -139,6 +139,6 @@ export function stepEffects(dt, frame) {
     part.vx *= Math.pow(0.08, dt);
     part.vy *= Math.pow(0.08, dt);
     part.life -= dt;
-    if (part.life <= 0) rt.state.particles.splice(pi, 1);
+    if (part.life <= 0) fastUnorderedRemove(rt.state.particles, pi);
   }
 }

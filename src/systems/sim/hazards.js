@@ -32,14 +32,30 @@ function noteBarrelChain(depth) {
   }
 }
 
+var MAX_BARREL_SNAP = 64;
+var barrelSnapBuf = [];
+for (var bsi = 0; bsi < MAX_BARREL_SNAP; bsi += 1) {
+  barrelSnapBuf.push({ x: 0, y: 0, r: 14, ref: null });
+}
+var barrelSnapCount = 0;
+
 function rememberBarrels() {
   var list = rt.state.barrels || [];
-  var snap = [];
-  var i;
-  for (i = 0; i < list.length; i += 1) {
-    snap.push({ x: list[i].x, y: list[i].y, r: list[i].r || 14, ref: list[i] });
+  var count = list.length;
+  if (count > MAX_BARREL_SNAP) count = MAX_BARREL_SNAP;
+  barrelSnapCount = count;
+  for (var i = 0; i < count; i += 1) {
+    var b = list[i];
+    var slot = barrelSnapBuf[i];
+    slot.x = b.x;
+    slot.y = b.y;
+    slot.r = b.r || 14;
+    slot.ref = b;
   }
-  rt.state._barrelSnap = snap;
+  for (var j = count; j < MAX_BARREL_SNAP; j += 1) {
+    barrelSnapBuf[j].ref = null;
+  }
+  rt.state._barrelSnap = barrelSnapBuf;
 }
 
 function detectChainedBarrels() {
@@ -50,8 +66,9 @@ function detectChainedBarrels() {
   }
   var snap = rt.state._barrelSnap || [];
   var live = rt.state.barrels || [];
+  var count = snap === barrelSnapBuf ? barrelSnapCount : snap.length;
   var i;
-  for (i = 0; i < snap.length; i += 1) {
+  for (i = 0; i < count; i += 1) {
     if (live.indexOf(snap[i].ref) === -1) armBarrelChain(snap[i].x, snap[i].y, 110, 1);
   }
 }

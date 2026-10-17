@@ -59,19 +59,26 @@ export function markBorn(ent) {
   return fx;
 }
 
+var POSE_SCRATCH = { scale: 1, alpha: 1, dust: 0, age: 0 };
+
 export function spawnPose(ent, duration) {
   var fx = markBorn(ent);
-  if (isReducedMotion()) return { scale: 1, alpha: 1, dust: 0, age: 999 };
+  if (isReducedMotion()) {
+    POSE_SCRATCH.scale = 1;
+    POSE_SCRATCH.alpha = 1;
+    POSE_SCRATCH.dust = 0;
+    POSE_SCRATCH.age = 999;
+    return POSE_SCRATCH;
+  }
   var dur = duration || 0.35;
   var age = (rt.renderTime || 0) - fx.born;
   var t = clamp(age / dur, 0, 1);
   var s = t * t * (3 - 2 * t);
-  return {
-    scale: 0.4 + 0.6 * s,
-    alpha: 0.42 + 0.58 * s,
-    dust: t < 1 ? (1 - t) : 0,
-    age: age
-  };
+  POSE_SCRATCH.scale = 0.4 + 0.6 * s;
+  POSE_SCRATCH.alpha = 0.42 + 0.58 * s;
+  POSE_SCRATCH.dust = t < 1 ? (1 - t) : 0;
+  POSE_SCRATCH.age = age;
+  return POSE_SCRATCH;
 }
 
 export function drawDustRing(ctx, r, dust) {

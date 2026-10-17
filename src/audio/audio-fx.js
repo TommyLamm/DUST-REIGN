@@ -168,6 +168,60 @@ export var AudioFX = (function () {
     else if (ctx) node.connect(ctx.destination);
   }
 
+  function cleanupVoice(sourceNode, childNodes, stopTime) {
+    var cleaned = false;
+    function doClean() {
+      if (cleaned) return;
+      cleaned = true;
+      if (sourceNode) {
+        sourceNode.onended = null;
+        try { sourceNode.disconnect(); } catch (e) {}
+      }
+      if (childNodes) {
+        for (var i = 0; i < childNodes.length; i += 1) {
+          var node = childNodes[i];
+          if (node) {
+            try {
+              if (node.onended) node.onended = null;
+              node.disconnect();
+            } catch (e) {}
+          }
+        }
+      }
+    }
+
+    if (sourceNode) {
+      sourceNode.onended = doClean;
+    }
+    var delayMs = 60;
+    if (ctx && typeof stopTime === 'number' && stopTime > ctx.currentTime) {
+      delayMs = Math.max(20, Math.ceil((stopTime - ctx.currentTime) * 1000) + 40);
+    }
+    setTimeout(doClean, delayMs);
+  }
+
+  var lastHitTime = 0;
+  var lastGrazeTime = 0;
+  var lastRicochetTime = 0;
+  var THROTTLE_HIT = 0.04;
+  var THROTTLE_GRAZE = 0.05;
+  var THROTTLE_RICOCHET = 0.04;
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function () {
+      if (!ctx || ctx.state === 'closed') return;
+      if (document.hidden) {
+        if (ctx.state === 'running') {
+          ctx.suspend().catch(function () {});
+        }
+      } else {
+        if (!muted && ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
+        }
+      }
+    });
+  }
+
   function canPlay() {
     if (!ctx) initContext();
     if (ctx && ctx.state === 'suspended') {
@@ -195,6 +249,7 @@ export var AudioFX = (function () {
     route(gainPunch);
     oscPunch.start(t);
     oscPunch.stop(t + 0.025);
+    cleanupVoice(oscPunch, [gainPunch], t + 0.025);
 
     // Layer 2: 36Hz Sub-bass punch (110Hz sliding to 36Hz over 0.22s)
     var oscSub = ctx.createOscillator();
@@ -208,6 +263,7 @@ export var AudioFX = (function () {
     route(gainSub);
     oscSub.start(t);
     oscSub.stop(t + 0.22);
+    cleanupVoice(oscSub, [gainSub], t + 0.22);
 
     // Layer 3: Dual-peak bandpass shell eject metallic clink (1850Hz & 4100Hz, Q=9.0)
     if (noiseBuffer) {
@@ -236,6 +292,7 @@ export var AudioFX = (function () {
 
       nSrc.start(t);
       nSrc.stop(t + 0.11);
+      cleanupVoice(nSrc, [bp1, bp2, nGain], t + 0.11);
     }
   }
 
@@ -264,6 +321,7 @@ export var AudioFX = (function () {
         vanguardChargeGain.gain.setValueAtTime(vanguardChargeGain.gain.value, t);
         vanguardChargeGain.gain.linearRampToValueAtTime(0.001, t + 0.03);
         vanguardChargeOsc.stop(t + 0.03);
+        cleanupVoice(vanguardChargeOsc, [vanguardChargeGain], t + 0.03);
       } catch (e) {}
       vanguardChargeOsc = null;
       vanguardChargeGain = null;
@@ -287,6 +345,7 @@ export var AudioFX = (function () {
     route(gainSub);
     oscSub.start(t);
     oscSub.stop(t + 0.35);
+    cleanupVoice(oscSub, [gainSub], t + 0.35);
 
     var oscLaser = ctx.createOscillator();
     var filterLaser = ctx.createBiquadFilter();
@@ -305,6 +364,7 @@ export var AudioFX = (function () {
     route(gainLaser);
     oscLaser.start(t);
     oscLaser.stop(t + 0.28);
+    cleanupVoice(oscLaser, [filterLaser, gainLaser], t + 0.28);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -322,12 +382,16 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.22);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.22);
     }
   }
 
   function ricochet(detune) {
     if (!canPlay()) return;
     var t = ctx.currentTime;
+    if (t - lastRicochetTime < THROTTLE_RICOCHET) return;
+    lastRicochetTime = t;
+
     var carrier = ctx.createOscillator();
     var modulator = ctx.createOscillator();
     var modGain = ctx.createGain();
@@ -358,6 +422,7 @@ export var AudioFX = (function () {
     modulator.start(t);
     carrier.stop(t + 0.035);
     modulator.stop(t + 0.035);
+    cleanupVoice(carrier, [modulator, modGain, outGain], t + 0.035);
   }
 
   function shieldShatter() {
@@ -375,6 +440,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.08);
+    cleanupVoice(osc, [gain], t + 0.08);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -390,6 +456,7 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.08);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.08);
     }
   }
 
@@ -415,6 +482,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.05);
+    cleanupVoice(osc, [gain], t + 0.05);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -430,12 +498,16 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.04);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.04);
     }
   }
 
   function hit() {
     if (!canPlay()) return;
     var t = ctx.currentTime;
+    if (t - lastHitTime < THROTTLE_HIT) return;
+    lastHitTime = t;
+
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
     osc.type = 'triangle';
@@ -447,6 +519,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.025);
+    cleanupVoice(osc, [gain], t + 0.025);
   }
 
   function kill(combo) {
@@ -466,6 +539,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.12);
+    cleanupVoice(osc, [gain], t + 0.12);
   }
 
   function dash() {
@@ -482,6 +556,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.18);
+    cleanupVoice(osc, [gain], t + 0.18);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -498,6 +573,7 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.18);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.18);
     }
   }
 
@@ -519,6 +595,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.20);
+    cleanupVoice(osc, [filter, gain], t + 0.20);
   }
 
   function pickup(kind) {
@@ -538,6 +615,7 @@ export var AudioFX = (function () {
         route(gain);
         osc.start(t + i * 0.055);
         osc.stop(t + i * 0.055 + 0.08);
+        cleanupVoice(osc, [gain], t + i * 0.055 + 0.08);
       });
     } else if (kind === 'overdrive') {
       var chord = [220, 277, 330];
@@ -552,6 +630,7 @@ export var AudioFX = (function () {
         route(gain);
         osc.start(t);
         osc.stop(t + 0.30);
+        cleanupVoice(osc, [gain], t + 0.30);
       });
     } else {
       var bell = [1046, 1318];
@@ -566,6 +645,7 @@ export var AudioFX = (function () {
         route(gain);
         osc.start(t);
         osc.stop(t + 0.05);
+        cleanupVoice(osc, [gain], t + 0.05);
       });
     }
   }
@@ -586,6 +666,7 @@ export var AudioFX = (function () {
       route(gain);
       osc.start(t + i * 0.07);
       osc.stop(t + i * 0.07 + 0.12);
+      cleanupVoice(osc, [gain], t + i * 0.07 + 0.12);
     });
   }
 
@@ -607,6 +688,7 @@ export var AudioFX = (function () {
       route(gain);
       osc.start(startT);
       osc.stop(startT + 0.34);
+      cleanupVoice(osc, [gain], startT + 0.34);
     }
   }
 
@@ -624,6 +706,7 @@ export var AudioFX = (function () {
     route(gain1);
     osc1.start(t);
     osc1.stop(t + 0.09);
+    cleanupVoice(osc1, [gain1], t + 0.09);
 
     var osc2 = ctx.createOscillator();
     var gain2 = ctx.createGain();
@@ -636,6 +719,7 @@ export var AudioFX = (function () {
     route(gain2);
     osc2.start(t + 0.14);
     osc2.stop(t + 0.14 + 0.08);
+    cleanupVoice(osc2, [gain2], t + 0.14 + 0.08);
   }
 
   function critHit() {
@@ -652,6 +736,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.06);
+    cleanupVoice(osc, [gain], t + 0.06);
   }
 
   function blast() {
@@ -668,6 +753,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.35);
+    cleanupVoice(osc, [gain], t + 0.35);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -684,6 +770,7 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.35);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.35);
     }
   }
 
@@ -701,6 +788,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.16);
+    cleanupVoice(osc, [gain], t + 0.16);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -717,6 +805,7 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.18);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.18);
     }
   }
 
@@ -734,6 +823,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.38);
+    cleanupVoice(osc, [gain], t + 0.38);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -750,12 +840,16 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.38);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.38);
     }
   }
 
   function graze() {
     if (!canPlay()) return;
     var t = ctx.currentTime;
+    if (t - lastGrazeTime < THROTTLE_GRAZE) return;
+    lastGrazeTime = t;
+
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
     osc.type = 'sine';
@@ -768,6 +862,7 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.055);
+    cleanupVoice(osc, [gain], t + 0.055);
   }
 
   function emp() {
@@ -784,6 +879,7 @@ export var AudioFX = (function () {
     route(gainHigh);
     oscHigh.start(t);
     oscHigh.stop(t + 0.28);
+    cleanupVoice(oscHigh, [gainHigh], t + 0.28);
 
     var oscBoom = ctx.createOscillator();
     var gainBoom = ctx.createGain();
@@ -796,6 +892,7 @@ export var AudioFX = (function () {
     route(gainBoom);
     oscBoom.start(t);
     oscBoom.stop(t + 0.45);
+    cleanupVoice(oscBoom, [gainBoom], t + 0.45);
 
     if (noiseBuffer) {
       var nSrc = ctx.createBufferSource();
@@ -813,6 +910,7 @@ export var AudioFX = (function () {
       route(nGain);
       nSrc.start(t);
       nSrc.stop(t + 0.35);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.35);
     }
   }
 
@@ -830,9 +928,11 @@ export var AudioFX = (function () {
     route(gain);
     osc.start(t);
     osc.stop(t + 0.04);
+    cleanupVoice(osc, [gain], t + 0.04);
   }
 
   return {
+    cleanupVoice: cleanupVoice,
     unlock: unlock,
     isMuted: isMuted,
     setMuted: setMuted,

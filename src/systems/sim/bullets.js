@@ -5,7 +5,7 @@ import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../../core/settings.js';
 import { getEnemyById, populateEnemyGrid, queryGrid } from '../../core/spatial-grid.js';
-import { clamp, dist2 } from '../../core/utils.js';
+import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerSpireAbsorption, triggerSpireMicroResonance } from '../abilities.js';
 import { applyEnemySlow, stepCardEffects } from '../card-effects.js';
 import { damageEnemy, explodeBarrel, explodeCore, killEnemy } from '../combat.js';
@@ -17,6 +17,11 @@ import { logEvent } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
 
 var queriedEnemyIds = [];
+var MAX_ARC_CANDIDATES = 64;
+var ARC_CANDIDATES = [];
+for (var i = 0; i < MAX_ARC_CANDIDATES; i += 1) {
+  ARC_CANDIDATES.push({ enemy: null, dist2: 0 });
+}
 
 function notePartDestroyed() {
   addScore(200, 'style');
@@ -169,8 +174,26 @@ export function stepBullets(dt, frame) {
   for (var bi = rt.state.bullets.length - 1; bi >= 0; bi -= 1) {
     var b = rt.state.bullets[bi];
     steerHoming(b, dt);
-    b.trail.push({ x: b.x, y: b.y });
-    if (b.trail.length > 4) b.trail.shift();
+    if (!b.trailBuf) {
+      b.trailBuf = new Float32Array(8);
+      b.trailHead = -1;
+      b.trailCount = 0;
+      b.trailPool = [{ x: b.x, y: b.y }, { x: b.x, y: b.y }, { x: b.x, y: b.y }, { x: b.x, y: b.y }];
+      b.trail = [];
+    }
+    var bHead = (b.trailHead + 1) & 3;
+    b.trailHead = bHead;
+    b.trailBuf[bHead * 2] = b.x;
+    b.trailBuf[bHead * 2 + 1] = b.y;
+    if (b.trailCount < 4) b.trailCount += 1;
+    for (var bti = 0; bti < b.trailCount; bti += 1) {
+      var bIdx = (bHead - b.trailCount + 1 + bti + 8) & 3;
+      var bPt = b.trailPool[bti];
+      bPt.x = b.trailBuf[bIdx * 2];
+      bPt.y = b.trailBuf[bIdx * 2 + 1];
+      b.trail[bti] = bPt;
+    }
+    b.trail.length = b.trailCount;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     if (b.isVulcan && rng('combat') < 0.45) {
@@ -608,21 +631,38 @@ export function stepBullets(dt, frame) {
           if (b.isArcWelder && rt.state.enemies) {
             noteArcHit(p, enemy.x, enemy.y);
             var chain = arcChainProfile(p);
-            var arcCandidates = [];
+            var arcRange2 = chain.range * chain.range;
+            var arcCandidateCount = 0;
             for (var aei = 0; aei < rt.state.enemies.length; aei += 1) {
               var other = rt.state.enemies[aei];
               if (other === enemy || other.hp <= 0) continue;
               var d2 = dist2(enemy.x, enemy.y, other.x, other.y);
-              if (d2 <= chain.range * chain.range) {
-                arcCandidates.push({ enemy: other, dist2: d2 });
+              if (d2 <= arcRange2) {
+                if (arcCandidateCount < MAX_ARC_CANDIDATES) {
+                  var arcSlot = ARC_CANDIDATES[arcCandidateCount];
+                  arcSlot.enemy = other;
+                  arcSlot.dist2 = d2;
+                  arcCandidateCount += 1;
+                }
               }
             }
-            if (arcCandidates.length > 0) {
-              arcCandidates.sort(function (e1, e2) { return e1.dist2 - e2.dist2; });
-              var targets = arcCandidates.slice(0, chain.targets);
+            if (arcCandidateCount > 0) {
+              for (var asi = 1; asi < arcCandidateCount; asi += 1) {
+                var curEnemy = ARC_CANDIDATES[asi].enemy;
+                var curDist = ARC_CANDIDATES[asi].dist2;
+                var asj = asi - 1;
+                while (asj >= 0 && ARC_CANDIDATES[asj].dist2 > curDist) {
+                  ARC_CANDIDATES[asj + 1].enemy = ARC_CANDIDATES[asj].enemy;
+                  ARC_CANDIDATES[asj + 1].dist2 = ARC_CANDIDATES[asj].dist2;
+                  asj -= 1;
+                }
+                ARC_CANDIDATES[asj + 1].enemy = curEnemy;
+                ARC_CANDIDATES[asj + 1].dist2 = curDist;
+              }
+              var targetCount = Math.min(arcCandidateCount, chain.targets);
               var arcDmg = Math.max(1, Math.round(b.damage * chain.ratio));
-              for (var ati = 0; ati < targets.length; ati += 1) {
-                var tgt = targets[ati].enemy;
+              for (var ati = 0; ati < targetCount; ati += 1) {
+                var tgt = ARC_CANDIDATES[ati].enemy;
                 damageEnemy(tgt, arcDmg, { source: 'bullet', x: enemy.x, y: enemy.y });
                 noteArcHit(p, tgt.x, tgt.y);
                 if (rt.state.lightningArcs) {
@@ -640,6 +680,9 @@ export function stepBullets(dt, frame) {
                 if (tgt.hp <= 0) {
                   killEnemy(tgt, 'bullet');
                 }
+              }
+              for (var aci = 0; aci < arcCandidateCount; aci += 1) {
+                ARC_CANDIDATES[aci].enemy = null;
               }
             }
           }
@@ -727,7 +770,7 @@ export function stepBullets(dt, frame) {
         p.consecutiveHits = 0;
       }
       if (b.vanguardBurst) burstVanguard(b);
-      rt.state.bullets.splice(bi, 1);
+      fastUnorderedRemove(rt.state.bullets, bi);
     }
   }
 }
