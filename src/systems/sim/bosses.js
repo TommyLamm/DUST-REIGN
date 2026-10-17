@@ -13,6 +13,7 @@ import { logEvent } from '../../ui/hud.js';
 import { refreshSovereignShield } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { blastAt } from './new-enemies.js';
+import { updateEnemyPartCache } from './boss-parts.js';
 
 function dmgScale() {
   var recipe = rt.state && rt.state.recipe;
@@ -767,39 +768,6 @@ export function createSovereign(wave, frameW, frameH) {
  * Shared across all bullets in the frame to eliminate redundant trigonometric operations.
  */
 export function updateTitanPartCache(titan, player) {
-  if (!titan || titan.kind !== 'titan') return null;
-  var px = player ? player.x : titan.x;
-  var py = player ? player.y : titan.y;
-  var aim = Math.atan2(py - titan.y, px - titan.x);
-  var cosA = Math.cos(aim);
-  var sinA = Math.sin(aim);
-
-  if (!titan.partCache) {
-    titan.partCache = {
-      aim: 0,
-      cosA: 1,
-      sinA: 0,
-      lcX: 0, lcY: 0,
-      rpX: 0, rpY: 0,
-      radX: 0, radY: 0,
-      trdX: 0, trdY: 0,
-      _frameTime: -1
-    };
-  }
-
-  var c = titan.partCache;
-  c.aim = aim;
-  c.cosA = cosA;
-  c.sinA = sinA;
-  // World positions of the 4 parts
-  c.lcX = titan.x + 22 * sinA;
-  c.lcY = titan.y - 22 * cosA;
-  c.rpX = titan.x - 22 * sinA;
-  c.rpY = titan.y + 22 * cosA;
-  c.radX = titan.x - 32 * cosA;
-  c.radY = titan.y - 32 * sinA;
-  c.trdX = titan.x - 18 * cosA;
-  c.trdY = titan.y - 18 * sinA;
-  return c;
+  return updateEnemyPartCache(titan, player);
 }
 

@@ -364,6 +364,8 @@ function createTitan(boundW) {
       {
         id: 'left_cannon',
         name: '左肩迫擊砲塔',
+        nameZh: '左迫砲',
+        nameEn: 'L-CANNON',
         relX: 0,
         relY: -22,
         r: 16,
@@ -376,6 +378,8 @@ function createTitan(boundW) {
       {
         id: 'right_pod',
         name: '右肩飛彈巢',
+        nameZh: '右蜂巢',
+        nameEn: 'R-POD',
         relX: 0,
         relY: 22,
         r: 16,
@@ -388,6 +392,8 @@ function createTitan(boundW) {
       {
         id: 'radiator',
         name: '背部散熱鰭片',
+        nameZh: '鰭片',
+        nameEn: 'FINS',
         relX: -32,
         relY: 0,
         r: 15,
@@ -402,6 +408,8 @@ function createTitan(boundW) {
       {
         id: 'treads',
         name: '履帶裝甲裙板',
+        nameZh: '履帶',
+        nameEn: 'TREADS',
         relX: -18,
         relY: 0,
         r: 24,
