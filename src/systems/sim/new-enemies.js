@@ -12,6 +12,7 @@ import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { dropBossShard } from '../drops.js';
 import { clearShieldsOwnedBy, takeDeathEvents } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
+import { ensureEnemyGrid, getEnemyById, queryGridCallback } from '../../core/spatial-grid.js';
 
 function dmgScale() {
   var recipe = rt.state && rt.state.recipe;
@@ -29,27 +30,37 @@ function bounds(frame) {
 export function blastAt(x, y, radius, playerDmg, enemyDmg, tint) {
   var p = rt.state && rt.state.player;
   var list = rt.state.enemies;
-  var i;
-  if (playerDmg > 0 && p && Math.hypot(p.x - x, p.y - y) <= radius + p.r) {
-    var hit = damagePlayer(playerDmg, 'zone');
-    if (hit > 0) {
-      p.invulnerable = 0.2;
-      AudioFX.hurt();
-      triggerHaptic([30]);
-      rt.state.shake = Math.max(rt.state.shake, 7);
-      rt.state.hurtFlash = 0.35;
-      spawnParticles(p.x, p.y, '#df6b4f', 8, 120, 2.5);
-      if (p.reactiveArmor || p.overchargeRetaliation) triggerReactiveArmor(x, y);
+  if (playerDmg > 0 && p) {
+    var pReach = radius + p.r;
+    var pdx = p.x - x;
+    var pdy = p.y - y;
+    if (pdx * pdx + pdy * pdy <= pReach * pReach) {
+      var hit = damagePlayer(playerDmg, 'zone');
+      if (hit > 0) {
+        p.invulnerable = 0.2;
+        AudioFX.hurt();
+        triggerHaptic([30]);
+        rt.state.shake = Math.max(rt.state.shake, 7);
+        rt.state.hurtFlash = 0.35;
+        spawnParticles(p.x, p.y, '#df6b4f', 8, 120, 2.5);
+        if (p.reactiveArmor || p.overchargeRetaliation) triggerReactiveArmor(x, y);
+      }
     }
   }
   if (enemyDmg > 0 && list) {
-    for (i = list.length - 1; i >= 0; i -= 1) {
-      var foe = list[i];
-      if (!foe || foe.hp <= 0) continue;
-      if (dist2(foe.x, foe.y, x, y) > (radius + foe.r) * (radius + foe.r)) continue;
-      damageEnemy(foe, enemyDmg, { source: 'zone', x: x, y: y });
-    }
+    ensureEnemyGrid(list);
+    queryGridCallback(x, y, radius + 30, function (id) {
+      var foe = getEnemyById(id);
+      if (!foe || foe.hp <= 0) return;
+      var reach = radius + (foe.r || 12);
+      var fdx = foe.x - x;
+      var fdy = foe.y - y;
+      if (fdx * fdx + fdy * fdy <= reach * reach) {
+        damageEnemy(foe, enemyDmg, { source: 'zone', x: x, y: y });
+      }
+    });
   }
+
   if (!rt.state.shockRings) rt.state.shockRings = [];
   rt.state.shockRings.push({
     x: x,
@@ -192,7 +203,10 @@ function stepAcidPools(dt, frame) {
       continue;
     }
     if (!p) continue;
-    var inside = Math.hypot(p.x - pool.x, p.y - pool.y) <= pool.r + p.r;
+    var pdx = p.x - pool.x;
+    var pdy = p.y - pool.y;
+    var pReach = pool.r + p.r;
+    var inside = (pdx * pdx + pdy * pdy) <= pReach * pReach;
     if (!inside) {
       pool.tick = 0;
       continue;
@@ -224,29 +238,34 @@ function stepAcidPools(dt, frame) {
   // Enemy acid pool interaction: 32 true damage every 0.5s & armor breakdown (+40% dmg taken)
   var foes = rt.state.enemies;
   if (foes && pools.length > 0) {
-    for (var ei = foes.length - 1; ei >= 0; ei -= 1) {
-      var foe = foes[ei];
-      if (!foe || foe.hp <= 0 || foe.burrowed) continue;
-      var inAcid = false;
-      for (var pi = 0; pi < pools.length; pi += 1) {
-        var ap = pools[pi];
-        if (Math.hypot(foe.x - ap.x, foe.y - ap.y) <= ap.r + foe.r) {
-          inAcid = true;
-          break;
+    ensureEnemyGrid(foes);
+    var acidStamp = (rt.state._acidStamp || 0) + 1;
+    rt.state._acidStamp = acidStamp;
+
+    for (var pi = 0; pi < pools.length; pi += 1) {
+      var ap = pools[pi];
+      queryGridCallback(ap.x, ap.y, ap.r + 25, function (foeId) {
+        var foe = getEnemyById(foeId);
+        if (!foe || foe.hp <= 0 || foe.burrowed) return;
+        var reach = ap.r + (foe.r || 12);
+        var fdx = foe.x - ap.x;
+        var fdy = foe.y - ap.y;
+        if (fdx * fdx + fdy * fdy <= reach * reach) {
+          if (foe._lastAcidStamp === acidStamp) return;
+          if (foe._lastAcidStamp !== acidStamp - 1) {
+            foe.acidTick = 0;
+          }
+          foe._lastAcidStamp = acidStamp;
+          foe.armorBreakTimer = Math.max(foe.armorBreakTimer || 0, 1.0);
+          foe.acidTick = (foe.acidTick || 0) + dt;
+          if (foe.acidTick >= 0.5) {
+            foe.acidTick -= 0.5;
+            damageEnemy(foe, 32, { source: 'acid', x: foe.x, y: foe.y });
+            spawnParticles(foe.x, foe.y, '#c6e35a', 4, 80, 2);
+            if (foe.hp <= 0) killEnemy(foe, 'acid');
+          }
         }
-      }
-      if (inAcid) {
-        foe.armorBreakTimer = Math.max(foe.armorBreakTimer || 0, 1.0);
-        foe.acidTick = (foe.acidTick || 0) + dt;
-        if (foe.acidTick >= 0.5) {
-          foe.acidTick -= 0.5;
-          damageEnemy(foe, 32, { source: 'acid', x: foe.x, y: foe.y });
-          spawnParticles(foe.x, foe.y, '#c6e35a', 4, 80, 2);
-          if (foe.hp <= 0) killEnemy(foe, 'acid');
-        }
-      } else {
-        foe.acidTick = 0;
-      }
+      });
     }
   }
 }

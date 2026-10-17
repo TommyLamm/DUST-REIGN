@@ -15,6 +15,7 @@ import { noteMetaEvent } from '../meta.js';
 import { arcChainProfile, spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
 import { logEvent } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
+import { updateTitanPartCache } from './bosses.js';
 
 var queriedEnemyIds = [];
 var MAX_ARC_CANDIDATES = 64;
@@ -169,8 +170,8 @@ export function stepBullets(dt, frame) {
   var p = frame.p;
   var boundW = frame.boundW;
   var boundH = frame.boundH;
-  stepCardEffects(dt);
   populateEnemyGrid(rt.state.enemies);
+  stepCardEffects(dt);
   for (var bi = rt.state.bullets.length - 1; bi >= 0; bi -= 1) {
     var b = rt.state.bullets[bi];
     steerHoming(b, dt);
@@ -397,9 +398,16 @@ export function stepBullets(dt, frame) {
     if (!hitSomething) {
       queryGrid(b.x, b.y, b.r + 32, queriedEnemyIds);
       for (var qi = 0; qi < queriedEnemyIds.length; qi += 1) {
-        var enemy = getEnemyById(queriedEnemyIds[qi]);
+        var qId = queriedEnemyIds[qi];
+        var enemy = getEnemyById(qId);
         if (!enemy || enemy.hp <= 0) continue;
-        if (b.hits && b.hits.indexOf(enemy) !== -1) continue;
+        if (qId < 32) {
+          if (((b.hitMask0 || 0) & (1 << qId)) !== 0) continue;
+        } else if (qId < 64) {
+          if (((b.hitMask1 || 0) & (1 << (qId - 32))) !== 0) continue;
+        } else {
+          if (b.hits && b.hits.indexOf(enemy) !== -1) continue;
+        }
         if (enemy.burrowed || enemy.untargetable) continue;
         if (dist2(b.x, b.y, enemy.x, enemy.y) <= (b.r + enemy.r) * (b.r + enemy.r)) {
           if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror') && (!enemy.shieldBrokenTimer || enemy.shieldBrokenTimer <= 0)) {
@@ -415,8 +423,17 @@ export function stepBullets(dt, frame) {
               break;
             }
           }
-          if (!b.hits) b.hits = [];
-          b.hits.push(enemy);
+          if (qId < 32) {
+            b.hitMask0 = (b.hitMask0 || 0) | (1 << qId);
+          } else if (qId < 64) {
+            b.hitMask1 = (b.hitMask1 || 0) | (1 << (qId - 32));
+          } else {
+            if (!b.hits) b.hits = [];
+            b.hits.push(enemy);
+          }
+          if (b.hits && b.hits.indexOf(enemy) === -1) {
+            b.hits.push(enemy);
+          }
           b.hasHitEnemy = true;
           p.consecutiveHits = (p.consecutiveHits || 0) + 1;
 
@@ -475,28 +492,43 @@ export function stepBullets(dt, frame) {
 
           if (enemy.kind === 'titan') {
             var e = enemy;
-            var tAim = Math.atan2(p.y - e.y, p.x - e.x);
-            var cosA = Math.cos(tAim);
-            var sinA = Math.sin(tAim);
-            var lcX = e.x + 22 * sinA;
-            var lcY = e.y - 22 * cosA;
-            var rpX = e.x - 22 * sinA;
-            var rpY = e.y + 22 * cosA;
-            var radX = e.x - 32 * cosA;
-            var radY = e.y - 32 * sinA;
-            var trdX = e.x - 18 * cosA;
-            var trdY = e.y - 18 * sinA;
+            var cache = e.partCache;
+            if (!cache || cache._frameTime !== rt.state.waveTime) {
+              cache = updateTitanPartCache(e, p);
+              if (cache) cache._frameTime = rt.state.waveTime;
+            }
 
-            var dLc = dist2(b.x, b.y, lcX, lcY);
-            var dRp = dist2(b.x, b.y, rpX, rpY);
-            var dRad = dist2(b.x, b.y, radX, radY);
-            var dTrd = dist2(b.x, b.y, trdX, trdY);
+            var bdx = b.x - e.x;
+            var bdy = b.y - e.y;
+            var xLoc = bdx * cache.cosA + bdy * cache.sinA;
+            var yLoc = -bdx * cache.sinA + bdy * cache.cosA;
+
+            var yLocPlus22 = yLoc + 22;
+            var yLocMinus22 = yLoc - 22;
+            var xLocPlus32 = xLoc + 32;
+            var xLocPlus18 = xLoc + 18;
+            var xLoc2 = xLoc * xLoc;
+            var yLoc2 = yLoc * yLoc;
+
+            var dLc = xLoc2 + yLocPlus22 * yLocPlus22;
+            var dRp = xLoc2 + yLocMinus22 * yLocMinus22;
+            var dRad = xLocPlus32 * xLocPlus32 + yLoc2;
+            var dTrd = xLocPlus18 * xLocPlus18 + yLoc2;
 
             var closestPart = 'lc';
             var minD = dLc;
             if (dRp < minD) { minD = dRp; closestPart = 'rp'; }
             if (dRad < minD) { minD = dRad; closestPart = 'rad'; }
             if (dTrd < minD) { minD = dTrd; closestPart = 'trd'; }
+
+            var lcX = cache.lcX;
+            var lcY = cache.lcY;
+            var rpX = cache.rpX;
+            var rpY = cache.rpY;
+            var radX = cache.radX;
+            var radY = cache.radY;
+            var trdX = cache.trdX;
+            var trdY = cache.trdY;
 
             if (closestPart === 'lc') {
               if (!e.leftCannonDestroyed) {

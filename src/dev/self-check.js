@@ -18,7 +18,7 @@ import { cycleWeaponMode, shoot } from '../systems/weapons.js';
 import { updateDomUi } from '../ui/hud.js';
 import { renderBuildInspector } from '../ui/pause-menu.js';
 import { getLanguage, setLanguage } from '../core/i18n.js';
-import { clearSpatialGrid, insertToGrid, queryGrid } from '../core/spatial-grid.js';
+import { clearSpatialGrid, insertToGrid, queryGrid, queryGridCallback } from '../core/spatial-grid.js';
 
 export function selfCheck() {
   var previousLang = getLanguage();
@@ -858,7 +858,12 @@ export function selfCheck() {
     var spatialNear2 = spatialOut.length === 1 && spatialOut[0] === 2;
     queryGrid(800, 800, 10, spatialOut);
     var spatialMiss = spatialOut.length === 0;
-    spatialGridOk = Boolean(spatialNear1 && spatialNear2 && spatialMiss);
+    var cbOut = [];
+    queryGridCallback(105, 105, 20, function (id) { cbOut.push(id); });
+    var cbOk = cbOut.length === 1 && cbOut[0] === 1;
+    var cbAborted = queryGridCallback(105, 105, 20, function () { return false; });
+    var cbEarlyOutOk = cbAborted === false;
+    spatialGridOk = Boolean(spatialNear1 && spatialNear2 && spatialMiss && cbOk && cbEarlyOutOk);
 
     runBuildChecks();
     runEnemyChecks();
