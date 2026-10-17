@@ -17,17 +17,53 @@ export var SECTOR_BLEND_SEC = 1.5;
 export var STORM_BLEND_SEC = 0.6;
 
 var GROUND_SECTORS = {
-  dusk: { base: '#13100d', light: '#1c1712', dark: '#090706', crack: '#050403', hi: '#251e18' },
-  rust: { base: '#140d0a', light: '#1f130e', dark: '#080504', crack: '#040202', hi: '#281711' },
-  night: { base: '#090e14', light: '#101722', dark: '#04070a', crack: '#020305', hi: '#172230' }
+  dusk: {
+    base: '#13100d',
+    light: '#1c1712',
+    dark: '#090706',
+    crack: '#050403',
+    hi: '#251e18',
+    moteColor: { normal: '#e6d3ad', storm: '#e27846' },
+    fogColor: { dark: '#7a3824', light: '#c45a32', streakA: '#ed6842', streakB: '#e0a84e' }
+  },
+  rust: {
+    base: '#140d0a',
+    light: '#1f130e',
+    dark: '#080504',
+    crack: '#040202',
+    hi: '#281711',
+    moteColor: { normal: '#d48a60', storm: '#d44220' },
+    fogColor: { dark: '#5a2216', light: '#a63c20', streakA: '#d44e28', streakB: '#c4783c' }
+  },
+  night: {
+    base: '#090e14',
+    light: '#101722',
+    dark: '#04070a',
+    crack: '#020305',
+    hi: '#172230',
+    moteColor: { normal: '#8ab0d0', storm: '#5a78a6' },
+    fogColor: { dark: '#101c2e', light: '#1e3452', streakA: '#386294', streakB: '#5c8bc2' }
+  }
 };
 
 function mixChannel(a, b, t) {
   return Math.round(a + (b - a) * t);
 }
 
+export function registerGroundSector(name, config) {
+  GROUND_SECTORS[name] = Object.assign({}, GROUND_SECTORS.dusk, config);
+}
+
 export function groundPalette(name) {
   return GROUND_SECTORS[name] || GROUND_SECTORS.dusk;
+}
+
+export function sectorAtmosphere(name) {
+  var s = GROUND_SECTORS[name] || GROUND_SECTORS.dusk;
+  return {
+    moteColor: s.moteColor || GROUND_SECTORS.dusk.moteColor,
+    fogColor: s.fogColor || GROUND_SECTORS.dusk.fogColor
+  };
 }
 
 export function sectorForWave(wave) {

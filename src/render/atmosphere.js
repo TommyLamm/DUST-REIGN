@@ -1,7 +1,7 @@
 import { TAU } from '../config.js';
 import { rt } from '../core/runtime.js';
 import { isHighContrast, isReducedMotion } from '../core/settings.js';
-import { sectorTint, stormBlend } from './palette.js';
+import { sectorAtmosphere, sectorTint, stormBlend } from './palette.js';
 import { getBudget } from './quality.js';
 import { getNoiseTile } from './sprites.js';
 import { tryScreenFlash } from './fx.js';
@@ -40,13 +40,17 @@ function view() {
   var wave = rt.state ? rt.state.wave || 1 : 1;
   var waveTime = rt.state ? rt.state.waveTime || 0 : 0;
   var storm = stormBlend(waveTime);
+  var tint = sectorTint(wave, waveTime, storm);
+  var sector = (rt.state && rt.state.sector) || tint.name;
+  var atmo = sectorAtmosphere(sector);
   return {
     w: rt.ui.width,
     h: rt.ui.height,
     wave: wave,
     waveTime: waveTime,
     storm: storm,
-    tint: sectorTint(wave, waveTime, storm),
+    tint: tint,
+    atmo: atmo,
     reduced: isReducedMotion(),
     hc: isHighContrast()
   };
@@ -112,9 +116,12 @@ function stepMotes(w, h, storm, reduced) {
   }
 }
 
-function drawMoteLayer(ctx, depth, storm, hc) {
+function drawMoteLayer(ctx, depth, storm, hc, atmo) {
   ctx.save();
-  ctx.fillStyle = storm > 0.35 ? '#e27846' : '#e6d3ad';
+  var moteConfig = (rt.state && rt.state.moteColor) || (atmo && atmo.moteColor);
+  var normalColor = (typeof moteConfig === 'string') ? moteConfig : (moteConfig && moteConfig.normal) || '#e6d3ad';
+  var stormColor = (typeof moteConfig === 'string') ? moteConfig : (moteConfig && moteConfig.storm) || '#e27846';
+  ctx.fillStyle = storm > 0.35 ? stormColor : normalColor;
   var k;
   for (k = 0; k < moteCount; k += 1) {
     var m = motes[k];
@@ -142,6 +149,12 @@ function drawMoteLayer(ctx, depth, storm, hc) {
 
 function drawFog(ctx, v) {
   if (!(v.storm > 0.01)) return;
+  var fogConfig = (rt.state && rt.state.fogColor) || (v.atmo && v.atmo.fogColor);
+  var darkFog = (typeof fogConfig === 'string') ? fogConfig : (fogConfig && fogConfig.dark) || '#7a3824';
+  var lightFog = (typeof fogConfig === 'string') ? fogConfig : (fogConfig && fogConfig.light) || '#c45a32';
+  var streakA = (typeof fogConfig === 'string') ? fogConfig : (fogConfig && fogConfig.streakA) || '#ed6842';
+  var streakB = (typeof fogConfig === 'string') ? fogConfig : (fogConfig && fogConfig.streakB) || '#e0a84e';
+
   var bands = 4;
   var time = v.reduced ? 0 : (rt.renderTime || 0);
   var diag = Math.hypot(v.w, v.h);
@@ -156,7 +169,7 @@ function drawFog(ctx, v) {
     ctx.rotate(WIND);
     ctx.translate(shift * 0.35 - i * 24, (i - 1.5) * v.h * 0.2);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = i % 2 ? '#c45a32' : '#7a3824';
+    ctx.fillStyle = i % 2 ? lightFog : darkFog;
     ctx.fillRect(-diag, -26 - i * 8, diag * 2, 54 + i * 16);
     ctx.restore();
   }
@@ -176,7 +189,7 @@ function drawFog(ctx, v) {
     var sa = (si % 2 === 0 ? 0.26 : 0.18) * v.storm;
     if (v.hc) sa *= 0.28;
     ctx.globalAlpha = sa;
-    ctx.strokeStyle = si % 2 === 0 ? '#ed6842' : '#e0a84e';
+    ctx.strokeStyle = si % 2 === 0 ? streakA : streakB;
     ctx.lineWidth = 2.2 + (si % 3) * 0.85;
     ctx.beginPath();
     ctx.moveTo(sX, sY);
@@ -331,7 +344,7 @@ export function drawFarMotes(ctx) {
   var ay = rt.camera ? (rt.camera.clampedY !== undefined ? rt.camera.clampedY : rt.camera.y) - rt.camera.viewH * 0.5 : 0;
   ctx.save();
   ctx.translate(ax, ay);
-  drawMoteLayer(ctx, 0, v.storm, v.hc);
+  drawMoteLayer(ctx, 0, v.storm, v.hc, v.atmo);
   ctx.restore();
 }
 
@@ -344,7 +357,7 @@ export function drawNearAtmosphere(ctx) {
   ctx.save();
   ctx.translate(ax, ay);
   drawFog(ctx, v);
-  if (moteCount > farCount) drawMoteLayer(ctx, 1, v.storm, v.hc);
+  if (moteCount > farCount) drawMoteLayer(ctx, 1, v.storm, v.hc, v.atmo);
   ctx.restore();
   updateBolt(v);
 }

@@ -3,6 +3,7 @@ import { isHighContrast } from '../core/settings.js';
 import { PALETTE, ambientShade, sectorTint, stormBlend } from './palette.js';
 import { getBudget } from './quality.js';
 import { drawGlow, beginGlowBatch, endGlowBatch } from './sprites.js';
+import { getPoiType } from '../systems/sim/poi-registry.js';
 
 var LIGHT_CAP = 48;
 var LIGHT_POOL = 160;
@@ -172,9 +173,11 @@ function collect(w, h, ox, oy) {
     for (i = 0; i < list.length; i += 1) {
       var poi = list[i];
       if (!poi) continue;
-      if (poi.kind === 'scrap_silo' && poi.status === 'active') addLight(poi.x, poi.y, 140, '#ffd43b', 0.65, px, py, w, h, ox, oy);
-      else if (poi.kind === 'orbital_pod' && poi.status !== 'completed') addLight(poi.x, poi.y, 120, '#38d9a9', 0.7, px, py, w, h, ox, oy);
-      else if (poi.kind === 'emp_spire' && poi.status !== 'completed') addLight(poi.x, poi.y, 130, '#7950f2', 0.7, px, py, w, h, ox, oy);
+      var poiHandler = getPoiType(poi.kind);
+      var light = poiHandler && typeof poiHandler.getLight === 'function' ? poiHandler.getLight(poi) : null;
+      if (light) {
+        addLight(poi.x, poi.y, light.radius, light.color, light.intensity, px, py, w, h, ox, oy);
+      }
     }
   }
   list = state.enemies;
