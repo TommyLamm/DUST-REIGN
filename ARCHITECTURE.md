@@ -31,7 +31,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
-| `src/core/meta-store.js` | 局外存檔、v2 最高分、每日成績、提示紀錄，以及闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口。 |
+| `src/core/meta-store.js`、`src/core/cloud-save.js` | 局外存檔、v2 最高分、每日成績、提示紀錄、闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口，以及全進度 Unified Save 與雲端存檔智慧合併。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
@@ -153,10 +153,10 @@ index.html → src/main.js → init()
 | --- | --- |
 | 最高分 | HUD 與單局 `bestScore` 讀寫 `src/core/meta-store.js` 的 v2 key。`src/config.js` 的 v1 key 與 `dustReignBestScore` 仍可讀、不再由單局寫入。 |
 | 局外進度 | `src/core/meta-store.js` 的 meta、每日、提示、改裝工坊（`dust-reign:workshop:v1`）、金庫（`dust-reign:vault:v1`）、懸賞（`dust-reign:bounties:v1`）與幽靈競速（`dust-reign:ghost:v1:<stageId>`）key。格式與預設值以該模組為準。 |
-| 音量與靜音 | `src/audio/audio-fx.js` 定義 key、格式與預設值。 |
-| 觸覺、減動效與高對比 | `src/core/settings.js` 定義 key、格式與回退行為。 |
-| 畫質分級 | `src/core/settings.js` 的 `dust_reign_visual_quality`（`auto`、`high`、`medium`、`low`；未設定或無法辨識時為 `auto`）。有效等級、自動降級與預算由 `src/render/quality.js` 提供。 |
-| 介面語言 | `src/core/i18n.js` 的 `dust_reign_lang`（`'zh'`、`'en'`；預設為 `'zh'`，無 storage 時回退 `'zh'`）。 |
+| 音量與靜音 | `src/audio/audio-fx.js` 的 `dust-reign:audio:v1`（儲存 JSON `{ muted, masterVolume }`；讀取優先新鍵，回退相容舊鍵 `dust_reign_audio_muted`、`dust_reign_master_volume` 並自動遷移）。 |
+| 偏好設定與畫質分級 | `src/core/settings.js` 的 `dust-reign:settings:v1`（儲存 JSON `{ hapticsEnabled, motionReduction, highContrast, visualQuality }`；讀取優先新鍵，回退相容舊鍵 `dust_reign_haptics_enabled`、`dust_reign_motion_reduction`、`dust_reign_high_contrast`、`dust_reign_visual_quality` 並自動遷移）。畫質有效等級、自動降級與預算由 `src/render/quality.js` 提供。 |
+| 介面語言 | `src/core/i18n.js` 的 `dust-reign:lang:v1`（`'zh'`、`'en'`；預設為 `'zh'`，讀取優先新鍵，回退相容舊鍵 `dust_reign_lang` 並自動遷移）。 |
+| 雲端存檔與 Unified Save | `src/core/cloud-save.js` 提供全進度 Unified Save 序列化結構（< 16 KiB，層級 <= 5）、跨設備進度聯集取大值智慧合併（Smart Merge）演算法及樂觀鎖衝突重試（`SAVE_REVISION_CONFLICT`／`REQUEST_ID_REUSED`）。 |
 
 調整 key 或資料格式時必須處理既有儲存相容性；本機最高分與帳號成績是兩套獨立資料。
 

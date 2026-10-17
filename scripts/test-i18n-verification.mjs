@@ -62,6 +62,7 @@ globalThis.localStorage = {
 setLanguage('zh');
 assert.strictEqual(getLanguage(), 'zh');
 assert.strictEqual(isChinese(), true);
+assert.strictEqual(localStorage.getItem('dust-reign:lang:v1'), 'zh');
 assert.strictEqual(localStorage.getItem('dust_reign_lang'), 'zh');
 
 let notified = null;
@@ -70,12 +71,14 @@ const unsub = onLanguageChange((l) => { notified = l; });
 toggleLanguage();
 assert.strictEqual(getLanguage(), 'en');
 assert.strictEqual(isChinese(), false);
+assert.strictEqual(localStorage.getItem('dust-reign:lang:v1'), 'en');
 assert.strictEqual(localStorage.getItem('dust_reign_lang'), 'en');
 assert.strictEqual(notified, 'en');
 
 toggleLanguage();
 assert.strictEqual(getLanguage(), 'zh');
 assert.strictEqual(isChinese(), true);
+assert.strictEqual(localStorage.getItem('dust-reign:lang:v1'), 'zh');
 assert.strictEqual(localStorage.getItem('dust_reign_lang'), 'zh');
 assert.strictEqual(notified, 'zh');
 

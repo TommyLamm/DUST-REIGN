@@ -1347,3 +1347,13 @@ export function importUnifiedSaveData(cloudData) {
   return true;
 }
 
+export {
+  createUnifiedSave,
+  applyUnifiedSave,
+  calculateSaveSize,
+  calculateSaveDepth,
+  smartMergeSaves,
+  CloudSaveManager,
+  UNIFIED_SAVE_SCHEMA_VERSION
+} from './cloud-save.js';
+

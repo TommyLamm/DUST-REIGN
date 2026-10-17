@@ -68,7 +68,29 @@ function resetMeta(extra) {
 }
 
 function installStorage() {
-  var keys = [META_KEY, BEST_SCORE_V2_KEY, DAILY_KEY, TIPS_SEEN_KEY, TIPS_ENABLED_KEY, BEST_SCORE_KEY, LEGACY_BEST_SCORE_KEY];
+  var keys = [
+    META_KEY,
+    BEST_SCORE_V2_KEY,
+    DAILY_KEY,
+    TIPS_SEEN_KEY,
+    TIPS_ENABLED_KEY,
+    BEST_SCORE_KEY,
+    LEGACY_BEST_SCORE_KEY,
+    'dust-reign:campaign:v1',
+    'dust-reign:hardcore:v1',
+    'dust-reign:ghosts:v1',
+    'dust-reign:mod-score:v2',
+    'dust-reign:audio:v1',
+    'dust_reign_audio_muted',
+    'dust_reign_master_volume',
+    'dust-reign:lang:v1',
+    'dust_reign_lang',
+    'dust-reign:settings:v1',
+    'dust_reign_haptics_enabled',
+    'dust_reign_motion_reduction',
+    'dust_reign_high_contrast',
+    'dust_reign_visual_quality'
+  ];
   var previousWindow;
   var mem;
   var fake;
