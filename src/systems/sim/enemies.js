@@ -5,18 +5,38 @@ import { pushFxEvent } from '../../core/fx-events.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
-import { clamp, dist2 } from '../../core/utils.js';
+import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { enemyProfile } from '../../data/enemies.js';
 import { triggerReactiveArmor } from '../abilities.js';
-import { damagePlayer } from '../combat.js';
+import { damageEnemy, damagePlayer, explodeBarrel, killEnemy } from '../combat.js';
 import { triggerGameOver } from '../flow.js';
 import { ensureScriptedBoss, fireArtillery } from '../spawning.js';
 import { logEvent } from '../../ui/hud.js';
-import { stepBoss, stepBossArena, updateTitanPartCache } from './bosses.js';
+import { stepBoss, stepBossArena, stepTitanHarpoon, updateTitanPartCache } from './bosses.js';
 import { clearEnemyShields, clearShieldsOwnedBy } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { primeEnemy, stepEnemyHazards, stepNewEnemy, sweepDefeated } from './new-enemies.js';
-import { populateEnemyGrid } from '../../core/spatial-grid.js';
+import { getEnemyById, populateEnemyGrid, queryGridCallback } from '../../core/spatial-grid.js';
+
+var repCurrentEnemy = null;
+var repCurrentIdx = -1;
+var repForceX = 0;
+var repForceY = 0;
+
+function repulseCallback(otherId) {
+  if (otherId === repCurrentIdx) return;
+  var other = getEnemyById(otherId);
+  if (!other || other.hp <= 0 || other.burrowed) return;
+  var rx = repCurrentEnemy.x - other.x;
+  var ry = repCurrentEnemy.y - other.y;
+  var rdist2 = rx * rx + ry * ry;
+  if (rdist2 > 0 && rdist2 < 38 * 38) {
+    var rdist = Math.sqrt(rdist2);
+    var force = (1 - rdist / 38) * 420;
+    repForceX += (rx / rdist) * force;
+    repForceY += (ry / rdist) * force;
+  }
+}
 
 function isFreshKind(kind) {
   return kind === 'spitter' || kind === 'scurrier' || kind === 'warden' || kind === 'burrower' || kind === 'mine' || kind === 'stormTower';
@@ -29,17 +49,55 @@ export function stepEnemies(dt, frame) {
   stepBossArena(dt, frame);
   sweepDefeated();
   ensureScriptedBoss();
+  populateEnemyGrid(rt.state.enemies);
+
+  var cam = rt.state.camera;
+  var cx = cam ? cam.x : p.x;
+  var cy = cam ? cam.y : p.y;
+  var vpW = cam ? (cam.viewW || cam.w || 960) : ((rt.ui && rt.ui.width) || boundW);
+  var vpH = cam ? (cam.viewH || cam.h || 640) : ((rt.ui && rt.ui.height) || boundH);
+  var zone3Dist = Math.hypot(vpW, vpH) * 0.5 * 1.85;
 
   for (var j = rt.state.enemies.length - 1; j >= 0; j -= 1) {
     var e = rt.state.enemies[j];
     if (!e || e.hp <= 0) continue;
     var isCulled = (e.x < -120 || e.x > boundW + 120 || e.y < -120 || e.y > boundH + 120);
+
+    // Zone 3 check (> 1.85 x Viewport): silent cull normal mobs after 3s with token recycling; hyper-catchup (3.5x speed) for elite/boss after 2.5s until within 750px
+    var distToCam = Math.hypot(e.x - cx, e.y - cy);
+    if (distToCam > zone3Dist) {
+      if (!e.isBoss && e.kind !== 'elite') {
+        e.zone3Timer = (e.zone3Timer || 0) + dt;
+        if (e.zone3Timer >= 3.0) {
+          rt.state.recycledTokens = (rt.state.recycledTokens || 0) + 1;
+          fastUnorderedRemove(rt.state.enemies, j);
+          continue;
+        }
+      } else {
+        e.zone3Timer = (e.zone3Timer || 0) + dt;
+        if (e.zone3Timer >= 2.5) {
+          e.hyperCatchup = true;
+        }
+      }
+    } else {
+      e.zone3Timer = 0;
+      if (e.hyperCatchup && distToCam <= 750) {
+        e.hyperCatchup = false;
+      }
+    }
+
     if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
     if (e.armorBreakTimer > 0) e.armorBreakTimer = Math.max(0, e.armorBreakTimer - dt);
     var dx = p.x - e.x;
     var dy = p.y - e.y;
     var d = Math.hypot(dx, dy) || 1;
-    var speed = e.speed * (e.kind === 'rusher' ? 1 + Math.sin(rt.state.waveTime * 5 + e.phase) * 0.08 : e.kind === 'elite' ? 1 + Math.sin(rt.state.waveTime * 3 + e.phase) * 0.12 : 1);
+
+    // +20% base mobility compensation, long-distance catchup (>550px: x1.35), hyper-catchup (x3.5), Wolf Pack surge (x1.15)
+    var speed = e.speed * 1.20 * (e.kind === 'rusher' ? 1 + Math.sin(rt.state.waveTime * 5 + e.phase) * 0.08 : e.kind === 'elite' ? 1 + Math.sin(rt.state.waveTime * 3 + e.phase) * 0.12 : 1);
+    if (d > 550) speed *= 1.35;
+    if (e.hyperCatchup) speed *= 3.5;
+    if (rt.state.wolfPackSurge && (e.kind === 'crawler' || e.kind === 'rusher')) speed *= 1.15;
+
     if (e.commandBuffTimer > 0) {
       e.commandBuffTimer -= dt;
       if (e.kind !== 'scurrier') speed *= 1.4;
@@ -68,7 +126,7 @@ export function stepEnemies(dt, frame) {
       if (!empFrozen && !isCulled) {
         if (e.burstTime > 0) {
           e.burstTime -= dt;
-          speed = e.speed * 1.55;
+          speed = e.speed * 1.55 * 1.20;
           if (e.burstAngle !== undefined) {
             dx = Math.cos(e.burstAngle);
             dy = Math.sin(e.burstAngle);
@@ -79,19 +137,48 @@ export function stepEnemies(dt, frame) {
           }
         } else if (e.burstCd > 0) {
           e.burstCd -= dt;
-          if (e.burstCd <= 0.35 && e.burstCd > 0) {
+          if (e.burstCd <= 0.30 && e.burstCd > 0) {
             speed = e.speed * 0.25;
             e.burstAngle = Math.atan2(p.y - e.y, p.x - e.x);
+          } else if (e.burstCd > 0.30) {
+            var pvx = p.vx || 0;
+            var pvy = p.vy || 0;
+            var pSpd = Math.hypot(pvx, pvy);
+            var flankSide = e.flankSide || 1;
+            var targetX, targetY;
+            if (pSpd > 15) {
+              var nx = -pvy / pSpd;
+              var ny = pvx / pSpd;
+              targetX = p.x + pvx * 0.8 + flankSide * nx * 130;
+              targetY = p.y + pvy * 0.8 + flankSide * ny * 130;
+            } else {
+              var baseAng = Math.atan2(e.y - p.y, e.x - p.x);
+              targetX = p.x + Math.cos(baseAng + flankSide * 0.6) * 120;
+              targetY = p.y + Math.sin(baseAng + flankSide * 0.6) * 120;
+            }
+            dx = targetX - e.x;
+            dy = targetY - e.y;
+            d = Math.hypot(dx, dy) || 1;
           }
           if (e.burstCd <= 0) {
-            e.burstTime = 0.35;
+            e.burstTime = 0.30;
             e.burstAngle = Math.atan2(p.y - e.y, p.x - e.x);
-            speed = e.speed * 1.55;
+            speed = e.speed * 1.55 * 1.20;
             dx = Math.cos(e.burstAngle);
             dy = Math.sin(e.burstAngle);
             d = 1;
           }
         }
+      }
+    } else if (e.kind === 'crawler' && rt.state.wolfPackSurge && !empFrozen && !isCulled) {
+      var slotAngle = (e.phase || 0) + rt.state.waveTime * 0.6;
+      var slotX = p.x + Math.cos(slotAngle) * 80;
+      var slotY = p.y + Math.sin(slotAngle) * 80;
+      var distToSlot = Math.hypot(slotX - e.x, slotY - e.y);
+      if (distToSlot > 20) {
+        dx = slotX - e.x;
+        dy = slotY - e.y;
+        d = distToSlot;
       }
     } else if (e.kind === 'artillery') {
       var distToP = d;
@@ -153,6 +240,23 @@ export function stepEnemies(dt, frame) {
     if (!skipMove) {
       e.vx = speed > 0 ? (dx / d) * speed : 0;
       e.vy = speed > 0 ? (dy / d) * speed : 0;
+
+      // 55px Spatial Hash Grid 0-GC local repulsion separation (K_repulsion = 420, d <= 38px)
+      if (!e.isBoss && !empFrozen && e.kind !== 'mine' && e.kind !== 'stormTower' && !e.burrowed) {
+        repCurrentEnemy = e;
+        repCurrentIdx = j;
+        repForceX = 0;
+        repForceY = 0;
+        queryGridCallback(e.x, e.y, 38, repulseCallback);
+        var repLen = Math.hypot(repForceX, repForceY);
+        if (repLen > 350) {
+          repForceX = (repForceX / repLen) * 350;
+          repForceY = (repForceY / repLen) * 350;
+        }
+        e.vx += repForceX;
+        e.vy += repForceY;
+      }
+
       e.x += e.vx * dt;
       e.y += e.vy * dt;
     }
@@ -285,6 +389,37 @@ export function stepEnemies(dt, frame) {
           e.radiatorExposed = false;
         }
       }
+
+      // Titan crushing: explode barrels within (e.r + b.r + 15)
+      if (rt.state.barrels && rt.state.barrels.length) {
+        for (var bi = rt.state.barrels.length - 1; bi >= 0; bi -= 1) {
+          var b = rt.state.barrels[bi];
+          var crushDist = (e.r || 40) + (b.r || 14) + 15;
+          if (dist2(e.x, e.y, b.x, b.y) <= crushDist * crushDist) {
+            explodeBarrel(b, bi, false);
+          }
+        }
+      }
+
+      // Drop 6s molten lava footprint every 0.45s
+      e.treadLavaTimer = (e.treadLavaTimer || 0.45) - dt;
+      if (e.treadLavaTimer <= 0) {
+        e.treadLavaTimer = 0.45;
+        if (!rt.state.artilleryTargets) rt.state.artilleryTargets = [];
+        rt.state.artilleryTargets.push({
+          x: e.x,
+          y: e.y,
+          r: 28,
+          timer: 6.0,
+          maxTimer: 6.0,
+          wave: rt.state.wave || 1,
+          state: 'molten',
+          damageTickTimer: 0
+        });
+      }
+
+      // Titan Harpoon (triggers if distance > 750px)
+      stepTitanHarpoon(e, dt, frame);
 
       if (!empFrozen && !e.leftCannonDestroyed) {
         e.shootCd = (e.shootCd || 2.8) - dt;

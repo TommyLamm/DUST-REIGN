@@ -67,6 +67,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
   }
 
   var mult = (typeof p.damageTakenMult === 'number') ? p.damageTakenMult : 1;
+  if (p.convoyShield) mult *= 0.85;
   if (p.fortressProtocol && (p.energy || 0) >= 50) mult *= 0.75;
   if (p.aegisStance && typeof threatX === 'number' && typeof threatY === 'number') {
     var threatAng = Math.atan2(threatY - p.y, threatX - p.x);

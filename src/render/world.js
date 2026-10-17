@@ -767,6 +767,115 @@ export function drawFieldReadability(ctx) {
     ctx.fillRect(-40, -40, w + 80, h + 80);
     ctx.restore();
   }
+
+  // 1. Dreadnought Monolith Crags
+  if (rt.state.monolithCrags && rt.state.monolithCrags.length) {
+    for (i = 0; i < rt.state.monolithCrags.length; i += 1) {
+      var crag = rt.state.monolithCrags[i];
+      if (!crag || crag.hp <= 0) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(crag.x, crag.y, crag.r || 32, 0, TAU);
+      ctx.fillStyle = '#2a2421';
+      ctx.fill();
+      ctx.strokeStyle = '#e69535';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      var cragPct = clamp(crag.hp / (crag.maxHp || 100), 0, 1);
+      if (cragPct < 1.0) {
+        ctx.beginPath();
+        ctx.arc(crag.x, crag.y, (crag.r || 32) + 4, -Math.PI / 2, -Math.PI / 2 + cragPct * TAU);
+        ctx.strokeStyle = '#00f3ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // 2. Titan Harpoon Cable & Telegraph
+  if (rt.state.enemies && rt.state.player) {
+    for (i = 0; i < rt.state.enemies.length; i += 1) {
+      var foe = rt.state.enemies[i];
+      if (!foe || foe.kind !== 'titan' || foe.hp <= 0) continue;
+      if (foe.harpoonTelegraph > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(foe.x, foe.y);
+        ctx.lineTo(rt.state.player.x, rt.state.player.y);
+        ctx.strokeStyle = 'rgba(255, 60, 40, 0.85)';
+        ctx.lineWidth = 2.2;
+        ctx.setLineDash([8, 6]);
+        ctx.stroke();
+        ctx.restore();
+      } else if (foe.harpoonFiredTimer > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(foe.x, foe.y);
+        ctx.lineTo(rt.state.player.x, rt.state.player.y);
+        ctx.strokeStyle = '#ff5533';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  // 3. Campaign Mobile Escort Convoy
+  if (rt.state.convoyVehicle && rt.state.convoyVehicle.hp > 0) {
+    var v = rt.state.convoyVehicle;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, v.captureRadius || 150, 0, TAU);
+    ctx.fillStyle = v.powerTimer > 0 ? 'rgba(0, 243, 255, 0.08)' : 'rgba(255, 176, 90, 0.04)';
+    ctx.fill();
+    ctx.strokeStyle = v.powerTimer > 0 ? 'rgba(0, 243, 255, 0.45)' : 'rgba(255, 176, 90, 0.35)';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, v.r || 26, 0, TAU);
+    ctx.fillStyle = '#1e242d';
+    ctx.fill();
+    ctx.strokeStyle = v.powerTimer > 0 ? '#00f3ff' : '#9ca3af';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 8, 0, TAU);
+    ctx.fillStyle = v.powerTimer > 0 ? '#00f3ff' : '#4b5563';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 4. Hardcore Converging Dark Storm
+  if (rt.state.toxicRing && rt.state.toxicRing.active) {
+    var ring = rt.state.toxicRing;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ring.x, ring.y, ring.r, 0, TAU);
+    ctx.strokeStyle = 'rgba(223, 64, 40, 0.75)';
+    ctx.lineWidth = 3.5;
+    ctx.setLineDash([12, 8]);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 5. Sovereign Eye of the Storm
+  if (rt.state.stormEye) {
+    var eye = rt.state.stormEye;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(eye.x, eye.y, eye.radius || 550, 0, TAU);
+    ctx.strokeStyle = 'rgba(117, 209, 176, 0.85)';
+    ctx.lineWidth = 2.8;
+    ctx.setLineDash([10, 6]);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 export function drawPois(ctx, x0, y0, viewW, viewH) {

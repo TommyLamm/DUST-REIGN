@@ -112,6 +112,7 @@ function placeEnemy(kind, x, y, recipe, affix, affix2) {
     e.burstCd = 1.5 + rng('spawn') * 1.0;
     e.burstTime = 0;
     e.burstAngle = 0;
+    e.flankSide = pickTacticalFlankSide(rt.state && rt.state.player);
     e.trail = [];
   } else if (kind === 'artillery') {
     e.timeAlive = 0;
@@ -120,20 +121,113 @@ function placeEnemy(kind, x, y, recipe, affix, affix2) {
     e.cooldown = 0;
     e.barrelAngle = 0;
   }
+  e.baseSpeed = e.speed;
   primeEnemy(kind, e);
   rt.state.enemies.push(e);
   return e;
 }
 
+var SPAWN_VEC_SCRATCH = { x: 0, y: 0 };
+
+export function pickTacticalFlankSide(player) {
+  return rng('spawn') < 0.5 ? 1 : -1;
+}
+
+/**
+ * Perimeter Spawn Ring Architecture (PSRA)
+ * - Zone 0 (Inner Safe Zone): Viewport + 40px strictly forbidden from spawning.
+ * - Zone 1 (Active Spawn Band): 1.15 ~ 1.42 x Viewport (radial 620 ~ 780px ellipse).
+ * - Velocity-biased predictive interception sector allocation:
+ *   - Frontal intercept arc (heading +- 45 deg): 55% ~ 65% spawn weight
+ *   - Flanking pincer arcs (heading +- 45 to +- 110 deg): 25% ~ 30% spawn weight
+ *   - Rear pursuit arc (remaining): 10% ~ 15% spawn weight
+ *   - Low-speed / idle fallback: 360 deg uniform ring
+ * - Tangent sliding along borders when clipping outside map boundaries.
+ */
+export function sampleRingSpawnPoint(player, camera, worldW, worldH) {
+  var p = player || (rt.state && rt.state.player) || { x: 480, y: 320, vx: 0, vy: 0 };
+  var cam = camera || (rt.state && rt.state.camera);
+  var cx = cam ? cam.x : p.x;
+  var cy = cam ? cam.y : p.y;
+  var vpW = cam ? (cam.viewW || cam.w || 960) : ((rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960);
+  var vpH = cam ? (cam.viewH || cam.h || 640) : ((rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640);
+  var bW = worldW || (rt.state && (rt.state.worldWidth || rt.state.worldW)) || (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 960;
+  var bH = worldH || (rt.state && (rt.state.worldHeight || rt.state.worldH)) || (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 640;
+
+  var pvx = p.vx || 0;
+  var pvy = p.vy || 0;
+  var pSpeed = Math.hypot(pvx, pvy);
+  var angle;
+  if (pSpeed < 30) {
+    angle = rng('spawn') * TAU;
+  } else {
+    var heading = Math.atan2(pvy, pvx);
+    var roll = rng('spawn');
+    if (roll < 0.60) {
+      // 55% ~ 65% Frontal intercept sector [heading - 45 deg, heading + 45 deg]
+      angle = heading + (rng('spawn') - 0.5) * (Math.PI / 2);
+    } else if (roll < 0.88) {
+      // 25% ~ 30% Flanking pincer sectors [heading +- 45 deg to heading +- 110 deg]
+      var flankSide = rng('spawn') < 0.5 ? 1 : -1;
+      var flankSpan = (110 - 45) * Math.PI / 180;
+      angle = heading + flankSide * (Math.PI / 4 + rng('spawn') * flankSpan);
+    } else {
+      // 10% ~ 15% Rear pursuit sector
+      angle = heading + Math.PI + (rng('spawn') - 0.5) * (140 * Math.PI / 180);
+    }
+  }
+
+  // Zone 1: Active spawn band (1.15 ~ 1.42 x Viewport)
+  var halfW = vpW * 0.5;
+  var halfH = vpH * 0.5;
+  var ringScale = 1.15 + rng('spawn') * 0.27;
+  var radX = halfW * ringScale;
+  var radY = halfH * ringScale;
+  var rawX = cx + Math.cos(angle) * radX;
+  var rawY = cy + Math.sin(angle) * radY;
+
+  // Tangent sliding & border clamping
+  var margin = 32;
+  var clampedX = clamp(rawX, margin, bW - margin);
+  var clampedY = clamp(rawY, margin, bH - margin);
+
+  // Check Zone 0 (camera viewport + 40px safe zone)
+  var safeHalfW = halfW + 40;
+  var safeHalfH = halfH + 40;
+  var dxZone0 = (clampedX - cx) / safeHalfW;
+  var dyZone0 = (clampedY - cy) / safeHalfH;
+  if ((dxZone0 * dxZone0 + dyZone0 * dyZone0) < 1.0) {
+    // Falls into Zone 0: slide along border outside view + 60px
+    var outSafeHalfW = halfW + 60;
+    var outSafeHalfH = halfH + 60;
+    if (clampedY <= margin + 1 || clampedY >= bH - margin - 1) {
+      var signX = (clampedX >= cx) ? 1 : -1;
+      clampedX = clamp(cx + signX * outSafeHalfW, margin, bW - margin);
+    } else if (clampedX <= margin + 1 || clampedX >= bW - margin - 1) {
+      var signY = (clampedY >= cy) ? 1 : -1;
+      clampedY = clamp(cy + signY * outSafeHalfH, margin, bH - margin);
+    } else {
+      var a = Math.atan2(clampedY - cy, clampedX - cx);
+      clampedX = clamp(cx + Math.cos(a) * outSafeHalfW, margin, bW - margin);
+      clampedY = clamp(cy + Math.sin(a) * outSafeHalfH, margin, bH - margin);
+    }
+  }
+
+  SPAWN_VEC_SCRATCH.x = clampedX;
+  SPAWN_VEC_SCRATCH.y = clampedY;
+  return SPAWN_VEC_SCRATCH;
+}
+
 export function spawnEnemy() {
-  if (!rt.state) return;
+  if (!rt.state) return null;
   var recipe = currentRecipe();
-  var side = Math.floor(rng('spawn') * 4);
-  var margin = 42;
   var boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
   var boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
-  var x = side === 0 ? -margin : side === 1 ? boundW + margin : rng('spawn') * boundW;
-  var y = side === 2 ? -margin : side === 3 ? boundH + margin : rng('spawn') * boundH;
+  var p = (rt.state && rt.state.player) || { x: boundW * 0.5, y: boundH * 0.5, vx: 0, vy: 0 };
+  var pt = sampleRingSpawnPoint(p, rt.state.camera, boundW, boundH);
+  var x = pt.x;
+  var y = pt.y;
+
   var eliteChance = typeof recipe.eliteChance === 'number' ? recipe.eliteChance : 0;
   var weights = recipe.weights || null;
   var useWeights = !!(weights && (
@@ -142,8 +236,6 @@ export function spawnEnemy() {
   var kind;
   var affix = null;
   var affix2 = null;
-  // P0 recipes have no new-enemy weight. Keep the old roll/artillery rng
-  // count so unseeded Math.random sequences used by the existing self-check stay put.
   var legacyRoll = useWeights ? 0 : rng('spawn');
   if (rng('spawn') < eliteChance) {
     kind = 'elite';
@@ -176,12 +268,14 @@ export function spawnEnemy() {
   var spawned = placeEnemy(kind, x, y, recipe, affix, affix2);
   if (kind === 'scurrier') {
     var cap = recipeCap(recipe);
-    var tangent = side === 0 || side === 1 ? 0 : Math.PI / 2;
+    var scurAngle = Math.atan2(y - p.y, x - p.x);
+    var tangent = scurAngle + Math.PI / 2;
+    var margin = 32;
     if (rt.state.enemies.length < cap) {
-      placeEnemy(kind, x + Math.cos(tangent + Math.PI / 2) * 22, y + Math.sin(tangent + Math.PI / 2) * 22, recipe, null, null);
+      placeEnemy(kind, clamp(x + Math.cos(tangent) * 22, margin, boundW - margin), clamp(y + Math.sin(tangent) * 22, margin, boundH - margin), recipe, null, null);
     }
     if (rt.state.enemies.length < cap) {
-      placeEnemy(kind, x - Math.cos(tangent + Math.PI / 2) * 22, y - Math.sin(tangent + Math.PI / 2) * 22, recipe, null, null);
+      placeEnemy(kind, clamp(x - Math.cos(tangent) * 22, margin, boundW - margin), clamp(y - Math.sin(tangent) * 22, margin, boundH - margin), recipe, null, null);
     }
   }
   return spawned;
