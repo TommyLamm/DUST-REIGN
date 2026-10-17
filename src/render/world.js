@@ -768,3 +768,359 @@ export function drawFieldReadability(ctx) {
     ctx.restore();
   }
 }
+
+export function drawPois(ctx, x0, y0, viewW, viewH) {
+  if (!ctx || !rt.state || !rt.state.pois) return;
+  var pois = rt.state.pois;
+  var rTime = rt.renderTime || 0;
+  var reduced = isReducedMotion();
+  var contrast = isHighContrast();
+
+  var hasBounds = typeof x0 === 'number' && typeof viewW === 'number';
+  var minX = hasBounds ? x0 - 150 : -9999;
+  var maxX = hasBounds ? x0 + viewW + 150 : 99999;
+  var minY = hasBounds ? y0 - 150 : -9999;
+  var maxY = hasBounds ? y0 + viewH + 150 : 99999;
+
+  for (var i = 0; i < pois.length; i += 1) {
+    var poi = pois[i];
+    if (!poi) continue;
+    if (poi.x < minX || poi.x > maxX || poi.y < minY || poi.y > maxY) continue;
+
+    ctx.save();
+    var px = poi.x;
+    var py = poi.y;
+    var pr = poi.r || 80;
+    var pulse = reduced ? 1 : 1 + Math.sin(rTime * 3 + (poi.pulsePhase || 0)) * 0.06;
+
+    // Ground Contact Shadow
+    ctx.beginPath();
+    ctx.ellipse(px, py + pr * 0.35, pr * 1.15, pr * 0.45, 0, 0, TAU);
+    ctx.fillStyle = 'rgba(2, 3, 5, 0.72)';
+    ctx.fill();
+
+    // 1. Scrap Silo
+    if (poi.kind === 'scrap_silo') {
+      var isActive = poi.status === 'active';
+      var isDone = poi.status === 'completed';
+
+      // Ground hazard warning circle
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = isActive ? (reduced ? '#ff4028' : (Math.sin(rTime * 12) > 0 ? '#ff4028' : '#ffd43b')) : (isDone ? '#38d9a9' : 'rgba(255, 212, 59, 0.55)');
+      ctx.lineWidth = isActive ? 3.5 : 2.0;
+      ctx.setLineDash(isActive ? [8, 6] : [6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Progress Arc
+      if (poi.progress > 0 && poi.progress < 1) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + TAU * poi.progress);
+        ctx.strokeStyle = isActive ? '#ff4028' : '#ffd43b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      // Base Platform
+      ctx.fillStyle = '#212529';
+      ctx.fillRect(px - 32, py - 32, 64, 64);
+      ctx.strokeStyle = '#495057';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(px - 32, py - 32, 64, 64);
+
+      // Drill Towers
+      ctx.fillStyle = isActive ? '#f59f00' : '#868e96';
+      ctx.fillRect(px - 22, py - 24, 16, 48);
+      ctx.fillRect(px + 6, py - 24, 16, 48);
+
+      // Hazard Stripes on Silo
+      ctx.fillStyle = '#111';
+      ctx.fillRect(px - 22, py - 6, 16, 6);
+      ctx.fillRect(px + 6, py - 6, 16, 6);
+
+      // Center Core
+      ctx.beginPath();
+      ctx.arc(px, py, 14 * pulse, 0, TAU);
+      ctx.fillStyle = isDone ? '#38d9a9' : (isActive ? '#ff6b6b' : '#ffd43b');
+      ctx.fill();
+
+      // Top Beacon
+      ctx.beginPath();
+      ctx.arc(px, py - 36, 6, 0, TAU);
+      ctx.fillStyle = isActive ? (Math.sin(rTime * 14) > 0 ? '#ff0000' : '#ffffff') : (isDone ? '#38d9a9' : '#ffd43b');
+      ctx.fill();
+    }
+
+    // 2. Orbital Drop Pod
+    else if (poi.kind === 'orbital_pod') {
+      var podDone = poi.status === 'completed';
+
+      // Landing Scorch & Beam
+      if (!podDone) {
+        var grad = ctx.createLinearGradient(px, py, px, py - 160);
+        grad.addColorStop(0, 'rgba(56, 217, 169, 0.45)');
+        grad.addColorStop(1, 'rgba(56, 217, 169, 0.0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(px - 14, py - 160, 28, 160);
+      }
+
+      // Ground Ring
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = podDone ? 'rgba(56, 217, 169, 0.3)' : 'rgba(56, 217, 169, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (poi.progress > 0 && poi.progress < 1) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + TAU * poi.progress);
+        ctx.strokeStyle = '#38d9a9';
+        ctx.lineWidth = 3.5;
+        ctx.stroke();
+      }
+
+      // Pod Octagonal Hull
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.beginPath();
+      for (var pi = 0; pi < 8; pi += 1) {
+        var ang = (pi / 8) * TAU + Math.PI / 8;
+        var hx = Math.cos(ang) * 26;
+        var hy = Math.sin(ang) * 26;
+        if (pi === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+      }
+      ctx.closePath();
+      ctx.fillStyle = podDone ? '#343a40' : '#495057';
+      ctx.fill();
+      ctx.strokeStyle = podDone ? '#212529' : '#20c997';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Vent ports
+      ctx.fillStyle = podDone ? '#111' : '#63e6be';
+      ctx.fillRect(-10, -10, 20, 20);
+      ctx.restore();
+    }
+
+    // 3. Field Modification Rig
+    else if (poi.kind === 'field_rig') {
+      var rigDone = poi.status === 'completed';
+
+      // Holographic workbench ring
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = rigDone ? 'rgba(77, 171, 247, 0.25)' : 'rgba(77, 171, 247, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (poi.progress > 0 && poi.progress < 1) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + TAU * poi.progress);
+        ctx.strokeStyle = '#4dabf7';
+        ctx.lineWidth = 3.5;
+        ctx.stroke();
+      }
+
+      // Tracked Vehicle Chassis
+      ctx.fillStyle = '#343a40';
+      ctx.fillRect(px - 36, py - 20, 72, 40);
+      // Treads
+      ctx.fillStyle = '#1a1d20';
+      ctx.fillRect(px - 38, py - 24, 76, 7);
+      ctx.fillRect(px - 38, py + 17, 76, 7);
+
+      // Holographic bench projector
+      ctx.beginPath();
+      ctx.arc(px, py, 12, 0, TAU);
+      ctx.fillStyle = rigDone ? '#212529' : '#1864ab';
+      ctx.fill();
+      ctx.strokeStyle = rigDone ? '#495057' : '#74c0fc';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Crane arm
+      ctx.strokeStyle = '#868e96';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(px - 10, py);
+      ctx.lineTo(px + 18, py - 22);
+      ctx.stroke();
+    }
+
+    // 4. Xeno Nest Fissure
+    else if (poi.kind === 'xeno_nest') {
+      var nestDead = poi.status === 'destroyed';
+
+      // Chitinous Tendril Rings
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = nestDead ? 'rgba(73, 80, 87, 0.4)' : 'rgba(177, 151, 252, 0.75)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Organic fleshy mound
+      ctx.beginPath();
+      ctx.arc(px, py, 34 * (nestDead ? 0.8 : pulse), 0, TAU);
+      ctx.fillStyle = nestDead ? '#1a1024' : '#3b1854';
+      ctx.fill();
+      ctx.strokeStyle = nestDead ? '#495057' : '#9775fa';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Pulsating egg sacs
+      if (!nestDead) {
+        for (var ni = 0; ni < 3; ni += 1) {
+          var nAng = (ni / 3) * TAU + rTime * 1.5;
+          var nx = px + Math.cos(nAng) * 16;
+          var ny = py + Math.sin(nAng) * 16;
+          ctx.beginPath();
+          ctx.arc(nx, ny, 7, 0, TAU);
+          ctx.fillStyle = '#da77f2';
+          ctx.fill();
+        }
+
+        // Nest HP Bar
+        var hpPct = poi.maxHp > 0 ? clamp(poi.hp / poi.maxHp, 0, 1) : 0;
+        ctx.fillStyle = '#111';
+        ctx.fillRect(px - 30, py - 46, 60, 6);
+        ctx.fillStyle = '#b197fc';
+        ctx.fillRect(px - 30, py - 46, 60 * hpPct, 6);
+      }
+    }
+
+    // 5. EMP Resonance Spire
+    else if (poi.kind === 'emp_spire') {
+      var spireDone = poi.status === 'completed';
+
+      // Ring
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : 'rgba(121, 80, 242, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Triangular Base
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.beginPath();
+      for (var ti = 0; ti < 3; ti += 1) {
+        var tAng = (ti / 3) * TAU - Math.PI / 2;
+        var tx = Math.cos(tAng) * 28;
+        var ty = Math.sin(tAng) * 28;
+        if (ti === 0) ctx.moveTo(tx, ty);
+        else ctx.lineTo(tx, ty);
+      }
+      ctx.closePath();
+      ctx.fillStyle = spireDone ? '#212529' : '#343a40';
+      ctx.fill();
+      ctx.strokeStyle = spireDone ? '#495057' : '#7950f2';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Capacitors at vertices
+      if (!spireDone) {
+        for (var ci = 0; ci < poi.capacitors; ci += 1) {
+          var cAng = (ci / 3) * TAU - Math.PI / 2;
+          var cx = Math.cos(cAng) * 28;
+          var cy = Math.sin(cAng) * 28;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 7 * pulse, 0, TAU);
+          ctx.fillStyle = '#e599f7';
+          ctx.fill();
+        }
+      }
+
+      // Central Spire Core
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, TAU);
+      ctx.fillStyle = spireDone ? '#495057' : '#7950f2';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 6. Bunker Cache
+    else if (poi.kind === 'bunker_cache') {
+      var bunkerDone = poi.status === 'completed';
+
+      // Outer fortified ring
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = bunkerDone ? 'rgba(255, 212, 59, 0.3)' : 'rgba(255, 212, 59, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Hexagonal Armor Door
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.beginPath();
+      for (var bi = 0; bi < 6; bi += 1) {
+        var bAng = (bi / 6) * TAU;
+        var bx = Math.cos(bAng) * 28;
+        var by = Math.sin(bAng) * 28;
+        if (bi === 0) ctx.moveTo(bx, by);
+        else ctx.lineTo(bx, by);
+      }
+      ctx.closePath();
+      ctx.fillStyle = bunkerDone ? '#1a1a1a' : '#2b2b2b';
+      ctx.fill();
+      ctx.strokeStyle = bunkerDone ? '#495057' : '#ffd43b';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Hazard Warning Bar
+      if (!bunkerDone) {
+        ctx.fillStyle = '#ffd43b';
+        ctx.fillRect(-16, -6, 32, 12);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-10, -6, 6, 12);
+        ctx.fillRect(4, -6, 6, 12);
+
+        // HP bar if damaged
+        if (poi.hp < poi.maxHp) {
+          var bHp = clamp(poi.hp / poi.maxHp, 0, 1);
+          ctx.fillStyle = '#111';
+          ctx.fillRect(-24, -38, 48, 5);
+          ctx.fillStyle = '#ffd43b';
+          ctx.fillRect(-24, -38, 48 * bHp, 5);
+        }
+      } else {
+        // Blown open interior
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, TAU);
+        ctx.fillStyle = '#38d9a9';
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // High-Contrast Tactical HUD Label above POI
+    var labelY = py - pr - 14;
+    var statusText = poi.status.toUpperCase();
+    if (poi.status === 'active' && poi.activeTimer > 0) {
+      statusText = Math.ceil(poi.activeTimer) + 's';
+    }
+    var fullTag = poi.label + ' [' + statusText + ']';
+
+    ctx.font = 'bold 11px monospace';
+    var tw = ctx.measureText(fullTag).width;
+    ctx.fillStyle = 'rgba(10, 12, 16, 0.85)';
+    ctx.fillRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
+    ctx.strokeStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#e0a800');
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
+
+    ctx.fillStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#f8f9fa');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fullTag, px, labelY - 3);
+
+    ctx.restore();
+  }
+}
+

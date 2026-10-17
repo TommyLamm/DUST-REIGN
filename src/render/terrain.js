@@ -7,27 +7,13 @@ import { getNoiseTile } from './sprites.js';
 var WIND = 35 * Math.PI / 180;
 var COS_W = Math.cos(WIND);
 var SIN_W = Math.sin(WIND);
+var TILE_SIZE = 1024;
 
-var slotA = { canvas: null, ctx: null, key: '', sector: '' };
-var slotB = { canvas: null, ctx: null, key: '', sector: '' };
+var slotA = { canvas: null, ctx: null, pattern: null, key: '', sector: '' };
+var slotB = { canvas: null, ctx: null, pattern: null, key: '', sector: '' };
 
-function viewSize() {
-  var w = rt.ui.width || 1;
-  var h = rt.ui.height || 1;
-  var dpr = rt.ui.dpr || 1;
-  if (dpr < 1) dpr = 1;
-  if (dpr > 2) dpr = 2;
-  return {
-    w: w,
-    h: h,
-    dpr: dpr,
-    pw: Math.max(1, Math.round(w * dpr)),
-    ph: Math.max(1, Math.round(h * dpr))
-  };
-}
-
-function cacheKey(sector, size, detail) {
-  return sector + '|' + size.pw + 'x' + size.ph + '|' + (detail ? '1' : '0');
+function cacheKey(sector, detail) {
+  return sector + '|' + TILE_SIZE + 'x' + TILE_SIZE + '|' + (detail ? '1' : '0');
 }
 
 function rng(seed) {
@@ -61,30 +47,25 @@ function paintNoise(ctx, tile, w, h, tileSize, alpha, op, ox, oy) {
 
 function paintDunes(ctx, w, h, colors, detail) {
   var bands = detail ? 6 : 3;
-  var reach = Math.hypot(w, h) + 48;
-  var steps = detail ? 22 : 10;
-  var px = -SIN_W;
-  var py = COS_W;
+  var steps = detail ? 32 : 16;
   ctx.save();
   ctx.lineCap = 'round';
   ctx.globalCompositeOperation = 'soft-light';
   var i;
   for (i = 0; i < bands; i += 1) {
-    var off = ((i + 0.5) / bands - 0.5) * (w + h);
-    var cx = w * 0.5 + px * off;
-    var cy = h * 0.5 + py * off;
+    var yBase = (i / bands) * h;
     ctx.beginPath();
     var s;
     for (s = 0; s <= steps; s += 1) {
-      var u = (s / steps - 0.5) * reach;
-      var wobble = Math.sin(s * 0.62 + i * 1.7) * (detail ? 12 : 6);
-      var x = cx + COS_W * u + px * wobble;
-      var y = cy + SIN_W * u + py * wobble;
+      var x = (s / steps) * w;
+      // Periodic wave wrapping seamlessly across 1024px tile width
+      var wave = Math.sin((x / w) * TAU * 2 + i * 1.5) * (detail ? 14 : 7);
+      var y = ((yBase + wave) % h + h) % h;
       if (s === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.strokeStyle = i % 2 === 0 ? colors.light : colors.dark;
-    ctx.globalAlpha = i % 2 === 0 ? 0.18 : 0.12;
+    ctx.globalAlpha = i % 2 === 0 ? 0.20 : 0.13;
     ctx.lineWidth = (detail ? 12 : 8) + (i % 2) * 4;
     ctx.stroke();
   }
@@ -115,7 +96,7 @@ function strokeCrack(ctx, p, q, colors) {
 }
 
 function paintCracks(ctx, w, h, colors, detail, sector) {
-  var count = detail ? 52 : 18;
+  var count = detail ? 48 : 16;
   var pts = new Array(count);
   var rand = rng(sectorSeed(sector, w, h));
   var i;
@@ -131,8 +112,11 @@ function paintCracks(ctx, w, h, colors, detail, sector) {
     var b;
     for (b = 0; b < count; b += 1) {
       if (a === b) continue;
-      var dx = pts[a].x - pts[b].x;
-      var dy = pts[a].y - pts[b].y;
+      // Toroidal distance for seamless edge matching
+      var rawDx = Math.abs(pts[a].x - pts[b].x);
+      var dx = Math.min(rawDx, w - rawDx);
+      var rawDy = Math.abs(pts[a].y - pts[b].y);
+      var dy = Math.min(rawDy, h - rawDy);
       var d = dx * dx + dy * dy;
       if (d < bestD) {
         second = best;
@@ -144,8 +128,8 @@ function paintCracks(ctx, w, h, colors, detail, sector) {
         secondD = d;
       }
     }
-    if (best > a) strokeCrack(ctx, pts[a], pts[best], colors);
-    if (detail && second > a && secondD < bestD * 2.15) strokeCrack(ctx, pts[a], pts[second], colors);
+    if (best > a && bestD < 36000) strokeCrack(ctx, pts[a], pts[best], colors);
+    if (detail && second > a && secondD < bestD * 2.15 && secondD < 36000) strokeCrack(ctx, pts[a], pts[second], colors);
   }
   ctx.restore();
 }
@@ -229,28 +213,35 @@ function paintScrap(ctx, size, variant, colors, detail) {
 }
 
 function paintProps(ctx, colors, detail) {
-  var pieces = rt.terrain || [];
-  var i;
+  // Spatial hash props distributed in 128x128 virtual cells across 1024x1024 tile
   ctx.save();
   ctx.globalAlpha = 0.28;
-  for (i = 0; i < pieces.length; i += 1) {
-    if ((i % 5) >= 2) continue;
-    var piece = pieces[i];
-    if (!piece) continue;
-    var size = piece.size || 8;
-    var seed = Math.abs((Math.imul((piece.x * 10) | 0, 374761393) ^ Math.imul((piece.y * 10) | 0, 668265263) ^ (i * 127)) | 0);
-    ctx.save();
-    ctx.translate(piece.x, piece.y);
-    ctx.rotate(piece.rot || 0);
-    paintShadow(ctx, size);
-    if (piece.kind === 'scrap') paintScrap(ctx, size, seed, colors, detail);
-    else paintRock(ctx, size, seed, colors);
-    ctx.restore();
+  var cells = 8;
+  var cellSize = 128;
+  for (var gy = 0; gy < cells; gy += 1) {
+    for (var gx = 0; gx < cells; gx += 1) {
+      var seed = Math.abs((Math.imul(gx + 1, 374761393) ^ Math.imul(gy + 1, 668265263)) | 0);
+      if ((seed % 5) >= 2) continue;
+      var size = 6 + (seed % 6);
+      var ox = 28 + (seed % 72);
+      var oy = 28 + ((seed >> 4) % 72);
+      var px = gx * cellSize + ox;
+      var py = gy * cellSize + oy;
+      var rot = ((seed % 314) / 100);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(rot);
+      paintShadow(ctx, size);
+      if (seed % 2 === 0) paintScrap(ctx, size, seed, colors, detail);
+      else paintRock(ctx, size, seed, colors);
+      ctx.restore();
+    }
   }
   ctx.restore();
 }
 
 function paintGrid(ctx, w, h) {
+  // 64px tactical coordinates grid (16 cells horizontally and vertically across 1024)
   var grid = 64;
   var cx = w * 0.5;
   var cy = h * 0.5;
@@ -290,7 +281,7 @@ function paintGround(ctx, w, h, sector, detail) {
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = colors.base;
   ctx.fillRect(0, 0, w, h);
-  paintNoise(ctx, tile, w, h, detail ? 420 : 520, 0.12, 'soft-light', 12, 20);
+  paintNoise(ctx, tile, w, h, detail ? 420 : 512, 0.12, 'soft-light', 12, 20);
   if (detail) {
     paintNoise(ctx, tile, w, h, 168, 0.06, 'soft-light', 40, 16);
   }
@@ -306,27 +297,26 @@ function paintGround(ctx, w, h, sector, detail) {
   paintGrid(ctx, w, h);
 }
 
-function bakeSlot(slot, sector, size, detail, key) {
+function bakeSlot(slot, sector, detail, key) {
   if (typeof document === 'undefined') return;
   if (!slot.canvas) {
     slot.canvas = document.createElement('canvas');
     slot.ctx = slot.canvas.getContext('2d', { alpha: false });
   }
   if (!slot.ctx) return;
-  if (slot.canvas.width !== size.pw || slot.canvas.height !== size.ph) {
-    slot.canvas.width = size.pw;
-    slot.canvas.height = size.ph;
+  if (slot.canvas.width !== TILE_SIZE || slot.canvas.height !== TILE_SIZE) {
+    slot.canvas.width = TILE_SIZE;
+    slot.canvas.height = TILE_SIZE;
   }
-  var sx = size.pw / size.w;
-  var sy = size.ph / size.h;
-  slot.ctx.setTransform(sx, 0, 0, sy, 0, 0);
-  paintGround(slot.ctx, size.w, size.h, sector, detail);
+  slot.ctx.setTransform(1, 0, 0, 1, 0, 0);
+  paintGround(slot.ctx, TILE_SIZE, TILE_SIZE, sector, detail);
   slot.key = key;
   slot.sector = sector;
+  slot.pattern = null;
 }
 
-function ensure(sector, size, detail, protect) {
-  var key = cacheKey(sector, size, detail);
+function ensure(sector, detail, protect) {
+  var key = cacheKey(sector, detail);
   if (slotA.key === key && slotA.canvas) return slotA;
   if (detail && slotB.key === key && slotB.canvas) return slotB;
   var slot = slotA;
@@ -335,38 +325,81 @@ function ensure(sector, size, detail, protect) {
     else if (protect === slotB) slot = slotA;
     else if (slotA.key && !slotB.key) slot = slotB;
   }
-  bakeSlot(slot, sector, size, detail, key);
+  bakeSlot(slot, sector, detail, key);
   return slot;
 }
 
-function blit(ctx, slot, alpha, w, h) {
-  if (!slot || !slot.canvas || !(alpha > 0)) return false;
-  if (alpha >= 0.999) {
-    ctx.drawImage(slot.canvas, 0, 0, w, h);
-    return true;
+function blitModuloQuads(ctx, canvas, x0, y0, viewW, viewH, tw, th) {
+  var u = ((x0 % tw) + tw) % tw;
+  var v = ((y0 % th) + th) % th;
+  for (var y = -v; y < viewH; y += th) {
+    for (var x = -u; x < viewW; x += tw) {
+      ctx.drawImage(canvas, x0 + x + u, y0 + y + v, tw, th);
+    }
   }
+}
+
+function drawSlotPattern(ctx, slot, alpha, x0, y0, viewW, viewH) {
+  if (!slot || !slot.canvas || !(alpha > 0)) return;
+  if (!slot.pattern) {
+    slot.pattern = ctx.createPattern(slot.canvas, 'repeat');
+  }
+  var terrainPattern = slot.pattern;
+  if (!terrainPattern) return;
+
   var prev = ctx.globalAlpha;
   ctx.globalAlpha = prev * alpha;
-  ctx.drawImage(slot.canvas, 0, 0, w, h);
+
+  if (terrainPattern.setTransform) {
+    var mat;
+    if (typeof DOMMatrix !== 'undefined') {
+      mat = new DOMMatrix();
+      mat.translateSelf(-x0, -y0);
+    } else {
+      mat = { a: 1, b: 0, c: 0, d: 1, e: -x0, f: -y0 };
+    }
+    terrainPattern.setTransform(mat);
+    ctx.fillStyle = terrainPattern;
+    ctx.fillRect(x0, y0, viewW, viewH);
+  } else {
+    blitModuloQuads(ctx, slot.canvas, x0, y0, viewW, viewH, TILE_SIZE, TILE_SIZE);
+  }
+
   ctx.globalAlpha = prev;
-  return true;
 }
 
-function flatFill(ctx, w, h) {
+function flatFill(ctx, x0, y0, w, h) {
   ctx.fillStyle = PALETTE.ground.base;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(x0, y0, w, h);
 }
 
-export function drawGround(ctx) {
+export function drawGround(ctx, camX, camY, viewW, viewH) {
   if (!ctx || !rt.ui) return;
-  var w = rt.ui.width;
-  var h = rt.ui.height;
+  var w = (typeof viewW === 'number' && viewW > 0) ? viewW : rt.ui.width;
+  var h = (typeof viewH === 'number' && viewH > 0) ? viewH : rt.ui.height;
   if (!(w > 0) || !(h > 0)) return;
+
+  var cx = (typeof camX === 'number') ? camX : (rt.camera && typeof rt.camera.x === 'number') ? rt.camera.x : (rt.state && rt.state.player ? rt.state.player.x : ((rt.state && rt.state.width) || 3520) * 0.5);
+  var cy = (typeof camY === 'number') ? camY : (rt.camera && typeof rt.camera.y === 'number') ? rt.camera.y : (rt.state && rt.state.player ? rt.state.player.y : ((rt.state && rt.state.height) || 2640) * 0.5);
+
+  var halfW = w * 0.5;
+  var halfH = h * 0.5;
+  var worldW = (rt.state && rt.state.width) || 3520;
+  var worldH = (rt.state && rt.state.height) || 2640;
+
+  var clampedCamX = Math.max(halfW, Math.min(cx, worldW - halfW));
+  var clampedCamY = Math.max(halfH, Math.min(cy, worldH - halfH));
+  if (worldW <= w) clampedCamX = worldW * 0.5;
+  if (worldH <= h) clampedCamY = worldH * 0.5;
+
+  var x0 = clampedCamX - halfW;
+  var y0 = clampedCamY - halfH;
+
   if (typeof document === 'undefined') {
-    flatFill(ctx, w, h);
+    flatFill(ctx, x0, y0, w, h);
     return;
   }
-  var size = viewSize();
+
   var detail = !!getBudget().terrainDetail;
   var wave = (rt.state && rt.state.wave) || 1;
   var waveTime = (rt.state && rt.state.waveTime) || 0;
@@ -378,22 +411,22 @@ export function drawGround(ctx) {
   if (!detail || from === sector) t = 1;
 
   if (!detail) {
-    var low = ensure(sector, size, false, null);
-    if (!blit(ctx, low, 1, w, h)) flatFill(ctx, w, h);
+    var low = ensure(sector, false, null);
+    drawSlotPattern(ctx, low, 1, x0, y0, w, h);
     return;
   }
 
-  var fromSlot = ensure(from, size, true, null);
-  var toSlot = ensure(sector, size, true, fromSlot);
+  var fromSlot = ensure(from, true, null);
+  var toSlot = ensure(sector, true, fromSlot);
   if (t >= 1) {
-    if (!blit(ctx, toSlot, 1, w, h)) flatFill(ctx, w, h);
+    drawSlotPattern(ctx, toSlot, 1, x0, y0, w, h);
   } else {
-    if (!blit(ctx, fromSlot, 1, w, h)) flatFill(ctx, w, h);
-    blit(ctx, toSlot, t, w, h);
+    drawSlotPattern(ctx, fromSlot, 1, x0, y0, w, h);
+    drawSlotPattern(ctx, toSlot, t, x0, y0, w, h);
   }
   if (waveTime >= WAVE_LENGTH - 2) {
     var next = sectorForWave(wave + 1);
-    if (next !== sector) ensure(next, size, true, toSlot);
+    if (next !== sector) ensure(next, true, toSlot);
   }
 }
 
@@ -445,28 +478,36 @@ export function addVisualDecal(x, y, r, maxLife, alpha, color) {
 
 function ageVisualDecals() {
   var s = rt.state;
-  if (s.paused || s.over || (s.hitstop || 0) > 0) return;
+  if (!s || s.paused || s.over || (s.hitstop || 0) > 0) return;
   var dt = rt.renderDt || 0;
   for (var i = 0; i < visualDecals.length; i += 1) {
     var d = visualDecals[i];
-    if (!d.active) continue;
+    if (!d || !d.active) continue;
     d.life -= dt;
     if (d.life <= 0) d.active = false;
   }
 }
 
-export function drawDecals(ctx) {
+export function drawDecals(ctx, x0, y0, viewW, viewH) {
   if (!ctx || !rt.state || !rt.ui) return;
-  var w = rt.ui.width;
-  var h = rt.ui.height;
-  if (rt.state.decals) drawDecalList(ctx, rt.state.decals, w, h);
+  var w = (typeof viewW === 'number' && viewW > 0) ? viewW : rt.ui.width;
+  var h = (typeof viewH === 'number' && viewH > 0) ? viewH : rt.ui.height;
+  var ox = (typeof x0 === 'number') ? x0 : 0;
+  var oy = (typeof y0 === 'number') ? y0 : 0;
+
+  if (rt.state.decals) drawDecalList(ctx, rt.state.decals, ox, oy, w, h);
   syncVisualDecalOwner();
   ageVisualDecals();
-  drawDecalList(ctx, visualDecals, w, h);
+  drawDecalList(ctx, visualDecals, ox, oy, w, h);
 }
 
-function drawDecalList(ctx, list, w, h) {
+function drawDecalList(ctx, list, x0, y0, w, h) {
   var i;
+  var minX = x0 - 48;
+  var maxX = x0 + w + 48;
+  var minY = y0 - 48;
+  var maxY = y0 + h + 48;
+
   for (i = 0; i < list.length; i += 1) {
     var d = list[i];
     if (!d || !d.active) continue;
@@ -475,7 +516,7 @@ function drawDecalList(ctx, list, w, h) {
     if (fade > 1) fade = 1;
     var alpha = d.alpha * fade;
     if (alpha <= 0.01) continue;
-    if (d.x < -48 || d.y < -48 || d.x > w + 48 || d.y > h + 48) continue;
+    if (d.x < minX || d.y < minY || d.x > maxX || d.y > maxY) continue;
     var kind = decalKind(d);
     ctx.save();
     ctx.translate(d.x, d.y);

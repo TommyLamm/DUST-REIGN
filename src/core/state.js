@@ -1,11 +1,17 @@
 import { readBestScoreV2 } from './meta-store.js';
 import { createCasingPool, createDecalPool } from './pools.js';
 import { rng } from './rng.js';
+import { WORLD_WIDTH, WORLD_HEIGHT, SPAWN_CENTER_X, SPAWN_CENTER_Y } from './constants.js';
+import { createDefaultPois } from '../systems/sim/poi.js';
 
 export function makeState(width, height) {
+  var isCustomSize = typeof width === 'number' && typeof height === 'number';
+  var w = isCustomSize ? width : WORLD_WIDTH;
+  var h = isCustomSize ? height : WORLD_HEIGHT;
+
   var player = {
-    x: (width || 960) / 2,
-    y: (height || 640) / 2,
+    x: isCustomSize ? (w / 2) : SPAWN_CENTER_X,
+    y: isCustomSize ? (h / 2) : SPAWN_CENTER_Y,
     vx: 0,
     vy: 0,
     r: 15,
@@ -82,8 +88,8 @@ export function makeState(width, height) {
   });
 
   var state = {
-    width: width || 960,
-    height: height || 640,
+    width: w,
+    height: h,
     running: true,
     paused: false,
     over: false,
@@ -186,6 +192,7 @@ export function makeState(width, height) {
     plasmaZones: [],
     vortices: [],
     spires: [],
+    pois: (isCustomSize && w < 1000) ? [] : createDefaultPois(),
     upgradeChoices: [],
     acquiredUpgrades: []
   };

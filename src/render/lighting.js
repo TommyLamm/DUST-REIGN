@@ -35,15 +35,18 @@ function shadeStyle(shade) {
   return shadeCss;
 }
 
-function addLight(x, y, radius, color, alpha, px, py, w, h) {
+function addLight(x, y, radius, color, alpha, px, py, w, h, ox, oy) {
   if (!(radius > 8) || !(alpha > 0.02) || lightCount >= LIGHT_POOL) return;
-  if (x < -radius || y < -radius || x > w + radius || y > h + radius) return;
+  var lx = x - (ox || 0);
+  var ly = y - (oy || 0);
+  var pad = 180;
+  if (lx < -radius - pad || ly < -radius - pad || lx > w + radius + pad || ly > h + radius + pad) return;
   var dx = x - px;
   var dy = y - py;
   var L = lights[lightCount];
   lightCount += 1;
-  L.x = x;
-  L.y = y;
+  L.x = lx;
+  L.y = ly;
   L.radius = radius > 280 ? 280 : radius;
   L.color = color || '#ffffff';
   L.a = alpha > 1 ? 1 : alpha;
@@ -69,7 +72,7 @@ function trimLights() {
   lightCount = kept;
 }
 
-function collect(w, h) {
+function collect(w, h, ox, oy) {
   lightCount = 0;
   var state = rt.state;
   var p = state.player;
@@ -77,13 +80,13 @@ function collect(w, h) {
   var px = p.x;
   var py = p.y;
   var playerSlot = lightCount;
-  addLight(px, py, 220, PALETTE.emissive.player, 0.82, px, py, w, h);
+  addLight(px, py, 220, PALETTE.emissive.player, 0.82, px, py, w, h, ox, oy);
   if (lightCount > playerSlot) lights[playerSlot].d2 = -1;
-  if (p.overdrive > 0) addLight(px, py, 150, PALETTE.emissive.gold, 0.55, px, py, w, h);
+  if (p.overdrive > 0) addLight(px, py, 150, PALETTE.emissive.gold, 0.55, px, py, w, h, ox, oy);
   if (p.recoil > 0.02) {
     var mx = px + Math.cos(p.aim || 0) * ((p.r || 15) + 12);
     var my = py + Math.sin(p.aim || 0) * ((p.r || 15) + 12);
-    addLight(mx, my, 40 + p.recoil * 48, '#fff1c4', 0.35 + p.recoil * 0.55, px, py, w, h);
+    addLight(mx, my, 40 + p.recoil * 48, '#fff1c4', 0.35 + p.recoil * 0.55, px, py, w, h, ox, oy);
   }
 
   var list;
@@ -93,7 +96,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var b = list[i];
       if (!b) continue;
-      addLight(b.x, b.y, 16 + (b.r || 4) * 4, b.colorCore || PALETTE.emissive.player, 0.5, px, py, w, h);
+      addLight(b.x, b.y, 16 + (b.r || 4) * 4, b.colorCore || PALETTE.emissive.player, 0.5, px, py, w, h, ox, oy);
     }
   }
   list = state.enemyBullets;
@@ -101,7 +104,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var eb = list[i];
       if (!eb) continue;
-      addLight(eb.x, eb.y, 14 + (eb.r || 3.5) * 3, eb.glowColor || eb.color || PALETTE.emissive.hostile, 0.4, px, py, w, h);
+      addLight(eb.x, eb.y, 14 + (eb.r || 3.5) * 3, eb.glowColor || eb.color || PALETTE.emissive.hostile, 0.4, px, py, w, h, ox, oy);
     }
   }
   list = state.orbs;
@@ -109,9 +112,9 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var orb = list[i];
       if (!orb) continue;
-      if (orb.kind === 'overdrive') addLight(orb.x, orb.y, 78, PALETTE.emissive.gold, 0.7, px, py, w, h);
-      else if (orb.kind === 'repair') addLight(orb.x, orb.y, 56, PALETTE.emissive.player, 0.48, px, py, w, h);
-      else addLight(orb.x, orb.y, 40, PALETTE.hud.amber, 0.32, px, py, w, h);
+      if (orb.kind === 'overdrive') addLight(orb.x, orb.y, 78, PALETTE.emissive.gold, 0.7, px, py, w, h, ox, oy);
+      else if (orb.kind === 'repair') addLight(orb.x, orb.y, 56, PALETTE.emissive.player, 0.48, px, py, w, h, ox, oy);
+      else addLight(orb.x, orb.y, 40, PALETTE.hud.amber, 0.32, px, py, w, h, ox, oy);
     }
   }
   list = state.volatileCores;
@@ -119,7 +122,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var core = list[i];
       if (!core) continue;
-      addLight(core.x, core.y, 110, PALETTE.emissive.gold, 0.62, px, py, w, h);
+      addLight(core.x, core.y, 110, PALETTE.emissive.gold, 0.62, px, py, w, h, ox, oy);
     }
   }
   list = state.barrels;
@@ -127,8 +130,8 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var barrel = list[i];
       if (!barrel) continue;
-      if (barrel.state === 'flying') addLight(barrel.x, barrel.y, 96, PALETTE.emissive.hostile, 0.7, px, py, w, h);
-      else addLight(barrel.x, barrel.y, 52, PALETTE.hud.amber, 0.34, px, py, w, h);
+      if (barrel.state === 'flying') addLight(barrel.x, barrel.y, 96, PALETTE.emissive.hostile, 0.7, px, py, w, h, ox, oy);
+      else addLight(barrel.x, barrel.y, 52, PALETTE.hud.amber, 0.34, px, py, w, h, ox, oy);
     }
   }
   list = state.artilleryTargets;
@@ -136,7 +139,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var at = list[i];
       if (!at || at.state !== 'molten') continue;
-      addLight(at.x, at.y, (at.r || 40) * 1.7, PALETTE.emissive.hostile, 0.55, px, py, w, h);
+      addLight(at.x, at.y, (at.r || 40) * 1.7, PALETTE.emissive.hostile, 0.55, px, py, w, h, ox, oy);
     }
   }
   list = state.plasmaZones;
@@ -144,7 +147,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var pz = list[i];
       if (!pz) continue;
-      addLight(pz.x, pz.y, (pz.r || 40) * 2.1, PALETTE.emissive.hostile, 0.5, px, py, w, h);
+      addLight(pz.x, pz.y, (pz.r || 40) * 2.1, PALETTE.emissive.hostile, 0.5, px, py, w, h, ox, oy);
     }
   }
   list = state.vortices;
@@ -152,7 +155,7 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var vortex = list[i];
       if (!vortex) continue;
-      addLight(vortex.x, vortex.y, 96, PALETTE.emissive.void, 0.4, px, py, w, h);
+      addLight(vortex.x, vortex.y, 96, PALETTE.emissive.void, 0.4, px, py, w, h, ox, oy);
     }
   }
   list = state.spires;
@@ -160,8 +163,18 @@ function collect(w, h) {
     for (i = 0; i < list.length; i += 1) {
       var sp = list[i];
       if (!sp) continue;
-      if (sp.resonanceTimer > 0) addLight(sp.x, sp.y, 150, PALETTE.emissive.tech, 0.75, px, py, w, h);
-      else addLight(sp.x, sp.y, 44, PALETTE.emissive.tech, 0.22, px, py, w, h);
+      if (sp.resonanceTimer > 0) addLight(sp.x, sp.y, 150, PALETTE.emissive.tech, 0.75, px, py, w, h, ox, oy);
+      else addLight(sp.x, sp.y, 44, PALETTE.emissive.tech, 0.22, px, py, w, h, ox, oy);
+    }
+  }
+  list = state.pois;
+  if (list) {
+    for (i = 0; i < list.length; i += 1) {
+      var poi = list[i];
+      if (!poi) continue;
+      if (poi.kind === 'scrap_silo' && poi.status === 'active') addLight(poi.x, poi.y, 140, '#ffd43b', 0.65, px, py, w, h, ox, oy);
+      else if (poi.kind === 'orbital_pod' && poi.status !== 'completed') addLight(poi.x, poi.y, 120, '#38d9a9', 0.7, px, py, w, h, ox, oy);
+      else if (poi.kind === 'emp_spire' && poi.status !== 'completed') addLight(poi.x, poi.y, 130, '#7950f2', 0.7, px, py, w, h, ox, oy);
     }
   }
   list = state.enemies;
@@ -170,7 +183,7 @@ function collect(w, h) {
       var enemy = list[i];
       if (!enemy || !(enemy.isBoss || enemy.kind === 'titan')) continue;
       var bossHot = enemy.phase2Triggered || (enemy.bossPhase && enemy.bossPhase >= 3);
-      addLight(enemy.x, enemy.y, 200, bossHot ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.8, px, py, w, h);
+      addLight(enemy.x, enemy.y, 200, bossHot ? PALETTE.emissive.hostile : PALETTE.emissive.gold, 0.8, px, py, w, h, ox, oy);
     }
   }
   list = state.shockRings;
@@ -180,7 +193,7 @@ function collect(w, h) {
       if (!ring) continue;
       var life = ring.maxLife > 0 ? ring.life / ring.maxLife : 0;
       if (!(life > 0)) continue;
-      addLight(ring.x, ring.y, (ring.maxR || 70) * (0.45 + 0.4 * life), ring.color || PALETTE.emissive.hostile, 0.35 + 0.4 * life, px, py, w, h);
+      addLight(ring.x, ring.y, (ring.maxR || 70) * (0.45 + 0.4 * life), ring.color || PALETTE.emissive.hostile, 0.35 + 0.4 * life, px, py, w, h, ox, oy);
     }
   }
   list = state.opticalFlashes;
@@ -189,7 +202,7 @@ function collect(w, h) {
       var flash = list[i];
       if (!flash) continue;
       var fa = flash.maxLife > 0 ? flash.life / flash.maxLife : 0.5;
-      addLight(flash.x, flash.y, (flash.r || 8) * 5, flash.color || '#fff4bd', 0.45 * fa, px, py, w, h);
+      addLight(flash.x, flash.y, (flash.r || 8) * 5, flash.color || '#fff4bd', 0.45 * fa, px, py, w, h, ox, oy);
     }
   }
   trimLights();
@@ -217,25 +230,27 @@ function ensureCone() {
   return coneCanvas;
 }
 
-function drawCone(lctx, p, s) {
+function drawCone(lctx, p, s, ox, oy) {
   var sprite = ensureCone();
   if (!sprite) return;
   var len = 280 * s;
   var half = len * Math.tan(CONE_SPREAD);
   if (!(len > 1) || !(half > 0.5)) return;
   lctx.save();
-  lctx.translate(p.x * s, p.y * s);
+  lctx.translate((p.x - (ox || 0)) * s, (p.y - (oy || 0)) * s);
   lctx.rotate(p.aim || 0);
   lctx.drawImage(sprite, 0, -half, len, half * 2);
   lctx.restore();
 }
 
-export function drawLightmap(ctx) {
+export function drawLightmap(ctx, x0, y0, viewW, viewH) {
   if (!ctx || !rt.ui || !rt.state || !rt.state.player) return;
   if (!getBudget().lightmap || isHighContrast()) return;
   if (typeof document === 'undefined') return;
-  var w = rt.ui.width;
-  var h = rt.ui.height;
+  var w = (typeof viewW === 'number' && viewW > 0) ? viewW : rt.ui.width;
+  var h = (typeof viewH === 'number' && viewH > 0) ? viewH : rt.ui.height;
+  var ox = x0 || 0;
+  var oy = y0 || 0;
   if (!(w > 0) || !(h > 0)) return;
   var dpr = rt.ui.dpr || 1;
   if (dpr < 1) dpr = 1;
@@ -269,7 +284,7 @@ export function drawLightmap(ctx) {
   mapCtx.globalAlpha = 1;
   mapCtx.fillStyle = shadeStyle(shade);
   mapCtx.fillRect(0, 0, pw, ph);
-  collect(w, h);
+  collect(w, h, ox, oy);
   var s = pw / w;
   mapCtx.globalCompositeOperation = 'lighter';
   beginGlowBatch();
@@ -279,7 +294,7 @@ export function drawLightmap(ctx) {
     drawGlow(mapCtx, L.x * s, L.y * s, L.radius * s, L.color, L.a);
   }
   endGlowBatch();
-  drawCone(mapCtx, rt.state.player, s);
+  drawCone(mapCtx, rt.state.player, s, ox, oy);
   mapCtx.globalCompositeOperation = 'source-over';
-  ctx.drawImage(mapCanvas, 0, 0, w, h);
+  ctx.drawImage(mapCanvas, ox, oy, w, h);
 }
