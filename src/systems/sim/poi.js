@@ -125,6 +125,28 @@ export function createDefaultPois() {
       r: 90,
       maxHp: 150,
       hp: 150
+    }),
+    // 7. Crystal Resonance Pylon (Northeast Crystalline Sector)
+    makePoiEntity({
+      id: 'pylon_ne',
+      kind: 'crystal_resonance_pylon',
+      name: '晶能共鳴超載柱',
+      label: 'CRYSTAL PYLON',
+      x: 2550,
+      y: 680,
+      r: 95,
+      targetTime: 2.2
+    }),
+    // 8. Crystal Siphon Refinery (Southwest Overclock Hub)
+    makePoiEntity({
+      id: 'siphon_sw',
+      kind: 'crystal_siphon',
+      name: '晶化精煉站',
+      label: 'CRYSTAL SIPHON',
+      x: 1050,
+      y: 1950,
+      r: 120,
+      targetTime: 10.0
     })
   ];
 }
@@ -159,6 +181,17 @@ export function stepPois(dt, frame) {
     p.magnetBonusTimer -= dt;
     if (p.magnetBonusTimer <= 0) {
       p.magnetRadius = 165;
+    }
+  }
+
+  // Decay crystal pierce bonus timer
+  if (p.crystalPierceTimer > 0) {
+    p.crystalPierceTimer -= dt;
+    if (p.crystalPierceTimer <= 0) {
+      if (p.crystalPierceBonus) {
+        p.pierce = Math.max(0, (p.pierce || 0) - p.crystalPierceBonus);
+        p.crystalPierceBonus = 0;
+      }
     }
   }
 }

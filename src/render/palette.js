@@ -7,7 +7,8 @@ export var PALETTE = {
   ambient: {
     dusk: { r: 24, g: 20, b: 16 },
     storm: { r: 34, g: 14, b: 10 },
-    night: { r: 10, g: 16, b: 23 }
+    night: { r: 10, g: 16, b: 23 },
+    crystal: { r: 14, g: 18, b: 32 }
   },
   emissive: { player: '#7cf0c8', hostile: '#ff552e', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
   hud: { bone: '#e8e0c6', rust: '#ed6842', amber: '#e8b94e', mint: '#96baa0' }
@@ -43,6 +44,16 @@ var GROUND_SECTORS = {
     hi: '#172230',
     moteColor: { normal: '#8ab0d0', storm: '#5a78a6' },
     fogColor: { dark: '#101c2e', light: '#1e3452', streakA: '#386294', streakB: '#5c8bc2' }
+  },
+  crystal: {
+    base: '#0a0d18',
+    light: '#131b2e',
+    dark: '#05070d',
+    crack: '#020408',
+    hi: '#38bdf8',
+    prism: '#c084fc',
+    moteColor: { normal: '#67e8f9', storm: '#e879f9' },
+    fogColor: { dark: '#0a1128', light: '#1c2b4d', streakA: '#38bdf8', streakB: '#c084fc' }
   }
 };
 
@@ -125,10 +136,13 @@ export function ambientShade(tint, storm) {
   var nightW = 0;
   if (tint && tint.name === 'night') nightW += blend;
   if (tint && tint.from === 'night') nightW += 1 - blend;
+  var crystalW = 0;
+  if (tint && tint.name === 'crystal') crystalW += blend;
+  if (tint && tint.from === 'crystal') crystalW += 1 - blend;
   var s = typeof storm === 'number' ? storm : storm ? 1 : 0;
   if (s < 0) s = 0;
   if (s > 1) s = 1;
-  var lift = 0.74 - nightW * 0.05 - s * 0.04;
+  var lift = 0.74 - nightW * 0.05 - crystalW * 0.06 - s * 0.04;
   if (lift < 0.65) lift = 0.65;
   var r = tint ? tint.r : 58;
   var g = tint ? tint.g : 42;
