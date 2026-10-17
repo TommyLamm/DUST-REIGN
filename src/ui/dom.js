@@ -335,11 +335,18 @@ export function resize() {
   if (rt.ui.ctx && rt.ui.ctx.setTransform) rt.ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (changed || !rt.terrain.length) rebuildTerrain();
   if (!rt.state) return;
-  rt.state.width = width;
-  rt.state.height = height;
-  if (rt.state.player) {
-    rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r || 14, width - (rt.state.player.r || 14));
-    rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r || 14, height - (rt.state.player.r || 14));
+  if (!rt.camera) {
+    rt.state.width = width;
+    rt.state.height = height;
+    if (rt.state.player) {
+      rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r || 14, width - (rt.state.player.r || 14));
+      rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r || 14, height - (rt.state.player.r || 14));
+    }
+  } else if (rt.state.player) {
+    var bw = rt.state.width || 3520;
+    var bh = rt.state.height || 2640;
+    rt.state.player.x = clamp(rt.state.player.x, rt.state.player.r || 14, bw - (rt.state.player.r || 14));
+    rt.state.player.y = clamp(rt.state.player.y, rt.state.player.r || 14, bh - (rt.state.player.r || 14));
   }
   fitGameOverOverlay();
 }

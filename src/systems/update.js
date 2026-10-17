@@ -12,6 +12,7 @@ import { stepOrbs } from './sim/orbs.js';
 import { stepPlayer } from './sim/player.js';
 import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
 import { stepTactical } from './tactical.js';
+import { stepPois } from './sim/poi.js';
 import { updateDomUi } from '../ui/hud.js';
 import { updateCamera } from '../core/camera.js';
 
@@ -54,13 +55,14 @@ export function update(dt) {
   }
 
   cachedFrame.p = rt.state.player;
-  cachedFrame.boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
-  cachedFrame.boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+  cachedFrame.boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+  cachedFrame.boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
   var frame = cachedFrame;
 
   stepWaveClock(dt, frame);
   stepMutators(frame);
   stepHazards(dt, frame);
+  stepPois(dt, frame);
   stepPlayer(dt, frame);
   stepEnemySpawner(dt, frame);
   stepBullets(dt, frame);

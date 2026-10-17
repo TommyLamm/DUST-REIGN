@@ -200,12 +200,12 @@ export function restart() {
   if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = true;
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   syncCombatLayout();
-  rt.state = makeState(rt.ui.width, rt.ui.height);
+  rt.state = makeState();
   rt.state.paused = true;
-  rt.state.player.x = rt.ui.width / 2;
-  rt.state.player.y = rt.ui.height / 2;
-  rt.input.mouse.x = rt.ui.width / 2 + 100;
-  rt.input.mouse.y = rt.ui.height / 2;
+  rt.state.player.x = rt.state.width / 2;
+  rt.state.player.y = rt.state.height / 2;
+  rt.input.mouse.x = rt.state.player.x + 100;
+  rt.input.mouse.y = rt.state.player.y;
   rt.input.mouse.down = false;
   rt.firePointers.clear();
   rt.input.keys.clear();

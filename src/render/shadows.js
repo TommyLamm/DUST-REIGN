@@ -66,7 +66,7 @@ export function contact(ctx, x, y, radius, deep, stretch, lead, altitude) {
   }
 }
 
-export function drawContactShadows(ctx) {
+export function drawContactShadows(ctx, culledIndices, culledCount) {
   if (!ctx || !rt.state) return;
   var state = rt.state;
   var i;
@@ -93,8 +93,10 @@ export function drawContactShadows(ctx) {
   if (enemies) {
     var reduced = isReducedMotion();
     var rTime = rt.renderTime || 0;
-    for (i = 0; i < enemies.length; i += 1) {
-      var e = enemies[i];
+    var eCount = (typeof culledCount === 'number') ? culledCount : enemies.length;
+    for (i = 0; i < eCount; i += 1) {
+      var eIdx = culledIndices ? culledIndices[i] : i;
+      var e = enemies[eIdx];
       if (!e) continue;
       var alt = e.altitude || e.z || 0;
       if (e.kind === 'burrower' && e.burrowed) {
