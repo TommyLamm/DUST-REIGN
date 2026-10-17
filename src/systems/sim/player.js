@@ -34,6 +34,7 @@ export function stepPlayer(dt, frame) {
     var moveScale = Math.min(1, moveLength);
     var speedMult = (typeof p.moveSpeedMult === 'number') ? p.moveSpeedMult : 1;
     if ((p.speedBoostTimer || 0) > 0 && p.speedBoostMult) speedMult *= p.speedBoostMult;
+    if ((p.tacticalOverdriveTimer || 0) > 0) speedMult *= 1.20;
     if (p.toxicSlow) speedMult *= (1 - p.toxicSlow);
     var effectiveSpeed = p.speed * (p.slowTimer > 0 ? 0.55 : 1) * speedMult;
     if (p.isCharging) {

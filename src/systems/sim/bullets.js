@@ -7,7 +7,7 @@ import { isReducedMotion, triggerHaptic } from '../../core/settings.js';
 import { getEnemyById, populateEnemyGrid, queryGrid } from '../../core/spatial-grid.js';
 import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerSpireAbsorption, triggerSpireMicroResonance } from '../abilities.js';
-import { applyEnemySlow, stepCardEffects } from '../card-effects.js';
+import { applyEnemySlow, onCrit, stepCardEffects } from '../card-effects.js';
 import { damageEnemy, explodeBarrel, explodeCore, killEnemy } from '../combat.js';
 import { stormWind } from '../flow.js';
 import { addScore } from '../scoring.js';
@@ -107,6 +107,27 @@ function burstVanguard(b) {
     });
   }
   pushFxEvent('burst', b.x, b.y, { preset: 'mortar', tint: '#5be7ff', scale: 0.7 });
+}
+
+function triggerColossusGraviton(b) {
+  if (!b.colossusGraviton || b.gravitonDone || !rt.state) return;
+  b.gravitonDone = true;
+  if (!rt.state.tacticalEntities) rt.state.tacticalEntities = [];
+  var boundW = rt.ui ? rt.ui.width : rt.state.width;
+  var boundH = rt.ui ? rt.ui.height : rt.state.height;
+  rt.state.tacticalEntities.push({
+    kind: 'singularity-vortex',
+    x: clamp(b.x, 20, boundW - 20),
+    y: clamp(b.y, 20, boundH - 20),
+    r: 130,
+    life: 0.4,
+    maxLife: 0.4,
+    tearTimer: 0,
+    absorbedDamage: 120,
+    hp: 999
+  });
+  if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+  spawnParticles(b.x, b.y, '#bd5bff', 18, 160, 3);
 }
 
 function noteArcHit(p, x, y) {
@@ -524,6 +545,7 @@ export function stepBullets(dt, frame) {
             enemy.jitterTimer = 0.033;
             enemy.jitterAngle = Math.atan2(b.vy, b.vx);
             enemy.jitterAmount = 3.5;
+            onCrit(enemy, { bullet: b, player: p, damage: damageDealt });
           } else {
             spawnParticles(b.x, b.y, b.isArcWelder ? '#5be7ff' : '#f7d48a', 4, 80, 2);
             if (enemy.hp <= 0) {} else AudioFX.hit();
@@ -630,7 +652,39 @@ export function stepBullets(dt, frame) {
             if (p.kineticShrapnel && !b.isShrapnel) {
               spawnKineticShrapnel(b, enemy.x, enemy.y);
             }
-            if (!b.isVanguard && !b.isOverchargeSpike) b.damage *= 0.7;
+            if (b.colossusDisintegration) {
+              var fanAngle = Math.atan2(b.vy, b.vx);
+              var fanRadius = 90;
+              var fanDmg = Math.max(1, Math.round(b.damage * 0.35));
+              var fEnemies = rt.state.enemies || [];
+              for (var fsi = fEnemies.length - 1; fsi >= 0; fsi -= 1) {
+                var fFoe = fEnemies[fsi];
+                if (!fFoe || fFoe.hp <= 0 || fFoe === enemy) continue;
+                if (dist2(enemy.x, enemy.y, fFoe.x, fFoe.y) <= (fanRadius + (fFoe.r || 0)) * (fanRadius + (fFoe.r || 0))) {
+                  var fAng = Math.atan2(fFoe.y - enemy.y, fFoe.x - enemy.x);
+                  var fDiff = Math.abs(Math.atan2(Math.sin(fAng - fanAngle), Math.cos(fAng - fanAngle)));
+                  if (fDiff <= (Math.PI / 3)) {
+                    damageEnemy(fFoe, fanDmg, { source: 'disintegration', x: enemy.x, y: enemy.y });
+                    spawnParticles(fFoe.x, fFoe.y, '#00f3ff', 4, 80, 2);
+                    if (fFoe.hp <= 0) killEnemy(fFoe, 'disintegration');
+                  }
+                }
+              }
+              var eBullets = rt.state.enemyBullets || [];
+              for (var ebi = eBullets.length - 1; ebi >= 0; ebi -= 1) {
+                var eBullet = eBullets[ebi];
+                if (dist2(enemy.x, enemy.y, eBullet.x, eBullet.y) <= fanRadius * fanRadius) {
+                  var ebAng = Math.atan2(eBullet.y - enemy.y, eBullet.x - enemy.x);
+                  var ebDiff = Math.abs(Math.atan2(Math.sin(ebAng - fanAngle), Math.cos(ebAng - fanAngle)));
+                  if (ebDiff <= (Math.PI / 3)) {
+                    spawnParticles(eBullet.x, eBullet.y, '#00f3ff', 3, 60, 1.5);
+                    eBullets.splice(ebi, 1);
+                  }
+                }
+              }
+              pushFxEvent('burst', enemy.x, enemy.y, { preset: 'emp', tint: '#00f3ff', scale: 0.6 });
+            }
+            if (!b.isVanguard && !b.isOverchargeSpike && !b.isColossus) b.damage *= 0.7;
             rt.state.shockRings.push({
               x: enemy.x,
               y: enemy.y,
@@ -638,7 +692,7 @@ export function stepBullets(dt, frame) {
               maxR: 28,
               life: 0.16,
               maxLife: 0.16,
-              color: b.isVanguard ? '#5be7ff' : '#a8f5e5'
+              color: b.isColossus ? '#00f3ff' : (b.isVanguard ? '#5be7ff' : '#a8f5e5')
             });
             var backAngle = Math.atan2(b.vy, b.vx) + Math.PI;
             for (var pji = 0; pji < 5; pji += 1) {
@@ -671,6 +725,7 @@ export function stepBullets(dt, frame) {
         p.consecutiveHits = 0;
       }
       if (b.vanguardBurst) burstVanguard(b);
+      if (b.colossusGraviton) triggerColossusGraviton(b);
       fastUnorderedRemove(rt.state.bullets, bi);
     }
   }

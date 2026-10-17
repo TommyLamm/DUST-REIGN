@@ -230,7 +230,7 @@ function drawBullet(ctx, bullet, view, time) {
   if (!bullet) return;
   var core = bullet.colorCore || '#5be7ff';
   var trail = bullet.colorTrail || 'rgba(91, 231, 255, 0.45)';
-  var headR = (bullet.r || 4) * (bullet.isVanguard ? 4.4 : 2.7);
+  var headR = (bullet.r || 4) * (bullet.isColossus ? 5.2 : (bullet.isVanguard ? 4.4 : 2.7));
   if (bullet.isArcWelder) {
     var x1;
     var y1;
@@ -245,6 +245,13 @@ function drawBullet(ctx, bullet, view, time) {
     }
     var depth = view.reduced ? 1 : (view.depth > 2 ? 2 : view.depth);
     drawBolt(ctx, x1, y1, bullet.x, bullet.y, 0.95, depth, core, view.key);
+  } else if (bullet.isColossus) {
+    traceBeam(ctx, bullet, (bullet.r || 8) * 2.6, trail, 0.70, 0, time, 0);
+    traceBeam(ctx, bullet, (bullet.r || 8) * 0.9, core, 1.0, 0, time, 0);
+    if (!view.key) {
+      traceBeam(ctx, bullet, 2.0, '#e0fcff', 0.9, 3.8, time, 0);
+      traceBeam(ctx, bullet, 2.0, '#e0fcff', 0.65, 3.8, time, Math.PI);
+    }
   } else if (bullet.isVanguard) {
     traceBeam(ctx, bullet, (bullet.r || 6) * 2.4, trail, 0.55, 0, time, 0);
     traceBeam(ctx, bullet, (bullet.r || 6) * 0.7, core, 0.95, 0, time, 0);
@@ -265,7 +272,7 @@ function drawBullet(ctx, bullet, view, time) {
   ctx.beginPath();
   ctx.arc(bullet.x, bullet.y, Math.max(1.2, (bullet.r || 4) * 0.35), 0, TAU);
   ctx.fill();
-  drawGlow(ctx, bullet.x, bullet.y, headR, core, bullet.isVanguard ? 0.95 : 0.82);
+  drawGlow(ctx, bullet.x, bullet.y, headR, core, (bullet.isColossus || bullet.isVanguard) ? 0.95 : 0.82);
   if (!view.key && bullet.trail && bullet.trail.length) {
     var tail = bullet.trail[0];
     drawGlow(ctx, tail.x, tail.y, (bullet.r || 4) * 1.4, core, 0.28);

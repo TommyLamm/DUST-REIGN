@@ -5,7 +5,7 @@ import { AudioFX } from '../audio/audio-fx.js';
 import { triggerHaptic } from '../core/settings.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { onEnemyEmp } from './sim/enemy-defense.js';
-import { launchMicroMissiles } from './card-effects.js';
+import { dispatchCardHook, launchMicroMissiles } from './card-effects.js';
 import { spawnParticles } from '../core/pools.js';
 
 function pushBullet(b) {
@@ -99,6 +99,37 @@ export var TACTICAL_ITEMS = {
       spawnParticles(gx, gy, '#bd5bff', 24, 200, 3.5);
       return true;
     }
+  },
+  'aegis-barrier': {
+    id: 'aegis-barrier',
+    name: '硬光防禦屏障',
+    enName: 'AEGIS BARRIER',
+    cooldown: 15,
+    icon: '⛊',
+    desc: '部署 240 HP 正面 130° 硬光屏障 (持續 5s)，吸收敵彈並折射增幅友軍子彈 (+30% 傷害/+200 速度/+1 穿透)',
+    onDeploy: function (p, mouse, boundW, boundH) {
+      var dist = Math.hypot(mouse.x - p.x, mouse.y - p.y);
+      var facing = (dist > 8) ? Math.atan2(mouse.y - p.y, mouse.x - p.x) : (p.aim || 0);
+      var deployDist = Math.min(Math.max(48, dist), 130);
+      var bx = clamp(p.x + Math.cos(facing) * deployDist, 35, boundW - 35);
+      var by = clamp(p.y + Math.sin(facing) * deployDist, 35, boundH - 35);
+      rt.state.tacticalEntities.push({
+        kind: 'aegis-barrier',
+        x: bx,
+        y: by,
+        hp: 240,
+        maxHp: 240,
+        life: 5.0,
+        maxLife: 5.0,
+        r: 44,
+        angle: facing,
+        arc: 130 * (Math.PI / 180)
+      });
+      if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+      spawnParticles(bx, by, '#00f3ff', 20, 160, 3);
+      spawnParticles(bx, by, '#ffffff', 10, 100, 2);
+      return true;
+    }
   }
 };
 
@@ -177,6 +208,7 @@ export function triggerTacticalAuxiliary() {
   if (executed) {
     tac.cooldown = tac.maxCooldown;
     triggerHaptic([35, 20, 45]);
+    dispatchCardHook('onTacticalUsed', p, gear || tac);
     if (rt.state.shockRings) {
       rt.state.shockRings.push({
         x: p.x,
@@ -237,6 +269,38 @@ export function stepTactical(dt, frame) {
       } else if (ent.kind === 'holo-mirage') {
         launchMicroMissiles(p, { x: ent.x, y: ent.y });
         spawnParticles(ent.x, ent.y, '#ffd700', 16, 160, 3);
+      } else if (ent.kind === 'aegis-barrier') {
+        if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
+        rt.state.shake = Math.max(rt.state.shake || 0, 8);
+        spawnParticles(ent.x, ent.y, '#00f3ff', 24, 180, 3.5);
+        spawnParticles(ent.x, ent.y, '#ffffff', 12, 120, 2);
+        if (rt.state.shockRings) {
+          rt.state.shockRings.push({
+            x: ent.x,
+            y: ent.y,
+            r: 10,
+            maxR: 90,
+            life: 0.25,
+            maxLife: 0.25,
+            color: '#00f3ff'
+          });
+        }
+        for (var aei = enemies.length - 1; aei >= 0; aei -= 1) {
+          var aTarget = enemies[aei];
+          if (!aTarget || aTarget.hp <= 0) continue;
+          var aeDist2 = dist2(ent.x, ent.y, aTarget.x, aTarget.y);
+          if (aeDist2 <= (90 + (aTarget.r || 0)) * (90 + (aTarget.r || 0))) {
+            damageEnemy(aTarget, 50, { source: 'aegis_barrier', x: ent.x, y: ent.y });
+            aTarget.empTimer = Math.max(aTarget.empTimer || 0, 0.8);
+            onEnemyEmp(aTarget);
+            if (!aTarget.knockbackImmune) {
+              var aKbDist = Math.sqrt(aeDist2) || 1;
+              aTarget.x += ((aTarget.x - ent.x) / aKbDist) * 35;
+              aTarget.y += ((aTarget.y - ent.y) / aKbDist) * 35;
+            }
+            if (aTarget.hp <= 0) killEnemy(aTarget, 'aegis_barrier');
+          }
+        }
       }
       entities.splice(i, 1);
       continue;
@@ -409,6 +473,53 @@ export function stepTactical(dt, frame) {
         });
         if (AudioFX && typeof AudioFX.shoot === 'function') AudioFX.shoot();
       }
+    } else if (ent.kind === 'aegis-barrier') {
+      var halfArc = (ent.arc || (130 * Math.PI / 180)) * 0.5;
+      // 1. 攔截並吸收敵方常規子彈 (正面 130° 弧面)
+      for (var bi = enemyBullets.length - 1; bi >= 0; bi -= 1) {
+        var aeb = enemyBullets[bi];
+        var aebDist2 = dist2(ent.x, ent.y, aeb.x, aeb.y);
+        var aReach = ent.r + (aeb.r || 4);
+        if (aebDist2 <= aReach * aReach) {
+          var aebAng = Math.atan2(aeb.y - ent.y, aeb.x - ent.x);
+          var aebDiff = Math.abs(Math.atan2(Math.sin(aebAng - ent.angle), Math.cos(aebAng - ent.angle)));
+          if (aebDiff <= halfArc + 0.25) {
+            ent.hp -= (aeb.damage || 14);
+            spawnParticles(aeb.x, aeb.y, '#00f3ff', 5, 90, 2);
+            spawnParticles(aeb.x, aeb.y, '#ffffff', 3, 60, 1.5);
+            enemyBullets.splice(bi, 1);
+            if (AudioFX && typeof AudioFX.hit === 'function') AudioFX.hit();
+            if (ent.hp <= 0) break;
+          }
+        }
+      }
+
+      // 2. 穿過屏障的友軍子彈獲得折射增幅：傷害 +30%、速度 +200 px/s、穿透 +1、青藍能量光暈
+      var pBullets = rt.state.bullets || [];
+      for (var pbi = 0; pbi < pBullets.length; pbi += 1) {
+        var apb = pBullets[pbi];
+        if (!apb || apb.aegisRefracted) continue;
+        var apbDist2 = dist2(ent.x, ent.y, apb.x, apb.y);
+        var apReach = ent.r + 16;
+        if (apbDist2 <= apReach * apReach) {
+          var apbAng = Math.atan2(apb.y - ent.y, apb.x - ent.x);
+          var apbDiff = Math.abs(Math.atan2(Math.sin(apbAng - ent.angle), Math.cos(apbAng - ent.angle)));
+          if (apbDiff <= halfArc + 0.35) {
+            apb.aegisRefracted = true;
+            apb.damage = Math.round(apb.damage * 1.30);
+            var aSpd = Math.hypot(apb.vx, apb.vy);
+            if (aSpd > 0) {
+              var aNewSpd = aSpd + 200;
+              apb.vx = (apb.vx / aSpd) * aNewSpd;
+              apb.vy = (apb.vy / aSpd) * aNewSpd;
+            }
+            apb.pierce = (apb.pierce || 0) + 1;
+            apb.colorCore = '#00f3ff';
+            apb.colorTrail = 'rgba(0, 243, 255, 0.65)';
+            spawnParticles(apb.x, apb.y, '#00f3ff', 6, 110, 2);
+          }
+        }
+      }
     }
   }
 
@@ -514,6 +625,60 @@ export function drawTacticalEntities(ctx) {
       ctx.fillStyle = '#5be7ff';
       ctx.fillRect(ent.r * 0.5, -2, 10, 4);
       ctx.restore();
+    } else if (ent.kind === 'aegis-barrier') {
+      var halfArc = (ent.arc || (130 * Math.PI / 180)) * 0.5;
+      var aStart = (ent.angle || 0) - halfArc;
+      var aEnd = (ent.angle || 0) + halfArc;
+      var hpRatio = clamp(ent.hp / (ent.maxHp || 240), 0, 1);
+
+      // Outer glow arc
+      ctx.strokeStyle = 'rgba(0, 243, 255, ' + (0.35 * hpRatio + 0.15) + ')';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(0, 0, ent.r, aStart, aEnd);
+      ctx.stroke();
+
+      // Main hard-light core arc
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, ent.r, aStart, aEnd);
+      ctx.stroke();
+
+      // Inner refraction lattice
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, ent.r - 2, aStart + 0.08, aEnd - 0.08);
+      ctx.stroke();
+
+      // Honeycomb rib lines
+      ctx.strokeStyle = 'rgba(0, 243, 255, 0.55)';
+      ctx.lineWidth = 2;
+      for (var seg = 0; seg <= 4; seg += 1) {
+        var segAng = aStart + (seg / 4) * (aEnd - aStart);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(segAng) * (ent.r - 8), Math.sin(segAng) * (ent.r - 8));
+        ctx.lineTo(Math.cos(segAng) * (ent.r + 4), Math.sin(segAng) * (ent.r + 4));
+        ctx.stroke();
+      }
+
+      // Emitter base at center
+      ctx.fillStyle = '#142c33';
+      ctx.beginPath();
+      ctx.arc(0, 0, 7, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Health bar above
+      if (ent.maxHp && ent.hp < ent.maxHp) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(-14, -ent.r - 12, 28, 3.5);
+        ctx.fillStyle = '#00f3ff';
+        ctx.fillRect(-14, -ent.r - 12, 28 * hpRatio, 3.5);
+      }
     }
 
     ctx.restore();

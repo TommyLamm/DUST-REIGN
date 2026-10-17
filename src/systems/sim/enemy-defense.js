@@ -3,6 +3,7 @@ import { pushFxEvent } from '../../core/fx-events.js';
 import { rt } from '../../core/runtime.js';
 import { addScore } from '../scoring.js';
 import { filterEnemyStrategyDamage } from './enemy-registry.js';
+import { onShieldBreak } from '../card-effects.js';
 
 function angDiff(a, b) {
   return Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -113,6 +114,7 @@ export function filterEnemyDamage(e, amount, info) {
 
   if (e.defenseAuraTimer > 0) left *= (1 - (e.damageMitigation || 0.35));
   if (e.armorBreakTimer > 0) left *= 1.4;
+  if (e.concussionTimer > 0) left *= 1.35;
   if (e.shieldHp > 0) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;
     e.shieldHp -= absorb;
@@ -124,6 +126,7 @@ export function filterEnemyDamage(e, amount, info) {
       }
       pushFxEvent('shieldBreak', e.x, e.y, { kind: e.kind, color: '#5be7ff' });
       if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
+      onShieldBreak(e, { x: e.x, y: e.y, source: 'shield_break' });
     }
   }
 

@@ -18,13 +18,15 @@ var WEAPONS = [
   { id: 'standard', name: 'STANDARD', rate: '0.18s', pattern: 'DIRECT', line: 'Steady rifle. Stay mobile.' },
   { id: 'breacher', name: 'BREACHER', rate: 'BURST', pattern: '5-PELLET', line: 'Close spread. Commit to the pocket.' },
   { id: 'vanguard', name: 'VANGUARD', rate: 'CHARGE', pattern: 'PIERCE', line: 'Hold to fire a heavy slug.' },
-  { id: 'arc-welder', name: 'ARC WELDER', rate: 'FAST', pattern: 'CHAIN', line: 'Lightning that jumps targets.' }
+  { id: 'arc-welder', name: 'ARC WELDER', rate: 'FAST', pattern: 'CHAIN', line: 'Lightning that jumps targets.' },
+  { id: 'colossus', name: 'COLOSSUS', rate: 'HEAVY', pattern: 'LANCE', line: 'Dual-stage rail lance. Devastating recoil.' }
 ];
 var MODES = ['standard', 'campaign', 'hardcore', 'daily'];
 var TACTICALS = [
   { id: 'sentry-turret', name: 'SENTRY TURRET', zhName: '定點機槍塔', cd: '16s', icon: '⛨', line: '120HP auto-turret with aura' },
   { id: 'thermal-decoy', name: 'THERMAL DECOY', zhName: '熱誘餌干擾彈', cd: '14s', icon: '✦', line: '3 flares distorting enemy fire' },
-  { id: 'singularity-grenade', name: 'SINGULARITY', zhName: '微型奇點手雷', cd: '18s', icon: '◎', line: 'Vortex pulls foes then collapses' }
+  { id: 'singularity-grenade', name: 'SINGULARITY', zhName: '微型奇點手雷', cd: '18s', icon: '◎', line: 'Vortex pulls foes then collapses' },
+  { id: 'aegis-barrier', name: 'AEGIS BARRIER', zhName: '硬光防禦屏障', cd: '15s', icon: '⛊', line: '240HP frontal barrier amplifies friendly fire' }
 ];
 var ROWS = ['rig', 'weapon', 'tactical', 'heat', 'mode'];
 
@@ -191,7 +193,7 @@ function refresh() {
     var wRatePattern = weaponButtons[i].querySelector('small:not(.loadout-line)');
     if (wRatePattern) {
       var rText = weapon.rate;
-      if (zh) rText = rText.replace('BURST', '連發').replace('CHARGE', '充能').replace('FAST', '極速');
+      if (zh) rText = rText.replace('BURST', '連發').replace('CHARGE', '充能').replace('FAST', '極速').replace('HEAVY', '重裝');
       wRatePattern.textContent = rText + ' · ' + (zh ? tWeaponPattern(weapon.id) : weapon.pattern);
     }
     var wLine = weaponButtons[i].querySelector('.loadout-line');
