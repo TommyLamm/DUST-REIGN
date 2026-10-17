@@ -12,6 +12,8 @@ import { stepOrbs } from './sim/orbs.js';
 import { stepPlayer } from './sim/player.js';
 import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
 import { stepTactical } from './tactical.js';
+import { stepCampaignMode } from './modes/campaign.js';
+import { stepHardcoreMode } from './modes/hardcore.js';
 import { updateDomUi } from '../ui/hud.js';
 
 var cachedFrame = { p: null, boundW: 960, boundH: 640 };
@@ -58,6 +60,8 @@ export function update(dt) {
   var frame = cachedFrame;
 
   stepWaveClock(dt, frame);
+  if (rt.state.mode === 'campaign') stepCampaignMode(dt, frame);
+  else if (rt.state.mode === 'hardcore') stepHardcoreMode(dt, frame);
   stepMutators(frame);
   stepHazards(dt, frame);
   stepPlayer(dt, frame);

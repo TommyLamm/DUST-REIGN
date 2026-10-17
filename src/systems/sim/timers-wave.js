@@ -203,6 +203,41 @@ export function stepWaveClock(dt, frame) {
     rt.state.heartbeatTimer = 0;
   }
 
+  // 4-Phase Wave Flow Pacing Cycle
+  var wTime = rt.state.waveTime;
+  if (wTime < 6) {
+    rt.state.pacingPhase = 1; // Infiltration
+  } else if (wTime < 20) {
+    rt.state.pacingPhase = 2; // Tactical Pincer
+    if (wTime >= 12 && wTime < 15.5) {
+      if (!rt.state.wolfPackSurge) {
+        rt.state.wolfPackSurge = true;
+        AudioFX.stormSiren();
+        rt.state.banner = 2.5;
+        rt.state.bannerText = 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION';
+        logEvent('WOLF PACK SURGE // CENTRIPETAL COMPRESSION');
+      }
+    } else {
+      rt.state.wolfPackSurge = false;
+    }
+  } else if (wTime < 25) {
+    rt.state.pacingPhase = 3; // Elite Peak
+    if (wTime >= 24 && wTime < 27.5) {
+      if (!rt.state.wolfPackSurge) {
+        rt.state.wolfPackSurge = true;
+        AudioFX.stormSiren();
+        rt.state.banner = 2.5;
+        rt.state.bannerText = 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION';
+        logEvent('WOLF PACK SURGE // CENTRIPETAL COMPRESSION');
+      }
+    } else {
+      rt.state.wolfPackSurge = false;
+    }
+  } else {
+    rt.state.pacingPhase = 4; // Storm Harvest
+    rt.state.wolfPackSurge = false;
+  }
+
   if (frontActive() && !rt.state.stormAlerted && !rt.state.over) {
     rt.state.stormAlerted = true;
     AudioFX.stormSiren();
@@ -252,6 +287,13 @@ export function stepEnemySpawner(dt, frame) {
   rt.state.spawnTimer -= dt;
   var recipe = rt.state.recipe;
   var enemyCap = recipe && typeof recipe.cap === 'number' ? recipe.cap : Math.min(95, 5 + rt.state.wave * 4);
+
+  // Silent refund: immediately replenish recycled tokens in front of player
+  while ((rt.state.recycledTokens || 0) > 0 && rt.state.enemies.length < enemyCap) {
+    rt.state.recycledTokens -= 1;
+    spawning.spawnEnemy();
+  }
+
   if (rt.state.spawnTimer <= 0 && rt.state.enemies.length < enemyCap) {
     spawning.spawnEnemy();
     var baseInterval = recipe && typeof recipe.spawnInterval === 'number' ? recipe.spawnInterval : Math.max(0.24, 1.08 - rt.state.wave * 0.045);

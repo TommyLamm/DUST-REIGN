@@ -12,6 +12,7 @@ import { damagePlayer } from '../combat.js';
 import { logEvent } from '../../ui/hud.js';
 import { refreshSovereignShield } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
+import { blastAt } from './new-enemies.js';
 
 function dmgScale() {
   var recipe = rt.state && rt.state.recipe;
@@ -180,6 +181,31 @@ function startTelegraph(e, p, seconds) {
   e.telegraphMax = seconds;
 }
 
+export function spawnMonolithCrags(e, frame) {
+  if (!rt.state) return;
+  if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
+  var count = 5;
+  var box = boxOf(frame);
+  var cx = e.x;
+  var cy = e.y;
+  var cragR = 45;
+  for (var i = 0; i < count; i += 1) {
+    var a = (i / count) * TAU + (rng('combat') - 0.5) * 0.4;
+    var dist = 380 + rng('combat') * 160;
+    var px = clamp(cx + Math.cos(a) * dist, cragR + 25, box.w - cragR - 25);
+    var py = clamp(cy + Math.sin(a) * dist, cragR + 25, box.h - cragR - 25);
+    rt.state.monolithCrags.push({
+      id: 'crag_' + i + '_' + Math.floor(rt.state.waveTime || 0),
+      x: px,
+      y: py,
+      r: cragR,
+      hp: 1,
+      active: true
+    });
+    spawnParticles(px, py, '#c4a574', 12, 140, 2.5);
+  }
+}
+
 function beginCharge(e) {
   e.mode = 'charge';
   e.chargeCarry = 0;
@@ -199,10 +225,11 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 1.2;
-  e.empTimer = Math.max(e.empTimer || 0, 1.2);
+  e.stunT = 3.2; // 3.2s forced armor-break stun
+  e.empTimer = Math.max(e.empTimer || 0, 3.2);
+  e.armorBreakTimer = 3.2;
   fireRing(e);
-  rt.state.shake = Math.max(rt.state.shake, 10);
+  rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();
 }
 
@@ -212,6 +239,11 @@ function stepDreadnought(e, dt, frame, empFrozen) {
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.bossSubtitle = e.bossPhase >= 3 ? 'OVERDRIVE' : e.bossPhase === 2 ? 'DOUBLE RAM' : 'CHARGE';
+
+  if (!rt.state.monolithCrags || rt.state.monolithCrags.length === 0) {
+    spawnMonolithCrags(e, frame);
+  }
+
   if (!e.mode) {
     e.mode = 'idle';
     e.attackCd = 2.2;
@@ -228,6 +260,37 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       e.chargeCarry = 0;
       dropLava(e);
     }
+
+    // Check collision with orbital monolith crag pillars
+    var crags = rt.state.monolithCrags;
+    if (crags && crags.length > 0) {
+      for (var ci = crags.length - 1; ci >= 0; ci -= 1) {
+        var crag = crags[ci];
+        if (!crag || !crag.active) continue;
+        var cdx = crag.x - e.x;
+        var cdy = crag.y - e.y;
+        var hitReach = e.r + (crag.r || 45);
+        if (cdx * cdx + cdy * cdy <= hitReach * hitReach) {
+          crag.active = false;
+          crags.splice(ci, 1);
+          blastAt(crag.x, crag.y, 90, 0, 60, '#c4a574');
+          spawnParticles(crag.x, crag.y, '#e6d2a8', 25, 220, 4);
+          AudioFX.blast();
+          rt.state.shake = Math.max(rt.state.shake, 14);
+          triggerHaptic([60, 50, 100]);
+          logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
+          rt.state.banner = 2.5;
+          rt.state.bannerText = 'CRAG SHATTERED // DREADNOUGHT STUNNED (3.2s)';
+          e.mode = 'stun';
+          e.stunT = 3.2; // 3.2s forced armor-break stun
+          e.empTimer = Math.max(e.empTimer || 0, 3.2);
+          e.armorBreakTimer = 3.2;
+          fireRing(e);
+          return { handled: true, vx: 0, vy: 0 };
+        }
+      }
+    }
+
     var m = e.r + 2;
     var hitWall = e.x <= m || e.y <= m || e.x >= box.w - m || e.y >= box.h - m;
     e.x = clamp(e.x, m, box.w - m);
@@ -252,6 +315,9 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       e.mode = 'idle';
       e.attackCd = 4;
       e.fanCd = 1.2;
+      if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
+        spawnMonolithCrags(e, frame);
+      }
     }
     return { dx: 0, dy: 1, d: 1, speed: 0 };
   }
@@ -410,24 +476,32 @@ function stepSovereign(e, dt, frame, empFrozen) {
     e.shielded = false;
   }
 
-  if (phase >= 3 && e.eyeWarn == null) e.eyeWarn = 2;
-  if (phase >= 3) {
-    e.eyeX = box.w * 0.5;
-    e.eyeY = box.h * 0.5;
-  }
-  if (e.eyeWarn != null && e.eyeWarn > 0) {
-    e.eyeWarn -= dt;
-    e.eyeRadius = Math.hypot(box.w, box.h) * 0.5;
-  }
-  if (phase >= 3 && e.eyeWarn <= 0) {
-    var finalR = Math.min(box.w, box.h) * 0.6;
-    var startR = Math.hypot(box.w, box.h) * 0.5;
-    e.eyeShrink = (e.eyeShrink || 0) + dt;
-    var u = e.eyeShrink / 6;
-    if (u > 1) u = 1;
-    e.eyeRadius = startR + (finalR - startR) * u;
-    e.eyeX = box.w * 0.5;
-    e.eyeY = box.h * 0.5;
+  // Mobile Eye of the Storm (follows Sovereign body in real-time)
+  e.eyeX = e.x;
+  e.eyeY = e.y;
+  e.eyeRadius = 550; // diameter 1100px
+  if (!rt.state.stormEye) rt.state.stormEye = { x: e.x, y: e.y, r: 550, active: true };
+  rt.state.stormEye.x = e.x;
+  rt.state.stormEye.y = e.y;
+  rt.state.stormEye.r = e.eyeRadius;
+  rt.state.stormEye.active = true;
+
+  // Sovereign slow patrol drift across big-world (24~40px/s)
+  var driftAngle = e.windAngle != null ? e.windAngle : ((rt.state.waveTime || 0) * 0.25);
+  e.x = clamp(e.x + Math.cos(driftAngle) * 28 * dt, e.r + 30, box.w - e.r - 30);
+  e.y = clamp(e.y + Math.sin(driftAngle) * 28 * dt, e.r + 30, box.h - e.r - 30);
+
+  // Phase 2: Orbiting storm towers
+  if (phase >= 2 && e.towerRefs) {
+    var tOrbit = (rt.state.waveTime || 0) * 0.45;
+    if (e.towerRefs[0] && e.towerRefs[0].hp > 0) {
+      e.towerRefs[0].x = e.x + Math.cos(tOrbit) * 220;
+      e.towerRefs[0].y = e.y + Math.sin(tOrbit) * 220;
+    }
+    if (e.towerRefs[1] && e.towerRefs[1].hp > 0) {
+      e.towerRefs[1].x = e.x + Math.cos(tOrbit + Math.PI) * 220;
+      e.towerRefs[1].y = e.y + Math.sin(tOrbit + Math.PI) * 220;
+    }
   }
 
   e.windCd -= dt;
@@ -487,6 +561,52 @@ function stepSovereign(e, dt, frame, empFrozen) {
   return { dx: mx, dy: my, d: md, speed: speed };
 }
 
+export function stepTitanHarpoon(e, dt, frame) {
+  var p = frame.p;
+  if (!p || p.hp <= 0) return;
+  var dx = p.x - e.x;
+  var dy = p.y - e.y;
+  var dist = Math.hypot(dx, dy) || 1;
+
+  if (e.harpoonTimer == null) e.harpoonTimer = 4.0;
+  if (e.harpoonTelegraph == null) e.harpoonTelegraph = 0;
+
+  if (e.harpoonTelegraph > 0) {
+    e.harpoonTelegraph -= dt;
+    if (e.harpoonTelegraph <= 0) {
+      var pullDist = 350;
+      var pullAng = Math.atan2(e.y - p.y, e.x - p.x);
+      var boundW = frame.boundW || 960;
+      var boundH = frame.boundH || 640;
+      p.x = clamp(p.x + Math.cos(pullAng) * pullDist, p.r, boundW - p.r);
+      p.y = clamp(p.y + Math.sin(pullAng) * pullDist, p.r, boundH - p.r);
+      p.slowTimer = Math.max(p.slowTimer || 0, 1.2);
+      rt.state.shake = Math.max(rt.state.shake, 12);
+      AudioFX.blast();
+      triggerHaptic([60, 40, 80]);
+      spawnParticles(p.x, p.y, '#ff5533', 18, 180, 3.5);
+      pushFxEvent('burst', p.x, p.y, { preset: 'emp', tint: '#ff5533', scale: 0.65 });
+      logEvent('TITAN // HARPOON TETHER REELED');
+      rt.state.banner = 2.0;
+      rt.state.bannerText = 'TITAN HARPOON // TETHERED & SLOWED';
+      e.harpoonFiredTimer = 0.5;
+    }
+  } else if (dist > 750) {
+    e.harpoonTimer -= dt;
+    if (e.harpoonTimer <= 0) {
+      e.harpoonTimer = 9.0;
+      e.harpoonTelegraph = 0.75;
+      AudioFX.mortarLaunch();
+      logEvent('WARNING // SEISMIC HARPOON LOCK');
+      rt.state.banner = 1.5;
+      rt.state.bannerText = 'WARNING // TITAN HARPOON LOCK';
+    }
+  } else {
+    e.harpoonTimer = Math.max(e.harpoonTimer - dt * 0.5, 2.0);
+  }
+  if (e.harpoonFiredTimer > 0) e.harpoonFiredTimer -= dt;
+}
+
 export function getPartWorldPosition(boss, part, player) {
   var p = player || (rt.state && rt.state.player);
   var angle = (boss.angle != null) ? boss.angle : (p ? Math.atan2(p.y - boss.y, p.x - boss.x) : Math.PI / 2);
@@ -525,19 +645,27 @@ export function stepBossArena(dt, frame) {
     }
   }
   var p = frame.p;
-  if (boss && p && boss.eyeRadius > 0 && boss.eyeWarn <= 0) {
-    boss.eyeTick = (boss.eyeTick || 0) + dt;
+  if (boss && p && boss.eyeRadius > 0) {
     var outside = Math.hypot(p.x - boss.eyeX, p.y - boss.eyeY) > boss.eyeRadius + p.r;
-    if (outside && boss.eyeTick >= 0.5) {
-      boss.eyeTick -= 0.5;
-      var eyeHit = 0;
-      if (p.invulnerable <= 0) {
-        eyeHit = damagePlayer(scaledShot(8, 0, true).damage, 'zone');
+    if (outside) {
+      var outAng = Math.atan2(p.y - boss.eyeY, p.x - boss.eyeX);
+      p.x = clamp(p.x + Math.cos(outAng) * 65 * dt, p.r, (frame.boundW || 960) - p.r);
+      p.y = clamp(p.y + Math.sin(outAng) * 65 * dt, p.r, (frame.boundH || 640) - p.r);
+
+      boss.eyeTick = (boss.eyeTick || 0) + dt;
+      if (boss.eyeTick >= 0.5) {
+        boss.eyeTick -= 0.5;
+        var eyeHit = 0;
+        if (p.invulnerable <= 0) {
+          eyeHit = damagePlayer(scaledShot(8, 0, true).damage, 'zone');
+        }
+        if (eyeHit > 0) {
+          p.invulnerable = 0.12;
+          rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.25);
+        }
       }
-      if (eyeHit > 0) {
-        p.invulnerable = 0.12;
-        rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.25);
-      }
+    } else {
+      boss.eyeTick = 0;
     }
   }
   var strikes = rt.state.lightningStrikes;

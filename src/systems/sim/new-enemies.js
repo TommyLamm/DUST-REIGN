@@ -449,17 +449,18 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
   }
 
   if (e.kind === 'spitter') {
-    var speed = e.speed;
+    var baseSpd = e.speed * 1.20;
+    var speed = baseSpd;
     var aimX = dx;
     var aimY = dy;
-    if (dist > 300) {
-      speed = e.speed;
-    } else if (dist < 220) {
-      speed = e.speed * 0.8;
+    if (dist > 320) {
+      speed = baseSpd;
+    } else if (dist < 240) {
+      speed = baseSpd * 0.85;
       aimX = -dx;
       aimY = -dy;
     } else {
-      speed = e.speed * 0.35;
+      speed = baseSpd * 0.35;
       aimX = -dy;
       aimY = dx;
     }
@@ -476,7 +477,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
   }
 
   if (e.kind === 'scurrier') {
-    var scurSpeed = e.speed;
+    var scurSpeed = e.speed * 1.20;
     if (empFrozen) scurSpeed *= 0.3;
     if (!e.arming && dist <= 70 && !empFrozen) {
       e.arming = true;
@@ -529,7 +530,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
     var wx = tx - e.x;
     var wy = ty - e.y;
     var wd = Math.hypot(wx, wy) || 1;
-    var wSpeed = wd < 12 ? 0 : e.speed;
+    var wSpeed = wd < 12 ? 0 : e.speed * 1.20;
     if (empFrozen) wSpeed *= 0.3;
     if (!empFrozen) {
       e.shieldCd = (e.shieldCd != null ? e.shieldCd : 2) - dt;
@@ -590,7 +591,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.warnX = p.x;
         e.warnY = p.y;
       }
-      var burrowSpeed = empFrozen ? 0 : 140;
+      var burrowSpeed = empFrozen ? 0 : 185;
       return setStepScratch(dx, dy, dist, burrowSpeed);
     }
     if (e.state === 'warn') {
@@ -606,7 +607,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         emergeBurrower(e, frame, true);
         return setStepScratch(dx, dy, dist, 0);
       }
-      return setStepScratch(mx, my, md, empFrozen ? 0 : 140);
+      return setStepScratch(mx, my, md, empFrozen ? 0 : 185);
     }
     e.burrowed = false;
     e.untargetable = false;
@@ -618,7 +619,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
       e.burrowT = 2.5;
       return setStepScratch(dx, dy, dist, 0);
     }
-    var surfaceSpeed = e.speed;
+    var surfaceSpeed = (e.speed || 40) * 1.20;
     if (empFrozen) surfaceSpeed *= 0.3;
     return setStepScratch(dx, dy, dist, surfaceSpeed);
   }
