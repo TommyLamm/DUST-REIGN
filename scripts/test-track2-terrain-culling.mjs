@@ -51,10 +51,10 @@ if (state.width !== 3520 || state.height !== 2640) {
 if (state.player.x !== 1760 || state.player.y !== 1320) {
   throw new Error(`Player not centered at (1760, 1320), got (${state.player.x}, ${state.player.y})`);
 }
-if (!state.pois || state.pois.length !== 7) {
-  throw new Error(`Expected 7 tactical POIs in default state, found ${state.pois ? state.pois.length : 0}`);
+if (!state.pois || (state.pois.length !== 7 && state.pois.length !== 9)) {
+  throw new Error(`Expected 7 or 9 tactical POIs in default state, found ${state.pois ? state.pois.length : 0}`);
 }
-console.log(' -> State dimensions, player centering and 7 POI instances verified.\n');
+console.log(` -> State dimensions, player centering and ${state.pois.length} POI instances verified.\n`);
 
 // 4. Verify World-Space Frustum Culling Pipeline
 console.log('[4/5] Verifying World Frustum AABB Culling Pipeline (48px regular, 220px boss)...');
@@ -87,13 +87,13 @@ if (visibleIndices.includes(2) || visibleIndices.includes(3) || visibleIndices.i
 }
 console.log(` -> Frustum culling verified: 3 visible, 3 culled (75%+ culled offscreen ratio).\n`);
 
-// 5. Verify 6 Tactical POIs Mechanics & Lifecycle
-console.log('[5/5] Verifying 6 Tactical POIs Lifecycle & Interaction Mechanics...');
+// 5. Verify Tactical POIs Mechanics & Lifecycle
+console.log('[5/5] Verifying Tactical POIs Lifecycle & Interaction Mechanics...');
 var pois = state.pois;
 var poiMap = {};
 for (var p of pois) poiMap[p.id] = p;
 
-var requiredKinds = ['scrap_silo', 'orbital_pod', 'field_rig', 'xeno_nest', 'emp_spire', 'bunker_cache'];
+var requiredKinds = ['scrap_silo', 'orbital_pod', 'field_rig', 'xeno_nest', 'emp_spire', 'bunker_cache', 'crystal_resonance_pylon', 'crystal_siphon'];
 for (var k of requiredKinds) {
   var found = pois.find(p => p.kind === k);
   if (!found) throw new Error(`Missing tactical POI kind: ${k}`);
@@ -129,7 +129,28 @@ if (spire.status !== 'completed' || spire.capacitors !== 0) {
   throw new Error(`EMP Spire did not overload upon destroying capacitors`);
 }
 
-console.log(' -> 6 Tactical POIs lifecycle and interaction mechanics verified.\n');
+// Test Crystal Resonance Pylon charge and overload
+var pylon = poiMap['pylon_ne'];
+state.player.x = pylon.x;
+state.player.y = pylon.y;
+stepPois(2.3, dummyFrame);
+if (pylon.status !== 'completed') {
+  throw new Error(`Crystal Resonance Pylon did not complete 2.2s charge`);
+}
+if ((state.player.overdrive || 0) < 5.0) {
+  throw new Error(`Crystal Resonance Pylon did not grant player overdrive`);
+}
+
+// Test Crystal Siphon heat load and meltdown
+var siphon = poiMap['siphon_sw'];
+state.player.x = siphon.x;
+state.player.y = siphon.y;
+stepPois(10.5, dummyFrame);
+if (siphon.status !== 'completed' || siphon.heatLoad < 1.0) {
+  throw new Error(`Crystal Siphon did not reach 100% heat load meltdown`);
+}
+
+console.log(' -> Tactical POIs lifecycle and interaction mechanics verified.\n');
 
 console.log('================================================================');
 console.log('  ALL TRACK 2 TESTS COMPLETED SUCCESSFULLY (100% PASS)         ');

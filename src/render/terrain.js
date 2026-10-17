@@ -25,7 +25,7 @@ function rng(seed) {
 }
 
 function sectorSeed(sector, w, h) {
-  var extra = sector === 'rust' ? 101 : sector === 'night' ? 307 : 17;
+  var extra = sector === 'rust' ? 101 : sector === 'night' ? 307 : sector === 'crystal' ? 521 : 17;
   return (7919 + (w | 0) * 13 + (h | 0) * 17 + extra) >>> 0;
 }
 
@@ -316,6 +316,175 @@ export function paintPlates(ctx, w, h, colors, detail) {
   ctx.restore();
 }
 
+export function paintCrystalLattice(ctx, w, h, colors, detail) {
+  var step = 64;
+  var count = Math.ceil((w + h) / step);
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = colors.light;
+  ctx.globalAlpha = 0.22;
+
+  // Diagonal positive slope: /
+  ctx.beginPath();
+  for (var i = -count; i <= count; i += 1) {
+    var offset = i * step;
+    ctx.moveTo(offset, 0);
+    ctx.lineTo(offset + h, h);
+  }
+  ctx.stroke();
+
+  // Diagonal negative slope: \
+  ctx.beginPath();
+  for (var j = 0; j <= count * 2; j += 1) {
+    var offset2 = j * step;
+    ctx.moveTo(offset2, 0);
+    ctx.lineTo(offset2 - h, h);
+  }
+  ctx.stroke();
+
+  // Subtle prism highlight lines on alternate major axes
+  if (detail) {
+    ctx.strokeStyle = colors.hi;
+    ctx.globalAlpha = 0.12;
+    ctx.beginPath();
+    for (var k = -count; k <= count; k += 4) {
+      var o1 = k * step;
+      ctx.moveTo(o1, 0);
+      ctx.lineTo(o1 + h, h);
+    }
+    for (var m = 0; m <= count * 2; m += 4) {
+      var o2 = m * step;
+      ctx.moveTo(o2, 0);
+      ctx.lineTo(o2 - h, h);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+export function paintCrystalCracks(ctx, w, h, colors, detail, sector) {
+  var count = detail ? 36 : 18;
+  var rand = rng(sectorSeed(sector || 'crystal', w, h));
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  var CLEAVAGE_ANGLES = [
+    0,
+    Math.PI / 3,       // 60 deg
+    2 * Math.PI / 3,   // 120 deg
+    Math.PI,           // 180 deg
+    4 * Math.PI / 3,   // 240 deg
+    5 * Math.PI / 3    // 300 deg
+  ];
+
+  for (var i = 0; i < count; i += 1) {
+    var cx = rand() * w;
+    var cy = rand() * h;
+    var arms = 2 + (rand() * 3 | 0);
+    var baseAngIdx = (rand() * 6) | 0;
+
+    for (var a = 0; a < arms; a += 1) {
+      var angIdx = (baseAngIdx + a * ((rand() > 0.5) ? 1 : 2)) % 6;
+      var ang = CLEAVAGE_ANGLES[angIdx];
+      var len = 30 + rand() * 65;
+      var ex = cx + Math.cos(ang) * len;
+      var ey = cy + Math.sin(ang) * len;
+
+      // Dark cleavage seam
+      ctx.strokeStyle = colors.crack;
+      ctx.globalAlpha = 0.95;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(ex, ey);
+      if (detail && rand() > 0.4) {
+        var turn = rand() > 0.5 ? 1 : 5;
+        var ang2 = CLEAVAGE_ANGLES[(angIdx + turn) % 6];
+        var len2 = 20 + rand() * 35;
+        ctx.lineTo(ex + Math.cos(ang2) * len2, ey + Math.sin(ang2) * len2);
+      }
+      ctx.stroke();
+
+      // Neon refraction highlight line along cleavage edge
+      ctx.strokeStyle = (a % 2 === 0) ? colors.hi : (colors.prism || colors.hi);
+      ctx.globalAlpha = 0.32;
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      var nx = -Math.sin(ang) * 1.5;
+      var ny = Math.cos(ang) * 1.5;
+      ctx.moveTo(cx + nx, cy + ny);
+      ctx.lineTo(ex + nx, ey + ny);
+      ctx.stroke();
+    }
+
+    // Microcrystalline node at cleavage vertex
+    var nodeR = 2.5 + rand() * 3.5;
+    ctx.fillStyle = (i % 2 === 0) ? colors.hi : (colors.prism || colors.hi);
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    for (var k = 0; k < 4; k += 1) {
+      var nAng = (k / 4) * TAU + Math.PI / 4;
+      var nx2 = cx + Math.cos(nAng) * nodeR;
+      var ny2 = cy + Math.sin(nAng) * (nodeR * 0.7);
+      if (k === 0) ctx.moveTo(nx2, ny2);
+      else ctx.lineTo(nx2, ny2);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+export function paintCrystalGlints(ctx, w, h, colors, detail) {
+  var cells = detail ? 16 : 8;
+  var cellSize = w / cells;
+  ctx.save();
+
+  for (var gy = 0; gy < cells; gy += 1) {
+    for (var gx = 0; gx < cells; gx += 1) {
+      var seed = Math.abs((Math.imul(gx + 1, 48271) ^ Math.imul(gy + 1, 16807)) | 0);
+      if ((seed % 5) >= 2) continue;
+
+      var ox = 16 + (seed % (cellSize - 32));
+      var oy = 16 + ((seed >> 4) % (cellSize - 32));
+      var px = gx * cellSize + ox;
+      var py = gy * cellSize + oy;
+      var armLen = 5 + (seed % 9);
+      var isPrism = (seed % 3 === 0);
+
+      ctx.strokeStyle = isPrism ? (colors.prism || colors.hi) : colors.hi;
+      ctx.lineWidth = 1.2;
+      ctx.globalAlpha = 0.45 + (seed % 40) / 100;
+
+      // 4-point cross star (horizontal and vertical arms)
+      ctx.beginPath();
+      ctx.moveTo(px - armLen, py);
+      ctx.lineTo(px + armLen, py);
+      ctx.moveTo(px, py - armLen);
+      ctx.lineTo(px, py + armLen);
+      ctx.stroke();
+
+      if (detail && armLen > 8) {
+        var diagLen = armLen * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(px - diagLen, py - diagLen);
+        ctx.lineTo(px + diagLen, py + diagLen);
+        ctx.moveTo(px - diagLen, py + diagLen);
+        ctx.lineTo(px + diagLen, py - diagLen);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.2, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 export var BIOME_RENDERERS = {
   dusk: {
     name: 'dusk',
@@ -388,6 +557,32 @@ export var BIOME_RENDERERS = {
       ctx.fillRect(0, 0, w, h);
       paintCracks(ctx, w, h, colors, detail, sector);
       paintProps(ctx, colors, detail);
+      paintGrid(ctx, w, h);
+    }
+  },
+  crystal: {
+    name: 'crystal',
+    render: function (ctx, w, h, colors, detail, sector) {
+      var tile = getNoiseTile();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = colors.base;
+      ctx.fillRect(0, 0, w, h);
+      paintNoise(ctx, tile, w, h, detail ? 420 : 512, 0.08, 'soft-light', 16, 16);
+      if (detail) {
+        paintNoise(ctx, tile, w, h, 180, 0.04, 'soft-light', 32, 48);
+      }
+      paintCrystalLattice(ctx, w, h, colors, detail);
+      paintCrystalCracks(ctx, w, h, colors, detail, sector);
+      paintCrystalGlints(ctx, w, h, colors, detail);
+      paintProps(ctx, colors, detail);
+
+      var shade = ctx.createLinearGradient(0, 0, w, h);
+      shade.addColorStop(0, 'rgba(56,189,248,0.04)');
+      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+      shade.addColorStop(1, 'rgba(192,132,252,0.06)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, w, h);
       paintGrid(ctx, w, h);
     }
   }

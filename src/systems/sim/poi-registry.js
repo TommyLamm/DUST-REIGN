@@ -660,6 +660,387 @@ export var POI_REGISTRY = {
     getLight: function (poi) {
       return null;
     }
+  },
+
+  // 7. Crystal Resonance Pylon
+  crystal_resonance_pylon: {
+    kind: 'crystal_resonance_pylon',
+    step: function (poi, dt, frame, inRange) {
+      var p = (frame && frame.p) || (rt.state ? rt.state.player : null);
+      var enemies = (rt.state && rt.state.enemies) || [];
+      var enemyBullets = (rt.state && rt.state.enemyBullets) || [];
+
+      if (poi.status === 'idle') {
+        if (inRange) {
+          poi.interactTimer += dt;
+          poi.progress = Math.min(1, poi.interactTimer / 2.2);
+          if (poi.interactTimer >= 2.2) {
+            poi.status = 'completed';
+            poi.progress = 1.0;
+
+            // 480px crystalline overload shock rings
+            if (rt.state && rt.state.shockRings) {
+              rt.state.shockRings.push({
+                x: poi.x,
+                y: poi.y,
+                r: 10,
+                maxR: 480,
+                life: 0.65,
+                maxLife: 0.65,
+                color: '#38bdf8'
+              });
+              rt.state.shockRings.push({
+                x: poi.x,
+                y: poi.y,
+                r: 10,
+                maxR: 320,
+                life: 0.5,
+                maxLife: 0.5,
+                color: '#c084fc'
+              });
+            }
+
+            // Heavy damage 400 within 300px, break shield, stun 3.5s
+            for (var ei = 0; ei < enemies.length; ei += 1) {
+              var e = enemies[ei];
+              if (!e || e.hp <= 0) continue;
+              var edx = e.x - poi.x;
+              var edy = e.y - poi.y;
+              var eDist = Math.hypot(edx, edy) || 1;
+              if (eDist <= 300) {
+                if (e.shield) e.shield = 0;
+                if (e.hasShield) e.hasShield = false;
+                e.stun = Math.max(e.stun || 0, 3.5);
+                damageEnemy(e, 400, false, 0, 0, null, true);
+                e.vx = (edx / eDist) * 320;
+                e.vy = (edy / eDist) * 320;
+              }
+            }
+
+            // Vaporize enemy bullets within 400px
+            for (var bi = enemyBullets.length - 1; bi >= 0; bi -= 1) {
+              var eb = enemyBullets[bi];
+              if (!eb) continue;
+              var bdx = eb.x - poi.x;
+              var bdy = eb.y - poi.y;
+              if (bdx * bdx + bdy * bdy <= 400 * 400) {
+                spawnParticles(eb.x, eb.y, '#38bdf8', 4, 80, 2);
+                enemyBullets.splice(bi, 1);
+              }
+            }
+
+            // Player buff: 6s overdrive and +2 pierce
+            if (p) {
+              p.overdrive = Math.max(p.overdrive || 0, 6.0);
+              p.pierce = (p.pierce || 0) + 2;
+              p.crystalPierceBonus = (p.crystalPierceBonus || 0) + 2;
+              p.crystalPierceTimer = 6.0;
+            }
+
+            // 45 scrap burst
+            spawnScrapBurst(poi.x, poi.y, 45);
+
+            // Particles and Audio
+            spawnParticles(poi.x, poi.y, '#38bdf8', 36, 220, 3.5);
+            spawnParticles(poi.x, poi.y, '#c084fc', 28, 180, 3.0);
+            if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+            if (AudioFX && typeof AudioFX.overdriveStart === 'function') AudioFX.overdriveStart();
+            if (rt.state) {
+              rt.state.banner = 2.5;
+              rt.state.bannerText = 'RESONANCE PYLON DISCHARGED: 480px SHOCKWAVE, +2 PIERCE & OVERDRIVE!';
+            }
+          }
+        } else {
+          poi.interactTimer = Math.max(0, poi.interactTimer - dt * 1.5);
+          poi.progress = poi.interactTimer / 2.2;
+        }
+      }
+    },
+    draw: function (ctx, poi, pulse, rTime, reduced) {
+      var px = poi.x;
+      var py = poi.y;
+      var pr = poi.r || 95;
+      var isDone = poi.status === 'completed';
+
+      // Outer Rune Circle
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = isDone ? 'rgba(56, 189, 248, 0.3)' : (reduced ? '#38bdf8' : (Math.sin(rTime * 8) > 0 ? '#38bdf8' : '#c084fc'));
+      ctx.lineWidth = isDone ? 1.8 : 2.5;
+      ctx.setLineDash(isDone ? [4, 4] : [8, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Progress Arc
+      if (poi.progress > 0 && poi.progress < 1) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + TAU * poi.progress);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      // Base Obsidian Platform (Hexagon)
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.beginPath();
+      for (var bi = 0; bi < 6; bi += 1) {
+        var bAng = (bi / 6) * TAU;
+        var bx = Math.cos(bAng) * 26;
+        var by = Math.sin(bAng) * 26;
+        if (bi === 0) ctx.moveTo(bx, by);
+        else ctx.lineTo(bx, by);
+      }
+      ctx.closePath();
+      ctx.fillStyle = isDone ? '#0f172a' : '#0a0d18';
+      ctx.fill();
+      ctx.strokeStyle = isDone ? '#1e293b' : '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Crystalline Spire Facets
+      var spireGlow = isDone ? 0.4 : (0.7 + Math.sin(rTime * 5) * 0.25);
+      ctx.fillStyle = isDone ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, ' + spireGlow.toFixed(2) + ')';
+      ctx.beginPath();
+      ctx.moveTo(-8, 14);
+      ctx.lineTo(0, -22);
+      ctx.lineTo(8, 14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Secondary Prism Shard
+      ctx.fillStyle = isDone ? 'rgba(192, 132, 252, 0.2)' : 'rgba(192, 132, 252, 0.7)';
+      ctx.beginPath();
+      ctx.moveTo(-16, 6);
+      ctx.lineTo(0, -14);
+      ctx.lineTo(16, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Levitating Apex Crystal Prism
+      var bob = Math.sin(rTime * 3) * 3;
+      var apexY = -28 + bob;
+      ctx.beginPath();
+      ctx.arc(0, apexY, 7 * (isDone ? 0.8 : pulse), 0, TAU);
+      ctx.fillStyle = isDone ? '#38bdf8' : '#c084fc';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    },
+    getLight: function (poi) {
+      if (poi.status !== 'completed') {
+        return { radius: 150, color: '#38bdf8', intensity: 0.75 };
+      }
+      return { radius: 80, color: '#c084fc', intensity: 0.3 };
+    }
+  },
+
+  // 8. Crystal Siphon Refinery
+  crystal_siphon: {
+    kind: 'crystal_siphon',
+    step: function (poi, dt, frame, inRange) {
+      var p = (frame && frame.p) || (rt.state ? rt.state.player : null);
+      var enemies = (rt.state && rt.state.enemies) || [];
+
+      if (poi.status !== 'completed') {
+        if (inRange) {
+          poi.status = 'active';
+
+          // 1. Aura buffs: fire rate +35% (accelerated cooldown), move speed +20%
+          if (p) {
+            p.speedBoostTimer = Math.max(p.speedBoostTimer || 0, 0.25);
+            p.speedBoostMult = Math.max(p.speedBoostMult || 1, 1.20);
+            if (p.cooldown > 0) {
+              p.cooldown = Math.max(0, p.cooldown - dt * 0.35);
+            }
+          }
+
+          // 2. Generate 5 scrap per second
+          poi.scrapAccumulator = (poi.scrapAccumulator || 0) + dt * 5.0;
+          while (poi.scrapAccumulator >= 1.0) {
+            poi.scrapAccumulator -= 1.0;
+            if (rt.state && rt.state.orbs) {
+              var ang = rng('spawn') * TAU;
+              var spd = 35 + rng('spawn') * 55;
+              rt.state.orbs.push({
+                x: poi.x + Math.cos(ang) * 14,
+                y: poi.y + Math.sin(ang) * 14,
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                r: 4.5,
+                val: 1,
+                kind: 'scrap'
+              });
+            }
+          }
+
+          // 3. Heat load +10% per second
+          poi.heatLoad = (poi.heatLoad || 0) + dt * 0.10;
+          poi.progress = clamp(poi.heatLoad, 0, 1);
+
+          // 4. Overheating alarm siren every 3s to summon monsters
+          poi.alarmTimer = (poi.alarmTimer || 0) + dt;
+          if (poi.alarmTimer >= 3.0) {
+            poi.alarmTimer = 0;
+            if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+            spawnParticles(poi.x, poi.y, '#ff4028', 16, 130, 2.5);
+            for (var si = 0; si < 2; si += 1) {
+              var spawned = spawnEnemy();
+              if (spawned) {
+                spawned.x = poi.x + (rng('spawn') - 0.5) * 120;
+                spawned.y = poi.y + (rng('spawn') - 0.5) * 120;
+                spawned.speed = Math.round((spawned.speed || 60) * 1.2);
+              }
+            }
+            if (rt.state) {
+              rt.state.banner = 1.8;
+              rt.state.bannerText = 'CRYSTAL SIPHON: OVERHEAT ALARM (' + Math.round(poi.heatLoad * 100) + '%)! ENEMY WAVE ATTRACTED!';
+            }
+          }
+
+          // 5. 100% heat load triggers critical meltdown (60 scrap burst)
+          if (poi.heatLoad >= 1.0) {
+            poi.heatLoad = 1.0;
+            poi.status = 'completed';
+            poi.progress = 1.0;
+
+            // 60 scrap burst
+            spawnScrapBurst(poi.x, poi.y, 60);
+
+            // Meltdown shockwave
+            if (rt.state.shockRings) {
+              rt.state.shockRings.push({
+                x: poi.x,
+                y: poi.y,
+                r: 10,
+                maxR: 280,
+                life: 0.6,
+                maxLife: 0.6,
+                color: '#ff552e'
+              });
+            }
+
+            // 20 overload blast damage to player if within range
+            if (p) {
+              var pDist = Math.hypot(p.x - poi.x, p.y - poi.y);
+              if (pDist <= poi.r) {
+                p.hp = Math.max(1, p.hp - 20);
+                p.invulnerable = Math.max(p.invulnerable || 0, 0.8);
+              }
+            }
+
+            // Blast enemies in range
+            for (var ei = 0; ei < enemies.length; ei += 1) {
+              var e = enemies[ei];
+              if (e && e.hp > 0 && Math.hypot(e.x - poi.x, e.y - poi.y) <= 280) {
+                damageEnemy(e, 300);
+              }
+            }
+
+            spawnParticles(poi.x, poi.y, '#ff552e', 36, 240, 4);
+            spawnParticles(poi.x, poi.y, '#38bdf8', 24, 180, 3);
+            if (AudioFX && typeof AudioFX.eliteDeath === 'function') AudioFX.eliteDeath();
+            if (rt.state) {
+              rt.state.banner = 2.5;
+              rt.state.bannerText = 'CRYSTAL SIPHON MELTDOWN: CRITICAL OVERHEAT! 60 SCRAP EXTRACTED!';
+            }
+          }
+        } else {
+          // Slow cooldown when player is not in range
+          poi.heatLoad = Math.max(0, (poi.heatLoad || 0) - dt * 0.03);
+          poi.progress = clamp(poi.heatLoad, 0, 1);
+          if (poi.heatLoad <= 0 && poi.status === 'active') {
+            poi.status = 'idle';
+          }
+        }
+      }
+    },
+    draw: function (ctx, poi, pulse, rTime, reduced) {
+      var px = poi.x;
+      var py = poi.y;
+      var pr = poi.r || 120;
+      var isDone = poi.status === 'completed';
+      var heat = poi.heatLoad || 0;
+      var isHot = heat > 0.65;
+
+      // Aura extraction ring
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.strokeStyle = isDone ? 'rgba(73, 80, 87, 0.35)' : (isHot ? (Math.sin(rTime * 12) > 0 ? '#ff552e' : '#ff922b') : 'rgba(56, 189, 248, 0.65)');
+      ctx.lineWidth = isDone ? 1.5 : (isHot ? 3.0 : 2.0);
+      ctx.setLineDash(isDone ? [4, 6] : [6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Heat / Overload Gauge Arc
+      if (!isDone && heat > 0) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + TAU * heat);
+        ctx.strokeStyle = heat > 0.75 ? '#ff4028' : (heat > 0.4 ? '#f59f00' : '#38bdf8');
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      // Center Octagonal Refinery Platform
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.beginPath();
+      for (var si = 0; si < 8; si += 1) {
+        var sAng = (si / 8) * TAU;
+        var sx = Math.cos(sAng) * 30;
+        var sy = Math.sin(sAng) * 30;
+        if (si === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath();
+      ctx.fillStyle = isDone ? '#141824' : '#1e293b';
+      ctx.fill();
+      ctx.strokeStyle = isDone ? '#334155' : (isHot ? '#ff552e' : '#38bdf8');
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 4 Peripheral Distillation Vats
+      for (var vi = 0; vi < 4; vi += 1) {
+        var vAng = (vi / 4) * TAU;
+        var vx = Math.cos(vAng) * 22;
+        var vy = Math.sin(vAng) * 22;
+        ctx.beginPath();
+        ctx.arc(vx, vy, 6, 0, TAU);
+        ctx.fillStyle = isDone ? '#0f172a' : (isHot ? '#ff8787' : '#67e8f9');
+        ctx.fill();
+        ctx.strokeStyle = '#020408';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Spinning extractor turbine in center
+      if (!isDone) {
+        var spin = rTime * (3 + heat * 6);
+        ctx.strokeStyle = isHot ? '#ff552e' : '#c084fc';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(spin) * 12, Math.sin(spin) * 12);
+        ctx.lineTo(Math.cos(spin + Math.PI) * 12, Math.sin(spin + Math.PI) * 12);
+        ctx.moveTo(Math.cos(spin + Math.PI * 0.5) * 12, Math.sin(spin + Math.PI * 0.5) * 12);
+        ctx.lineTo(Math.cos(spin + Math.PI * 1.5) * 12, Math.sin(spin + Math.PI * 1.5) * 12);
+        ctx.stroke();
+      }
+
+      // Center Core
+      ctx.beginPath();
+      ctx.arc(0, 0, 7 * (isDone ? 0.7 : pulse), 0, TAU);
+      ctx.fillStyle = isDone ? '#475569' : (isHot ? '#ff4028' : '#38bdf8');
+      ctx.fill();
+      ctx.restore();
+    },
+    getLight: function (poi) {
+      if (poi.status !== 'completed') {
+        return { radius: 140, color: (poi.heatLoad || 0) > 0.7 ? '#ff552e' : '#38bdf8', intensity: 0.7 };
+      }
+      return { radius: 70, color: '#ff552e', intensity: 0.25 };
+    }
   }
 };
 
