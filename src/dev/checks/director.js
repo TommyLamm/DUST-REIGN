@@ -268,12 +268,12 @@ export function run() {
 
     // Declarative Star Criteria & Dynamic Stage Chain Verifications
     var chain = getStageChain();
-    if (!Array.isArray(chain) || chain.length !== 15) throw new Error('dynamic stage chain length should be 15');
-    if (chain[0] !== 'stage_1_1' || chain[14] !== 'stage_ex_3') throw new Error('stage chain boundaries drifted');
-    if (getSectorOfStage('stage_1_1') !== 1 || getSectorOfStage('stage_2_1') !== 2 || getSectorOfStage('stage_3_1') !== 3 || getSectorOfStage('stage_ex_1') !== 4) {
+    if (!Array.isArray(chain) || chain.length !== 20) throw new Error('dynamic stage chain length should be 20');
+    if (chain[0] !== 'stage_1_1' || chain[19] !== 'stage_4_5') throw new Error('stage chain boundaries drifted');
+    if (getSectorOfStage('stage_1_1') !== 1 || getSectorOfStage('stage_2_1') !== 2 || getSectorOfStage('stage_3_1') !== 3 || getSectorOfStage('stage_4_1') !== 4) {
       throw new Error('dynamic sector lookup by stage object failed');
     }
-    if (getSectorReqStars(1) !== 0 || getSectorReqStars(2) !== 8 || getSectorReqStars(3) !== 18 || getSectorReqStars(4) !== 28) {
+    if (getSectorReqStars(1) !== 0 || getSectorReqStars(2) !== 8 || getSectorReqStars(3) !== 18 || getSectorReqStars(4) !== 32) {
       throw new Error('dynamic sector req stars failed');
     }
 

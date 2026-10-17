@@ -738,7 +738,12 @@ function isStageUnlockedInternal(stageId, store) {
 
   var prevStageId = chain[idx - 1];
   var prevRecord = store && store.stages && store.stages[prevStageId];
-  return !!(prevRecord && prevRecord.stars >= 1);
+  var prevCleared = !!(prevRecord && prevRecord.stars >= 1);
+  if (stageId === 'stage_4_1') {
+    var s34 = store && store.stages && store.stages['stage_3_4'];
+    if (s34 && s34.stars >= 1) prevCleared = true;
+  }
+  return prevCleared;
 }
 
 export function getCampaignStore() {
@@ -825,8 +830,8 @@ export function saveCampaignStore(data) {
   return writeRaw(CAMPAIGN_KEY, JSON.stringify(next));
 }
 
-export function isStageUnlocked(stageId) {
-  var store = getCampaignStore();
+export function isStageUnlocked(stageId, customStore) {
+  var store = customStore || getCampaignStore();
   return isStageUnlockedInternal(stageId, store);
 }
 

@@ -13,30 +13,54 @@ export function initCampaignStage(state, stageConfig) {
   var boundH = (rt.ui && rt.ui.height) || state.height || 640;
   var type = stageConfig.type || stageConfig.goalType || '';
 
-  if (type === 'beacon_defense') {
-    var startX = 100;
+  if (type === 'beacon_defense' || type === 'payload_escort') {
+    var startX = 120;
     var startY = boundH * 0.5;
-    var destX = boundW - 100;
+    var destX = boundW - 120;
     var destY = boundH * 0.5;
-    var maxHp = stageConfig.beaconMaxHp || 1000;
+    var maxHp = stageConfig.beaconMaxHp || (type === 'payload_escort' ? 1200 : 1000);
+    var capRadius = type === 'payload_escort' ? 160 : 150;
     state.convoyVehicle = {
       kind: 'convoyVehicle',
       x: startX,
       y: startY,
-      r: 26,
+      startX: startX,
+      startY: startY,
+      r: 28,
       hp: maxHp,
       maxHp: maxHp,
-      speed: 65,
+      speed: type === 'payload_escort' ? 70 : 65,
       destX: destX,
       destY: destY,
       powerTimer: 5.0,
-      captureRadius: 150,
+      captureRadius: capRadius,
       arrived: false
     };
+    state.payloadVehicle = state.convoyVehicle;
     state.beacon = state.convoyVehicle;
     state.beaconHp = maxHp;
     state.beaconMaxHp = maxHp;
     state.beaconPlayerStayTime = 0;
+    state.payloadProgress = 0;
+  }
+
+  if (type === 'core_overload') {
+    state.coreOverload = {
+      heat: 0,
+      maxHeat: 100,
+      ratio: 0,
+      peakRatio: 0,
+      coreX: boundW * 0.5,
+      coreY: boundH * 0.5,
+      radius: 130,
+      heatPerSec: 6.0,
+      coolingPerSec: 14.0,
+      targetTime: stageConfig.targetTime || 80,
+      playerCooling: false,
+      exploded: false,
+      secured: false
+    };
+    state.overloadPeakRatio = 0;
   }
 
   if (type === 'vip_hunt') {
@@ -47,7 +71,9 @@ export function initCampaignStage(state, stageConfig) {
       var vh = boundH;
       var kind = stageConfig.id === 'stage_1_3' ? 'brute' :
                  stageConfig.id === 'stage_2_2' ? 'elite' :
-                 stageConfig.id === 'stage_3_3' ? 'burrower' : (stageConfig.vipKind || 'brute');
+                 stageConfig.id === 'stage_3_3' ? 'burrower' :
+                 stageConfig.id === 'stage_4_4' ? 'brute' : (stageConfig.vipKind || 'brute');
+      var baseHp = stageConfig.id === 'stage_4_4' ? 480 : (kind === 'burrower' ? 280 : 380);
       for (var vi = 0; vi < vipCount; vi += 1) {
         var angle = (vi / vipCount) * Math.PI * 2 + Math.PI / 4;
         var dist = 220;
@@ -56,8 +82,8 @@ export function initCampaignStage(state, stageConfig) {
           x: vw / 2 + Math.cos(angle) * dist,
           y: vh / 2 + Math.sin(angle) * dist,
           r: kind === 'burrower' ? 20 : 22,
-          hp: kind === 'burrower' ? 280 : 380,
-          maxHp: kind === 'burrower' ? 280 : 380,
+          hp: baseHp,
+          maxHp: baseHp,
           speed: 120,
           damage: 24,
           score: 300,
@@ -86,15 +112,15 @@ export function stepCampaignMode(dt, frame) {
   var p = frame.p;
   if (!p) return;
 
-  // 1. Mobile Mining Convoy Escort (移動採集車護航)
-  if (type === 'beacon_defense') {
+  // 1. Mobile Mining Convoy Escort & Payload Escort (移動採集車 / 物資推車護航)
+  if (type === 'beacon_defense' || type === 'payload_escort') {
     if (!state.convoyVehicle) {
       initCampaignStage(state, config);
     }
     var v = state.convoyVehicle;
     if (v && v.hp > 0) {
       var pDist = Math.hypot(p.x - v.x, p.y - v.y);
-      var inPowerField = pDist <= (v.captureRadius || 150);
+      var inPowerField = pDist <= (v.captureRadius || (type === 'payload_escort' ? 160 : 150));
 
       if (inPowerField) {
         v.powerTimer = 5.0;
@@ -122,6 +148,47 @@ export function stepCampaignMode(dt, frame) {
       state.beacon = v;
       state.beaconHp = v.hp;
       state.beaconMaxHp = v.maxHp;
+
+      var totalDist = Math.hypot((v.destX || 860) - (v.startX || 120), (v.destY || 320) - (v.startY || 320)) || 1;
+      var remDist = Math.hypot((v.destX || 860) - v.x, (v.destY || 320) - v.y);
+      state.payloadProgress = v.arrived ? 1 : Math.max(0, Math.min(1, 1 - (remDist / totalDist)));
+    }
+  }
+
+  // 2. Core Overload Defense (地脈核心超載防線)
+  if (type === 'core_overload') {
+    if (!state.coreOverload) {
+      initCampaignStage(state, config);
+    }
+    var core = state.coreOverload;
+    if (core && !core.exploded && !core.secured) {
+      var cpDist = Math.hypot(p.x - core.coreX, p.y - core.coreY);
+      var inCooling = cpDist <= (core.radius || 130);
+      core.playerCooling = inCooling;
+
+      var heatDelta = (core.heatPerSec || 6.0) * dt;
+      if (state.enemies && state.enemies.length > 0) {
+        var nearbyCount = 0;
+        for (var ei = 0; ei < state.enemies.length; ei += 1) {
+          var foe = state.enemies[ei];
+          if (foe && foe.hp > 0) {
+            var fd = Math.hypot(foe.x - core.coreX, foe.y - core.coreY);
+            if (fd < 300) nearbyCount += 1;
+          }
+        }
+        heatDelta += nearbyCount * 0.8 * dt;
+      }
+
+      if (inCooling) {
+        heatDelta -= (core.coolingPerSec || 14.0) * dt;
+      }
+
+      core.heat = Math.max(0, core.heat + heatDelta);
+      core.ratio = Math.min(1.0, core.heat / core.maxHeat);
+      if (core.ratio > core.peakRatio) {
+        core.peakRatio = core.ratio;
+      }
+      state.overloadPeakRatio = core.peakRatio;
     }
   }
 
