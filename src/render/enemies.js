@@ -1987,6 +1987,414 @@ function drawFieldTelegraphs(ctx) {
   }
 }
 
+function drawProwlerBody(ctx, e, flashing, reduced) {
+  var r = e.r || 12;
+  var isStalk = (e.phaseState === 'stalk');
+  var isTelegraph = (e.phaseState === 'telegraph');
+  var isRecover = (e.phaseState === 'recover');
+
+  if (isStalk) {
+    ctx.globalAlpha *= reduced ? 0.5 : (0.4 + 0.2 * Math.sin((rt.renderTime || 0) * 8));
+  }
+
+  // Aerodynamic needle chassis / carapace
+  ctx.fillStyle = flashing ? '#ffffff' : (isStalk ? '#1e103a' : '#2e1065');
+  ctx.beginPath();
+  ctx.moveTo(r * 1.5, 0);
+  ctx.lineTo(-r * 0.7, r * 0.85);
+  ctx.lineTo(-r * 0.35, 0);
+  ctx.lineTo(-r * 0.7, -r * 0.85);
+  ctx.closePath();
+  ctx.fill();
+  drawDualOutline(ctx, r, 'prowler');
+
+  if (!flashing) {
+    // Dorsal violet spine plate
+    ctx.fillStyle = '#581c87';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.8, 0);
+    ctx.lineTo(-r * 0.2, r * 0.45);
+    ctx.lineTo(-r * 0.1, 0);
+    ctx.lineTo(-r * 0.2, -r * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    // Central neon crystal conduit line
+    ctx.strokeStyle = isTelegraph ? '#f43f5e' : '#c084fc';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.2, 0);
+    ctx.lineTo(r * 1.1, 0);
+    ctx.stroke();
+
+    // Predatory visor / ocular slit
+    ctx.fillStyle = isTelegraph ? '#f43f5e' : '#e879f9';
+    ctx.fillRect(r * 0.5, -2, 5, 4);
+
+    // Mandible blades
+    var mandOff = isRecover ? -2 : (isTelegraph ? 3 : 0);
+    ctx.fillStyle = '#3b0764';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.9, -r * 0.4);
+    ctx.lineTo(r * 1.4 + mandOff, -r * 0.2);
+    ctx.lineTo(r * 0.8, -r * 0.1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(r * 0.9, r * 0.4);
+    ctx.lineTo(r * 1.4 + mandOff, r * 0.2);
+    ctx.lineTo(r * 0.8, r * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Exhaust steam vents if in recover state
+  if (isRecover && !reduced) {
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.6, -r * 0.4);
+    ctx.lineTo(-r * 0.9, -r * 0.7);
+    ctx.moveTo(-r * 0.6, r * 0.4);
+    ctx.lineTo(-r * 0.9, r * 0.7);
+    ctx.stroke();
+  }
+}
+
+function drawBulwarkBody(ctx, e, flashing, reduced) {
+  var r = e.r || 21;
+  var broken = Boolean(e.shieldBroken);
+  var shieldHp = e.shieldHp !== undefined ? e.shieldHp : 350;
+  var maxShieldHp = e.maxShieldHp || 350;
+
+  // Heavy armored chassis
+  ctx.fillStyle = flashing ? '#ffffff' : '#0f172a';
+  ctx.beginPath();
+  ctx.moveTo(r * 1.1, -r * 0.65);
+  ctx.lineTo(r * 1.1, r * 0.65);
+  ctx.lineTo(r * 0.2, r * 1.05);
+  ctx.lineTo(-r * 0.95, r * 0.8);
+  ctx.lineTo(-r * 0.95, -r * 0.8);
+  ctx.lineTo(r * 0.2, -r * 1.05);
+  ctx.closePath();
+  ctx.fill();
+  drawDualOutline(ctx, r, 'bulwark');
+
+  if (!flashing) {
+    // Reinforced sloped plating
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.8, -r * 0.45);
+    ctx.lineTo(r * 0.8, r * 0.45);
+    ctx.lineTo(0, r * 0.75);
+    ctx.lineTo(-r * 0.65, r * 0.55);
+    ctx.lineTo(-r * 0.65, -r * 0.55);
+    ctx.lineTo(0, -r * 0.75);
+    ctx.closePath();
+    ctx.fill();
+
+    // Hazard cyan markings
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(-r * 0.4, -r * 0.35, 4, r * 0.7);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-r * 0.15, -r * 0.25, 3, r * 0.5);
+
+    // Emitter core
+    ctx.fillStyle = broken ? '#475569' : '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(r * 0.2, 0, 4.5, 0, TAU);
+    ctx.fill();
+  }
+
+  // Frontal 140° Shield Barrier Projection
+  if (!broken && shieldHp > 0) {
+    var shieldRatio = clamp(shieldHp / maxShieldHp, 0, 1);
+    var arcHalf = (70 * Math.PI / 180);
+    var sR = r + 8;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, sR, -arcHalf, arcHalf);
+    ctx.strokeStyle = '#030204';
+    ctx.lineWidth = 6.0;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, sR, -arcHalf, arcHalf);
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 4.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, sR, -arcHalf * shieldRatio, arcHalf * shieldRatio);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    var eX1 = Math.cos(arcHalf) * sR;
+    var eY1 = Math.sin(-arcHalf) * sR;
+    var eX2 = Math.cos(arcHalf) * sR;
+    var eY2 = Math.sin(arcHalf) * sR;
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(eX1, eY1, 3, 0, TAU);
+    ctx.arc(eX2, eY2, 3, 0, TAU);
+    ctx.fill();
+
+    if (!reduced) {
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.9, -r * 0.5);
+      ctx.lineTo(eX1, eY1);
+      ctx.moveTo(r * 0.9, r * 0.5);
+      ctx.lineTo(eX2, eY2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  } else if (broken && !reduced) {
+    var bSpark = Math.sin((rt.renderTime || 0) * 20);
+    if (bSpark > 0) {
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.9, -r * 0.6);
+      ctx.lineTo(r * 1.2, -r * 0.8);
+      ctx.lineTo(r * 1.0, -r * 0.4);
+      ctx.moveTo(r * 0.9, r * 0.6);
+      ctx.lineTo(r * 1.2, r * 0.8);
+      ctx.lineTo(r * 1.0, r * 0.4);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawBehemothBody(ctx, e, flashing, reduced) {
+  var r = e.r || 44;
+  var enraged = Boolean(e.phase2Triggered);
+  var spin = reduced ? 0 : (rt.renderTime || 0) * 3.0;
+
+  // 1. Rear Dynamic Crystal Tail (Part: behemoth_tail)
+  var tailAlive = !e.crystalTailDestroyed;
+  var tailWag = (reduced || !tailAlive) ? 0 : Math.sin((rt.renderTime || 0) * 4) * 8;
+  ctx.save();
+  ctx.translate(-r * 0.7, tailWag * 0.4);
+  if (tailAlive) {
+    ctx.fillStyle = flashing ? '#ffffff' : '#1e1b4b';
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.lineTo(-18, -7 + tailWag * 0.3);
+    ctx.lineTo(-34, 0 + tailWag);
+    ctx.lineTo(-18, 7 + tailWag * 0.3);
+    ctx.lineTo(0, 10);
+    ctx.closePath();
+    ctx.fill();
+    drawDualOutline(ctx, 18, 'behemoth');
+
+    ctx.fillStyle = flashing ? '#ffffff' : '#0284c7';
+    ctx.beginPath();
+    ctx.moveTo(-34, tailWag);
+    ctx.lineTo(-48, -12 + tailWag);
+    ctx.lineTo(-42, tailWag);
+    ctx.lineTo(-48, 12 + tailWag);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(-34, tailWag);
+    ctx.lineTo(-44, tailWag);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#140f2d';
+    ctx.beginPath();
+    ctx.moveTo(0, -9);
+    ctx.lineTo(-12, -5);
+    ctx.lineTo(-9, 0);
+    ctx.lineTo(-13, 6);
+    ctx.lineTo(0, 9);
+    ctx.closePath();
+    ctx.fill();
+    drawDualOutline(ctx, 10, 'behemoth');
+
+    if (!reduced && Math.sin((rt.renderTime || 0) * 16) > 0) {
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-8, -3);
+      ctx.lineTo(-14, 2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // 2. Dorsal Corrosive Acid Gland (Part: behemoth_gland)
+  var glandAlive = !e.acidGlandDestroyed;
+  var glandExposed = Boolean(e.acidGlandExposed);
+  ctx.save();
+  ctx.translate(r * 0.15, -r * 0.58);
+  if (glandAlive) {
+    var gScale = glandExposed ? (1.15 + 0.1 * Math.sin((rt.renderTime || 0) * 12)) : 1.0;
+    ctx.scale(gScale, gScale);
+    ctx.fillStyle = flashing ? '#ffffff' : (glandExposed ? '#bef264' : '#65a30d');
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 14, 10, -0.2, 0, TAU);
+    ctx.fill();
+    drawDualOutline(ctx, 12, 'spitter');
+
+    ctx.fillStyle = glandExposed ? '#ffffff' : '#a3e635';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 8, 5, -0.2, 0, TAU);
+    ctx.fill();
+
+    if (glandExposed && !reduced) {
+      drawGlow(ctx, 0, 0, 20, '#a3e635', 0.7);
+    }
+  } else {
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 6, -0.2, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 3. Main Colossal Carapace
+  ctx.beginPath();
+  var segments = 10;
+  for (var i = 0; i < segments; i += 1) {
+    var ang = (i / segments) * TAU;
+    var segR = r * (i % 2 === 0 ? 1.05 : 0.95);
+    if (i === 0) ctx.moveTo(Math.cos(ang) * segR, Math.sin(ang) * segR);
+    else ctx.lineTo(Math.cos(ang) * segR, Math.sin(ang) * segR);
+  }
+  ctx.closePath();
+  ctx.fillStyle = flashing ? '#ffffff' : (enraged ? '#311042' : '#1e103a');
+  ctx.fill();
+  drawDualOutline(ctx, r, 'behemoth');
+
+  if (!flashing) {
+    for (var pi = 0; pi < 6; pi += 1) {
+      var pa0 = (pi / 6) * TAU;
+      var pa1 = ((pi + 1) / 6) * TAU;
+      var pMid = (pa0 + pa1) * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(pa0) * r * 0.85, Math.sin(pa0) * r * 0.85);
+      ctx.lineTo(Math.cos(pa1) * r * 0.85, Math.sin(pa1) * r * 0.85);
+      ctx.lineTo(Math.cos(pMid) * r * 0.42, Math.sin(pMid) * r * 0.42);
+      ctx.closePath();
+      ctx.fillStyle = pi % 2 ? '#581c87' : '#2e1065';
+      ctx.fill();
+      ctx.strokeStyle = enraged ? '#c084fc' : '#3b0764';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+    }
+  }
+
+  // 4. Forward Crystal Horn Shield (Part: behemoth_horn)
+  var hornAlive = !e.hornDestroyed;
+  ctx.save();
+  ctx.translate(r * 0.75, 0);
+  if (hornAlive) {
+    ctx.fillStyle = flashing ? '#ffffff' : '#3b0764';
+    ctx.beginPath();
+    ctx.moveTo(0, -18);
+    ctx.lineTo(26, -9);
+    ctx.lineTo(34, 0);
+    ctx.lineTo(26, 9);
+    ctx.lineTo(0, 18);
+    ctx.closePath();
+    ctx.fill();
+    drawDualOutline(ctx, 22, 'behemoth');
+
+    ctx.fillStyle = '#a855f7';
+    ctx.beginPath();
+    ctx.moveTo(4, -10);
+    ctx.lineTo(28, 0);
+    ctx.lineTo(4, 10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#e9d5ff';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(32, 0);
+    ctx.stroke();
+
+    if (!flashing && !reduced) {
+      drawGlow(ctx, 24, 0, 24, '#c084fc', 0.55);
+    }
+  } else {
+    ctx.fillStyle = '#1e103a';
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(8, -8);
+    ctx.lineTo(4, 0);
+    ctx.lineTo(9, 7);
+    ctx.lineTo(0, 15);
+    ctx.closePath();
+    ctx.fill();
+    drawDualOutline(ctx, 12, 'behemoth');
+
+    if (!reduced && Math.sin((rt.renderTime || 0) * 14) > 0) {
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(3, -6);
+      ctx.lineTo(8, -1);
+      ctx.lineTo(4, 5);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // 5. Central Prismatic Core (Phase 2 Enrage Overdrive)
+  var coreR = r * 0.28;
+  if (enraged) {
+    ctx.save();
+    ctx.rotate(spin);
+    ctx.strokeStyle = flashing ? '#ffffff' : '#f43f5e';
+    ctx.lineWidth = 2.4;
+    for (var ci = 0; ci < 4; ci += 1) {
+      var ca = (ci / 4) * TAU;
+      ctx.beginPath();
+      ctx.arc(0, 0, coreR * 1.35, ca, ca + 0.9);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = flashing ? '#ffffff' : '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(0, 0, coreR, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffe4e6';
+    ctx.beginPath();
+    ctx.arc(0, 0, coreR * 0.5, 0, TAU);
+    ctx.fill();
+
+    if (!keyGlowsOnly() && !flashing) {
+      drawGlow(ctx, 0, 0, coreR + 24, '#f43f5e', 0.9);
+      drawGlow(ctx, 0, 0, coreR + 12, '#c084fc', 0.7);
+    }
+  } else {
+    ctx.fillStyle = flashing ? '#ffffff' : '#7e22ce';
+    ctx.beginPath();
+    ctx.arc(0, 0, coreR * 0.7, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath();
+    ctx.arc(0, 0, coreR * 0.35, 0, TAU);
+    ctx.fill();
+    if (!keyGlowsOnly() && !flashing) {
+      drawGlow(ctx, 0, 0, coreR + 8, '#a855f7', 0.45);
+    }
+  }
+}
+
 var ENEMY_CONTRAST_SHAPES = {
   rusher: function (ctx, r) {
     ctx.moveTo(r * 1.55, 0);
@@ -1994,6 +2402,25 @@ var ENEMY_CONTRAST_SHAPES = {
     ctx.lineTo(-r * 0.28, 0);
     ctx.lineTo(-r * 0.7, -r * 1.1);
     ctx.closePath();
+  },
+  prowler: function (ctx, r) {
+    ctx.moveTo(r * 1.6, 0);
+    ctx.lineTo(-r * 0.8, r * 0.9);
+    ctx.lineTo(-r * 0.4, 0);
+    ctx.lineTo(-r * 0.8, -r * 0.9);
+    ctx.closePath();
+  },
+  bulwark: function (ctx, r) {
+    ctx.moveTo(r * 1.3, -r * 0.7);
+    ctx.lineTo(r * 1.3, r * 0.7);
+    ctx.lineTo(0, r * 1.15);
+    ctx.lineTo(-r * 1.1, r * 0.8);
+    ctx.lineTo(-r * 1.1, -r * 0.8);
+    ctx.lineTo(0, -r * 1.15);
+    ctx.closePath();
+  },
+  behemoth: function (ctx, r) {
+    ctx.ellipse(0, 0, r * 1.25, r * 1.1, 0, 0, TAU);
   },
   burrower: function (ctx, r) {
     ctx.ellipse(0, 0, r * 1.2, r * 0.95, 0, 0, TAU);
@@ -2037,6 +2464,9 @@ export var ENEMY_BODY_RENDERERS = {
   burrower: drawBurrowerBody,
   dreadnought: drawDreadnoughtBody,
   sovereign: drawSovereignBody,
+  behemoth: drawBehemothBody,
+  prowler: drawProwlerBody,
+  bulwark: drawBulwarkBody,
   stormTower: drawStormTowerBody,
   mine: drawMineBody,
   crawler: drawCrawlerBody
@@ -2086,7 +2516,7 @@ export function drawEnemy(ctx, e) {
 
   // Static building structures & mines do not rotate with player facing
   var facing = (e.kind === 'stormTower' || e.kind === 'mine') ? 0 :
-    ((e.kind === 'dreadnought' || e.kind === 'sovereign') && e.aim != null ? e.aim : faceOf(e));
+    ((e.kind === 'dreadnought' || e.kind === 'sovereign' || e.kind === 'behemoth' || e.kind === 'bulwark' || e.kind === 'prowler') && e.aim != null ? e.aim : faceOf(e));
   ctx.rotate(facing);
   ctx.translate(lean, 0);
   ctx.globalAlpha *= pose.alpha;
@@ -2231,9 +2661,39 @@ export function drawRusherTelegraphs(ctx) {
   var i;
   for (i = 0; i < list.length; i += 1) {
     if (list[i].kind === 'rusher') drawRusherTelegraph(ctx, list[i]);
+    if (list[i].kind === 'prowler') drawProwlerTelegraph(ctx, list[i]);
   }
   drawCommandLinks(ctx);
   drawLabels(ctx);
+}
+
+function drawProwlerTelegraph(ctx, e) {
+  if (e.phaseState === 'telegraph') {
+    var tAngle = e.lungeAim !== undefined ? e.lungeAim : (e.aim !== undefined ? e.aim : faceOf(e));
+    var x1 = e.x + Math.cos(tAngle) * 180;
+    var y1 = e.y + Math.sin(tAngle) * 180;
+    var reduced = isReducedMotion();
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(e.x, e.y);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = '#030204';
+    ctx.lineWidth = 6.0;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(e.x, e.y);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = '#c084fc';
+    ctx.lineWidth = 3.2;
+    if (!reduced) {
+      ctx.setLineDash([8, 6]);
+      ctx.lineDashOffset = -((rt.renderTime || 0) * 40) % 14;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawRusherTelegraph(ctx, e) {

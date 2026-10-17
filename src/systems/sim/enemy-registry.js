@@ -12,7 +12,7 @@ import { fireArtillery } from '../spawning.js';
 import { dropBossShard } from '../drops.js';
 import { logEvent } from '../../ui/hud.js';
 import { stepBoss, stepTitanHarpoon } from './bosses.js';
-import { updateEnemyPartCache } from './boss-parts.js';
+import { initBehemothParts, getPartWorldPos, updateEnemyPartCache } from './boss-parts.js';
 import { clearShieldsOwnedBy, refreshSovereignShield } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { blastAt, grantBossLoot, primeEnemy as primeNewEnemy, stepNewEnemy } from './new-enemies.js';
@@ -574,5 +574,397 @@ registerEnemyStrategy('stormTower', {
   filterDamage: function (e, amount, info) {
     if (info && (info.source === 'emp' || info.source === 'spire')) return amount * 3;
     return amount;
+  }
+});
+
+registerEnemyStrategy('prowler', {
+  prime: function (e) {
+    e.phaseState = 'stalk';
+    e.phaseTimer = 1.5 + rng('spawn') * 1.5;
+    e.aim = 0;
+    e.baseSpeed = e.speed || 105;
+  },
+  step: function (e, dt, frame, empFrozen, isCulled) {
+    var p = frame.p;
+    if (!e.phaseState) {
+      e.phaseState = 'stalk';
+      e.phaseTimer = 1.5;
+      e.baseSpeed = e.speed || 105;
+    }
+
+    if (empFrozen) {
+      return null;
+    }
+
+    var dx = p.x - e.x;
+    var dy = p.y - e.y;
+    var dist = Math.hypot(dx, dy) || 1;
+
+    if (e.phaseState === 'stalk') {
+      e.aim = Math.atan2(dy, dx);
+      e.phaseTimer -= dt;
+      if (e.phaseTimer <= 0 || dist <= 140) {
+        e.phaseState = 'telegraph';
+        e.phaseTimer = 0.35;
+        e.lungeAim = Math.atan2(p.y - e.y, p.x - e.x);
+        e.aim = e.lungeAim;
+      }
+      return { dx: dx, dy: dy, d: dist, speed: e.baseSpeed || 105 };
+    }
+
+    if (e.phaseState === 'telegraph') {
+      e.phaseTimer -= dt;
+      if (e.phaseTimer <= 0) {
+        e.phaseState = 'lunge';
+        e.phaseTimer = 0.20;
+        e.lungeAim = Math.atan2(p.y - e.y, p.x - e.x);
+        e.aim = e.lungeAim;
+        spawnParticles(e.x, e.y, '#c084fc', 12, 160, 3);
+        spawnParticles(e.x, e.y, '#ffffff', 8, 120, 2);
+        AudioFX.dash();
+      }
+      return { dx: 0, dy: 0, d: 1, speed: 0 };
+    }
+
+    if (e.phaseState === 'lunge') {
+      e.phaseTimer -= dt;
+      var lungeSpeed = 320;
+      var lvx = Math.cos(e.lungeAim);
+      var lvy = Math.sin(e.lungeAim);
+      if (e.phaseTimer <= 0) {
+        e.phaseState = 'recover';
+        e.phaseTimer = 0.6;
+      }
+      return { dx: lvx, dy: lvy, d: 1, speed: lungeSpeed };
+    }
+
+    if (e.phaseState === 'recover') {
+      e.phaseTimer -= dt;
+      if (e.phaseTimer <= 0) {
+        e.phaseState = 'stalk';
+        e.phaseTimer = 2.0 + rng('combat') * 1.0;
+      }
+      return { dx: 0, dy: 0, d: 1, speed: 0 };
+    }
+
+    return null;
+  },
+  filterDamage: function (e, amount, info) {
+    if (e.phaseState === 'stalk') {
+      return Math.max(1, Math.round(amount * 0.3));
+    }
+    return amount;
+  }
+});
+
+registerEnemyStrategy('bulwark', {
+  prime: function (e) {
+    e.shieldHp = 350;
+    e.maxShieldHp = 350;
+    e.shieldBroken = false;
+    e.shieldBreakTimer = 0;
+    e.auraCd = 3.0;
+    e.auraPulseTimer = 0;
+    e.aim = 0;
+    e.baseSpeed = e.speed || 34;
+  },
+  step: function (e, dt, frame, empFrozen, isCulled) {
+    var p = frame.p;
+    if (e.shieldHp === undefined) {
+      e.shieldHp = 350;
+      e.maxShieldHp = 350;
+      e.shieldBroken = false;
+      e.auraCd = 3.0;
+      e.baseSpeed = e.speed || 34;
+    }
+
+    if (e.auraPulseTimer > 0) {
+      e.auraPulseTimer -= dt;
+    }
+
+    if (e.shieldBroken) {
+      e.shieldBreakTimer = (e.shieldBreakTimer || 0) - dt;
+      if (e.shieldBreakTimer <= 0) {
+        e.shieldBroken = false;
+        e.shieldHp = e.maxShieldHp || 350;
+        spawnParticles(e.x, e.y, '#38bdf8', 12, 120, 2.5);
+      }
+    }
+
+    if (empFrozen) {
+      return null;
+    }
+
+    e.aim = Math.atan2(p.y - e.y, p.x - e.x);
+
+    e.auraCd = (e.auraCd !== undefined ? e.auraCd : 3.0) - dt;
+    if (e.auraCd <= 0 && !e.shieldBroken) {
+      e.auraCd = 3.0;
+      e.auraPulseTimer = 0.5;
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({
+          x: e.x,
+          y: e.y,
+          r: 10,
+          maxR: 130,
+          life: 0.45,
+          maxLife: 0.45,
+          color: '#38bdf8'
+        });
+      }
+      var r2 = 130 * 130;
+      var enemies = (rt.state && rt.state.enemies) || [];
+      for (var i = 0; i < enemies.length; i += 1) {
+        var ally = enemies[i];
+        if (ally && ally !== e && ally.hp > 0) {
+          if (dist2(e.x, e.y, ally.x, ally.y) <= r2) {
+            ally.defenseAuraTimer = 3.0;
+            ally.damageMitigation = 0.35;
+            spawnParticles(ally.x, ally.y, '#38bdf8', 3, 60, 1.5);
+          }
+        }
+      }
+    }
+
+    var dx = p.x - e.x;
+    var dy = p.y - e.y;
+    var d = Math.hypot(dx, dy) || 1;
+    var speed = (e.shieldBroken || e.empTimer > 0) ? 0 : (e.baseSpeed || 34);
+    return { dx: dx, dy: dy, d: d, speed: speed };
+  },
+  filterDamage: function (e, amount, info) {
+    if (e.shieldHp === undefined) {
+      e.shieldHp = 350;
+      e.maxShieldHp = 350;
+    }
+
+    if (!e.shieldBroken && e.shieldHp > 0) {
+      var hitX = (info && info.x != null) ? info.x : (rt.state && rt.state.player ? rt.state.player.x : e.x);
+      var hitY = (info && info.y != null) ? info.y : (rt.state && rt.state.player ? rt.state.player.y : e.y);
+      var hitAngle = Math.atan2(hitY - e.y, hitX - e.x);
+      var diff = Math.abs(angDiff(hitAngle, e.aim || 0));
+      if (diff <= (70 * Math.PI / 180)) {
+        e.shieldHp -= amount;
+        spawnParticles(e.x + Math.cos(e.aim || 0) * (e.r + 4), e.y + Math.sin(e.aim || 0) * (e.r + 4), '#38bdf8', 6, 90, 2);
+        if (e.shieldHp <= 0) {
+          e.shieldHp = 0;
+          e.shieldBroken = true;
+          e.shieldBreakTimer = 4.0;
+          e.empTimer = Math.max(e.empTimer || 0, 4.0);
+          if (rt.state.shockRings) {
+            rt.state.shockRings.push({
+              x: e.x,
+              y: e.y,
+              r: 10,
+              maxR: 90,
+              life: 0.35,
+              maxLife: 0.35,
+              color: '#38bdf8'
+            });
+          }
+          spawnParticles(e.x, e.y, '#38bdf8', 20, 170, 3.5);
+          AudioFX.blast();
+          logEvent('BULWARK SHIELD SHATTERED // PARALYZED [4.0s]');
+        }
+        return 0;
+      }
+    }
+    return amount;
+  }
+});
+
+registerEnemyStrategy('behemoth', {
+  prime: function (e) {
+    initBehemothParts(e);
+    e.isBoss = true;
+    e.bossName = 'BEHEMOTH';
+    e.bossSubtitle = 'ABYSSAL COLOSSUS';
+    e.baseSpeed = e.speed || 32;
+    e.aim = 0;
+    e.phase2Triggered = false;
+    e.coreExposed = false;
+    e.shootCd = 3.0;
+    e.spiralCd = 2.4;
+    e.spiralAngle = 0;
+    e.spitCd = 4.0;
+    e.tailSwipeCd = 3.6;
+    e.turnPenalty = 0;
+  },
+  step: function (e, dt, frame, empFrozen, isCulled) {
+    var p = frame.p;
+    var boundW = frame.boundW;
+    var boundH = frame.boundH;
+
+    if (!e.parts || !e.parts.length) {
+      initBehemothParts(e);
+      e.baseSpeed = e.speed || 32;
+    }
+
+    updateEnemyPartCache(e, p);
+    if (e.partCache) e.partCache._frameTime = rt.state.waveTime;
+
+    var tail = e.parts.find(function (pt) { return pt.id === 'behemoth_tail'; });
+    if (tail && !tail.destroyed) {
+      tail.relY = Math.sin(rt.state.waveTime * 3.5) * 8;
+    }
+
+    var gland = e.parts.find(function (pt) { return pt.id === 'behemoth_gland'; });
+
+    var spd = e.baseSpeed || 32;
+    if (e.crystalTailDestroyed) {
+      spd *= 0.75;
+    }
+    e.speed = spd;
+
+    var targetAim = Math.atan2(p.y - e.y, p.x - e.x);
+    var turnRate = (e.crystalTailDestroyed ? 1.2 : 1.8) * dt;
+    e.aim = (e.aim !== undefined ? e.aim : targetAim) + clamp(angDiff(targetAim, e.aim), -turnRate, turnRate);
+
+    if (!empFrozen && !e.acidGlandDestroyed) {
+      e.spitCd = (e.spitCd || 4.0) - dt;
+      if (e.spitCd <= 1.2 && e.spitCd > 0) {
+        if (gland && !gland.destroyed) {
+          gland.exposed = true;
+          e.acidGlandExposed = true;
+        }
+      }
+      if (e.spitCd <= 0) {
+        e.spitCd = 4.0;
+        if (gland) {
+          gland.exposed = false;
+          e.acidGlandExposed = false;
+        }
+        for (var ai = 0; ai < 3; ai += 1) {
+          var targetAngle = Math.atan2(p.y - e.y, p.x - e.x) + (ai - 1) * 0.22;
+          var spitDist = Math.hypot(p.x - e.x, p.y - e.y);
+          var mortarX = e.x + Math.cos(targetAngle) * Math.min(spitDist, 300) + (rng('combat') - 0.5) * 50;
+          var mortarY = e.y + Math.sin(targetAngle) * Math.min(spitDist, 300) + (rng('combat') - 0.5) * 50;
+          if (!rt.state.artilleryTargets) rt.state.artilleryTargets = [];
+          rt.state.artilleryTargets.push({
+            x: mortarX,
+            y: mortarY,
+            r: 32,
+            timer: 1.4,
+            maxTimer: 1.4,
+            wave: rt.state.wave || 1,
+            state: 'acid',
+            damageTickTimer: 0
+          });
+        }
+        spawnParticles(e.x + Math.cos(e.aim) * 20, e.y + Math.sin(e.aim) * 20, '#a3e635', 14, 150, 3);
+        AudioFX.mortarLaunch();
+      }
+    }
+
+    if (!empFrozen && !e.crystalTailDestroyed) {
+      e.tailSwipeCd = (e.tailSwipeCd || 3.6) - dt;
+      if (e.tailSwipeCd <= 0) {
+        e.tailSwipeCd = 3.6;
+        var tailWorld = e.partCache ? getPartWorldPos(e, tail || { relX: -42, relY: 0 }, e.partCache) : { x: e.x - 42, y: e.y };
+        for (var spi = 0; spi < 8; spi += 1) {
+          var sAng = (spi * TAU / 8) + (e.aim || 0);
+          var spikeShot = scaledShot(18, 150, true);
+          pushEnemyBullet({
+            type: 'basic',
+            fromBoss: true,
+            x: tailWorld.x + Math.cos(sAng) * 14,
+            y: tailWorld.y + Math.sin(sAng) * 14,
+            vx: Math.cos(sAng) * spikeShot.speed,
+            vy: Math.sin(sAng) * spikeShot.speed,
+            r: 4.5,
+            damage: spikeShot.damage,
+            life: 5.5,
+            glow: true,
+            color: '#38bdf8',
+            glowColor: '#0ea5e9'
+          });
+        }
+        spawnParticles(tailWorld.x, tailWorld.y, '#38bdf8', 14, 160, 3);
+        AudioFX.blast();
+      }
+    }
+
+    if (!e.phase2Triggered && e.hp <= e.maxHp * 0.5) {
+      e.phase2Triggered = true;
+      e.coreExposed = true;
+      rt.state.hitstop = 0.1;
+      rt.state.shake = Math.max(rt.state.shake || 0, 16);
+      triggerHaptic([60, 50, 100, 50, 120]);
+      AudioFX.blast();
+      AudioFX.stormSiren();
+
+      var tdx = p.x - e.x;
+      var tdy = p.y - e.y;
+      var tpDist = Math.hypot(tdx, tdy) || 1;
+      p.x = clamp(p.x + (tdx / tpDist) * 40, p.r, boundW - p.r);
+      p.y = clamp(p.y + (tdy / tpDist) * 40, p.r, boundH - p.r);
+      p.slowTimer = Math.max(p.slowTimer || 0, 0.6);
+
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({
+          x: e.x, y: e.y, r: 16, maxR: 240, life: 0.5, maxLife: 0.5, color: '#c084fc'
+        });
+      }
+      spawnParticles(e.x, e.y, '#c084fc', 28, 240, 4.5);
+      spawnParticles(e.x, e.y, '#f43f5e', 20, 180, 3.5);
+
+      rt.state.banner = 3.5;
+      rt.state.bannerText = 'BEHEMOTH ENRAGED // CORE OVERDRIVE';
+      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'BEHEMOTH ENRAGED // CORE OVERDRIVE';
+      logEvent('BEHEMOTH ENRAGED // CORE OVERDRIVE');
+    }
+
+    if (e.phase2Triggered && !empFrozen) {
+      e.spiralCd = (e.spiralCd || 2.4) - dt;
+      if (e.spiralCd <= 0) {
+        e.spiralCd = 2.4;
+        e.spiralAngle = (e.spiralAngle || 0) + 0.35;
+        for (var bpi = 0; bpi < 16; bpi += 1) {
+          var bAng = e.spiralAngle + (bpi * TAU / 16);
+          var crystalShot = scaledShot(17, 135, true);
+          pushEnemyBullet({
+            type: 'spiral',
+            fromBoss: true,
+            x: e.x + Math.cos(bAng) * (e.r + 6),
+            y: e.y + Math.sin(bAng) * (e.r + 6),
+            vx: Math.cos(bAng) * crystalShot.speed,
+            vy: Math.sin(bAng) * crystalShot.speed,
+            r: 5.0,
+            damage: crystalShot.damage,
+            life: 6.5,
+            glow: true,
+            color: '#c084fc',
+            glowColor: '#a855f7'
+          });
+        }
+        spawnParticles(e.x, e.y, '#c084fc', 14, 150, 3);
+        AudioFX.shoot();
+      }
+    }
+
+    return { dx: Math.cos(e.aim), dy: Math.sin(e.aim), d: 1, speed: e.speed };
+  },
+  filterDamage: function (e, amount, info) {
+    var hitX = (info && info.x != null) ? info.x : (rt.state && rt.state.player ? rt.state.player.x : e.x);
+    var hitY = (info && info.y != null) ? info.y : (rt.state && rt.state.player ? rt.state.player.y : e.y);
+    var hitAngle = Math.atan2(hitY - e.y, hitX - e.x);
+    var frontDiff = Math.abs(angDiff(hitAngle, e.aim || 0));
+
+    if (!e.hornDestroyed && frontDiff <= (70 * Math.PI / 180)) {
+      var reduced = Math.max(1, Math.round(amount * 0.4));
+      return reduced;
+    }
+
+    if (e.phase2Triggered && e.coreExposed) {
+      var coreDmg = Math.round(amount * 1.6);
+      return coreDmg;
+    }
+
+    return amount;
+  },
+  onDeath: function (ev) {
+    dropBossShard(ev.x, ev.y, 4);
+    AudioFX.blast();
+    return true;
   }
 });
