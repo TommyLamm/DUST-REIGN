@@ -5,8 +5,10 @@ import { dist2 } from '../core/utils.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { isStormFront } from './flow.js';
 import { spawnCombatText } from '../render/fx.js';
+import { ensureEnemyGrid, getEnemyById, getEnemyBulletById, populateEnemyBulletGrid, queryEnemyBulletGridCallback, queryGridCallback } from '../core/spatial-grid.js';
 
 var hookDepth = 0;
+
 
 function livingEnemies() {
   var list = (rt.state && rt.state.enemies) || [];
@@ -322,41 +324,72 @@ function pullScrapVortices(dt) {
 
 function tickScorch(dt) {
   var marks = rt.state.scorchMarks;
-  if (!marks) return;
+  if (!marks || marks.length === 0) return;
   var enemyBullets = rt.state.enemyBullets || [];
+
+  var hasVaporize = false;
   var i;
+  for (i = 0; i < marks.length; i += 1) {
+    if (marks[i].vaporize) {
+      hasVaporize = true;
+      break;
+    }
+  }
+
+  if (hasVaporize && enemyBullets.length > 0) {
+    populateEnemyBulletGrid(enemyBullets);
+  }
+
+  var vaporizedAny = false;
+
   for (i = marks.length - 1; i >= 0; i -= 1) {
     var mark = marks[i];
     mark.life -= dt;
     mark.tick = (mark.tick || 0) + dt;
 
     if (mark.vaporize && enemyBullets.length > 0) {
-      for (var bi = enemyBullets.length - 1; bi >= 0; bi -= 1) {
-        var eb = enemyBullets[bi];
-        if (dist2(mark.x, mark.y, eb.x, eb.y) <= (mark.r + (eb.r || 4)) * (mark.r + (eb.r || 4))) {
+      queryEnemyBulletGridCallback(mark.x, mark.y, mark.r + 8, function (bId) {
+        var eb = getEnemyBulletById(bId);
+        if (!eb || eb._vaporized) return;
+        var reach = mark.r + (eb.r || 4);
+        var bdx = mark.x - eb.x;
+        var bdy = mark.y - eb.y;
+        if (bdx * bdx + bdy * bdy <= reach * reach) {
+          eb._vaporized = true;
+          vaporizedAny = true;
           pushFxEvent('spark', eb.x, eb.y, { color: '#ff6622', scale: 0.8 });
-          enemyBullets.splice(bi, 1);
         }
-      }
+      });
     }
 
     if (mark.tick >= 0.25) {
       mark.tick -= 0.25;
-      var enemies = rt.state.enemies || [];
-      var ei;
-      for (ei = enemies.length - 1; ei >= 0; ei -= 1) {
-        var enemy = enemies[ei];
+      ensureEnemyGrid(rt.state.enemies);
+      queryGridCallback(mark.x, mark.y, (mark.r || 12) + 30, function (eId) {
+        var enemy = getEnemyById(eId);
+        if (!enemy || enemy.hp <= 0) return;
         var reach = (mark.r || 12) + (enemy.r || 10);
-        if (dist2(mark.x, mark.y, enemy.x, enemy.y) > reach * reach) continue;
-        damageEnemy(enemy, mark.dmg || 1, { source: 'zone', x: mark.x, y: mark.y });
-        if (mark.kind === 'solar-trench') {
-          enemy.burnStacks = Math.min(10, (enemy.burnStacks || 0) + 1);
-          enemy.burnTimer = 3.0;
+        var edx = mark.x - enemy.x;
+        var edy = mark.y - enemy.y;
+        if (edx * edx + edy * edy <= reach * reach) {
+          damageEnemy(enemy, mark.dmg || 1, { source: 'zone', x: mark.x, y: mark.y });
+          if (mark.kind === 'solar-trench') {
+            enemy.burnStacks = Math.min(10, (enemy.burnStacks || 0) + 1);
+            enemy.burnTimer = 3.0;
+          }
+          if (enemy.hp <= 0) killEnemy(enemy, 'zone');
         }
-        if (enemy.hp <= 0) killEnemy(enemy, 'zone');
-      }
+      });
     }
     if (mark.life <= 0) marks.splice(i, 1);
+  }
+
+  if (vaporizedAny) {
+    for (var bi = enemyBullets.length - 1; bi >= 0; bi -= 1) {
+      if (enemyBullets[bi]._vaporized) {
+        enemyBullets.splice(bi, 1);
+      }
+    }
   }
 }
 

@@ -12,10 +12,11 @@ import { damagePlayer } from '../combat.js';
 import { triggerGameOver } from '../flow.js';
 import { ensureScriptedBoss, fireArtillery } from '../spawning.js';
 import { logEvent } from '../../ui/hud.js';
-import { stepBoss, stepBossArena } from './bosses.js';
+import { stepBoss, stepBossArena, updateTitanPartCache } from './bosses.js';
 import { clearEnemyShields, clearShieldsOwnedBy } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { primeEnemy, stepEnemyHazards, stepNewEnemy, sweepDefeated } from './new-enemies.js';
+import { populateEnemyGrid } from '../../core/spatial-grid.js';
 
 function isFreshKind(kind) {
   return kind === 'spitter' || kind === 'scurrier' || kind === 'warden' || kind === 'burrower' || kind === 'mine' || kind === 'stormTower';
@@ -26,12 +27,13 @@ export function stepEnemies(dt, frame) {
   var boundW = frame.boundW;
   var boundH = frame.boundH;
   stepBossArena(dt, frame);
-  stepEnemyHazards(dt, frame);
   sweepDefeated();
   ensureScriptedBoss();
+
   for (var j = rt.state.enemies.length - 1; j >= 0; j -= 1) {
     var e = rt.state.enemies[j];
     if (!e || e.hp <= 0) continue;
+    var isCulled = (e.x < -120 || e.x > boundW + 120 || e.y < -120 || e.y > boundH + 120);
     if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
     if (e.armorBreakTimer > 0) e.armorBreakTimer = Math.max(0, e.armorBreakTimer - dt);
     var dx = p.x - e.x;
@@ -63,7 +65,7 @@ export function stepEnemies(dt, frame) {
     var skipMove = false;
     if (e.kind === 'rusher') {
       if (e.burstCd === undefined) { e.burstCd = 1.5 + rng('spawn') * 1.0; e.burstTime = 0; }
-      if (!empFrozen) {
+      if (!empFrozen && !isCulled) {
         if (e.burstTime > 0) {
           e.burstTime -= dt;
           speed = e.speed * 1.55;
@@ -92,30 +94,34 @@ export function stepEnemies(dt, frame) {
         }
       }
     } else if (e.kind === 'artillery') {
-      e.timeAlive = (e.timeAlive || 0) + dt;
-      var distToP = Math.hypot(p.x - e.x, p.y - e.y);
+      var distToP = d;
       e.barrelAngle = Math.atan2(p.y - e.y, p.x - e.x);
-      if (!e.deployed) {
-        if ((distToP >= 180 && distToP <= 340) || e.timeAlive > 4) {
-          e.deployed = true;
-          e.siegeTimer = 0.9;
-          e.cooldown = 0;
-          speed = 0;
-        }
+      if (isCulled) {
+        speed = e.speed;
       } else {
-        speed = 0;
-        if (!empFrozen) {
-          if (e.siegeTimer > 0) {
-            e.siegeTimer -= dt;
-            if (e.siegeTimer <= 0) {
-              fireArtillery(e);
-              e.cooldown = 3.8;
-            }
-          } else if (e.cooldown > 0) {
-            e.cooldown -= dt;
-            if (e.cooldown <= 0) {
-              fireArtillery(e);
-              e.cooldown = 3.8;
+        e.timeAlive = (e.timeAlive || 0) + dt;
+        if (!e.deployed) {
+          if ((distToP >= 180 && distToP <= 340) || e.timeAlive > 4) {
+            e.deployed = true;
+            e.siegeTimer = 0.9;
+            e.cooldown = 0;
+            speed = 0;
+          }
+        } else {
+          speed = 0;
+          if (!empFrozen) {
+            if (e.siegeTimer > 0) {
+              e.siegeTimer -= dt;
+              if (e.siegeTimer <= 0) {
+                fireArtillery(e);
+                e.cooldown = 3.8;
+              }
+            } else if (e.cooldown > 0) {
+              e.cooldown -= dt;
+              if (e.cooldown <= 0) {
+                fireArtillery(e);
+                e.cooldown = 3.8;
+              }
             }
           }
         }
@@ -221,7 +227,7 @@ export function stepEnemies(dt, frame) {
         }
       }
 
-      if (!empFrozen) {
+      if (!empFrozen && !isCulled) {
         e.shootCd = (e.shootCd || 3.5) - dt;
         if (e.shootCd <= 0) {
           e.shootCd = 3.5;
@@ -247,12 +253,15 @@ export function stepEnemies(dt, frame) {
         }
       }
 
-      if (!e.ringTriggered && e.hp < e.maxHp * 0.5) {
+      if (!e.ringTriggered && !isCulled && e.hp < e.maxHp * 0.5) {
         e.ringTriggered = true;
-        var edpDist = Math.hypot(p.x - e.x, p.y - e.y) || 1;
-        if (edpDist <= 120) {
-          var pushX = ((p.x - e.x) / edpDist) * 15;
-          var pushY = ((p.y - e.y) / edpDist) * 15;
+        var rdx = p.x - e.x;
+        var rdy = p.y - e.y;
+        var edpDist2 = rdx * rdx + rdy * rdy;
+        if (edpDist2 <= 120 * 120) {
+          var edpDist = Math.sqrt(edpDist2) || 1;
+          var pushX = (rdx / edpDist) * 15;
+          var pushY = (rdy / edpDist) * 15;
           p.x = clamp(p.x + pushX, p.r, boundW - p.r);
           p.y = clamp(p.y + pushY, p.r, boundH - p.r);
           p.slowTimer = Math.max(p.slowTimer || 0, 0.5);
@@ -265,6 +274,8 @@ export function stepEnemies(dt, frame) {
     }
 
     if (e.kind === 'titan') {
+      updateTitanPartCache(e, p);
+      if (e.partCache) e.partCache._frameTime = rt.state.waveTime;
       if (e.treadDestroyed) {
         e.speed = (e.baseSpeed || 50) * 0.6;
       }
@@ -319,10 +330,13 @@ export function stepEnemies(dt, frame) {
         AudioFX.blast();
         AudioFX.stormSiren();
 
-        var tpDist = Math.hypot(p.x - e.x, p.y - e.y) || 1;
-        if (tpDist <= 180) {
-          p.x = clamp(p.x + ((p.x - e.x) / tpDist) * 30, p.r, boundW - p.r);
-          p.y = clamp(p.y + ((p.y - e.y) / tpDist) * 30, p.r, boundH - p.r);
+        var tdx = p.x - e.x;
+        var tdy = p.y - e.y;
+        var tpDist2 = tdx * tdx + tdy * tdy;
+        if (tpDist2 <= 180 * 180) {
+          var tpDist = Math.sqrt(tpDist2) || 1;
+          p.x = clamp(p.x + (tdx / tpDist) * 30, p.r, boundW - p.r);
+          p.y = clamp(p.y + (tdy / tpDist) * 30, p.r, boundH - p.r);
           p.slowTimer = Math.max(p.slowTimer || 0, 0.6);
         }
         rt.state.shockRings.push({
@@ -403,8 +417,11 @@ export function stepEnemies(dt, frame) {
       }
     }
 
-    var touchD = Math.hypot(p.x - e.x, p.y - e.y);
-    if (!e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD <= p.r + e.r && e.touchCooldown <= 0 && p.invulnerable <= 0) {
+    var tdx = p.x - e.x;
+    var tdy = p.y - e.y;
+    var touchR = (p.r || 16) + (e.r || 12);
+    var touchD2 = tdx * tdx + tdy * tdy;
+    if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
       var touched = damagePlayer(e.damage, 'contact');
       e.touchCooldown = 0.85;
       if (touched > 0) {
@@ -419,6 +436,7 @@ export function stepEnemies(dt, frame) {
     }
   }
   sweepDefeated();
+  populateEnemyGrid(rt.state.enemies);
   stepEnemyHazards(dt, frame);
   sweepDefeated();
   if (p.hp <= 0 && !rt.state.over) triggerGameOver();
