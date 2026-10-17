@@ -465,6 +465,7 @@ export function upgradeModule(moduleId) {
   meta.scrap -= cost;
   meta.workshop.unlockedModules[moduleId] = currentTier + 1;
   writeMeta(meta);
+  triggerCheckpointSave();
   return { ok: true, success: true, newTier: currentTier + 1, tier: currentTier + 1, cost: cost };
 }
 
@@ -584,6 +585,7 @@ export function claimDailyBounty(bountyId) {
   bounty.claimed = true;
   addScrap(reward);
   saveDailyBounties(dc);
+  triggerCheckpointSave();
   return { ok: true, success: true, reward: reward };
 }
 
@@ -595,6 +597,7 @@ export function claimGrandSlam() {
   dc.grandSlamClaimed = true;
   addScrap(GRAND_SLAM_BONUS);
   saveDailyBounties(dc);
+  triggerCheckpointSave();
   return { ok: true, success: true, reward: GRAND_SLAM_BONUS };
 }
 
@@ -893,6 +896,7 @@ export function recordStageClear(stageId, details) {
   }
 
   saveCampaignStore(store);
+  triggerCheckpointSave();
   return store.stages[stageId];
 }
 
@@ -1011,5 +1015,335 @@ export function recordHardcoreClear(operationId, details) {
   }
 
   saveHardcoreStore(store);
+  triggerCheckpointSave();
   return store.operations[operationId];
 }
+
+// --- Unified Cloud Save Snapshot & Smart Merge (Schema v2) ---
+
+var checkpointHook = null;
+
+export function registerCheckpointHook(fn) {
+  checkpointHook = fn;
+}
+
+export function triggerCheckpointSave() {
+  if (typeof checkpointHook === 'function') {
+    try {
+      checkpointHook();
+    } catch (e) {
+      // Non-blocking
+    }
+  }
+}
+
+export function exportUnifiedSaveData() {
+  var meta = readMeta();
+  var camp = getCampaignStore();
+  var hard = getHardcoreStore();
+  var ws = getWorkshopState();
+  var cos = getCosmetics();
+  var bounties = readDailyBounties();
+  var bestScore = readBestScoreV2();
+  var modScore = readModdedBestScore();
+
+  return {
+    version: 1,
+    bestScore: bestScore,
+    modScore: modScore,
+    meta: {
+      scrap: readScrap(),
+      heatUnlocked: meta.heatUnlocked || 0,
+      unlockedRigs: meta.unlockedRigs ? meta.unlockedRigs.slice() : ['scrapper'],
+      achievements: meta.achievements ? Object.assign({}, meta.achievements) : {},
+      stats: meta.stats ? JSON.parse(JSON.stringify(meta.stats)) : defaultStats()
+    },
+    campaign: {
+      stages: camp.stages ? JSON.parse(JSON.stringify(camp.stages)) : {},
+      stats: camp.stats ? Object.assign({}, camp.stats) : { totalStars: 0, stagesCleared: 0, attempts: 0 },
+      unlockedStages: camp.unlockedStages ? camp.unlockedStages.slice() : ['stage_1_1'],
+      unlockedBoosters: camp.unlockedBoosters ? camp.unlockedBoosters.slice() : []
+    },
+    hardcore: {
+      operations: hard.operations ? JSON.parse(JSON.stringify(hard.operations)) : {},
+      unlockedBadges: hard.unlockedBadges ? hard.unlockedBadges.slice() : []
+    },
+    workshop: {
+      unlockedModules: ws.unlockedModules ? Object.assign({}, ws.unlockedModules) : defaultUnlockedModules(),
+      loadout: ws.loadout ? Object.assign({}, ws.loadout) : { propulsion: null, armor: null, tactical: null }
+    },
+    vault: {
+      selectedSkin: cos.selectedSkin || 'default',
+      selectedTrail: cos.selectedTrail || 'default',
+      unlockedSkins: cos.unlockedSkins ? cos.unlockedSkins.slice() : ['default'],
+      unlockedTrails: cos.unlockedTrails ? cos.unlockedTrails.slice() : ['default']
+    },
+    bounties: {
+      date: bounties.date || '',
+      bounties: bounties.bounties ? JSON.parse(JSON.stringify(bounties.bounties)) : [],
+      grandSlamClaimed: !!bounties.grandSlamClaimed
+    }
+  };
+}
+
+export function importUnifiedSaveData(cloudData) {
+  if (!cloudData || typeof cloudData !== 'object' || Array.isArray(cloudData)) {
+    return false;
+  }
+
+  // 1. Best Score
+  var localBest = readBestScoreV2();
+  var cloudBest = num(cloudData.bestScore, 0, Number.MAX_SAFE_INTEGER, 0);
+  if (cloudBest > localBest) {
+    writeBestScoreV2(cloudBest);
+  }
+  if (typeof cloudData.modScore === 'number') {
+    var localMod = readModdedBestScore();
+    var cloudMod = num(cloudData.modScore, 0, Number.MAX_SAFE_INTEGER, 0);
+    if (cloudMod > localMod) writeModdedBestScore(cloudMod);
+  }
+
+  // 2. Meta, Scrap, Workshop, Vault, Bounties
+  var meta = readMeta();
+  var cMeta = cloudData.meta || {};
+
+  // Scrap: max
+  var cScrap = num(cMeta.scrap != null ? cMeta.scrap : cloudData.scrap, 0, Number.MAX_SAFE_INTEGER, 0);
+  meta.scrap = Math.max(meta.scrap || 0, cScrap);
+
+  // Heat unlocked: max
+  var cHeat = num(cMeta.heatUnlocked, 0, 5, 0);
+  meta.heatUnlocked = Math.max(meta.heatUnlocked || 0, cHeat);
+
+  // Unlocked rigs: union
+  if (Array.isArray(cMeta.unlockedRigs)) {
+    meta.unlockedRigs = stringList(meta.unlockedRigs.concat(cMeta.unlockedRigs));
+  }
+  if (meta.unlockedRigs.indexOf('scrapper') === -1) {
+    meta.unlockedRigs.unshift('scrapper');
+  }
+
+  // Achievements: union
+  if (cMeta.achievements && typeof cMeta.achievements === 'object') {
+    if (!meta.achievements) meta.achievements = {};
+    for (var achKey in cMeta.achievements) {
+      if (Object.prototype.hasOwnProperty.call(cMeta.achievements, achKey)) {
+        if (!meta.achievements[achKey]) {
+          meta.achievements[achKey] = cMeta.achievements[achKey];
+        }
+      }
+    }
+  }
+
+  // Stats: max
+  if (cMeta.stats && typeof cMeta.stats === 'object') {
+    var cStats = cMeta.stats;
+    var lStats = meta.stats || defaultStats();
+    lStats.runs = Math.max(lStats.runs || 0, num(cStats.runs, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.kills = Math.max(lStats.kills || 0, num(cStats.kills, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.justDashes = Math.max(lStats.justDashes || 0, num(cStats.justDashes, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.contracts = Math.max(lStats.contracts || 0, num(cStats.contracts, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.extractions = Math.max(lStats.extractions || 0, num(cStats.extractions, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.bestWave = Math.max(lStats.bestWave || 0, num(cStats.bestWave, 0, Number.MAX_SAFE_INTEGER, 0));
+    lStats.playTimeSec = Math.max(lStats.playTimeSec || 0, num(cStats.playTimeSec, 0, Number.MAX_SAFE_INTEGER, 0));
+
+    if (cStats.bossKills && typeof cStats.bossKills === 'object') {
+      if (!lStats.bossKills) lStats.bossKills = {};
+      for (var bKind in cStats.bossKills) {
+        if (Object.prototype.hasOwnProperty.call(cStats.bossKills, bKind)) {
+          lStats.bossKills[bKind] = Math.max(lStats.bossKills[bKind] || 0, num(cStats.bossKills[bKind], 0, Number.MAX_SAFE_INTEGER, 0));
+        }
+      }
+    }
+    if (Array.isArray(cStats.fusionsSeen)) {
+      lStats.fusionsSeen = stringList((lStats.fusionsSeen || []).concat(cStats.fusionsSeen));
+    }
+    if (Array.isArray(cStats.seenEnemies)) {
+      lStats.seenEnemies = stringList((lStats.seenEnemies || []).concat(cStats.seenEnemies));
+    }
+    meta.stats = lStats;
+  }
+
+  // Workshop (9 modules): max tier
+  var cWs = cloudData.workshop || cMeta.workshop;
+  if (cWs && typeof cWs === 'object') {
+    if (!meta.workshop) meta.workshop = { unlockedModules: defaultUnlockedModules(), loadout: {} };
+    if (!meta.workshop.unlockedModules) meta.workshop.unlockedModules = defaultUnlockedModules();
+    if (cWs.unlockedModules && typeof cWs.unlockedModules === 'object') {
+      for (var modId in cWs.unlockedModules) {
+        if (Object.prototype.hasOwnProperty.call(cWs.unlockedModules, modId)) {
+          var cTier = Math.floor(num(cWs.unlockedModules[modId], 1, 3, 1));
+          var lTier = meta.workshop.unlockedModules[modId] || 1;
+          meta.workshop.unlockedModules[modId] = Math.max(lTier, cTier);
+        }
+      }
+    }
+    if (cWs.loadout && typeof cWs.loadout === 'object') {
+      var lLoadout = meta.workshop.loadout || {};
+      var hasLocal = !!(lLoadout.propulsion || lLoadout.armor || lLoadout.tactical);
+      if (!hasLocal && (cWs.loadout.propulsion || cWs.loadout.armor || cWs.loadout.tactical)) {
+        var testLoadout = {
+          propulsion: cWs.loadout.propulsion || null,
+          armor: cWs.loadout.armor || null,
+          tactical: cWs.loadout.tactical || null
+        };
+        if (getEquippedWattage(testLoadout) <= MAX_WATTAGE) {
+          meta.workshop.loadout = testLoadout;
+        }
+      }
+    }
+  }
+
+  // Vault / Cosmetics: union
+  var cVault = cloudData.vault || cMeta.cosmetics;
+  if (cVault && typeof cVault === 'object') {
+    if (!meta.cosmetics) meta.cosmetics = { selectedSkin: 'default', selectedTrail: 'default', unlockedSkins: ['default'], unlockedTrails: ['default'] };
+    if (Array.isArray(cVault.unlockedSkins)) {
+      meta.cosmetics.unlockedSkins = stringList(meta.cosmetics.unlockedSkins.concat(cVault.unlockedSkins));
+    }
+    if (Array.isArray(cVault.unlockedTrails)) {
+      meta.cosmetics.unlockedTrails = stringList(meta.cosmetics.unlockedTrails.concat(cVault.unlockedTrails));
+    }
+    if (meta.cosmetics.unlockedSkins.indexOf('default') === -1) meta.cosmetics.unlockedSkins.unshift('default');
+    if (meta.cosmetics.unlockedTrails.indexOf('default') === -1) meta.cosmetics.unlockedTrails.unshift('default');
+  }
+
+  // Bounties: merge
+  var cBounties = cloudData.bounties || cMeta.dailyContracts;
+  if (cBounties && typeof cBounties === 'object' && cBounties.date) {
+    var lDc = meta.dailyContracts;
+    if (!lDc || !lDc.date || cBounties.date > lDc.date) {
+      meta.dailyContracts = cBounties;
+    } else if (cBounties.date === lDc.date && Array.isArray(cBounties.bounties)) {
+      if (Array.isArray(lDc.bounties)) {
+        for (var bi = 0; bi < lDc.bounties.length; bi++) {
+          var lb = lDc.bounties[bi];
+          for (var ci = 0; ci < cBounties.bounties.length; ci++) {
+            var cb = cBounties.bounties[ci];
+            if (cb && cb.id === lb.id) {
+              lb.progress = Math.max(lb.progress || 0, cb.progress || 0);
+              lb.claimed = lb.claimed || !!cb.claimed;
+              break;
+            }
+          }
+        }
+      }
+      lDc.grandSlamClaimed = lDc.grandSlamClaimed || !!cBounties.grandSlamClaimed;
+    }
+  }
+
+  writeMeta(meta);
+
+  // 3. Campaign Store: max stars, max score, min time
+  if (cloudData.campaign && typeof cloudData.campaign === 'object') {
+    var camp = getCampaignStore();
+    var cCamp = cloudData.campaign;
+    if (cCamp.stages && typeof cCamp.stages === 'object') {
+      for (var stgId in cCamp.stages) {
+        if (!Object.prototype.hasOwnProperty.call(cCamp.stages, stgId)) continue;
+        var cs = cCamp.stages[stgId];
+        if (!cs || typeof cs !== 'object') continue;
+        var ls = camp.stages[stgId] || {
+          stars: 0,
+          highScore: 0,
+          bestTime: 0,
+          completedAt: '',
+          starDetails: { star1: false, star2: false, star3: false }
+        };
+        var s1 = !!(ls.starDetails && ls.starDetails.star1) || !!(cs.starDetails && cs.starDetails.star1);
+        var s2 = !!(ls.starDetails && ls.starDetails.star2) || !!(cs.starDetails && cs.starDetails.star2);
+        var s3 = !!(ls.starDetails && ls.starDetails.star3) || !!(cs.starDetails && cs.starDetails.star3);
+        var earnedStars = (s1 ? 1 : 0) + (s2 ? 1 : 0) + (s3 ? 1 : 0);
+        var cStars = Math.floor(num(cs.stars, 0, 3, 0));
+        var finalStars = Math.max(ls.stars || 0, cStars, earnedStars);
+        var finalScore = Math.max(ls.highScore || 0, Math.floor(num(cs.highScore, 0, Number.MAX_SAFE_INTEGER, 0)));
+        var cTime = num(cs.bestTime, 0, Number.MAX_SAFE_INTEGER, 0);
+        var lTime = num(ls.bestTime, 0, Number.MAX_SAFE_INTEGER, 0);
+        var finalBestTime = (lTime > 0 && cTime > 0) ? Math.min(lTime, cTime) : (lTime || cTime || 0);
+        var finalCompletedAt = ls.completedAt || cs.completedAt || '';
+        if (ls.completedAt && cs.completedAt && cs.completedAt > ls.completedAt) {
+          finalCompletedAt = cs.completedAt;
+        }
+        camp.stages[stgId] = {
+          stars: finalStars,
+          highScore: finalScore,
+          bestTime: finalBestTime,
+          completedAt: finalCompletedAt,
+          starDetails: { star1: s1, star2: s2, star3: s3 }
+        };
+      }
+    }
+    if (Array.isArray(cCamp.unlockedStages)) {
+      camp.unlockedStages = stringList(camp.unlockedStages.concat(cCamp.unlockedStages));
+    }
+    if (Array.isArray(cCamp.unlockedBoosters)) {
+      camp.unlockedBoosters = stringList(camp.unlockedBoosters.concat(cCamp.unlockedBoosters));
+    }
+    var totalStars = 0;
+    var stagesCleared = 0;
+    for (var k in camp.stages) {
+      if (camp.stages[k] && camp.stages[k].stars > 0) {
+        totalStars += camp.stages[k].stars;
+        stagesCleared += 1;
+      }
+    }
+    camp.stats.totalStars = totalStars;
+    camp.stats.stagesCleared = stagesCleared;
+    if (cCamp.stats && typeof cCamp.stats.attempts === 'number') {
+      camp.stats.attempts = Math.max(camp.stats.attempts || 0, cCamp.stats.attempts);
+    }
+    for (var si = 0; si < STAGE_CHAIN.length; si++) {
+      var chkId = STAGE_CHAIN[si];
+      if (isStageUnlockedInternal(chkId, camp) && camp.unlockedStages.indexOf(chkId) === -1) {
+        camp.unlockedStages.push(chkId);
+      }
+    }
+    checkStarVaultMilestones(totalStars);
+    saveCampaignStore(camp);
+  }
+
+  // 4. Hardcore Store: union clears, min time, union badges
+  if (cloudData.hardcore && typeof cloudData.hardcore === 'object') {
+    var hard = getHardcoreStore();
+    var cHard = cloudData.hardcore;
+    if (cHard.operations && typeof cHard.operations === 'object') {
+      for (var opId in cHard.operations) {
+        if (!Object.prototype.hasOwnProperty.call(cHard.operations, opId)) continue;
+        var co = cHard.operations[opId];
+        if (!co || typeof co !== 'object') continue;
+        var lo = hard.operations[opId] || {
+          cleared: false,
+          bestTime: 0,
+          attempts: 0,
+          completedAt: '',
+          badge: ''
+        };
+        var hlTime = num(lo.bestTime, 0, Number.MAX_SAFE_INTEGER, 0);
+        var hcTime = num(co.bestTime, 0, Number.MAX_SAFE_INTEGER, 0);
+        var finalTime = (hlTime > 0 && hcTime > 0) ? Math.min(hlTime, hcTime) : (hlTime || hcTime || 0);
+        var finalBadge = lo.badge || co.badge || '';
+        var hFinalCompletedAt = lo.completedAt || co.completedAt || '';
+        if (lo.completedAt && co.completedAt && co.completedAt > lo.completedAt) {
+          hFinalCompletedAt = co.completedAt;
+        }
+        hard.operations[opId] = {
+          cleared: !!(lo.cleared || co.cleared),
+          bestTime: finalTime,
+          attempts: Math.max(lo.attempts || 0, Math.floor(num(co.attempts, 0, Number.MAX_SAFE_INTEGER, 0))),
+          completedAt: hFinalCompletedAt,
+          badge: finalBadge
+        };
+        if (finalBadge && hard.unlockedBadges.indexOf(finalBadge) === -1) {
+          hard.unlockedBadges.push(finalBadge);
+        }
+      }
+    }
+    if (Array.isArray(cHard.unlockedBadges)) {
+      hard.unlockedBadges = stringList(hard.unlockedBadges.concat(cHard.unlockedBadges));
+    }
+    saveHardcoreStore(hard);
+  }
+
+  return true;
+}
+
