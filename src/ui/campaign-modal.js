@@ -1,6 +1,7 @@
 import { isChinese, onLanguageChange } from '../core/i18n.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
-import { CAMPAIGN_MILESTONES, CAMPAIGN_SECTORS, CAMPAIGN_STAGES } from '../data/campaign-stages.js';
+import { CAMPAIGN_MILESTONES, CAMPAIGN_SECTORS, CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
+import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
 
 var modalElement = null;
@@ -98,6 +99,9 @@ function selectStage(stageId) {
   var store = getCampaignStore();
   store.selectedStage = stageId;
   saveCampaignStore(store);
+  if (rt.state && rt.state.mode === 'campaign') {
+    rt.state.stageConfig = getCampaignStage(stageId);
+  }
   closeCampaignModal();
 }
 

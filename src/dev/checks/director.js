@@ -4,7 +4,9 @@ import { makeState } from '../../core/state.js';
 import { getDailyRule } from '../../data/daily.js';
 import { routeById } from '../../data/routes.js';
 import { noteContractEvent } from '../../systems/contracts.js';
-import { designScales, onBossDefeated, onWaveStart, planWave } from '../../systems/director.js';
+import { designScales, evaluateStageStars, evaluateStarCondition, onBossDefeated, onWaveStart, planWave } from '../../systems/director.js';
+import { getCampaignStage } from '../../data/campaign-stages.js';
+import { getSectorOfStage, getSectorReqStars, getStageChain } from '../../core/meta-store.js';
 import { spawnCrate } from '../../systems/drops.js';
 import { explodeBarrel, killEnemy } from '../../systems/combat.js';
 import { triggerGameOver } from '../../systems/flow.js';
@@ -263,6 +265,30 @@ export function run() {
     if (brick.x !== 100 || brick.y !== 100) throw new Error('knockbackImmune boss was shoved');
     if (!(brick.empTimer >= 1.5)) throw new Error('boss barrel did not stun');
     if (brick.hp !== 560) throw new Error('boss barrel base was not 240');
+
+    // Declarative Star Criteria & Dynamic Stage Chain Verifications
+    var chain = getStageChain();
+    if (!Array.isArray(chain) || chain.length !== 15) throw new Error('dynamic stage chain length should be 15');
+    if (chain[0] !== 'stage_1_1' || chain[14] !== 'stage_ex_3') throw new Error('stage chain boundaries drifted');
+    if (getSectorOfStage('stage_1_1') !== 1 || getSectorOfStage('stage_2_1') !== 2 || getSectorOfStage('stage_3_1') !== 3 || getSectorOfStage('stage_ex_1') !== 4) {
+      throw new Error('dynamic sector lookup by stage object failed');
+    }
+    if (getSectorReqStars(1) !== 0 || getSectorReqStars(2) !== 8 || getSectorReqStars(3) !== 18 || getSectorReqStars(4) !== 28) {
+      throw new Error('dynamic sector req stars failed');
+    }
+
+    var stage11 = getCampaignStage('stage_1_1');
+    if (!stage11 || !stage11.starRules) throw new Error('stage_1_1 missing declarative starRules');
+    var evalState = fresh();
+    evalState.wave = 3;
+    evalState.stageElapsed = 45;
+    evalState.player.hp = 85;
+    evalState.player.maxHp = 100;
+    evalState.damageTakenInStage = 10;
+    var starsRes = evaluateStageStars(evalState, stage11);
+    if (!starsRes.star1 || !starsRes.star2 || !starsRes.star3) {
+      throw new Error('stage_1_1 star evaluation failed: ' + JSON.stringify(starsRes));
+    }
   } finally {
     clearSeed();
     rt.state = saved;

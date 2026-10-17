@@ -1,15 +1,18 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
-import { getCampaignStore, getHardcoreStore, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
+import { getCampaignStore, getHardcoreStore, readMeta, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
 import { applyRig } from '../data/rigs.js';
 import { finishAccountRun, saveAccountCheckpoint, startAccountRun } from '../platform/playroom.js';
+import { getCampaignStage } from '../data/campaign-stages.js';
+import { HARDCORE_OPERATIONS, getHardcoreOperation } from '../data/hardcore-operations.js';
 import { checkStageVictory, directorStartRun } from './director.js';
 import { finalizeGhostOnClear, initGhostForRun } from './ghost.js';
 import { grantDeferredExtract } from './interlude.js';
 import { applyLoadout, onRunEnd } from './meta.js';
+import { initMode } from './modes/mode-adapter.js';
 import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
 import { updateDomUi } from '../ui/hud.js';
@@ -37,14 +40,6 @@ export function livingSovereign() {
 
 export function isStormFront() {
   if (!rt.state) return false;
-  if (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore') {
-    if (!rt.state.over && !rt.state.paused && rt.renderDt > 0) {
-      if (rt.state._lastVictoryCheckTime !== rt.renderTime) {
-        rt.state._lastVictoryCheckTime = rt.renderTime;
-        checkStageVictory(rt.state, rt.renderDt);
-      }
-    }
-  }
   if (livingSovereign()) return true;
   return rt.state.waveTime >= WAVE_LENGTH - stormSeconds();
 }
@@ -62,82 +57,24 @@ export function stormWind() {
 
 export function beginRun() {
   if (!rt.state || rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)) return;
-  applyLoadout(rt.state);
 
   var state = rt.state;
-  var stageConfig = state.stageConfig;
-  if (state.mode === 'campaign' || state.mode === 'hardcore') {
-    if (stageConfig) {
-      var lockedRig = stageConfig.lockedRig || stageConfig.fixedRig;
-      if (lockedRig) {
-        applyRig(state.player, lockedRig);
-        state.rigId = lockedRig;
-        state.player.rig = lockedRig;
-      }
-      var lockedWeapon = stageConfig.lockedWeapon || stageConfig.fixedWeapon;
-      if (lockedWeapon) {
-        state.weaponId = lockedWeapon;
-        state.player.weapon = lockedWeapon;
-        state.player.weaponMode = lockedWeapon;
-      }
-      if (stageConfig.maxHpCap) {
-        state.player.maxHp = Math.min(state.player.maxHp, stageConfig.maxHpCap);
-        state.player.hp = state.player.maxHp;
-      }
-      state.stageElapsed = 0;
-      state.stageCleared = false;
-      state.stageStars = { star1: false, star2: false, star3: false };
-      state.scrapCollectedInStage = 0;
-      state.damageTakenInStage = 0;
-      if (stageConfig.type === 'beacon_defense' || stageConfig.goalType === 'beacon_defense') {
-        state.beaconMaxHp = stageConfig.beaconMaxHp || 1000;
-        state.beaconHp = state.beaconMaxHp;
-        var bw = (rt.ui && rt.ui.width) || state.width || 960;
-        var bh = (rt.ui && rt.ui.height) || state.height || 640;
-        state.beacon = {
-          x: bw / 2,
-          y: bh / 2,
-          r: stageConfig.beaconRadius || 40,
-          hp: state.beaconHp,
-          maxHp: state.beaconMaxHp,
-          captureRadius: stageConfig.captureRadius || 120
-        };
-      }
-      if (stageConfig.type === 'vip_hunt' || stageConfig.goalType === 'vip_hunt') {
-        state.vipList = [];
-        var vipCount = stageConfig.targetQuota || 2;
-        var vw = (rt.ui && rt.ui.width) || state.width || 960;
-        var vh = (rt.ui && rt.ui.height) || state.height || 640;
-        var kind = stageConfig.id === 'stage_1_3' ? 'brute' :
-                   stageConfig.id === 'stage_2_2' ? 'elite' :
-                   stageConfig.id === 'stage_3_3' ? 'burrower' : (stageConfig.vipKind || 'brute');
-        for (var vi = 0; vi < vipCount; vi += 1) {
-          var angle = (vi / vipCount) * Math.PI * 2 + Math.PI / 4;
-          var dist = 220;
-          var vipEnemy = {
-            kind: kind,
-            x: vw / 2 + Math.cos(angle) * dist,
-            y: vh / 2 + Math.sin(angle) * dist,
-            r: kind === 'burrower' ? 20 : 22,
-            hp: kind === 'burrower' ? 280 : 380,
-            maxHp: kind === 'burrower' ? 280 : 380,
-            speed: 120,
-            damage: 24,
-            score: 300,
-            isVip: true,
-            color: '#f43f5e',
-            touchCooldown: 0,
-            shootCooldown: 1.0 + vi * 0.5
-          };
-          if (kind === 'elite') {
-            vipEnemy.affix = 'command';
-          }
-          state.enemies.push(vipEnemy);
-          state.vipList.push(vipEnemy);
-        }
-      }
-    }
+  var meta = readMeta();
+  var selectedMode = (meta && meta.selectedMode) || state.mode || 'standard';
+  state.mode = selectedMode;
+
+  if (state.mode === 'campaign' && !state.stageConfig) {
+    var campStore = getCampaignStore();
+    var selStageId = (campStore && campStore.selectedStage) || 'stage_1_1';
+    state.stageConfig = getCampaignStage(selStageId);
+  } else if (state.mode === 'hardcore' && !state.stageConfig) {
+    var hardStore = getHardcoreStore();
+    var selOpId = (hardStore && hardStore.selectedOperation) || 'op_01';
+    state.stageConfig = getHardcoreOperation(selOpId) || HARDCORE_OPERATIONS[0];
   }
+
+  applyLoadout(state);
+  initMode(state, state.mode, state.stageConfig);
 
   directorStartRun(rt.state);
   AudioFX.unlock();
@@ -197,6 +134,20 @@ export function restart() {
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   syncCombatLayout();
   rt.state = makeState();
+  var meta = readMeta();
+  var selectedMode = (meta && meta.selectedMode) || 'standard';
+  rt.state.mode = selectedMode;
+  if (selectedMode === 'campaign') {
+    var campStore = getCampaignStore();
+    var selStageId = (campStore && campStore.selectedStage) || 'stage_1_1';
+    rt.state.stageConfig = getCampaignStage(selStageId);
+  } else if (selectedMode === 'hardcore') {
+    var hardStore = getHardcoreStore();
+    var selOpId = (hardStore && hardStore.selectedOperation) || 'op_01';
+    rt.state.stageConfig = getHardcoreOperation(selOpId) || HARDCORE_OPERATIONS[0];
+  } else {
+    rt.state.stageConfig = null;
+  }
   rt.state.paused = true;
   rt.state.player.x = rt.state.width / 2;
   rt.state.player.y = rt.state.height / 2;

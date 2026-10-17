@@ -71,6 +71,21 @@ export var CAMPAIGN_STAGES = [
       star2: '60 秒內通關',
       star3: '剩餘 HP ≥ 80% 且完成 1 次桶殺'
     },
+    starRules: {
+      star1: { type: 'waves_cleared', count: 3 },
+      star2: { type: 'time_under', seconds: 60 },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.8 },
+          {
+            any: [
+              { type: 'damage_taken_under', maxDamage: 20 },
+              { type: 'barrel_kill' }
+            ]
+          }
+        ]
+      }
+    },
     enemyWeights: { rusher: 0.6, crawler: 0.4 },
     boss: null
   },
@@ -92,6 +107,16 @@ export var CAMPAIGN_STAGES = [
       star1: '收集 100 廢料',
       star2: '50 秒內提前達成',
       star3: '未被流星命中且 HP ≥ 75%'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 50 },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.75 },
+          { type: 'damage_taken_under', maxDamage: 25 }
+        ]
+      }
     },
     enemyWeights: { crawler: 0.7, rusher: 0.3 },
     boss: null
@@ -115,6 +140,11 @@ export var CAMPAIGN_STAGES = [
       star2: '剩餘時間 ≥ 30 秒',
       star3: '重砲一擊同時命中兩隻目標'
     },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 60 },
+      star3: { type: 'hp_ratio', ratio: 0.70 }
+    },
     enemyWeights: { brute: 0.3, rusher: 0.4, crawler: 0.3 },
     boss: null
   },
@@ -136,6 +166,16 @@ export var CAMPAIGN_STAGES = [
       star1: '擊敗 Titan 首領',
       star2: '90 秒內擊破',
       star3: '達成 3 次 Just Dash 且 P3 無傷'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 90 },
+      star3: {
+        any: [
+          { type: 'just_dashes', count: 3 },
+          { type: 'hp_ratio', ratio: 0.8 }
+        ]
+      }
     },
     enemyWeights: {},
     boss: 'titan'
@@ -161,6 +201,11 @@ export var CAMPAIGN_STAGES = [
       star2: '全程未踩入熔岩池',
       star3: '剩餘 HP ≥ 70% 且全殲火砲蟲'
     },
+    starRules: {
+      star1: { type: 'waves_cleared', count: 4 },
+      star2: { type: 'no_lava' },
+      star3: { type: 'hp_ratio', ratio: 0.70 }
+    },
     enemyWeights: { artillery: 0.35, crawler: 0.35, rusher: 0.3 },
     boss: null
   },
@@ -182,6 +227,11 @@ export var CAMPAIGN_STAGES = [
       star1: '摧毀裝甲護送車',
       star2: '車輛行駛過半前擊毀',
       star3: '收集車輛掉落的全數物資箱'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 36 },
+      star3: { type: 'hp_ratio', ratio: 0.75 }
     },
     enemyWeights: { spitter: 0.4, crawler: 0.4, rusher: 0.2 },
     boss: null
@@ -205,6 +255,11 @@ export var CAMPAIGN_STAGES = [
       star2: '信號塔剩餘耐久 ≥ 75%',
       star3: '在防守光圈內累計停留 ≥ 45 秒'
     },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'beacon_hp_ratio', ratio: 0.75 },
+      star3: { type: 'beacon_stay_time', seconds: 45 }
+    },
     enemyWeights: { scurrier: 0.45, spitter: 0.35, crawler: 0.2 },
     boss: null
   },
@@ -226,6 +281,11 @@ export var CAMPAIGN_STAGES = [
       star1: '擊沉 Dreadnought',
       star2: '100 秒內完成擊殺',
       star3: '全程未受到水雷傷害'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 100 },
+      star3: { type: 'hp_ratio', ratio: 0.70 }
     },
     enemyWeights: {},
     boss: 'dreadnought'
@@ -251,6 +311,11 @@ export var CAMPAIGN_STAGES = [
       star2: '75 秒內通關',
       star3: '達成 10+ Chain Combo'
     },
+    starRules: {
+      star1: { type: 'waves_cleared', count: 3 },
+      star2: { type: 'time_under', seconds: 75 },
+      star3: { type: 'combo', count: 10 }
+    },
     enemyWeights: { warden: 0.25, rusher: 0.35, brute: 0.2, scurrier: 0.2 },
     boss: null
   },
@@ -272,6 +337,21 @@ export var CAMPAIGN_STAGES = [
       star1: '收集 150 廢料',
       star2: '觸發至少 3 次尖塔共振',
       star3: '未消耗過 EMP 且 HP ≥ 70%'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: {
+        any: [
+          { type: 'spire_chains', count: 3 },
+          { type: 'time_under', seconds: 70 }
+        ]
+      },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.70 },
+          { type: 'no_emp' }
+        ]
+      }
     },
     enemyWeights: { crawler: 0.4, scurrier: 0.3, warden: 0.3 },
     boss: null
@@ -295,6 +375,11 @@ export var CAMPAIGN_STAGES = [
       star2: '破盾後 3 秒內擊斃守衛',
       star3: '剩餘 HP ≥ 80% 且 P2 無傷'
     },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 75 },
+      star3: { type: 'hp_ratio', ratio: 0.80 }
+    },
     enemyWeights: { burrower: 0.35, warden: 0.35, brute: 0.3 },
     boss: null
   },
@@ -316,6 +401,11 @@ export var CAMPAIGN_STAGES = [
       star1: '擊敗 Storm Sovereign',
       star2: '110 秒內擊破神君',
       star3: '神君護盾無敵期間無傷'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 110 },
+      star3: { type: 'hp_ratio', ratio: 0.75 }
     },
     enemyWeights: {},
     boss: 'sovereign'
@@ -341,6 +431,16 @@ export var CAMPAIGN_STAGES = [
       star2: '100 秒內通關',
       star3: '剩餘 HP ≥ 80% 且達成 15+ Chain'
     },
+    starRules: {
+      star1: { type: 'waves_cleared', count: 5 },
+      star2: { type: 'time_under', seconds: 100 },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.80 },
+          { type: 'combo', count: 15 }
+        ]
+      }
+    },
     enemyWeights: { brute: 0.25, warden: 0.25, spitter: 0.25, scurrier: 0.25 },
     boss: null
   },
@@ -362,6 +462,16 @@ export var CAMPAIGN_STAGES = [
       star1: '極限信號塔防守 100 秒',
       star2: '信號塔剩餘耐久 ≥ 80%',
       star3: '在防守圈內累計停留 ≥ 60 秒且 HP ≥ 75%'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'beacon_hp_ratio', ratio: 0.80 },
+      star3: {
+        all: [
+          { type: 'beacon_stay_time', seconds: 60 },
+          { type: 'hp_ratio', ratio: 0.75 }
+        ]
+      }
     },
     enemyWeights: { burrower: 0.3, warden: 0.3, scurrier: 0.2, brute: 0.2 },
     boss: null
@@ -385,9 +495,19 @@ export var CAMPAIGN_STAGES = [
       star2: '120 秒內完成擊殺',
       star3: '神君狂暴階段無傷且達成 5 次 Just Dash'
     },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 120 },
+      star3: {
+        any: [
+          { type: 'just_dashes', count: 5 },
+          { type: 'hp_ratio', ratio: 0.80 }
+        ]
+      }
+    },
     enemyWeights: {},
     boss: 'sovereign'
-  }
+  },
 ];
 
 export function getCampaignStage(id) {

@@ -133,6 +133,19 @@ function refresh() {
     }
   }
 
+  if (rt.state) {
+    rt.state.mode = currentMode;
+    if (currentMode === 'campaign') {
+      var campStore = getCampaignStore();
+      var selStageId = (campStore && campStore.selectedStage) || 'stage_1_1';
+      rt.state.stageConfig = getCampaignStage(selStageId);
+    } else if (currentMode === 'hardcore') {
+      rt.state.stageConfig = hcOp || getSelectedHardcoreOperation();
+    } else {
+      rt.state.stageConfig = null;
+    }
+  }
+
   // Rig Buttons Refresh
   for (i = 0; i < rigButtons.length; i += 1) {
     rig = RIGS[i];
@@ -322,6 +335,18 @@ function chooseMode(mode) {
     var op = getSelectedHardcoreOperation();
     if (op) {
       writeMeta({ selectedRig: op.lockedRig, selectedWeapon: op.lockedWeapon });
+    }
+  }
+  if (rt.state) {
+    rt.state.mode = mode;
+    if (mode === 'campaign') {
+      var campStore = getCampaignStore();
+      var selStageId = (campStore && campStore.selectedStage) || 'stage_1_1';
+      rt.state.stageConfig = getCampaignStage(selStageId);
+    } else if (mode === 'hardcore') {
+      rt.state.stageConfig = getSelectedHardcoreOperation();
+    } else {
+      rt.state.stageConfig = null;
     }
   }
   refresh();

@@ -8,8 +8,10 @@ import { contractById } from '../data/contracts.js';
 import { routeById, routeIds } from '../data/routes.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
+import { getCampaignStage } from '../data/campaign-stages.js';
 import { assignRoute, onBossCleared } from './interlude.js';
 import { triggerGameOver } from './flow.js';
+import { checkStageVictory, onModeBossDefeated } from './modes/mode-adapter.js';
 
 var WEIGHT_KEYS = ['crawler', 'rusher', 'brute', 'artillery', 'spitter', 'scurrier', 'warden', 'burrower'];
 var UNLOCK_WAVE = { crawler: 1, rusher: 1, brute: 1, artillery: 2, spitter: 6, scurrier: 7, warden: 11, burrower: 12 };
@@ -649,8 +651,110 @@ export function onBossDefeated(enemy) {
   noteMetaEvent('boss', { kind: kind, wave: rt.state.wave || 1 });
   onWaveEnd(rt.state);
   onBossCleared(rt.state);
-  if (rt.state.mode === 'campaign' || rt.state.mode === 'hardcore') {
-    checkStageVictory(rt.state, 0);
+  onModeBossDefeated(rt.state, enemy);
+}
+
+export function evaluateStarCondition(cond, state, stageConfig, ctx) {
+  if (!cond) return true;
+  if (!state) state = rt.state || {};
+  if (!stageConfig) stageConfig = state.stageConfig || {};
+
+  var p = state.player || {};
+  var maxHp = p.maxHp || 100;
+  var currentHp = p.hp || 0;
+  var hpRatio = (ctx && typeof ctx.hpRatio === 'number') ? ctx.hpRatio : (maxHp > 0 ? currentHp / maxHp : 0);
+  var elapsed = (ctx && typeof ctx.elapsed === 'number') ? ctx.elapsed : (state.stageElapsed || 0);
+
+  if (Array.isArray(cond)) {
+    return cond.every(function (sub) {
+      return evaluateStarCondition(sub, state, stageConfig, ctx);
+    });
+  }
+  if (Array.isArray(cond.all)) {
+    return cond.all.every(function (sub) {
+      return evaluateStarCondition(sub, state, stageConfig, ctx);
+    });
+  }
+  if (Array.isArray(cond.any)) {
+    return cond.any.some(function (sub) {
+      return evaluateStarCondition(sub, state, stageConfig, ctx);
+    });
+  }
+
+  var type = cond.type;
+  if (!type) return true;
+
+  switch (type) {
+    case 'primary_clear':
+      return true;
+
+    case 'waves_cleared': {
+      var targetWaves = cond.count != null ? cond.count : (cond.value != null ? cond.value : (stageConfig.targetWaves || 1));
+      return (state.wave || 1) >= targetWaves;
+    }
+
+    case 'time_under': {
+      var maxTime = cond.seconds != null ? cond.seconds : (cond.value != null ? cond.value : ((stageConfig.targetTime || 90) * 0.8));
+      return elapsed <= maxTime;
+    }
+
+    case 'hp_ratio': {
+      var reqRatio = cond.ratio != null ? cond.ratio : (cond.value != null ? cond.value : 0.75);
+      return hpRatio >= reqRatio;
+    }
+
+    case 'damage_taken_under': {
+      var maxDamage = cond.maxDamage != null ? cond.maxDamage : (cond.value != null ? cond.value : 20);
+      return (state.damageTakenInStage || 0) <= maxDamage;
+    }
+
+    case 'barrel_kill': {
+      return Boolean(state.barrelKill || (state.stats && state.stats.coresDetonated > 0));
+    }
+
+    case 'no_lava': {
+      return !state.steppedInLava;
+    }
+
+    case 'just_dashes': {
+      var reqDashes = cond.count != null ? cond.count : (cond.value != null ? cond.value : 3);
+      return Boolean(state.stats && state.stats.justDashes >= reqDashes);
+    }
+
+    case 'spire_chains': {
+      var reqChains = cond.count != null ? cond.count : (cond.value != null ? cond.value : 3);
+      var chainsMet = Boolean(state.stats && state.stats.spireChains >= reqChains);
+      if (cond.noEmp) {
+        return chainsMet && !state.empUsed;
+      }
+      return chainsMet;
+    }
+
+    case 'no_emp': {
+      return !state.empUsed;
+    }
+
+    case 'combo': {
+      var reqCombo = cond.count != null ? cond.count : (cond.value != null ? cond.value : 10);
+      var maxCombo = (state.stats && state.stats.maxCombo) || 0;
+      var curCombo = state.combo || 0;
+      return maxCombo >= reqCombo || curCombo >= reqCombo;
+    }
+
+    case 'beacon_hp_ratio': {
+      var reqBeaconRatio = cond.ratio != null ? cond.ratio : (cond.value != null ? cond.value : 0.75);
+      var beaconMaxHp = state.beaconMaxHp || (state.beacon && state.beacon.maxHp) || 1000;
+      var beaconHp = state.beaconHp != null ? state.beaconHp : ((state.beacon && state.beacon.hp) || 0);
+      return (beaconHp / beaconMaxHp) >= reqBeaconRatio;
+    }
+
+    case 'beacon_stay_time': {
+      var reqStay = cond.seconds != null ? cond.seconds : (cond.value != null ? cond.value : 45);
+      return (state.beaconPlayerStayTime || 0) >= reqStay;
+    }
+
+    default:
+      return true;
   }
 }
 
@@ -666,189 +770,40 @@ export function evaluateStageStars(state, stageConfig) {
   var p = (state && state.player) || {};
   var maxHp = p.maxHp || 100;
   var currentHp = p.hp || 0;
-  var hpRatio = currentHp / maxHp;
+  var hpRatio = maxHp > 0 ? (currentHp / maxHp) : 0;
   var elapsed = (state && state.stageElapsed) || 0;
-  var id = stageConfig.id || '';
-  var type = stageConfig.type || stageConfig.goalType || '';
+  var ctx = { hpRatio: hpRatio, elapsed: elapsed };
 
-  switch (id) {
-    case 'stage_1_1':
-      stars.star2 = elapsed <= 60;
-      stars.star3 = hpRatio >= 0.8 && ((state.damageTakenInStage || 0) <= 20 || (state.stats && state.stats.coresDetonated > 0) || Boolean(state.barrelKill));
-      break;
-    case 'stage_1_2':
-      stars.star2 = elapsed <= 50;
-      stars.star3 = hpRatio >= 0.75 && ((state.damageTakenInStage || 0) <= 25);
-      break;
-    case 'stage_1_3':
-      stars.star2 = ((stageConfig.targetTime || 90) - elapsed) >= 30 || elapsed <= 60;
-      stars.star3 = hpRatio >= 0.70;
-      break;
-    case 'stage_1_4':
-      stars.star2 = elapsed <= 90;
-      stars.star3 = (state.stats && state.stats.justDashes >= 3) || hpRatio >= 0.8;
-      break;
-    case 'stage_2_1':
-      stars.star2 = !state.steppedInLava;
-      stars.star3 = hpRatio >= 0.70;
-      break;
-    case 'stage_2_2':
-      stars.star2 = elapsed <= ((stageConfig.targetTime || 60) * 0.6);
-      stars.star3 = hpRatio >= 0.75;
-      break;
-    case 'stage_2_3':
-      stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.75;
-      stars.star3 = (state.beaconPlayerStayTime || 0) >= 45;
-      break;
-    case 'stage_2_4':
-      stars.star2 = elapsed <= 100;
-      stars.star3 = hpRatio >= 0.70;
-      break;
-    case 'stage_3_1':
-      stars.star2 = elapsed <= 75;
-      stars.star3 = (state.stats && state.stats.maxCombo >= 10) || ((state.combo || 0) >= 10);
-      break;
-    case 'stage_3_2':
-      stars.star2 = (state.stats && state.stats.spireChains >= 3) || elapsed <= 70;
-      stars.star3 = hpRatio >= 0.70 && !state.empUsed;
-      break;
-    case 'stage_3_3':
-      stars.star2 = elapsed <= 75;
-      stars.star3 = hpRatio >= 0.80;
-      break;
-    case 'stage_3_4':
-      stars.star2 = elapsed <= 110;
-      stars.star3 = hpRatio >= 0.75;
-      break;
-    case 'stage_ex_1':
-      stars.star2 = elapsed <= 100;
-      stars.star3 = hpRatio >= 0.80 && (state.stats && state.stats.maxCombo >= 15);
-      break;
-    case 'stage_ex_2':
-      stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.80;
-      stars.star3 = (state.beaconPlayerStayTime || 0) >= 60 && hpRatio >= 0.75;
-      break;
-    case 'stage_ex_3':
-      stars.star2 = elapsed <= 120;
-      stars.star3 = (state.stats && state.stats.justDashes >= 5) || hpRatio >= 0.80;
-      break;
-    default:
-      if (type === 'beacon_defense') {
-        stars.star2 = (state.beaconHp / (state.beaconMaxHp || 1000)) >= 0.75;
-        stars.star3 = (state.beaconPlayerStayTime || 0) >= ((stageConfig.targetTime || 90) * 0.5);
-      } else {
-        var tLimit = stageConfig.targetTime || 90;
-        stars.star2 = elapsed <= tLimit * 0.8;
-        stars.star3 = hpRatio >= 0.75;
-      }
-      break;
+  var rules = stageConfig.starRules;
+  if (rules) {
+    if (rules.star1) stars.star1 = evaluateStarCondition(rules.star1, state, stageConfig, ctx);
+    if (rules.star2) stars.star2 = evaluateStarCondition(rules.star2, state, stageConfig, ctx);
+    if (rules.star3) stars.star3 = evaluateStarCondition(rules.star3, state, stageConfig, ctx);
+    return stars;
+  }
+
+  // Fallback if stageConfig doesn't have starRules directly (e.g. matched by id in CAMPAIGN_STAGES)
+  var matchedStage = stageConfig.id ? getCampaignStage(stageConfig.id) : null;
+  if (matchedStage && matchedStage.starRules) {
+    var mRules = matchedStage.starRules;
+    if (mRules.star1) stars.star1 = evaluateStarCondition(mRules.star1, state, stageConfig, ctx);
+    if (mRules.star2) stars.star2 = evaluateStarCondition(mRules.star2, state, stageConfig, ctx);
+    if (mRules.star3) stars.star3 = evaluateStarCondition(mRules.star3, state, stageConfig, ctx);
+    return stars;
+  }
+
+  // Generic fallback based on stage objective type
+  var type = stageConfig.type || stageConfig.goalType || '';
+  if (type === 'beacon_defense') {
+    stars.star2 = evaluateStarCondition({ type: 'beacon_hp_ratio', ratio: 0.75 }, state, stageConfig, ctx);
+    stars.star3 = evaluateStarCondition({ type: 'beacon_stay_time', seconds: ((stageConfig.targetTime || 90) * 0.5) }, state, stageConfig, ctx);
+  } else {
+    var tLimit = stageConfig.targetTime || 90;
+    stars.star2 = elapsed <= tLimit * 0.8;
+    stars.star3 = hpRatio >= 0.75;
   }
 
   return stars;
 }
 
-export function checkStageVictory(state, dt) {
-  if (!state) state = rt.state;
-  if (!state || state.over || state.stageCleared) return null;
-  if (state.mode !== 'campaign' && state.mode !== 'hardcore') return null;
-
-  var config = state.stageConfig;
-  if (!config) return null;
-
-  if (typeof dt === 'number' && dt > 0) {
-    state.stageElapsed = (state.stageElapsed || 0) + dt;
-  }
-
-  var type = config.type || config.goalType || '';
-  if (state.mode === 'hardcore') {
-    type = 'boss_duel';
-  }
-
-  // Beacon defense logic
-  if (type === 'beacon_defense') {
-    if (state.beacon) {
-      if (typeof dt === 'number' && dt > 0 && state.enemies) {
-        var b = state.beacon;
-        for (var ei = 0; ei < state.enemies.length; ei += 1) {
-          var foe = state.enemies[ei];
-          if (!foe || foe.hp <= 0) continue;
-          var fDist = Math.hypot(foe.x - b.x, foe.y - b.y);
-          if (fDist <= (b.r + (foe.r || 10) + 10)) {
-            state.beaconHp = Math.max(0, state.beaconHp - (foe.damage || 15) * dt * 0.8);
-            b.hp = state.beaconHp;
-          }
-        }
-      }
-      if (state.player && typeof dt === 'number' && dt > 0) {
-        var pDist = Math.hypot(state.player.x - state.beacon.x, state.player.y - state.beacon.y);
-        if (pDist <= (state.beacon.captureRadius || 120)) {
-          state.beaconPlayerStayTime = (state.beaconPlayerStayTime || 0) + dt;
-          state.stageElapsed += dt * 0.5;
-        }
-      }
-    }
-    if (state.beaconHp <= 0) {
-      triggerGameOver({ victory: false });
-      return { victory: false, failed: true };
-    }
-  }
-
-  // Scrap rush timeout check
-  if (type === 'scrap_rush') {
-    var quota = config.targetQuota || 100;
-    var tLimit = config.targetTime || 75;
-    if (state.stageElapsed > tLimit && (state.scrapCollectedInStage || 0) < quota) {
-      triggerGameOver({ victory: false });
-      return { victory: false, failed: true };
-    }
-  }
-
-  var won = false;
-  if (type === 'wave_wipeout') {
-    var targetWaves = config.targetWaves || 3;
-    var livingEnemies = state.enemies ? state.enemies.length : 0;
-    if (state.wave >= targetWaves && state.stageElapsed > 3 && livingEnemies === 0) {
-      won = true;
-    }
-  } else if (type === 'vip_hunt') {
-    if (state.vipList && state.vipList.length > 0) {
-      if (state.vipList.every(function (vip) {
-        return !vip || vip.hp <= 0 || !state.enemies || state.enemies.indexOf(vip) === -1;
-      })) {
-        won = true;
-      }
-    }
-  } else if (type === 'beacon_defense') {
-    var defTime = config.targetTime || 90;
-    if (state.stageElapsed >= defTime && state.beaconHp > 0) {
-      won = true;
-    }
-  } else if (type === 'scrap_rush') {
-    var reqQuota = config.targetQuota || 100;
-    var maxTime = config.targetTime || 75;
-    if ((state.scrapCollectedInStage || 0) >= reqQuota && state.stageElapsed <= maxTime) {
-      won = true;
-    }
-  } else if (type === 'boss_duel') {
-    var bKind = config.boss || (config.bossOverride && config.bossOverride.kind);
-    if (bKind) {
-      if (state.bossesDefeated && state.bossesDefeated.indexOf(bKind) !== -1) {
-        won = true;
-      }
-    } else if (state.bossesDefeated && state.bossesDefeated.length > 0) {
-      won = true;
-    }
-  }
-
-  if (won) {
-    state.stageCleared = true;
-    state.stageVictory = true;
-    var stars = evaluateStageStars(state, config);
-    state.stageStars = stars;
-    var stageId = config.id || '';
-    triggerGameOver({ victory: true, stars: stars, stageId: stageId });
-    return { victory: true, stars: stars, stageId: stageId };
-  }
-
-  return null;
-}
+export { checkStageVictory };

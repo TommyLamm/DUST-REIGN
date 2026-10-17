@@ -1,6 +1,7 @@
 import { BEST_SCORE_KEY, LEGACY_BEST_SCORE_KEY } from '../config.js';
 import { getModule, getModuleCost, MAX_WATTAGE, MODULE_BRANCHES } from '../data/modules.js';
 import { getBountiesForDate, getBountyTemplate, GRAND_SLAM_BONUS } from '../data/bounties.js';
+import { CAMPAIGN_SECTORS, CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 
 export var META_KEY = 'dust-reign:meta:v1';
 export var BEST_SCORE_V2_KEY = 'dust-reign:best-score:v2';
@@ -660,26 +661,48 @@ export function resetTipsSeen() {
 
 // --- Campaign & Sector Progression Store (dust-reign:campaign:v1) ---
 
-var STAGE_CHAIN = [
-  'stage_1_1', 'stage_1_2', 'stage_1_3', 'stage_1_4',
-  'stage_2_1', 'stage_2_2', 'stage_2_3', 'stage_2_4',
-  'stage_3_1', 'stage_3_2', 'stage_3_3', 'stage_3_4',
-  'stage_ex_1', 'stage_ex_2', 'stage_ex_3'
-];
+export function getStageChain() {
+  if (Array.isArray(CAMPAIGN_STAGES)) {
+    return CAMPAIGN_STAGES.map(function (s) { return s.id; });
+  }
+  return [];
+}
 
-var SECTOR_REQ_STARS = {
-  1: 0,
-  2: 8,
-  3: 18,
-  4: 28
-};
+export var STAGE_CHAIN = getStageChain();
 
-function getSectorOfStage(stageId) {
-  if (typeof stageId !== 'string') return 0;
-  if (stageId.indexOf('stage_1_') === 0) return 1;
-  if (stageId.indexOf('stage_2_') === 0) return 2;
-  if (stageId.indexOf('stage_3_') === 0) return 3;
-  if (stageId.indexOf('stage_ex_') === 0) return 4;
+export function getSectorReqStars(sectorId) {
+  if (Array.isArray(CAMPAIGN_SECTORS)) {
+    for (var i = 0; i < CAMPAIGN_SECTORS.length; i += 1) {
+      var s = CAMPAIGN_SECTORS[i];
+      if (s && s.id === sectorId && typeof s.reqStars === 'number') {
+        return s.reqStars;
+      }
+    }
+  }
+  return 0;
+}
+
+export function getSectorReqStarsMap() {
+  var map = {};
+  if (Array.isArray(CAMPAIGN_SECTORS)) {
+    for (var i = 0; i < CAMPAIGN_SECTORS.length; i += 1) {
+      var s = CAMPAIGN_SECTORS[i];
+      if (s && s.id != null) {
+        map[s.id] = typeof s.reqStars === 'number' ? s.reqStars : 0;
+      }
+    }
+  }
+  return map;
+}
+
+export var SECTOR_REQ_STARS = getSectorReqStarsMap();
+
+export function getSectorOfStage(stageId) {
+  if (typeof stageId !== 'string' || !stageId) return 0;
+  var stage = getCampaignStage(stageId);
+  if (stage && typeof stage.sector === 'number') {
+    return stage.sector;
+  }
   return 0;
 }
 
@@ -695,12 +718,14 @@ function defaultCampaign() {
 }
 
 function isStageUnlockedInternal(stageId, store) {
+  var chain = getStageChain();
+  if (chain.length > 0 && stageId === chain[0]) return true;
   if (stageId === 'stage_1_1') return true;
-  var idx = STAGE_CHAIN.indexOf(stageId);
+  var idx = chain.indexOf(stageId);
   if (idx === -1) return false;
 
   var sector = getSectorOfStage(stageId);
-  var minStars = SECTOR_REQ_STARS[sector] || 0;
+  var minStars = getSectorReqStars(sector);
   var totalStars = (store && store.stats && typeof store.stats.totalStars === 'number') ? store.stats.totalStars : 0;
   if (totalStars < minStars) return false;
 
@@ -708,7 +733,7 @@ function isStageUnlockedInternal(stageId, store) {
     return true;
   }
 
-  var prevStageId = STAGE_CHAIN[idx - 1];
+  var prevStageId = chain[idx - 1];
   var prevRecord = store && store.stages && store.stages[prevStageId];
   return !!(prevRecord && prevRecord.stars >= 1);
 }
@@ -881,9 +906,10 @@ export function recordStageClear(stageId, details) {
     store.unlockedBoosters.push('heavy_pierce');
   }
 
+  var chain = getStageChain();
   var i;
-  for (i = 0; i < STAGE_CHAIN.length; i += 1) {
-    var checkId = STAGE_CHAIN[i];
+  for (i = 0; i < chain.length; i += 1) {
+    var checkId = chain[i];
     if (isStageUnlockedInternal(checkId, store) && store.unlockedStages.indexOf(checkId) === -1) {
       store.unlockedStages.push(checkId);
     }
@@ -1286,8 +1312,9 @@ export function importUnifiedSaveData(cloudData) {
     if (cCamp.stats && typeof cCamp.stats.attempts === 'number') {
       camp.stats.attempts = Math.max(camp.stats.attempts || 0, cCamp.stats.attempts);
     }
-    for (var si = 0; si < STAGE_CHAIN.length; si++) {
-      var chkId = STAGE_CHAIN[si];
+    var chain = getStageChain();
+    for (var si = 0; si < chain.length; si++) {
+      var chkId = chain[si];
       if (isStageUnlockedInternal(chkId, camp) && camp.unlockedStages.indexOf(chkId) === -1) {
         camp.unlockedStages.push(chkId);
       }
