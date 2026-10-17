@@ -1987,34 +1987,63 @@ function drawFieldTelegraphs(ctx) {
   }
 }
 
-function drawEnemyContrastBase(ctx, e) {
-  var r = e.r || 12;
-  ctx.save();
-  ctx.fillStyle = '#030204';
-  ctx.beginPath();
-  if (e.kind === 'rusher') {
+var ENEMY_CONTRAST_SHAPES = {
+  rusher: function (ctx, r) {
     ctx.moveTo(r * 1.55, 0);
     ctx.lineTo(-r * 0.7, r * 1.1);
     ctx.lineTo(-r * 0.28, 0);
     ctx.lineTo(-r * 0.7, -r * 1.1);
     ctx.closePath();
-  } else if (e.kind === 'burrower') {
+  },
+  burrower: function (ctx, r) {
     ctx.ellipse(0, 0, r * 1.2, r * 0.95, 0, 0, TAU);
-  } else if (e.kind === 'crawler') {
+  },
+  crawler: function (ctx, r) {
     ctx.ellipse(0, 0, r * 1.18, r * 1.12, 0, 0, TAU);
-  } else if (e.kind === 'brute') {
+  },
+  brute: function (ctx, r) {
     ctx.ellipse(0, 0, r * 1.18, r * 1.08, 0, 0, TAU);
-  } else if (e.kind === 'warden') {
+  },
+  warden: function (ctx, r) {
     ctx.moveTo(r * 1.18, 0);
     ctx.lineTo(0, r * 0.88);
     ctx.lineTo(-r * 1.02, 0);
     ctx.lineTo(0, -r * 0.88);
     ctx.closePath();
-  } else {
-    ctx.arc(0, 0, r * 1.12 + 1.2, 0, TAU);
   }
+};
+
+function drawEnemyContrastBase(ctx, e) {
+  var r = e.r || 12;
+  ctx.save();
+  ctx.fillStyle = '#030204';
+  ctx.beginPath();
+  var shape = ENEMY_CONTRAST_SHAPES[e.kind];
+  if (shape) shape(ctx, r);
+  else ctx.arc(0, 0, r * 1.12 + 1.2, 0, TAU);
   ctx.fill();
   ctx.restore();
+}
+
+export var ENEMY_BODY_RENDERERS = {
+  elite: drawEliteBody,
+  brute: drawBruteBody,
+  rusher: drawRusherBody,
+  artillery: drawArtilleryBody,
+  titan: drawTitanBody,
+  spitter: drawSpitterBody,
+  scurrier: drawScurrierBody,
+  warden: drawWardenBody,
+  burrower: drawBurrowerBody,
+  dreadnought: drawDreadnoughtBody,
+  sovereign: drawSovereignBody,
+  stormTower: drawStormTowerBody,
+  mine: drawMineBody,
+  crawler: drawCrawlerBody
+};
+
+export function registerEnemyRenderer(kind, renderer) {
+  ENEMY_BODY_RENDERERS[kind] = renderer;
 }
 
 export function drawEnemy(ctx, e) {
@@ -2066,20 +2095,8 @@ export function drawEnemy(ctx, e) {
   // High contrast under-chassis grounding silhouette
   drawEnemyContrastBase(ctx, e);
 
-  if (e.kind === 'elite') drawEliteBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'brute') drawBruteBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'rusher') drawRusherBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'artillery') drawArtilleryBody(ctx, e, flashing);
-  else if (e.kind === 'titan') drawTitanBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'spitter') drawSpitterBody(ctx, e, flashing);
-  else if (e.kind === 'scurrier') drawScurrierBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'warden') drawWardenBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'burrower') drawBurrowerBody(ctx, e, flashing);
-  else if (e.kind === 'dreadnought') drawDreadnoughtBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'sovereign') drawSovereignBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'stormTower') drawStormTowerBody(ctx, e, flashing, reduced);
-  else if (e.kind === 'mine') drawMineBody(ctx, e, flashing, reduced);
-  else drawCrawlerBody(ctx, e, flashing, reduced);
+  var renderer = ENEMY_BODY_RENDERERS[e.kind] || drawCrawlerBody;
+  renderer(ctx, e, flashing, reduced);
 
   ctx.restore();
   if (e.kind === 'elite' && (e.affix === 'command' || e.affix2 === 'command')) drawCommandAntenna(ctx, e, reduced);
@@ -2171,6 +2188,37 @@ function drawCommandLinks(ctx) {
       ctx.moveTo(boss.x, boss.y - boss.r - 11);
       ctx.lineTo(ally.x, ally.y);
       ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawLabels(ctx) {
+  var list = rt.state.enemies;
+  if (!list) return;
+  var hc = isHighContrast();
+  var i;
+  ctx.save();
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    var lift = (e.maxHp > 0 && e.hp < e.maxHp) ? 8 : 0;
+    var y = e.y - e.r - (hc ? 30 : 18) - lift;
+    if (e.kind === 'elite' && e.affix) {
+      var tag = e.affix === 'mirror' ? '[MRR]' :
+        e.affix === 'vortex' ? '[VTX]' :
+        e.affix === 'command' ? '[CMD]' :
+        e.affix === 'blink' ? '[BLK]' : '';
+      var col = e.affix === 'mirror' ? PALETTE.emissive.tech :
+        e.affix === 'vortex' ? PALETTE.emissive.void :
+        e.affix === 'command' ? '#f59e0b' :
+        e.affix === 'blink' ? '#75d1b0' : '#ffffff';
+      if (tag) drawTag(ctx, e.x, y, tag, col);
+    }
+    if (e.kind === 'titan' && (e.leftCannonDestroyed || e.rightPodDestroyed)) {
+      var titanTag = (e.leftCannonDestroyed ? '[L: OFF]' : '') +
+        (e.leftCannonDestroyed && e.rightPodDestroyed ? ' ' : '') +
+        (e.rightPodDestroyed ? '[R: OFF]' : '');
+      drawTag(ctx, e.x, y, titanTag, PALETTE.emissive.hostile);
     }
   }
   ctx.restore();

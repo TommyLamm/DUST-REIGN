@@ -2,6 +2,7 @@ import { AudioFX } from '../../audio/audio-fx.js';
 import { pushFxEvent } from '../../core/fx-events.js';
 import { rt } from '../../core/runtime.js';
 import { addScore } from '../scoring.js';
+import { filterEnemyStrategyDamage } from './enemy-registry.js';
 
 function angDiff(a, b) {
   return Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -98,9 +99,13 @@ export function filterEnemyDamage(e, amount, info) {
   var left = Number(amount);
   if (!e || !(left > 0)) return left > 0 ? left : 0;
   info = info || {};
-  if (e.kind === 'burrower' && e.burrowed && !e.forceEmerge) return 0;
-  if (e.kind === 'sovereign' && refreshSovereignShield(e)) return 0;
-  if (e.kind === 'stormTower' && (info.source === 'emp' || info.source === 'spire')) left *= 3;
+
+  var custom = filterEnemyStrategyDamage(e, left, info);
+  if (custom !== null && custom !== undefined) {
+    left = custom;
+    if (left <= 0) return 0;
+  }
+
   if (e.armorBreakTimer > 0) left *= 1.4;
   if (e.shieldHp > 0) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;
@@ -115,12 +120,7 @@ export function filterEnemyDamage(e, amount, info) {
       if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
     }
   }
-  if (e.kind === 'dreadnought' && info.source === 'bullet' && info.x != null && info.y != null) {
-    var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
-    var rear = (e.aim || 0) + Math.PI;
-    if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) left *= (e.empTimer > 0 ? 2 : 1.5);
-  }
-  if (e.kind === 'dreadnought' && info.source === 'barrel' && e.empTimer > 0) left *= 2;
+
   rememberDeath(e, info, left);
   return left;
 }

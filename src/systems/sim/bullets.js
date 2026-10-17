@@ -15,7 +15,7 @@ import { noteMetaEvent } from '../meta.js';
 import { arcChainProfile, spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
 import { logEvent } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
-import { updateTitanPartCache } from './bosses.js';
+import { checkMultiPartBulletHit } from './boss-parts.js';
 
 var queriedEnemyIds = [];
 var MAX_ARC_CANDIDATES = 64;
@@ -490,145 +490,9 @@ export function stepBullets(dt, frame) {
             }
           }
 
-          if (enemy.kind === 'titan') {
-            var e = enemy;
-            var cache = e.partCache;
-            if (!cache || cache._frameTime !== rt.state.waveTime) {
-              cache = updateTitanPartCache(e, p);
-              if (cache) cache._frameTime = rt.state.waveTime;
-            }
-
-            var bdx = b.x - e.x;
-            var bdy = b.y - e.y;
-            var xLoc = bdx * cache.cosA + bdy * cache.sinA;
-            var yLoc = -bdx * cache.sinA + bdy * cache.cosA;
-
-            var yLocPlus22 = yLoc + 22;
-            var yLocMinus22 = yLoc - 22;
-            var xLocPlus32 = xLoc + 32;
-            var xLocPlus18 = xLoc + 18;
-            var xLoc2 = xLoc * xLoc;
-            var yLoc2 = yLoc * yLoc;
-
-            var dLc = xLoc2 + yLocPlus22 * yLocPlus22;
-            var dRp = xLoc2 + yLocMinus22 * yLocMinus22;
-            var dRad = xLocPlus32 * xLocPlus32 + yLoc2;
-            var dTrd = xLocPlus18 * xLocPlus18 + yLoc2;
-
-            var closestPart = 'lc';
-            var minD = dLc;
-            if (dRp < minD) { minD = dRp; closestPart = 'rp'; }
-            if (dRad < minD) { minD = dRad; closestPart = 'rad'; }
-            if (dTrd < minD) { minD = dTrd; closestPart = 'trd'; }
-
-            var lcX = cache.lcX;
-            var lcY = cache.lcY;
-            var rpX = cache.rpX;
-            var rpY = cache.rpY;
-            var radX = cache.radX;
-            var radY = cache.radY;
-            var trdX = cache.trdX;
-            var trdY = cache.trdY;
-
-            if (closestPart === 'lc') {
-              if (!e.leftCannonDestroyed) {
-                e.leftCannonHp = (e.leftCannonHp !== undefined ? e.leftCannonHp : Math.round((e.maxHp || e.hp) * 0.22)) - b.damage;
-                spawnCombatText(lcX, lcY - 10, 'MORTAR -' + Math.round(b.damage), false);
-                if (e.leftCannonHp <= 0) {
-                  e.leftCannonHp = 0;
-                  e.leftCannonDestroyed = true;
-                  e.empTimer = Math.max(e.empTimer || 0, 1.8);
-                  if (!isReducedMotion()) rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.083);
-                  notePartDestroyed();
-                  rt.state.orbs.push({ kind: 'repair', x: lcX, y: lcY, vx: (rng('loot') - 0.5) * 85, vy: (rng('loot') - 0.5) * 85, r: 10, value: 0, life: 25 });
-                  AudioFX.blast();
-                  rt.state.shake = Math.max(rt.state.shake, 14);
-                  rt.state.hitstop = 0.08;
-                  triggerHaptic([40, 50, 60]);
-                  if (rt.state.shockRings) {
-                    rt.state.shockRings.push({ x: lcX, y: lcY, r: 8, maxR: 70, life: 0.3, maxLife: 0.3, color: '#ff4d2e' });
-                  }
-                  spawnParticles(lcX, lcY, '#ff4d2e', 22, 190, 4);
-                  spawnParticles(lcX, lcY, '#ffd27d', 16, 150, 3);
-                  spawnParticles(lcX, lcY, '#5be7ff', 12, 120, 2);
-                  logEvent('TITAN COMPONENT DESTROYED // LEFT CANNON OFFLINE');
-                  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN LEFT CANNON DESTROYED // TWIN CANNON OFFLINE [STUN 1.8s]';
-                }
-              }
-            } else if (closestPart === 'rp') {
-              if (!e.rightPodDestroyed) {
-                e.rightPodHp = (e.rightPodHp !== undefined ? e.rightPodHp : Math.round((e.maxHp || e.hp) * 0.22)) - b.damage;
-                spawnCombatText(rpX, rpY - 10, 'POD -' + Math.round(b.damage), false);
-                if (e.rightPodHp <= 0) {
-                  e.rightPodHp = 0;
-                  e.rightPodDestroyed = true;
-                  e.empTimer = Math.max(e.empTimer || 0, 1.8);
-                  if (!isReducedMotion()) rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.083);
-                  notePartDestroyed();
-                  rt.state.orbs.push({ kind: 'overdrive', x: rpX, y: rpY, vx: (rng('loot') - 0.5) * 95, vy: (rng('loot') - 0.5) * 95, r: 11, value: 0, life: 25 });
-                  AudioFX.blast();
-                  rt.state.shake = Math.max(rt.state.shake, 14);
-                  rt.state.hitstop = 0.08;
-                  triggerHaptic([40, 50, 60]);
-                  if (rt.state.shockRings) {
-                    rt.state.shockRings.push({ x: rpX, y: rpY, r: 8, maxR: 70, life: 0.3, maxLife: 0.3, color: '#ff4d2e' });
-                  }
-                  spawnParticles(rpX, rpY, '#ff4d2e', 22, 190, 4);
-                  spawnParticles(rpX, rpY, '#ffd27d', 16, 150, 3);
-                  spawnParticles(rpX, rpY, '#5be7ff', 12, 120, 2);
-                  logEvent('TITAN COMPONENT DESTROYED // REINFORCEMENTS DISABLED');
-                  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN RIGHT POD DESTROYED // MINIONS OFFLINE [STUN 1.8s]';
-                }
-              }
-            } else if (closestPart === 'rad') {
-              if (!e.radiatorDestroyed) {
-                var radDmg = b.damage;
-                if (e.radiatorExposed) {
-                  radDmg = Math.round(b.damage * 2.5);
-                  damageEnemy(e, radDmg - b.damage, { source: 'weakpoint', crit: true, x: radX, y: radY });
-                  spawnCombatText(radX, radY - 12, 'CRIT FINS -' + radDmg, true);
-                } else {
-                  spawnCombatText(radX, radY - 12, 'FINS (RESIST)', false);
-                }
-                e.radiatorHp = (e.radiatorHp !== undefined ? e.radiatorHp : Math.round((e.maxHp || e.hp) * 0.18)) - radDmg;
-                if (e.radiatorHp <= 0) {
-                  e.radiatorHp = 0;
-                  e.radiatorDestroyed = true;
-                  e.radiatorExposed = false;
-                  e.empTimer = Math.max(e.empTimer || 0, 4.0);
-                  notePartDestroyed();
-                  var overloadDmg = Math.round((e.maxHp || e.hp) * 0.12);
-                  damageEnemy(e, overloadDmg, { source: 'overload', crit: true, x: radX, y: radY });
-                  rt.state.orbs.push({ kind: 'surge', x: radX, y: radY, vx: (rng('loot') - 0.5) * 85, vy: (rng('loot') - 0.5) * 85, r: 10, value: 0, life: 25 });
-                  AudioFX.blast();
-                  rt.state.shake = Math.max(rt.state.shake, 16);
-                  rt.state.hitstop = 0.08;
-                  triggerHaptic([40, 60, 80]);
-                  spawnParticles(radX, radY, '#ffd27d', 24, 200, 4);
-                  spawnParticles(radX, radY, '#ff4d2e', 18, 160, 3);
-                  logEvent('TITAN COMPONENT DESTROYED // HEAT-SINK FINS OVERLOAD [STUN 4s]');
-                  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN FINS DESTROYED // OVERLOAD CRITICAL [STUN 4.0s]';
-                }
-              }
-            } else if (closestPart === 'trd') {
-              if (!e.treadDestroyed) {
-                e.treadHp = (e.treadHp !== undefined ? e.treadHp : Math.round((e.maxHp || e.hp) * 0.20)) - b.damage;
-                spawnCombatText(trdX, trdY - 10, 'TREADS -' + Math.round(b.damage), false);
-                if (e.treadHp <= 0) {
-                  e.treadHp = 0;
-                  e.treadDestroyed = true;
-                  e.speed = (e.baseSpeed || 50) * 0.6;
-                  notePartDestroyed();
-                  AudioFX.blast();
-                  rt.state.shake = Math.max(rt.state.shake, 14);
-                  rt.state.hitstop = 0.08;
-                  triggerHaptic([40, 50, 60]);
-                  spawnParticles(trdX, trdY, '#a0a0a0', 22, 180, 3.5);
-                  spawnParticles(trdX, trdY, '#ff7733', 14, 140, 2.5);
-                  logEvent('TITAN COMPONENT DESTROYED // TREAD SKIRTS DAMAGED [-40% SPEED]');
-                  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN TREADS DESTROYED // MOBILITY CRIPPLED [-40% SPEED]';
-                }
-              }
+          if (enemy.parts) {
+            if (checkMultiPartBulletHit(enemy, b)) {
+              // Multi-part collision handled
             }
           }
 

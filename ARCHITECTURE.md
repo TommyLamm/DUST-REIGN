@@ -41,7 +41,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
-| `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領重塑在 `sim/bosses.js`，狼群包夾與空間分離在 `sim/enemies.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
+| `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領重塑在 `sim/bosses.js`，通用可拆解部位在 `sim/boss-parts.js`，敵型策略註冊在 `sim/enemy-registry.js`，狼群包夾與空間分離在 `sim/enemies.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口、相機世界矩陣注入、視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池，常態 48px / 首領 220px 雙階邊界，剔除 75%~90% 螢幕外實體）與世界／螢幕圖層分流順序。 |
 | `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | $1024 \times 1024$ 離屏圖塊 GPU GL_REPEAT 平鋪渲染（`terrainPattern.setTransform`，消除 37.2MB OOM）、地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻，單遍距離平方線性剪裁 $O(N)$）、雙 Pass 全合流接地陰影（全場僅發出 2 次 `ctx.fill()` 繪製所有實體之 Penumbra 柔影與 Core AO 硬咬合）。 |
 | `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點、敵型雙層反差描邊、街機立體戰利品、敵我色譜隔離與三層三明治彈體及斑馬預警軌道、敵彈 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染、字體排版分組批處理 Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）、視口邊緣雷達指針（`drawOffscreenChevrons`，Ray-AABB 邊界求交）與右上角 128px 戰術小地圖（`drawTacticalMinimap`，4 桶批次繪製）。 |
@@ -62,7 +62,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `rt.renderTime` 與 `rt.renderDt` 由 `src/main.js` 的 `frame()` 每幀寫入，暫停與 hitstop 時仍前進。`rt.fxEvents` 在 `src/core/runtime.js` 初始為 `null`，由 `pushFxEvent`／`drainFxEvents` 首次使用時建立上限 64 的環形佇列（滿額覆寫最舊一筆）。事件只供視覺使用。種類與欄位以呼叫處及 `src/render/fx.js` 的處理為準：`kill`、`crit`、`core`、`barrel`、`mortar`、`emp`、`spire`、`dash`、`graze`、`playerHit`、`titanPhase`、`bounty`、`surge`、`burst`。
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 與雙層描邊快取只由 `src/render/entity-style.js` 的 `tickFlash` 維護；怪物血條滯後白條（`ghostHp`、`ghostTimer`）與傷害數字的 `numHp` 只由 render 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
 - 0-GC 記憶體防線：子彈軌跡使用平坦環形緩衝區（`Float32Array(8)`）與靜態 `trailPool` 復用物件；逐實體姿態與每幀位移步進以單例物件 `POSE_SCRATCH` 與 `STEP_SCRATCH` 傳遞；貫穿彈命中歷史採用 64-bit Bitmask（`hitMask0`, `hitMask1`）紀錄取代陣列物件；全域無序實體陣列（子彈、敵彈、粒子、掉落物等）全面採用 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice`，移除時切斷死者懸空參照避免隱式記憶體洩漏。
-- 物理空間加速：空間雜湊網格單元格鎖定 55px，以 $64 \times 48$ 單元格精確對齊覆蓋 $3520 \times 2640$ 大世界地圖，提供零分配回調 `queryGridCallback` 供酸池、焦痕、自爆友傷與碰撞查詢；全域幾何判定以平方距離 $d^2 \le r^2$ 替代 `Math.hypot`；Titan 4 大可拆解部位以單幀快取旋轉矩陣（`updateTitanPartCache`）與逆向局部坐標判定；視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池）以雙階邊界（常態 48px、首領 220px）避免螢幕外實體之網格插入、渲染與射擊計時器推進。
+- 物理空間加速：空間雜湊網格單元格鎖定 55px，以 $64 \times 48$ 單元格精確對齊覆蓋 $3520 \times 2640$ 大世界地圖，提供零分配回調 `queryGridCallback` 供酸池、焦痕、自爆友傷與碰撞查詢；全域幾何判定以平方距離 $d^2 \le r^2$ 替代 `Math.hypot`；通用可拆解部位系統（`boss-parts.js`）以單幀快取旋轉矩陣（`updateEnemyPartCache`）與逆向局部坐標判定；視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池）以雙階邊界（常態 48px、首領 220px）避免螢幕外實體之網格插入、渲染與射擊計時器推進。
 - 大世界廢土與中心相機動力學：地圖邊界為 $3520 \times 2640$（邊界緩衝 160px，有效戰術空間 $3200 \times 2320$），玩家初始置中於 $(1760, 1320)$。相機單例 `rt.camera` 具備非對稱雙階動態阻尼（$\lambda_{cruise}=8.5$, $\lambda_{dash}=24$）、76.8px 軟約束死區、Hermite 雙向準星前瞻（最大 140px，死區 70px）與 20px 邊界防出界夾持；創傷度正交震屏（$T^2$ 質數頻率）於 `screenToWorld` 逆映射中徹底扣除 Shake 雜訊，消滅震屏準星抖動。視口邊緣雷達指針（Ray-AABB 邊界求交）與右上角 128px 微型小地圖（4 桶分流單 Pass 繪製）提供廣域態勢感知。地表渲染採用 $1024 \times 1024$ 離屏圖塊經 GPU GL_REPEAT 矩陣平鋪（`terrainPattern.setTransform`），消除全圖分配之 37.2MB 記憶體負擔。
 - PSRA 環形生成架構：內環（視口 $+40\text{px}$）絕對禁刷防暴怪臉貼；中環（$1.15 \sim 1.42\times$ 視口半徑）維持活躍生成；外環（$>1.85\times$）執行靜默回收並退回波次代幣。生成依玩家速度向量預判扇區（$55\% \sim 65\%$ 迎面阻截、$25\% \sim 30\%$ 兩側包夾、$10\% \sim 15\%$ 後方壓迫）與世界邊界切線折射。怪群 AI 支援狼群包夾、55px 空間雜湊局部排斥分離（Separation）與菁英怪 Hyper-Catchup 地底疾行（3.5x 移速）。
 - 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）具備獨立互動半徑、防守計時與破壞回饋，提供戰地超頻、全圖過載脈衝、空投戰備與防守獎勵。三大首領大世界重塑：Titan 導入地震牽引錨拉扯遠程機甲與履帶障礙碾壓；Dreadnought 具備巨石空投撞擊暈眩（3.2s 破甲硬直）；Sovereign 隨動動態風暴之眼。
@@ -71,7 +71,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
 - 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
-- 首領身份是 `isBoss`。Titan 拆解部位（左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
+- 首領身份是 `isBoss`。首領拆解部位（以 `parts` 陣列定義，如 Titan 之左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。動態首領血條（`drawBossHealthBar`）依 `parts` 陣列自適應渲染部位藥丸徽章。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
 - 廢料改裝工坊（Scrapyard Workshop）以 6⚡ 負載上限與 3 大改裝插槽運作，模組雙面刃數值在開局前注入玩家屬性；安裝改裝模組進行競速時自動標記為 Mod 模式，與純粹無改裝幽靈競速榜分流隔離。
 - 幽靈殘影競速以 5Hz 取樣、Delta 差分及 Base64 壓縮儲存於 localStorage（< 3KB），由 Split-Timer 於戰鬥中即時比對檢核點秒差。
 - `isStormFront()` 在波末風暴窗或場上仍存活的 Storm Sovereign 時為真。位移用 `stormWind()`：有首領風向時用該風向，否則用固定風暴方向。
@@ -122,7 +122,7 @@ index.html → src/main.js → init()
 | 開始、暫停、重開、結算與評級 | `src/main.js`、`src/systems/flow.js`、`src/systems/scoring.js`、`src/ui/pause-menu.js`、`src/ui/hud.js` |
 | 幕間、路線、撤離與無盡 | `src/systems/interlude.js`、`src/systems/director.js`、`src/ui/interlude-panel.js` |
 | 大世界邊界與戰術 POI | `src/core/constants.js`、`src/systems/sim/poi.js`、`src/render/world.js` |
-| 敵人、首領、波次與生成 | `src/systems/director.js`、`src/systems/spawning.js`、`src/systems/sim/timers-wave.js`、`src/systems/sim/enemies.js`、`src/systems/sim/bosses.js`、`src/systems/sim/new-enemies.js`、`src/systems/sim/enemy-defense.js` |
+| 敵人、首領、波次與生成 | `src/systems/director.js`、`src/systems/spawning.js`、`src/systems/sim/timers-wave.js`、`src/systems/sim/enemies.js`、`src/systems/sim/bosses.js`、`src/systems/sim/boss-parts.js`、`src/systems/sim/enemy-registry.js`、`src/systems/sim/new-enemies.js`、`src/systems/sim/enemy-defense.js` |
 | 突變、合約、掉落與持續效果 | `src/systems/mutators.js`、`src/systems/contracts.js`、`src/systems/drops.js`、`src/systems/card-effects.js`、`src/ui/contracts-hud.js` |
 | 配裝、改裝工坊、金庫、懸賞、熱度、每日與成就 | `src/systems/meta.js`、`src/data/modules.js`、`src/data/bounties.js`、`src/core/meta-store.js`、`src/ui/loadout-panel.js`、`src/ui/workshop-panel.js`、`src/ui/vault-panel.js`、`src/ui/bounties-panel.js`、`src/ui/codex-panel.js` |
 | 幽靈殘影競速與分段計時 | `src/systems/ghost.js`、`src/render/ghost.js`、`src/ui/hud.js` |

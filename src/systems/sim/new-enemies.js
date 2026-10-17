@@ -13,6 +13,7 @@ import { dropBossShard } from '../drops.js';
 import { clearShieldsOwnedBy, takeDeathEvents } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { ensureEnemyGrid, getEnemyById, queryGridCallback } from '../../core/spatial-grid.js';
+import { handleEnemyStrategyDeath } from './enemy-registry.js';
 
 function dmgScale() {
   var recipe = rt.state && rt.state.recipe;
@@ -78,18 +79,7 @@ export function blastAt(x, y, radius, playerDmg, enemyDmg, tint) {
 
 function applyDeathEvent(ev) {
   if (!ev) return;
-  if (ev.kind === 'warden' && ev.ref) clearShieldsOwnedBy(ev.ref);
-  if (ev.kind === 'scurrier') {
-    if (ev.cause === 'dash' || !ev.arming) return;
-    blastAt(ev.x, ev.y, 70, 0, 60, '#e07a3d');
-    return;
-  }
-  if (ev.kind === 'mine' && ev.ref && !ev.ref.detonated) {
-    ev.ref.detonated = true;
-    var mineDmg = scaledShot(25, 0, true).damage;
-    blastAt(ev.x, ev.y, 80, mineDmg, 40, '#e0a84e');
-    return;
-  }
+  if (handleEnemyStrategyDeath(ev)) return;
   if (ev.affix === 'volatile' || ev.affix2 === 'volatile') {
     if (!rt.state.pendingBlasts) rt.state.pendingBlasts = [];
     rt.state.pendingBlasts.push({
@@ -104,8 +94,6 @@ function applyDeathEvent(ev) {
     });
   }
   if (ev.affix === 'splitter' || ev.affix2 === 'splitter') spawnSplit(ev);
-  if (ev.kind === 'dreadnought') grantBossLoot(ev, 4);
-  if (ev.kind === 'sovereign') grantBossLoot(ev, 5);
 }
 
 function spawnSplit(ev) {
@@ -144,7 +132,7 @@ function spawnSplit(ev) {
   spawnParticles(ev.x, ev.y, '#75d1b0', 10, 120, 2);
 }
 
-function grantBossLoot(ev, scrapCount) {
+export function grantBossLoot(ev, scrapCount) {
   if (!rt.state.orbs) rt.state.orbs = [];
   var i;
   rt.state.orbs.push({

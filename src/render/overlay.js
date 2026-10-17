@@ -8,8 +8,8 @@ import { drawGlow } from './sprites.js';
 import { isChinese, tBanner } from '../core/i18n.js';
 import { worldToScreen } from '../core/camera.js';
 
-var titanLag = 1;
-var titanRef = null;
+var bossLag = 1;
+var bossRef = null;
 var deathGhost = 0;
 
 
@@ -115,30 +115,34 @@ function drawPartBadge(ctx, x, y, w, h, label, destroyed, exposed) {
   ctx.restore();
 }
 
-function drawTitanBar(ctx, titan) {
-  if (titanRef !== titan) {
-    titanRef = titan;
-    titanLag = clamp(titan.hp / titan.maxHp, 0, 1);
+export function drawBossHealthBar(ctx, boss) {
+  if (!ctx || !boss || !(boss.hp > 0)) return;
+  if (bossRef !== boss) {
+    bossRef = boss;
+    bossLag = clamp(boss.hp / boss.maxHp, 0, 1);
   }
-  var hpRatio = clamp(titan.hp / titan.maxHp, 0, 1);
+  var hpRatio = clamp(boss.hp / boss.maxHp, 0, 1);
   var dt = rt.renderDt || 0.016;
-  if (isReducedMotion() || hpRatio >= titanLag) titanLag = hpRatio;
-  else titanLag += (hpRatio - titanLag) * Math.min(1, dt * 2.4);
+  if (isReducedMotion() || hpRatio >= bossLag) bossLag = hpRatio;
+  else bossLag += (hpRatio - bossLag) * Math.min(1, dt * 2.4);
 
-  var hasParts = Boolean(
-    titan.leftCannonDestroyed != null ||
-    titan.rightPodDestroyed != null ||
-    titan.radiatorDestroyed != null ||
-    titan.treadDestroyed != null ||
-    titan.kind === 'titan'
-  );
+  var parts = boss.parts;
+  if ((!parts || !parts.length) && boss.kind === 'titan') {
+    parts = [
+      { id: 'left_cannon', nameZh: '左迫砲', nameEn: 'L-CANNON', destroyed: boss.leftCannonDestroyed, exposed: false },
+      { id: 'right_pod', nameZh: '右蜂巢', nameEn: 'R-POD', destroyed: boss.rightPodDestroyed, exposed: false },
+      { id: 'radiator', nameZh: '鰭片', nameEn: 'FINS', destroyed: boss.radiatorDestroyed, exposed: boss.radiatorExposed },
+      { id: 'treads', nameZh: '履帶', nameEn: 'TREADS', destroyed: boss.treadDestroyed, exposed: false }
+    ];
+  }
+  var hasParts = Boolean(parts && parts.length > 0);
 
   var barW = Math.min(360, rt.ui.width * 0.65);
   var barH = 12;
   var barX = (rt.ui.width - barW) / 2;
   var barY = 20;
   var boxExtraH = hasParts ? 20 : 0;
-  var enraged = Boolean(titan.phase2Triggered);
+  var enraged = Boolean(boss.phase2Triggered);
   var stroke = enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold;
   var fill = enraged ? '#ff4d2e' : '#d4af37';
 
@@ -153,8 +157,8 @@ function drawTitanBar(ctx, titan) {
   ctx.textBaseline = 'top';
   ctx.fillStyle = enraged ? '#ff4d2e' : '#f5d58f';
   var zh = isChinese();
-  var rawName = titan.bossName || 'TITAN';
-  var rawSub = (enraged && titan.kind === 'titan') ? 'ENRAGED' : (titan.bossSubtitle || 'APEX THREAT');
+  var rawName = boss.bossName || (boss.kind ? boss.kind.toUpperCase() : 'BOSS');
+  var rawSub = (enraged && boss.kind === 'titan') ? 'ENRAGED' : (boss.bossSubtitle || 'APEX THREAT');
   var bName = rawName;
   var bSub = rawSub;
   if (zh) {
@@ -174,12 +178,12 @@ function drawTitanBar(ctx, titan) {
   var bossTitle = bName + ' // ' + bSub;
   ctx.fillText(bossTitle, barX, barY - 11);
   ctx.textAlign = 'right';
-  ctx.fillText(Math.ceil(titan.hp) + ' / ' + titan.maxHp, barX + barW, barY - 11);
+  ctx.fillText(Math.ceil(boss.hp) + ' / ' + boss.maxHp, barX + barW, barY - 11);
 
   ctx.fillStyle = '#1c1712';
   ctx.fillRect(barX, barY, barW, barH);
   ctx.fillStyle = 'rgba(255, 244, 230, 0.85)';
-  ctx.fillRect(barX, barY, barW * titanLag, barH);
+  ctx.fillRect(barX, barY, barW * bossLag, barH);
   ctx.fillStyle = fill;
   ctx.fillRect(barX, barY, barW * hpRatio, barH);
   if (!isReducedMotion()) drawGlow(ctx, barX + barW * hpRatio, barY + barH / 2, 16, fill, 0.4);
@@ -190,18 +194,36 @@ function drawTitanBar(ctx, titan) {
   ctx.fillRect(barX + barW * 0.50 - 1, barY, 2, barH);
   ctx.fillRect(barX + barW * 0.75 - 0.75, barY, 1.5, barH);
 
-  // 部位破壞藥丸徽章 (Part destruction pill badges)
-  if (hasParts) {
+  // Dynamic multi-part breakdown badges
+  if (hasParts && parts.length > 0) {
+    var numParts = parts.length;
     var badgeY = barY + barH + 5;
     var badgeH = 13;
     var badgeGap = 5;
-    var badgeW = (barW - badgeGap * 3) / 4;
+    var badgeW = Math.max(16, (barW - badgeGap * (numParts - 1)) / numParts);
 
-    drawPartBadge(ctx, barX, badgeY, badgeW, badgeH, zh ? '左迫砲' : 'L-CANNON', Boolean(titan.leftCannonDestroyed), false);
-    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 1, badgeY, badgeW, badgeH, zh ? '右蜂巢' : 'R-POD', Boolean(titan.rightPodDestroyed), false);
-    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 2, badgeY, badgeW, badgeH, zh ? '鰭片' : 'FINS', Boolean(titan.radiatorDestroyed), Boolean(titan.radiatorExposed));
-    drawPartBadge(ctx, barX + (badgeW + badgeGap) * 3, badgeY, badgeW, badgeH, zh ? '履帶' : 'TREADS', Boolean(titan.treadDestroyed), false);
+    for (var pi = 0; pi < numParts; pi += 1) {
+      var pt = parts[pi];
+      var label;
+      if (zh) {
+        label = pt.nameZh || pt.badgeZh || (pt.id === 'left_cannon' ? '左迫砲' : pt.id === 'right_pod' ? '右蜂巢' : pt.id === 'radiator' ? '鰭片' : pt.id === 'treads' ? '履帶' : (pt.name || pt.id));
+      } else {
+        label = pt.nameEn || pt.badgeEn || (pt.id === 'left_cannon' ? 'L-CANNON' : pt.id === 'right_pod' ? 'R-POD' : pt.id === 'radiator' ? 'FINS' : pt.id === 'treads' ? 'TREADS' : (pt.name || pt.id.toUpperCase()));
+      }
+      var destroyed = Boolean(pt.destroyed ||
+        (pt.id === 'left_cannon' && boss.leftCannonDestroyed) ||
+        (pt.id === 'right_pod' && boss.rightPodDestroyed) ||
+        (pt.id === 'radiator' && boss.radiatorDestroyed) ||
+        (pt.id === 'treads' && boss.treadDestroyed));
+      var exposed = Boolean(pt.exposed || (pt.id === 'radiator' && boss.radiatorExposed));
+      var bx = barX + (badgeW + badgeGap) * pi;
+      drawPartBadge(ctx, bx, badgeY, badgeW, badgeH, label, destroyed, exposed);
+    }
   }
+}
+
+export function drawTitanBar(ctx, titan) {
+  return drawBossHealthBar(ctx, titan);
 }
 
 function drawWaveBanner(ctx) {
@@ -303,8 +325,8 @@ export function drawHud(ctx) {
   ctx.fillStyle = '#d49a55'; ctx.fillRect(rt.ui.width - 145, 58, 125 * clamp(rt.state.waveTime / WAVE_LENGTH, 0, 1), 4);
 
   var boss = rt.state.boss;
-  if (boss && boss.hp > 0) drawTitanBar(ctx, boss);
-  else titanRef = null;
+  if (boss && boss.hp > 0) drawBossHealthBar(ctx, boss);
+  else bossRef = null;
 
   ctx.restore();
 }
