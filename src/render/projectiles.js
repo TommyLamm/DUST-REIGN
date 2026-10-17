@@ -28,6 +28,28 @@ var DARK_HALO_BULLET = '#040306';
 var PURE_WHITE = '#ffffff';
 var ZEBRA_DASH = [7, 6];
 
+// 0-GC Preallocated Static Buckets for 4-Bucket Enemy Bullet Batching
+var BUCKET_MAGENTA = [];
+var BUCKET_ORANGE = [];
+var BUCKET_LIME = [];
+var BUCKET_VIOLET = [];
+
+function routeEnemyBullet(b) {
+  if (!b) return BUCKET_MAGENTA;
+  var rawCol = b.color;
+  if (rawCol && rawCol !== '#75d1b0' && rawCol !== '#7cf0c8') {
+    if (rawCol === HOSTILE_LIME) return BUCKET_LIME;
+    if (rawCol === HOSTILE_ORANGE) return BUCKET_ORANGE;
+    if (rawCol === HOSTILE_VIOLET) return BUCKET_VIOLET;
+    return BUCKET_MAGENTA;
+  }
+  var t = b.type || 'basic';
+  if (t === 'acid') return BUCKET_LIME;
+  if (t === 'heavy' || t === 'plasma' || t === 'boss' || t === 'mortar') return BUCKET_ORANGE;
+  if (t === 'void' || t === 'gravity') return BUCKET_VIOLET;
+  return BUCKET_MAGENTA;
+}
+
 export function getHostileBulletColor(b) {
   if (!b) return HOSTILE_MAGENTA;
   var t = b.type || 'basic';
@@ -452,35 +474,77 @@ export function drawEnemyBullets(ctx) {
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
 
-  // Three-Tier Visibility Sandwich
+  // 4-Bucket Static Partitioning for Tier 2 Neon Hazard Rings (0-GC batching)
+  BUCKET_MAGENTA.length = 0;
+  BUCKET_ORANGE.length = 0;
+  BUCKET_LIME.length = 0;
+  BUCKET_VIOLET.length = 0;
+
+  for (i = 0; i < n; i += 1) {
+    var b = list[i];
+    if (!b) continue;
+    routeEnemyBullet(b).push(b);
+  }
+
+  // Draw 4 color buckets: 1 draw call per color
+  if (BUCKET_MAGENTA.length > 0) {
+    ctx.fillStyle = HOSTILE_MAGENTA;
+    ctx.beginPath();
+    for (i = 0; i < BUCKET_MAGENTA.length; i += 1) {
+      var bm = BUCKET_MAGENTA[i];
+      disc(ctx, bm.x, bm.y, bm.r || 4);
+    }
+    ctx.fill();
+  }
+
+  if (BUCKET_ORANGE.length > 0) {
+    ctx.fillStyle = HOSTILE_ORANGE;
+    ctx.beginPath();
+    for (i = 0; i < BUCKET_ORANGE.length; i += 1) {
+      var bo = BUCKET_ORANGE[i];
+      disc(ctx, bo.x, bo.y, bo.r || 4);
+    }
+    ctx.fill();
+  }
+
+  if (BUCKET_LIME.length > 0) {
+    ctx.fillStyle = HOSTILE_LIME;
+    ctx.beginPath();
+    for (i = 0; i < BUCKET_LIME.length; i += 1) {
+      var bl = BUCKET_LIME[i];
+      disc(ctx, bl.x, bl.y, bl.r || 4);
+    }
+    ctx.fill();
+  }
+
+  if (BUCKET_VIOLET.length > 0) {
+    ctx.fillStyle = HOSTILE_VIOLET;
+    ctx.beginPath();
+    for (i = 0; i < BUCKET_VIOLET.length; i += 1) {
+      var bv = BUCKET_VIOLET[i];
+      disc(ctx, bv.x, bv.y, bv.r || 4);
+    }
+    ctx.fill();
+  }
+
+  // Tier 3: Pure White Core merged into a single Path with a single ctx.fill()
+  ctx.fillStyle = PURE_WHITE;
+  ctx.beginPath();
+  for (i = 0; i < n; i += 1) {
+    var bCore = list[i];
+    if (!bCore) continue;
+    var bcr = bCore.r || 4;
+    var pulse = view.reduced ? 1 : (0.84 + 0.16 * (0.5 + 0.5 * Math.sin(time * 6 + i * 1.3)));
+    disc(ctx, bCore.x, bCore.y, Math.max(1.8, bcr * 0.6 * pulse));
+  }
+  ctx.fill();
+
+  // Per-bullet custom decorations (tactical boxes, shapes, contrast rings)
   for (i = 0; i < n; i += 1) {
     var body = list[i];
     if (!body) continue;
     var br = body.r || 4;
     var bodyHostile = !!body.glow;
-    var rawBodyCol = body.color;
-    var color = (rawBodyCol && rawBodyCol !== '#75d1b0' && rawBodyCol !== '#7cf0c8')
-      ? rawBodyCol
-      : getHostileBulletColor(body);
-    var pulse = view.reduced ? 1 : (0.84 + 0.16 * (0.5 + 0.5 * Math.sin(time * 6 + i * 1.3)));
-
-    // Tier 1: Outer inky dark halo (br + 2.6px, solid #040306)
-    ctx.fillStyle = DARK_HALO_BULLET;
-    ctx.beginPath();
-    ctx.arc(body.x, body.y, br + (view.contrast ? 3.8 : 2.6), 0, TAU);
-    ctx.fill();
-
-    // Tier 2: Mid high-saturation neon hazard ring (br)
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(body.x, body.y, br, 0, TAU);
-    ctx.fill();
-
-    // Tier 3: Inner white-hot optical core (br * 0.6, #ffffff)
-    ctx.fillStyle = PURE_WHITE;
-    ctx.beginPath();
-    ctx.arc(body.x, body.y, Math.max(1.8, br * 0.6 * pulse), 0, TAU);
-    ctx.fill();
 
     if (bodyHostile && (body.type || 'basic') === 'basic') {
       var rot = view.reduced ? 0.6 : time * 2.4 + i;

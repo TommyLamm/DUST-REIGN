@@ -14,11 +14,26 @@ import { readTipsEnabled, resetTipsSeen, writeTipsEnabled } from '../core/meta-s
 import { setLanguage, toggleLanguage } from '../core/i18n.js';
 import { onTipsReset, updateTips } from '../ui/tips.js';
 
-function pointerPosition(event) {
+export var cachedCanvasRect = { left: 0, top: 0, width: 1, height: 1 };
+
+export function updateCanvasRect() {
+  if (!rt.ui || !rt.ui.canvas || typeof rt.ui.canvas.getBoundingClientRect !== 'function') return;
   var rect = rt.ui.canvas.getBoundingClientRect();
-  if (!rect.width || !rect.height) return;
-  rt.input.mouse.x = (event.clientX - rect.left) * (rt.ui.width / rect.width);
-  rt.input.mouse.y = (event.clientY - rect.top) * (rt.ui.height / rect.height);
+  if (rect.width && rect.height) {
+    cachedCanvasRect.left = rect.left;
+    cachedCanvasRect.top = rect.top;
+    cachedCanvasRect.width = rect.width;
+    cachedCanvasRect.height = rect.height;
+  }
+}
+
+function pointerPosition(event) {
+  if (!cachedCanvasRect.width || !cachedCanvasRect.height || cachedCanvasRect.width <= 1) {
+    updateCanvasRect();
+    if (!cachedCanvasRect.width || !cachedCanvasRect.height) return;
+  }
+  rt.input.mouse.x = (event.clientX - cachedCanvasRect.left) * (rt.ui.width / cachedCanvasRect.width);
+  rt.input.mouse.y = (event.clientY - cachedCanvasRect.top) * (rt.ui.height / cachedCanvasRect.height);
   if (event && event.pointerType === 'mouse') rt.input.touchMode = false;
 }
 
@@ -79,10 +94,14 @@ export function bindInput() {
       }
     }
   });
+  updateCanvasRect();
+  on(window, 'resize', updateCanvasRect, { passive: true });
+  on(window, 'scroll', updateCanvasRect, { passive: true });
   on(window, 'keyup', function (event) { rt.input.keys.delete(event.key.toLowerCase()); });
   on(rt.ui.canvas, 'contextmenu', function (event) { event.preventDefault(); });
   on(rt.ui.canvas, 'pointermove', pointerPosition);
   on(rt.ui.canvas, 'pointerdown', function (event) {
+    updateCanvasRect();
     pointerPosition(event);
     if (event.pointerType === 'touch') rt.input.touchMode = true;
     else if (event.pointerType === 'mouse') rt.input.touchMode = false;
