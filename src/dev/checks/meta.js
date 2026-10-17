@@ -5,6 +5,8 @@ import {
   META_KEY,
   TIPS_ENABLED_KEY,
   TIPS_SEEN_KEY,
+  exportUnifiedSaveData,
+  importUnifiedSaveData,
   readBestScoreV2,
   readDaily,
   readLegacyBestScore,
@@ -408,6 +410,18 @@ export function run() {
     assert(readDaily().date === glassKey && readDaily().best === 50 && readDaily().runs >= 1, 'daily best was not stored');
     assert(readBestScoreV2() === 100, 'a lower daily score replaced the v2 best');
     assert(store.getItem(BEST_SCORE_KEY) === '42' && store.getItem(LEGACY_BEST_SCORE_KEY) === '7', 'legacy score keys were modified');
+
+    var unified = exportUnifiedSaveData();
+    assert(unified && unified.version === 1 && unified.meta && unified.campaign && unified.hardcore && unified.workshop && unified.vault && unified.bounties, 'exportUnifiedSaveData missing required schema v2 modules');
+    var rawUnified = JSON.stringify(unified);
+    assert(rawUnified.length <= 65536, 'exportUnifiedSaveData exceeded 64 KiB size limit');
+
+    var mergedOk = importUnifiedSaveData({
+      bestScore: 200,
+      meta: { scrap: 350, heatUnlocked: 2, unlockedRigs: ['scrapper', 'bulwark'] },
+      workshop: { unlockedModules: { m_phase_bearing: 2 } }
+    });
+    assert(mergedOk === true && readBestScoreV2() === 200, 'importUnifiedSaveData smart merge failed');
   } finally {
     Math.random = prevRandom;
     clearSeed();

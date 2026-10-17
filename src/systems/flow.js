@@ -1,11 +1,11 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
-import { getCampaignStore, getHardcoreStore, readModdedBestScore, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
+import { getCampaignStore, getHardcoreStore, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
 import { applyRig } from '../data/rigs.js';
-import { finishAccountRun, startAccountRun } from '../platform/playroom.js';
+import { finishAccountRun, saveAccountCheckpoint, startAccountRun } from '../platform/playroom.js';
 import { checkStageVictory, directorStartRun, evaluateStageStars } from './director.js';
 import { finalizeGhostOnClear, initGhostForRun } from './ghost.js';
 import { grantDeferredExtract } from './interlude.js';
@@ -271,9 +271,19 @@ export function triggerGameOver(options) {
       if (rt.state.mode === 'campaign') {
         var campRecord = getCampaignStore().stages[stageId];
         isNewPb = !campRecord || !campRecord.bestTime || clearTime <= campRecord.bestTime;
+        recordStageClear(stageId, {
+          stars: (options && options.stars && ((options.stars.star1 ? 1 : 0) + (options.stars.star2 ? 1 : 0) + (options.stars.star3 ? 1 : 0))) || 1,
+          score: rt.state.score || 0,
+          time: clearTime,
+          starDetails: options && options.stars
+        });
       } else {
         var hcRecord = getHardcoreStore().operations[stageId];
         isNewPb = !hcRecord || !hcRecord.bestTime || clearTime <= hcRecord.bestTime;
+        recordHardcoreClear(stageId, {
+          time: clearTime,
+          badge: (rt.state.stageConfig && rt.state.stageConfig.badge) || ''
+        });
       }
       finalizeGhostOnClear(stageId, clearTime, isNewPb);
     }
@@ -294,6 +304,7 @@ export function triggerGameOver(options) {
   rt.state.evalRank = calculateCombatRank(rt.state.wave, rt.state.score, rt.state.stats);
   rt.state.deathSequenceTimer = 0.55;
   if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+  saveAccountCheckpoint();
 }
 
 export function stepStageFlow(dt) {

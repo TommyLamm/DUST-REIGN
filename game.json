@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
   "version": "0.7.0",
@@ -23,5 +23,11 @@
     "unit": "分",
     "minScore": 0,
     "maxScore": 9007199254740991
+  },
+  "cloudSave": {
+    "readableFormats": [
+      1
+    ],
+    "writeFormat": 1
   }
 }

@@ -160,11 +160,11 @@ index.html → src/main.js → init()
 
 調整 key 或資料格式時必須處理既有儲存相容性；本機最高分與帳號成績是兩套獨立資料。
 
-### Playroom 成績
+### Playroom 成績與雲端存檔
 
-`game.json` 是遊戲身分、版本、裝置宣告與榜單規則的來源。`src/platform/playroom.js` 動態載入根目錄 SDK，提供 `startAccountRun()`／`finishAccountRun()`。`beginRun()` 開始局次；`triggerGameOver()` 在計入延後撤離分之後結束局次。同一局只提交一次。
+`game.json` 是遊戲身分、版本、裝置宣告、榜單規則與雲端存檔相容性（Manifest Schema v2；`cloudSave: { readableFormats: [1], writeFormat: 1 }`）的來源。`src/platform/playroom.js` 動態載入根目錄 SDK 1.1.0，提供局次成績（`startAccountRun()`／`finishAccountRun()`）與帳號雲端進度（`loadAccountProgress()`／`saveAccountProgress()`／`saveAccountCheckpoint()`）。`beginRun()` 開始局次；`triggerGameOver()` 在計入延後撤離分之後結束局次。同一局只提交一次。
 
-局次 Promise 放在 `rt.accountRun`；結算時擷取該局 Promise 與最終分數，再非同步提交，不等待網路才推進主要玩法。SDK 不可用、回傳空結果或請求失敗時可繼續遊玩；只有 `finishRun()` 回傳 `saved: true` 才標示帳號成績已保存。局次資料留在記憶體，不寫入本機儲存。
+雲端存檔採用樂觀鎖版本控制（`revision`），由 `src/core/meta-store.js` 的 `exportUnifiedSaveData()` 打包乾淨 JSON 快照（$\le 64\text{ KiB}$，深度 $\le 32$，涵蓋 meta、campaign、hardcore、workshop、vault、bounties 與 bestScore），並由 `importUnifiedSaveData()` 執行跨設備最大化智慧合併（取最高星級、最佳分數、解鎖並集與最大廢料）。同快照重試嚴格沿用同一 `requestId`；遇 `SAVE_REVISION_CONFLICT`（409）自動重讀伺服器最新進度合併後重試；遇 `SAVE_FORMAT_INCOMPATIBLE` 停止寫入並警告。離線與訪客模式無縫降級，不阻塞玩法。
 
 平台訊息協定由 `playroom-sdk.js` 處理；遊戲不直接讀取平台憑證或呼叫管理 API。平台接入、預覽診斷與驗收要求以 `AGENTS.md` 引用的最新線上規格為準。
 

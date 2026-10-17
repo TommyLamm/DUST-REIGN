@@ -14,7 +14,8 @@ import { FUSION_CHIPS } from './data/upgrades.js';
 import { selfCheck } from './dev/self-check.js';
 import { pollGamepad } from './input/gamepad.js';
 import { bindInput } from './input/keyboard-pointer.js';
-import { getPlayroom, startAccountRun } from './platform/playroom.js';
+import { getPlayroom, loadAccountProgress, saveAccountCheckpoint, saveAccountProgress, startAccountRun } from './platform/playroom.js';
+import { exportUnifiedSaveData, importUnifiedSaveData } from './core/meta-store.js';
 import { draw } from './render/draw.js';
 import { sampleFrame } from './render/quality.js';
 import { directorStartRun } from './systems/director.js';
@@ -69,6 +70,19 @@ function init(options) {
   updateDomUi();
   draw();
   rt.raf = window.requestAnimationFrame(frame);
+
+  // Asynchronously sync cloud save progress
+  loadAccountProgress().then(function (res) {
+    if (res && res.data) {
+      importUnifiedSaveData(res.data);
+      if (rt.state) applyLoadout(rt.state);
+      updateDomUi();
+      updateSettingsUi();
+    }
+  }).catch(function () {
+    // Non-blocking offline fallback
+  });
+
   return api;
 }
 
@@ -117,6 +131,11 @@ var api = {
   calculateCombatRank: calculateCombatRank,
   getState: function () { return rt.state; },
   getPlayroom: getPlayroom,
+  loadAccountProgress: loadAccountProgress,
+  saveAccountProgress: saveAccountProgress,
+  saveAccountCheckpoint: saveAccountCheckpoint,
+  exportUnifiedSaveData: exportUnifiedSaveData,
+  importUnifiedSaveData: importUnifiedSaveData,
   getAudio: function () { return AudioFX; },
   getFusionChips: function () { return FUSION_CHIPS; },
   getLanguage: getLanguage,
