@@ -1,5 +1,4 @@
 import { AudioFX } from '../audio/audio-fx.js';
-import { BEST_SCORE_KEY, LEGACY_BEST_SCORE_KEY } from '../config.js';
 import { rt } from './runtime.js';
 
 export var SETTINGS_KEY = 'dust-reign:settings:v1';
@@ -221,24 +220,4 @@ export function triggerHaptic(pattern) {
       }
     }
   } catch (e) {}
-}
-
-export function readBestScore() {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return 0;
-    // Keep the original score readable without deleting or rewriting old saves.
-    var current = Number(window.localStorage.getItem(BEST_SCORE_KEY)) || 0;
-    var legacy = Number(window.localStorage.getItem(LEGACY_BEST_SCORE_KEY)) || 0;
-    return Math.max(0, isFinite(current) ? current : 0, isFinite(legacy) ? legacy : 0);
-  } catch (error) {
-    return 0;
-  }
-}
-
-export function writeBestScore(score) {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(BEST_SCORE_KEY, String(score));
-  } catch (error) {
-    // Private browsing and file URLs can deny storage; the run still works without it.
-  }
 }

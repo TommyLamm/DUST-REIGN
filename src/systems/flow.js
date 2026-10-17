@@ -6,7 +6,7 @@ import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
 import { applyRig } from '../data/rigs.js';
 import { finishAccountRun, saveAccountCheckpoint, startAccountRun } from '../platform/playroom.js';
-import { checkStageVictory, directorStartRun, evaluateStageStars } from './director.js';
+import { checkStageVictory, directorStartRun } from './director.js';
 import { finalizeGhostOnClear, initGhostForRun } from './ghost.js';
 import { grantDeferredExtract } from './interlude.js';
 import { applyLoadout, onRunEnd } from './meta.js';
@@ -16,7 +16,7 @@ import { updateDomUi } from '../ui/hud.js';
 import { syncCombatLayout } from '../ui/dom.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
-export { calculateCombatRank, checkStageVictory, evaluateStageStars };
+export { calculateCombatRank };
 
 var STORM_ANGLE = 35 * Math.PI / 180;
 var STORM_POWER = 38;
@@ -31,12 +31,8 @@ export function livingSovereign() {
   var boss = rt.state.boss;
   if (boss && boss.kind === 'sovereign' && boss.hp > 0) return boss;
   var list = rt.state.enemies;
-  var i;
   if (!list) return null;
-  for (i = 0; i < list.length; i += 1) {
-    if (list[i] && list[i].kind === 'sovereign' && list[i].hp > 0) return list[i];
-  }
-  return null;
+  return list.find(function (e) { return e && e.kind === 'sovereign' && e.hp > 0; }) || null;
 }
 
 export function isStormFront() {

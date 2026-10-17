@@ -398,28 +398,3 @@ export function getCampaignStage(id) {
   return null;
 }
 
-export function getStagesBySector(sectorNum) {
-  var out = [];
-  var i;
-  for (i = 0; i < CAMPAIGN_STAGES.length; i += 1) {
-    if (CAMPAIGN_STAGES[i].sector === sectorNum) out.push(CAMPAIGN_STAGES[i]);
-  }
-  return out;
-}
-
-export function getSectorConfig(sectorNum) {
-  var i;
-  for (i = 0; i < CAMPAIGN_SECTORS.length; i += 1) {
-    if (CAMPAIGN_SECTORS[i].id === sectorNum) return CAMPAIGN_SECTORS[i];
-  }
-  return null;
-}
-
-export function campaignStageIds() {
-  var out = [];
-  var i;
-  for (i = 0; i < CAMPAIGN_STAGES.length; i += 1) {
-    out.push(CAMPAIGN_STAGES[i].id);
-  }
-  return out;
-}

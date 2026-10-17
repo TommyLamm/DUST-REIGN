@@ -90,7 +90,6 @@ export function makeState(width, height) {
   var state = {
     width: w,
     height: h,
-    running: true,
     paused: false,
     over: false,
     level: 1,

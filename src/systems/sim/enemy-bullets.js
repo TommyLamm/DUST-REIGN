@@ -38,14 +38,7 @@ export function pushEnemyBullet(bullet) {
   var list = rt.state.enemyBullets;
   if (!bullet.type) bullet.type = 'basic';
   while (list.length >= EB_CAP) {
-    var drop = -1;
-    var i;
-    for (i = 0; i < list.length; i += 1) {
-      if (!list[i].fromBoss) {
-        drop = i;
-        break;
-      }
-    }
+    var drop = list.findIndex(function (b) { return !b.fromBoss; });
     if (drop < 0) break;
     list.splice(drop, 1);
   }

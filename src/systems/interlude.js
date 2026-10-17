@@ -144,10 +144,6 @@ function enterTitle(state) {
   il.selected = 0;
 }
 
-function applyMastery(state) {
-  grantArmoryMastery(state);
-}
-
 function applyRepair(state) {
   var p = state.player;
   if (!p) return;
@@ -183,7 +179,7 @@ export function chooseInterlude(index) {
       il.selected = 0;
       return;
     }
-    if (choice.id === 'mastery') applyMastery(state);
+    if (choice.id === 'mastery') grantArmoryMastery(state);
     else if (choice.id === 'repair') applyRepair(state);
     enterTitle(state);
     return;

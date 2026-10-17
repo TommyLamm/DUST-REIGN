@@ -194,11 +194,3 @@ export function getHardcoreOperation(id) {
   return null;
 }
 
-export function hardcoreOperationIds() {
-  var out = [];
-  var i;
-  for (i = 0; i < HARDCORE_OPERATIONS.length; i += 1) {
-    out.push(HARDCORE_OPERATIONS[i].id);
-  }
-  return out;
-}

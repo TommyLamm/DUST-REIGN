@@ -66,21 +66,15 @@ function weaponIdOf(id) {
 }
 
 function bossTotal(kills, names) {
-  var n = 0;
-  var i;
-  if (!kills) return 0;
-  for (i = 0; i < names.length; i += 1) n += kills[names[i]] || 0;
-  return n;
+  if (!kills || !names) return 0;
+  return names.reduce(function (sum, name) {
+    return sum + (kills[name] || 0);
+  }, 0);
 }
 
 function knownFusionCount(ids) {
-  var n = 0;
-  var i;
   if (!ids) return 0;
-  for (i = 0; i < FUSION_CHIPS.length; i += 1) {
-    if (ids.indexOf(FUSION_CHIPS[i].id) !== -1) n += 1;
-  }
-  return n;
+  return FUSION_CHIPS.filter(function (c) { return ids.indexOf(c.id) !== -1; }).length;
 }
 
 function copyUnlock(item) {

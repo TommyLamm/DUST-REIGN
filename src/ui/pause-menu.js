@@ -4,7 +4,7 @@ import { readTipsEnabled } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { getVisualQuality, isHapticsEnabled, isHighContrast, isReducedMotion } from '../core/settings.js';
 import { getHeatModifiers } from '../data/heat.js';
-import { FUSION_CHIPS, UPGRADES, toPropName } from '../data/upgrades.js';
+import { FUSION_CHIPS, UPGRADES, findUpgrade, stackCount, toPropName } from '../data/upgrades.js';
 import { triggerGameOver } from '../systems/flow.js';
 import { breacherPelletCount } from '../systems/weapons.js';
 import { isChinese, onLanguageChange, tCategory, tChassisDesc, tContractName, tFusionText, tFusionTitle, tMutatorName, tPassiveName, tRouteName, tUpgradeText, tUpgradeTitle, tWeaponName } from '../core/i18n.js';
@@ -69,23 +69,6 @@ export function switchPauseTab(tabName) {
     }
   });
   if (tabName === 'build') renderBuildInspector();
-  placePauseIndicator(tabName);
-}
-
-function placePauseIndicator(tabName) {
-  if (typeof document === 'undefined' || !rt.ui) return;
-  var nav = rt.ui.tabBtnSystem && rt.ui.tabBtnSystem.parentElement;
-  var indicator = rt.ui.pauseTabIndicator || (nav && nav.querySelector && nav.querySelector('.pause-tab-indicator'));
-  if (!nav || !indicator) return;
-  if (rt.ui) rt.ui.pauseTabIndicator = indicator;
-  if (nav.setAttribute) nav.setAttribute('data-tab', tabName || currentPauseTab);
-  var active = null;
-  if (tabName === 'build') active = rt.ui.tabBtnBuild;
-  else if (tabName === 'controls') active = rt.ui.tabBtnControls;
-  else active = rt.ui.tabBtnSystem;
-  if (!active || !indicator.style) return;
-  indicator.style.width = active.offsetWidth + 'px';
-  indicator.style.transform = 'translateX(' + active.offsetLeft + 'px)';
 }
 
 export function updateAudioBtn() {
@@ -162,7 +145,6 @@ export function updateSettingsUi() {
   if (rt.ui.root && rt.ui.root.classList) {
     rt.ui.root.classList.toggle('is-high-contrast', isHighContrast());
   }
-  placePauseIndicator(currentPauseTab);
 }
 
 export function renderBuildInspector() {
@@ -327,25 +309,16 @@ export function renderBuildInspector() {
   }
 
   // 5. Fusion Resonance Matrix
-  function hasCard(id) {
-    return ((rt.state && rt.state.acquiredUpgrades) || []).some(function (u) {
-      return u.id === id || (u.aliases && u.aliases.indexOf(id) !== -1);
-    });
-  }
-
   function getUpgradeName(id) {
-    for (var k = 0; k < UPGRADES.length; k += 1) {
-      if (UPGRADES[k].id === id) return UPGRADES[k].title;
-    }
-    return id.toUpperCase();
+    return (findUpgrade(id) && findUpgrade(id).title) || id.toUpperCase();
   }
 
   var activeFusions = 0;
   var matrixHtml = FUSION_CHIPS.map(function (fc) {
     var isUnlocked = Boolean(p[toPropName(fc.id)]) || (fc.aliases && fc.aliases.some(function (a) { return Boolean(p[toPropName(a)]); }));
     if (isUnlocked) activeFusions += 1;
-    var hasA = hasCard(fc.required[0]);
-    var hasB = hasCard(fc.required[1]);
+    var hasA = stackCount(rt.state, fc.required[0]) > 0;
+    var hasB = stackCount(rt.state, fc.required[1]) > 0;
     var isReady = !isUnlocked && hasA && hasB;
     var nameA = zh ? tUpgradeTitle(fc.required[0]) : getUpgradeName(fc.required[0]);
     var nameB = zh ? tUpgradeTitle(fc.required[1]) : getUpgradeName(fc.required[1]);
@@ -392,11 +365,7 @@ export function renderBuildInspector() {
 
 function runLabel(value) {
   if (!value) return '—';
-  if (typeof value === 'string') return value;
-  if (value.title) return value.title;
-  if (value.name) return value.name;
-  if (value.id) return String(value.id).toUpperCase();
-  return '—';
+  return typeof value === 'string' ? value : (value.title || value.name || (value.id && String(value.id).toUpperCase()) || '—');
 }
 
 function renderRunSummary(p) {

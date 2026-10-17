@@ -144,15 +144,12 @@ export function draw() {
 
   drawNearAtmosphere(ctx);
 
-  ctx.save();
-  ctx.globalCompositeOperation = 'source-over';
   drawEnemyBullets(ctx);
   drawArtilleryTelegraphs(ctx);
   drawRusherTelegraphs(ctx);
   drawFieldReadability(ctx);
   drawHighContrastMarkers(ctx);
   drawDamageNumbers(ctx);
-  ctx.restore();
 
   if (!isReducedMotion() && !isHighContrast() && rt.state.player && rt.state.player.fx) {
     var chronoUntil = rt.state.player.fx.chronoUntil || 0;

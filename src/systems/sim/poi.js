@@ -137,7 +137,6 @@ function spawnScrapBurst(cx, cy, count) {
   var n = Math.min(count || 60, 100);
   for (var i = 0; i < n; i += 1) {
     var ang = rng('spawn') * TAU;
-    var dist = 20 + rng('spawn') * 90;
     var speed = 80 + rng('spawn') * 160;
     rt.state.orbs.push({
       x: cx + Math.cos(ang) * 15,

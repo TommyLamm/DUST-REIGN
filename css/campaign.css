@@ -840,31 +840,6 @@
 
 /* --- 8. High Contrast & Reduced Motion Overrides --- */
 
-.high-contrast .mode-tab,
-.high-contrast .stage-card,
-.high-contrast .sector-tab,
-.high-contrast .campaign-stage-bar,
-.high-contrast .hardcore-briefing-card,
-.high-contrast .campaign-modal-inner,
-@media (forced-colors: active) {
-  border: 2px solid #ffffff !important;
-  background: #000000 !important;
-  backdrop-filter: none !important;
-  box-shadow: none !important;
-  color: #ffffff !important;
-}
-
-.high-contrast .mode-tab.is-active,
-.high-contrast .stage-card.is-selected,
-.high-contrast .sector-tab.is-active {
-  outline: 3px solid #ffff00 !important;
-}
-
-.high-contrast .star-icon.is-earned,
-.high-contrast .victory-star-slot.is-lit .victory-star-glyph {
-  color: #ffff00 !important;
-  text-shadow: none !important;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .victory-star-slot.is-lit .victory-star-glyph {

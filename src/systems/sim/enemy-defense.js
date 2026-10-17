@@ -75,13 +75,7 @@ function livingTowers(e) {
   var refs = e && e.towerRefs;
   var list = rt.state && rt.state.enemies;
   if (!refs || !list) return 0;
-  var n = 0;
-  var i;
-  for (i = 0; i < refs.length; i += 1) {
-    var t = refs[i];
-    if (t && t.hp > 0 && list.indexOf(t) !== -1) n += 1;
-  }
-  return n;
+  return refs.filter(function (t) { return t && t.hp > 0 && list.indexOf(t) !== -1; }).length;
 }
 
 export function refreshSovereignShield(e) {

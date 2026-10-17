@@ -5,20 +5,7 @@ import { rt } from '../core/runtime.js';
 import { currentGhostPlayback } from '../systems/ghost.js';
 import { drawGlow } from './sprites.js';
 import { isChinese } from '../core/i18n.js';
-
-var TAU = Math.PI * 2;
-
-function ghostHullPath(ctx, r) {
-  ctx.beginPath();
-  ctx.moveTo(r * 0.68, 0);
-  ctx.lineTo(r * 0.28, r * 0.52);
-  ctx.lineTo(-r * 0.48, r * 0.46);
-  ctx.lineTo(-r * 0.68, r * 0.24);
-  ctx.lineTo(-r * 0.68, -r * 0.24);
-  ctx.lineTo(-r * 0.48, -r * 0.46);
-  ctx.lineTo(r * 0.28, -r * 0.52);
-  ctx.closePath();
-}
+import { hullPath } from './player.js';
 
 export function drawGhostMecha(ctx) {
   if (!currentGhostPlayback || !ctx) return;
@@ -34,7 +21,7 @@ export function drawGhostMecha(ctx) {
   ctx.globalAlpha = 0.38;
 
   // Translucent body fill
-  ghostHullPath(ctx, r);
+  hullPath(ctx, r);
   ctx.fillStyle = 'rgba(0, 243, 255, 0.22)';
   ctx.fill();
 

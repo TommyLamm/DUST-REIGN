@@ -6,7 +6,7 @@ import { triggerHaptic } from '../core/settings.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { onEnemyEmp } from './sim/enemy-defense.js';
 import { launchMicroMissiles } from './card-effects.js';
-import { isReducedMotion } from '../core/settings.js';
+import { spawnParticles } from '../core/pools.js';
 
 function pushBullet(b) {
   if (!rt.state) return;
@@ -40,26 +40,6 @@ export var TACTICAL_ITEMS = {
     desc: '投擲重力子核心吸附 150px 敵軍 2.5s，並在坍縮時爆發 80 點動能衝擊與暈眩'
   }
 };
-
-function spawnParticles(x, y, color, count, speed, size) {
-  if (!rt.state || !rt.state.particles) return;
-  var TAU = Math.PI * 2;
-  var n = isReducedMotion() ? Math.max(2, Math.floor(count * 0.4)) : count;
-  for (var i = 0; i < n; i += 1) {
-    var ang = rng('combat') * TAU;
-    var spd = (0.3 + rng('combat') * 0.7) * speed;
-    rt.state.particles.push({
-      x: x,
-      y: y,
-      vx: Math.cos(ang) * spd,
-      vy: Math.sin(ang) * spd,
-      r: (0.5 + rng('combat') * 0.5) * size,
-      color: color,
-      life: 0.35 + rng('combat') * 0.35,
-      maxLife: 0.7
-    });
-  }
-}
 
 export function initPlayerTactical(p, id) {
   if (!p) return;

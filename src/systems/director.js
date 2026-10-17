@@ -359,12 +359,7 @@ export function applyStageDirectorMods(state, recipe) {
 
   if (state.mode === 'campaign') {
     if (config.enemyWeights && Object.keys(config.enemyWeights).length > 0) {
-      var k;
-      for (k in config.enemyWeights) {
-        if (Object.prototype.hasOwnProperty.call(config.enemyWeights, k)) {
-          recipe.weights[k] = config.enemyWeights[k];
-        }
-      }
+      Object.assign(recipe.weights, config.enemyWeights);
       renormalize(recipe.weights);
       refreshCuts(recipe);
     }
@@ -381,15 +376,10 @@ export function applyStageDirectorMods(state, recipe) {
       recipe.eliteChance = config.eliteChance;
     }
     if (config.counterWeights && Object.keys(config.counterWeights).length > 0) {
-      var cw;
-      for (cw = 0; cw < WEIGHT_KEYS.length; cw += 1) {
+      for (var cw = 0; cw < WEIGHT_KEYS.length; cw += 1) {
         recipe.weights[WEIGHT_KEYS[cw]] = 0;
       }
-      for (var key in config.counterWeights) {
-        if (Object.prototype.hasOwnProperty.call(config.counterWeights, key)) {
-          recipe.weights[key] = config.counterWeights[key];
-        }
-      }
+      Object.assign(recipe.weights, config.counterWeights);
       renormalize(recipe.weights);
       refreshCuts(recipe);
     }
@@ -642,9 +632,7 @@ export function startRun(state) {
   onWaveStart(state);
 }
 
-export function directorStartRun(state) {
-  startRun(state);
-}
+export var directorStartRun = startRun;
 
 export function onBossDefeated(enemy) {
   if (!rt.state || !enemy || enemy._bossNoted) return;
@@ -824,15 +812,9 @@ export function checkStageVictory(state, dt) {
     }
   } else if (type === 'vip_hunt') {
     if (state.vipList && state.vipList.length > 0) {
-      var allVipsDead = true;
-      for (var vi = 0; vi < state.vipList.length; vi += 1) {
-        var vip = state.vipList[vi];
-        if (vip && vip.hp > 0 && state.enemies && state.enemies.indexOf(vip) !== -1) {
-          allVipsDead = false;
-          break;
-        }
-      }
-      if (allVipsDead) {
+      if (state.vipList.every(function (vip) {
+        return !vip || vip.hp <= 0 || !state.enemies || state.enemies.indexOf(vip) === -1;
+      })) {
         won = true;
       }
     }

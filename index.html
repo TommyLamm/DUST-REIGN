@@ -109,7 +109,7 @@
                 <div class="resource-block resource-block--xp">
                   <div class="resource-label">
                     <span>SCRAP MEMORY</span>
-                    <strong><span id="hudXp" data-xp="">0 / 100</span><span id="hudXpMax" hidden>100</span></strong>
+                    <strong><span id="hudXp" data-xp="">0 / 100</span></strong>
                   </div>
                   <div id="xpBar" class="meter meter--xp" role="progressbar" aria-label="Scrap memory" aria-valuemin="0"
                     aria-valuemax="100" aria-valuenow="0">
@@ -237,23 +237,7 @@
                 </div>
                 <div class="upgrade-count"><span>DECISION WINDOW</span><strong id="upgradeTimer">COMBAT PAUSED — PICK ONE</strong></div>
               </div>
-              <div id="upgradeChoices" class="upgrade-choices" data-upgrade-options>
-                <button id="upgradeChoice1" class="upgrade-card" type="button" data-upgrade="iron-heart">
-                  <span class="upgrade-index">1</span>
-                  <span class="upgrade-copy"><strong>IRON HEART</strong><small>+20 MAX HULL</small></span>
-                  <span class="upgrade-arrow" aria-hidden="true">↗</span>
-                </button>
-                <button id="upgradeChoice2" class="upgrade-card" type="button" data-upgrade="hot-chamber">
-                  <span class="upgrade-index">2</span>
-                  <span class="upgrade-copy"><strong>HOT CHAMBER</strong><small>+18% FIRE RATE</small></span>
-                  <span class="upgrade-arrow" aria-hidden="true">↗</span>
-                </button>
-                <button id="upgradeChoice3" class="upgrade-card" type="button" data-upgrade="scatter-shot">
-                  <span class="upgrade-index">3</span>
-                  <span class="upgrade-copy"><strong>SCATTER SHOT</strong><small>+1 PROJECTILE</small></span>
-                  <span class="upgrade-arrow" aria-hidden="true">↗</span>
-                </button>
-              </div>
+              <div id="upgradeChoices" class="upgrade-choices" data-upgrade-options></div>
               <div id="upgradeControlRow" class="upgrade-control-row"></div>
             </section>
 
@@ -310,7 +294,6 @@
                 </div>
 
                 <nav class="pause-tabs" data-tab="system" role="tablist" aria-label="Pause Menu Categories">
-                  <span id="pauseTabIndicator" class="pause-tab-indicator" aria-hidden="true"></span>
                   <button id="tabBtnSystem" class="pause-tab is-active" type="button" role="tab" aria-selected="true"
                     aria-controls="panelSystem">SYSTEM</button>
                   <button id="tabBtnBuild" class="pause-tab" type="button" role="tab" aria-selected="false"
@@ -605,7 +588,6 @@
 
       <footer class="system-footer">
         <span>© TommyLam / ALL SIGNALS UNVERIFIED</span>
-        <span id="systemClock">--:--:-- LOCAL</span>
       </footer>
     </div>
   </div>

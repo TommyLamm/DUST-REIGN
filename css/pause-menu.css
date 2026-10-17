@@ -38,17 +38,6 @@
   margin-bottom: 12px;
 }
 
-.pause-tab-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  width: 0;
-  height: 2px;
-  background: var(--amber);
-  pointer-events: none;
-}
-
 .pause-tab {
   min-height: 44px;
   padding: 8px 18px;
@@ -74,6 +63,7 @@
   background: rgba(36, 39, 31, 0.96);
   border-color: var(--line-strong);
   border-bottom: 2px solid var(--amber);
+  margin-bottom: -1px;
 }
 
 .pause-tab-content {

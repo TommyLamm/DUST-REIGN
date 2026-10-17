@@ -135,19 +135,7 @@ export function calculateSaveDepth(obj) {
 }
 
 function unionStrings(a, b) {
-  var out = [];
-  var i;
-  if (Array.isArray(a)) {
-    for (i = 0; i < a.length; i += 1) {
-      if (typeof a[i] === 'string' && a[i] && out.indexOf(a[i]) === -1) out.push(a[i]);
-    }
-  }
-  if (Array.isArray(b)) {
-    for (i = 0; i < b.length; i += 1) {
-      if (typeof b[i] === 'string' && b[i] && out.indexOf(b[i]) === -1) out.push(b[i]);
-    }
-  }
-  return out;
+  return Array.from(new Set([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])])).filter(function (x) { return typeof x === 'string' && x; });
 }
 
 /**

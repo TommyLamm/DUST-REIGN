@@ -22,14 +22,7 @@ export function refreshVaultPanel(container) {
 
   var zh = isChinese();
   var campaign = getCampaignStore();
-  var stageStars = campaign.stageStars || {};
-  var totalStars = 0;
-  Object.keys(stageStars).forEach(function (k) {
-    var stars = stageStars[k] || {};
-    if (stars.star1) totalStars += 1;
-    if (stars.star2) totalStars += 1;
-    if (stars.star3) totalStars += 1;
-  });
+  var totalStars = (campaign.stats && campaign.stats.totalStars) || 0;
 
   var cosmetics = getCosmetics();
   var unlockedSkins = cosmetics.unlockedSkins || ['default'];

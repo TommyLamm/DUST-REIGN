@@ -1,6 +1,6 @@
 import { isChinese } from '../core/i18n.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
-import { CAMPAIGN_STAGES } from '../data/campaign-stages.js';
+import { CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 import { beginRun, restart } from '../systems/flow.js';
 import { openCampaignModal } from './campaign-modal.js';
 import { on } from '../core/utils.js';
@@ -28,13 +28,7 @@ function el(tag, className, text) {
 }
 
 function findNextStageId(currentStageId) {
-  var idx = -1;
-  for (var i = 0; i < CAMPAIGN_STAGES.length; i += 1) {
-    if (CAMPAIGN_STAGES[i].id === currentStageId) {
-      idx = i;
-      break;
-    }
-  }
+  var idx = CAMPAIGN_STAGES.findIndex(function (s) { return s.id === currentStageId; });
   if (idx !== -1 && idx + 1 < CAMPAIGN_STAGES.length) {
     var nextStage = CAMPAIGN_STAGES[idx + 1];
     if (isStageUnlocked(nextStage.id)) {
@@ -61,16 +55,6 @@ export function handleNextSector() {
   }
 }
 
-export function handleReplay() {
-  restart();
-  beginRun();
-}
-
-export function handleStageSelect() {
-  restart();
-  openCampaignModal();
-}
-
 function renderVictoryStars(state) {
   if (!victoryStarsContainer) return;
   while (victoryStarsContainer.firstChild) victoryStarsContainer.removeChild(victoryStarsContainer.firstChild);
@@ -78,14 +62,7 @@ function renderVictoryStars(state) {
   var zh = isChinese();
   var stageConfig = state.stageConfig || null;
   var stageId = (stageConfig && stageConfig.id) || (getCampaignStore().selectedStage);
-  var stageObj = null;
-
-  for (var i = 0; i < CAMPAIGN_STAGES.length; i += 1) {
-    if (CAMPAIGN_STAGES[i].id === stageId) {
-      stageObj = CAMPAIGN_STAGES[i];
-      break;
-    }
-  }
+  var stageObj = getCampaignStage(stageId);
 
   var starsEarned = state.stageStars || { star1: true, star2: false, star3: false };
   var criteria = (stageObj && stageObj.starCriteria) || {
@@ -250,7 +227,8 @@ export function initGameOverUi() {
     on(replayBtn, 'click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      handleReplay();
+      restart();
+      beginRun();
     });
   }
 
@@ -258,7 +236,8 @@ export function initGameOverUi() {
     on(stageSelectBtn, 'click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      handleStageSelect();
+      restart();
+      openCampaignModal();
     });
   }
 

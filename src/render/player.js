@@ -273,7 +273,7 @@ function drawThrusters(ctx, p, reduced) {
   ctx.fill();
 }
 
-function hullPath(ctx, r) {
+export function hullPath(ctx, r) {
   ctx.beginPath();
   ctx.moveTo(r * 0.68, 0);
   ctx.lineTo(r * 0.28, r * 0.52);

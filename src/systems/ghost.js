@@ -165,24 +165,6 @@ export class GhostRecorder {
     this.weaponId = state.weaponId || 'standard';
   }
 
-  step(dt, x, y, aim, isDashing, isFiring) {
-    if (!this.active) return;
-    this.elapsed += dt;
-    if (this.elapsed - this.lastSampleTime < SAMPLE_INTERVAL && this.lastSampleTime >= 0) return;
-    this.lastSampleTime = this.elapsed;
-
-    var flags = 0;
-    if (isFiring) flags |= GHOST_FLAG_FIRING;
-    if (isDashing) flags |= GHOST_FLAG_DASHING;
-
-    this.frames.push({
-      t: Number(this.elapsed.toFixed(2)),
-      x: Math.round(x),
-      y: Math.round(y),
-      aim: Number((aim || 0).toFixed(2)),
-      flags: flags
-    });
-  }
 
   sample(elapsed, player) {
     if (!this.active || !player) return;

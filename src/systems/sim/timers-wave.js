@@ -74,11 +74,7 @@ function spawnOneSpire() {
 }
 
 function summonBoss(kind) {
-  if (typeof spawning.spawnBoss === 'function') {
-    spawning.spawnBoss(kind);
-    return;
-  }
-  if (typeof spawning.spawnTitan === 'function') spawning.spawnTitan();
+  spawning.spawnBoss(kind);
 }
 
 export function commitWaveAdvance(early) {
@@ -209,32 +205,21 @@ export function stepWaveClock(dt, frame) {
     rt.state.pacingPhase = 1; // Infiltration
   } else if (wTime < 20) {
     rt.state.pacingPhase = 2; // Tactical Pincer
-    if (wTime >= 12 && wTime < 15.5) {
-      if (!rt.state.wolfPackSurge) {
-        rt.state.wolfPackSurge = true;
-        AudioFX.stormSiren();
-        rt.state.banner = 2.5;
-        rt.state.bannerText = 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION';
-        logEvent('WOLF PACK SURGE // CENTRIPETAL COMPRESSION');
-      }
-    } else {
-      rt.state.wolfPackSurge = false;
-    }
   } else if (wTime < 25) {
     rt.state.pacingPhase = 3; // Elite Peak
-    if (wTime >= 24 && wTime < 27.5) {
-      if (!rt.state.wolfPackSurge) {
-        rt.state.wolfPackSurge = true;
-        AudioFX.stormSiren();
-        rt.state.banner = 2.5;
-        rt.state.bannerText = 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION';
-        logEvent('WOLF PACK SURGE // CENTRIPETAL COMPRESSION');
-      }
-    } else {
-      rt.state.wolfPackSurge = false;
-    }
   } else {
     rt.state.pacingPhase = 4; // Storm Harvest
+  }
+
+  if ((wTime >= 12 && wTime < 15.5) || (wTime >= 24 && wTime < 27.5)) {
+    if (!rt.state.wolfPackSurge) {
+      rt.state.wolfPackSurge = true;
+      AudioFX.stormSiren();
+      rt.state.banner = 2.5;
+      rt.state.bannerText = 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION';
+      logEvent('WOLF PACK SURGE // CENTRIPETAL COMPRESSION');
+    }
+  } else {
     rt.state.wolfPackSurge = false;
   }
 

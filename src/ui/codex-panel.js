@@ -116,7 +116,6 @@ function paintFusions(body, meta) {
   var zh = isChinese();
   var i;
   var chip;
-  var slots = Math.max(10, FUSION_CHIPS.length);
   for (i = 0; i < FUSION_CHIPS.length; i += 1) {
     chip = FUSION_CHIPS[i];
     if (seen.indexOf(chip.id) === -1) {
@@ -126,7 +125,6 @@ function paintFusions(body, meta) {
     var reqs = (chip.required || []).map(function (rid) { return tUpgradeTitle(rid); }).join(' + ');
     body.appendChild(card(tFusionTitle(chip), reqs, zh ? '已記錄' : 'SEEN'));
   }
-  for (i = FUSION_CHIPS.length; i < slots; i += 1) body.appendChild(unknownCard());
 }
 
 function paintStats(body, meta) {
@@ -251,7 +249,6 @@ export function initCodexPanel() {
   var body;
   var closeBtn;
   var i;
-  var screen;
   if (built || typeof document === 'undefined') return;
   panel = document.getElementById('codexPanel');
   if (!panel) return;
@@ -321,13 +318,6 @@ export function initCodexPanel() {
       first.focus();
     }
   });
-  screen = document.getElementById('startScreen');
-  if (screen && typeof MutationObserver !== 'undefined') {
-    var observer = new MutationObserver(function () {
-      if (screen.hidden && open) closeCodex();
-    });
-    observer.observe(screen, { attributes: true, attributeFilter: ['hidden'] });
-  }
   built = true;
   panel.hidden = true;
 }

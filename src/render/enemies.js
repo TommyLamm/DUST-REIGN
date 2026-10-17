@@ -7,7 +7,6 @@ import {
   decay,
   drawDualOutline,
   drawDustRing,
-  drawHpBar,
   ensureFx,
   keyGlowsOnly,
   outline,
@@ -2177,89 +2176,6 @@ function drawCommandLinks(ctx) {
   ctx.restore();
 }
 
-function drawLayerBars(ctx) {
-  var list = rt.state.enemies;
-  var i;
-  if (list) {
-    for (i = 0; i < list.length; i += 1) {
-      var e = list[i];
-      if (!(e.maxHp > 0) || !(e.hp < e.maxHp)) continue;
-      drawHpBar(ctx, e.x, e.y - e.r - 12, Math.max(18, e.r * 2), e.hp / e.maxHp);
-    }
-  }
-  var cores = rt.state.volatileCores;
-  if (cores) {
-    for (i = 0; i < cores.length; i += 1) {
-      var c = cores[i];
-      if (!(c.maxHp > 0) || !(c.hp < c.maxHp)) continue;
-      drawHpBar(ctx, c.x, c.y - c.r * 1.3 - 10, c.r * 2.4, c.hp / c.maxHp);
-    }
-  }
-  var barrels = rt.state.barrels;
-  if (barrels) {
-    for (i = 0; i < barrels.length; i += 1) {
-      var b = barrels[i];
-      if (!(b.maxHp > 0) || !(b.hp < b.maxHp)) continue;
-      drawHpBar(ctx, b.x, b.y - b.r - 10, b.r * 2, b.hp / b.maxHp);
-    }
-  }
-}
-
-function drawLabels(ctx) {
-  var list = rt.state.enemies;
-  if (!list) return;
-  var hc = isHighContrast();
-  var i;
-  ctx.save();
-  for (i = 0; i < list.length; i += 1) {
-    var e = list[i];
-    var lift = (e.maxHp > 0 && e.hp < e.maxHp) ? 8 : 0;
-    var y = e.y - e.r - (hc ? 30 : 18) - lift;
-    if (e.kind === 'elite' && e.affix) {
-      var tag = e.affix === 'mirror' ? '[MRR]' :
-        e.affix === 'vortex' ? '[VTX]' :
-        e.affix === 'command' ? '[CMD]' :
-        e.affix === 'blink' ? '[BLK]' : '';
-      var col = e.affix === 'mirror' ? '#38bdf8' :
-        e.affix === 'vortex' ? '#c084fc' :
-        e.affix === 'command' ? '#fbbf24' :
-        e.affix === 'blink' ? '#34d399' : '#ffffff';
-      if (!tag && e.affix === 'volatile') {
-        tag = '[VOL]';
-        col = '#ffbe2e';
-      }
-      if (!tag && e.affix === 'splitter') {
-        tag = '[SPL]';
-        col = '#ff7844';
-      }
-      if (tag) drawTag(ctx, e.x, y, tag, col);
-      if (e.affix2 && e.affix2 !== e.affix) {
-        var tag2 = e.affix2 === 'mirror' ? '[MRR]' :
-          e.affix2 === 'vortex' ? '[VTX]' :
-          e.affix2 === 'command' ? '[CMD]' :
-          e.affix2 === 'blink' ? '[BLK]' :
-          e.affix2 === 'volatile' ? '[VOL]' :
-          e.affix2 === 'splitter' ? '[SPL]' : '';
-        var col2 = e.affix2 === 'mirror' ? '#38bdf8' :
-          e.affix2 === 'vortex' ? '#c084fc' :
-          e.affix2 === 'command' ? '#fbbf24' :
-          e.affix2 === 'blink' ? '#34d399' :
-          e.affix2 === 'volatile' ? '#ffbe2e' : '#ff7844';
-        if (tag2) drawTag(ctx, e.x, y - 14, tag2, col2);
-      }
-    }
-    if (e.kind === 'titan' && (e.leftCannonDestroyed || e.rightPodDestroyed || e.radiatorDestroyed || e.treadDestroyed)) {
-      var titanParts = [];
-      if (e.leftCannonDestroyed) titanParts.push('[L: OFF]');
-      if (e.rightPodDestroyed) titanParts.push('[R: OFF]');
-      if (e.radiatorDestroyed) titanParts.push('[FINS: OFF]');
-      if (e.treadDestroyed) titanParts.push('[TRK: OFF]');
-      drawTag(ctx, e.x, y, titanParts.join(' '), PALETTE.emissive.hostile);
-    }
-  }
-  ctx.restore();
-}
-
 export function drawRusherTelegraphs(ctx) {
   if (!ctx || !rt.state || !rt.state.enemies) return;
   drawFieldTelegraphs(ctx);
@@ -2269,7 +2185,6 @@ export function drawRusherTelegraphs(ctx) {
     if (list[i].kind === 'rusher') drawRusherTelegraph(ctx, list[i]);
   }
   drawCommandLinks(ctx);
-  drawLayerBars(ctx);
   drawLabels(ctx);
 }
 
@@ -2371,8 +2286,6 @@ function drawHighContrastMarker(ctx, e) {
   ctx.stroke();
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.arc(e.x, e.y, e.r + 2, 0, TAU);
   ctx.stroke();
   var glyph = e.kind === 'crawler' ? '▲' :
     e.kind === 'rusher' ? '⚡' :

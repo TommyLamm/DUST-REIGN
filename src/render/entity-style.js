@@ -4,7 +4,7 @@ import { rt } from '../core/runtime.js';
 import { isHighContrast, isReducedMotion } from '../core/settings.js';
 import { clamp } from '../core/utils.js';
 import { PALETTE } from './palette.js';
-import { getQuality } from './quality.js';
+import { getBudget } from './quality.js';
 
 export function ensureFx(ent) {
   if (!ent.fx) ent.fx = {};
@@ -94,23 +94,6 @@ export function drawDustRing(ctx, r, dust) {
   ctx.restore();
 }
 
-export function drawHpBar(ctx, x, y, w, ratio) {
-  if (!(w > 0)) return;
-  var left = x - w * 0.5;
-  var ticks = w > 48 ? 6 : 4;
-  var i;
-  ctx.fillStyle = 'rgba(8, 6, 4, 0.9)';
-  ctx.fillRect(left - 1, y - 1, w + 2, 6);
-  ctx.fillStyle = '#2a2118';
-  ctx.fillRect(left, y, w, 4);
-  ctx.fillStyle = PALETTE.hud.rust;
-  ctx.fillRect(left, y, Math.max(0, w * clamp(ratio, 0, 1)), 4);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-  for (i = 1; i < ticks; i += 1) {
-    ctx.fillRect(left + (w * i) / ticks, y, 1, 4);
-  }
-}
-
 // Specular Rimlight Color Constants (0-GC static strings)
 var RIM_DEFAULT = '#d8c8b4';
 var RIM_CRAWLER = 'rgba(216, 200, 180, 0.75)';
@@ -148,41 +131,16 @@ export function getSpecularRimColor(kind, options) {
 export function drawDualOutline(ctx, r, kind, options) {
   var outerW = 3.8;
   var rimW = 1.6;
-  var rimColor = RIM_DEFAULT;
+  var rimColor = getSpecularRimColor(kind, options);
   var isBoss = false;
 
-  if (typeof kind === 'string' && (kind.charCodeAt(0) === 35 /* # */ || kind.charCodeAt(0) === 114 /* r */)) {
-    // Signature: drawDualOutline(ctx, outerW, rimColor, rimW)
-    outerW = typeof r === 'number' ? r : 3.8;
-    rimColor = kind;
-    rimW = typeof options === 'number' ? options : 1.6;
-  } else {
-    // Signature: drawDualOutline(ctx, r, kind, options)
-    if (typeof kind === 'string') {
-      rimColor = getSpecularRimColor(kind, options);
-      if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') {
-        outerW = 4.8;
-        rimW = 2.0;
-        isBoss = true;
-      } else if (typeof r === 'number' && r > 20) {
-        outerW = 4.2;
-        rimW = 1.8;
-      }
-    } else if (kind && typeof kind === 'object') {
-      var actualKind = kind.kind;
-      rimColor = getSpecularRimColor(actualKind, kind);
-      if (actualKind === 'titan' || actualKind === 'sovereign' || actualKind === 'dreadnought' || kind.isBoss) {
-        outerW = 4.8;
-        rimW = 2.0;
-        isBoss = true;
-      }
-    }
-    if (options && typeof options === 'object') {
-      if (options.outerW != null) outerW = options.outerW;
-      if (options.rimW != null) rimW = options.rimW;
-      if (options.rimColor != null) rimColor = options.rimColor;
-      if (options.isBoss) isBoss = true;
-    }
+  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') {
+    outerW = 4.8;
+    rimW = 2.0;
+    isBoss = true;
+  } else if (typeof r === 'number' && r > 20) {
+    outerW = 4.2;
+    rimW = 1.8;
   }
 
   var hc = isHighContrast();
@@ -222,8 +180,6 @@ export function drawDualOutline(ctx, r, kind, options) {
   ctx.lineJoin = prevJoin;
 }
 
-export var drawDualOutlineZeroCost = drawDualOutline;
-
 export function outline(ctx, width) {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
@@ -232,23 +188,12 @@ export function outline(ctx, width) {
   ctx.stroke();
 }
 
-var glowStamp = -1;
-var glowOnly = false;
-
 export function keyGlowsOnly() {
-  var stamp = rt.renderTime || 0;
-  if (stamp !== glowStamp) {
-    glowStamp = stamp;
-    glowOnly = getQuality() === 'low';
-  }
-  return glowOnly;
+  return getBudget().keyGlowsOnly;
 }
 
 export function arcDepth() {
-  var q = getQuality();
-  if (q === 'low') return 1;
-  if (q === 'medium') return 2;
-  return 3;
+  return getBudget().arcDepth;
 }
 
 export function decay(fx, key) {

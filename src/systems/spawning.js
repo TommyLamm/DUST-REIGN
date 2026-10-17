@@ -242,21 +242,8 @@ export function spawnEnemy() {
     var pool = affixPool(rt.state.wave, recipe);
     affix = pickAffix(pool);
     if ((rt.state.wave | 0) >= 16 && pool.length > 1) {
-      var guard = 0;
-      affix2 = pickAffix(pool);
-      while (affix2 === affix && guard < 6) {
-        affix2 = pickAffix(pool);
-        guard += 1;
-      }
-      if (affix2 === affix) {
-        var ai;
-        for (ai = 0; ai < pool.length; ai += 1) {
-          if (pool[ai] !== affix) {
-            affix2 = pool[ai];
-            break;
-          }
-        }
-      }
+      var pool2 = pool.filter(function (a) { return a !== affix; });
+      affix2 = pickAffix(pool2);
     }
   } else if (useWeights) {
     kind = pickWeightedKind(weights) || 'crawler';

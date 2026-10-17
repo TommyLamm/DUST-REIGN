@@ -9,6 +9,7 @@ export var ROUTES = [
     reward: 'Score ×1.10',
     sector: 'rust',
     scoreMultiplier: 1.1,
+    scoreMult: 1.1,
     xpMultiplier: 1,
     batteryRegenMultiplier: 1,
     stormScoreMultiplier: 1,
@@ -29,6 +30,7 @@ export var ROUTES = [
     reward: 'Act opens with +1 reroll',
     sector: 'dusk',
     scoreMultiplier: 1,
+    scoreMult: 1,
     xpMultiplier: 1.2,
     batteryRegenMultiplier: 1,
     stormScoreMultiplier: 1,
@@ -49,6 +51,7 @@ export var ROUTES = [
     reward: 'Battery regen +50%',
     sector: 'night',
     scoreMultiplier: 1,
+    scoreMult: 1,
     xpMultiplier: 1,
     batteryRegenMultiplier: 1.5,
     stormScoreMultiplier: 1,
@@ -69,6 +72,7 @@ export var ROUTES = [
     reward: 'Score ×1.20',
     sector: 'night',
     scoreMultiplier: 1.2,
+    scoreMult: 1.2,
     xpMultiplier: 1,
     batteryRegenMultiplier: 1,
     stormScoreMultiplier: 1,
@@ -89,6 +93,7 @@ export var ROUTES = [
     reward: 'Each wreck drops a supply crate',
     sector: 'rust',
     scoreMultiplier: 1,
+    scoreMult: 1,
     xpMultiplier: 1,
     batteryRegenMultiplier: 1,
     stormScoreMultiplier: 1,
@@ -109,6 +114,7 @@ export var ROUTES = [
     reward: 'Storm Breaker score ×2',
     sector: 'night',
     scoreMultiplier: 1,
+    scoreMult: 1,
     xpMultiplier: 1,
     batteryRegenMultiplier: 1,
     stormScoreMultiplier: 2,
@@ -123,14 +129,6 @@ export var ROUTES = [
     blackout: false
   }
 ];
-
-var scoreStamp;
-for (scoreStamp = 0; scoreStamp < ROUTES.length; scoreStamp += 1) {
-  var stamped = ROUTES[scoreStamp];
-  if (stamped.id === 'scorched') stamped.scoreMult = 1.1;
-  else if (stamped.id === 'blackout') stamped.scoreMult = 1.2;
-  else stamped.scoreMult = 1;
-}
 
 export function routeById(id) {
   var i;

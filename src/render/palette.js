@@ -4,9 +4,11 @@ import { rt } from '../core/runtime.js';
 export var PALETTE = {
   ground: { base: '#13100d', light: '#1c1712', dark: '#090706', crack: '#050403' },
   shadow: 'rgba(2, 3, 5, 0.92)',
-  shadowPenumbra: 'rgba(4, 6, 9, 0.46)',
-  shadowFloat: 'rgba(8, 12, 16, 0.25)',
-  ambient: { dusk: '#181410', storm: '#220e0a', night: '#0a1017' },
+  ambient: {
+    dusk: { r: 24, g: 20, b: 16 },
+    storm: { r: 34, g: 14, b: 10 },
+    night: { r: 10, g: 16, b: 23 }
+  },
   emissive: { player: '#7cf0c8', hostile: '#ff552e', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
   hud: { bone: '#e8e0c6', rust: '#ed6842', amber: '#e8b94e', mint: '#96baa0' }
 };
@@ -19,16 +21,6 @@ var GROUND_SECTORS = {
   rust: { base: '#140d0a', light: '#1f130e', dark: '#080504', crack: '#040202', hi: '#281711' },
   night: { base: '#090e14', light: '#101722', dark: '#04070a', crack: '#020305', hi: '#172230' }
 };
-
-function hexToRgb(hex) {
-  var h = String(hex || '#000000').replace('#', '');
-  if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
-  return {
-    r: parseInt(h.slice(0, 2), 16) || 0,
-    g: parseInt(h.slice(2, 4), 16) || 0,
-    b: parseInt(h.slice(4, 6), 16) || 0
-  };
-}
 
 function mixChannel(a, b, t) {
   return Math.round(a + (b - a) * t);
@@ -67,14 +59,14 @@ export function sectorTint(wave, waveTime, storm) {
   var name = sectorForWave(wave);
   var from = wave > 1 ? sectorForWave(wave - 1) : name;
   var t = waveTime == null ? 1 : Math.max(0, Math.min(1, Number(waveTime) / SECTOR_BLEND_SEC));
-  var a = hexToRgb(PALETTE.ambient[from] || PALETTE.ambient.dusk);
-  var b = hexToRgb(PALETTE.ambient[name] || PALETTE.ambient.dusk);
+  var a = PALETTE.ambient[from] || PALETTE.ambient.dusk;
+  var b = PALETTE.ambient[name] || PALETTE.ambient.dusk;
   var r = mixChannel(a.r, b.r, t);
   var g = mixChannel(a.g, b.g, t);
   var bl = mixChannel(a.b, b.b, t);
   var stormMix = storm === true ? 0.72 : (typeof storm === 'number' ? Math.max(0, Math.min(1, storm)) : 0);
   if (stormMix > 0) {
-    var s = hexToRgb(PALETTE.ambient.storm);
+    var s = PALETTE.ambient.storm;
     r = mixChannel(r, s.r, stormMix);
     g = mixChannel(g, s.g, stormMix);
     bl = mixChannel(bl, s.b, stormMix);

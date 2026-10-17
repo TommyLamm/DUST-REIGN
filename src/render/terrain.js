@@ -329,16 +329,6 @@ function ensure(sector, detail, protect) {
   return slot;
 }
 
-function blitModuloQuads(ctx, canvas, x0, y0, viewW, viewH, tw, th) {
-  var u = ((x0 % tw) + tw) % tw;
-  var v = ((y0 % th) + th) % th;
-  for (var y = -v; y < viewH; y += th) {
-    for (var x = -u; x < viewW; x += tw) {
-      ctx.drawImage(canvas, x0 + x + u, y0 + y + v, tw, th);
-    }
-  }
-}
-
 function drawSlotPattern(ctx, slot, alpha, x0, y0, viewW, viewH) {
   if (!slot || !slot.canvas || !(alpha > 0)) return;
   if (!slot.pattern) {
@@ -350,20 +340,16 @@ function drawSlotPattern(ctx, slot, alpha, x0, y0, viewW, viewH) {
   var prev = ctx.globalAlpha;
   ctx.globalAlpha = prev * alpha;
 
-  if (terrainPattern.setTransform) {
-    var mat;
-    if (typeof DOMMatrix !== 'undefined') {
-      mat = new DOMMatrix();
-      mat.translateSelf(-x0, -y0);
-    } else {
-      mat = { a: 1, b: 0, c: 0, d: 1, e: -x0, f: -y0 };
-    }
-    terrainPattern.setTransform(mat);
-    ctx.fillStyle = terrainPattern;
-    ctx.fillRect(x0 - 48, y0 - 48, viewW + 96, viewH + 96);
+  var mat;
+  if (typeof DOMMatrix !== 'undefined') {
+    mat = new DOMMatrix();
+    mat.translateSelf(-x0, -y0);
   } else {
-    blitModuloQuads(ctx, slot.canvas, x0 - 48, y0 - 48, viewW + 96, viewH + 96, TILE_SIZE, TILE_SIZE);
+    mat = { a: 1, b: 0, c: 0, d: 1, e: -x0, f: -y0 };
   }
+  terrainPattern.setTransform(mat);
+  ctx.fillStyle = terrainPattern;
+  ctx.fillRect(x0 - 48, y0 - 48, viewW + 96, viewH + 96);
 
   ctx.globalAlpha = prev;
 }
@@ -433,13 +419,6 @@ export function drawGround(ctx, camX, camY, viewW, viewH) {
 function decalKind(d) {
   var c = d.color || '#1b1715';
   if (c === '#141210' || d.r <= 8) return 'foot';
-  if (c === '#1b1715') return 'scorch';
-  if (c.length === 7 && c.charAt(0) === '#') {
-    var r = parseInt(c.substr(1, 2), 16);
-    var g = parseInt(c.substr(3, 2), 16);
-    var b = parseInt(c.substr(5, 2), 16);
-    if (b > r + 12 && g + 15 > r) return 'coolant';
-  }
   return 'scorch';
 }
 
@@ -540,18 +519,6 @@ function drawDecalList(ctx, list, x0, y0, w, h) {
       ctx.arc(0, 0, d.r * 0.48, 0, TAU);
       ctx.fill();
       ctx.restore();
-    } else if (kind === 'coolant') {
-      ctx.fillStyle = d.color;
-      ctx.save();
-      ctx.scale(1, 0.7);
-      ctx.beginPath();
-      ctx.arc(0, 0, d.r, 0, TAU);
-      ctx.fill();
-      ctx.restore();
-      ctx.globalAlpha = alpha * 0.65;
-      ctx.beginPath();
-      ctx.arc(d.r * 0.22, -d.r * 0.08, d.r * 0.32, 0, TAU);
-      ctx.fill();
     } else {
       ctx.fillStyle = d.color || '#1b1715';
       ctx.globalAlpha = alpha * 0.5;

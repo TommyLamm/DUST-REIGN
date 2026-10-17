@@ -315,9 +315,6 @@
   animation: rankShake var(--dur-shake) linear;
 }
 
-.pause-tab-indicator {
-  transition: transform var(--dur-tab) ease, width var(--dur-tab) ease;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .brand-lockup h1,

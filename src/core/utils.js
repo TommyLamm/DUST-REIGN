@@ -1,16 +1,13 @@
 import { rt } from './runtime.js';
 
-function q(selector, root) {
-  return (root || document).querySelector(selector);
-}
-
 export function qa(selector, root) {
-  return Array.prototype.slice.call((root || document).querySelectorAll(selector));
+  return Array.from((root || document).querySelectorAll(selector));
 }
 
 export function first(selectors, root) {
+  var doc = root || document;
   for (var i = 0; i < selectors.length; i += 1) {
-    var found = q(selectors[i], root);
+    var found = doc.querySelector(selectors[i]);
     if (found) return found;
   }
   return null;

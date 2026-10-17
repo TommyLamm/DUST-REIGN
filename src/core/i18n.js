@@ -1065,12 +1065,6 @@ function setHtmlById(id, html) {
   if (el) el.innerHTML = html;
 }
 
-function setAttrById(id, attr, val) {
-  if (typeof document === 'undefined') return;
-  var el = document.getElementById(id);
-  if (el) el.setAttribute(attr, val);
-}
-
 export function syncStaticHtml(lang) {
   if (typeof document === 'undefined') return;
   var zh = lang === 'zh';

@@ -79,7 +79,7 @@ var RULES = [
 ];
 
 function pad2(n) {
-  return (n < 10 ? '0' : '') + n;
+  return String(n).padStart(2, '0');
 }
 
 function hash32(text) {

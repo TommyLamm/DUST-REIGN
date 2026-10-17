@@ -29,12 +29,8 @@ import {
   LEGACY_CONTRAST_KEY,
   LEGACY_QUALITY_KEY
 } from '../src/core/settings.js';
-import {
-  AudioFX,
-  AUDIO_KEY,
-  LEGACY_AUDIO_MUTED_KEY,
-  LEGACY_AUDIO_VOLUME_KEY
-} from '../src/audio/audio-fx.js';
+import { AudioFX } from '../src/audio/audio-fx.js';
+var { AUDIO_KEY, LEGACY_AUDIO_MUTED_KEY, LEGACY_AUDIO_VOLUME_KEY } = AudioFX;
 import {
   getLanguage,
   setLanguage,

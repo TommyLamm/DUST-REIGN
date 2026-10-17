@@ -7,7 +7,6 @@ export var DASH_PULSE_RADIUS = 88;
 export var OVERDRIVE_DURATION = 6;
 export var OVERDRIVE_COOLDOWN = 0.62;
 export var OVERDRIVE_DAMAGE = 1.5;
-export var REPAIR_HEAL = 18;
 export var BOUNTY_SURGE_DURATION = 3;
 export var REPAIR_OVERFLOW_SCORE = 12;
 export var STORM_FRONT_SECONDS = 5;

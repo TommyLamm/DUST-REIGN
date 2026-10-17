@@ -1,6 +1,6 @@
 import { isChinese, onLanguageChange, tRigName, tWeaponName } from '../core/i18n.js';
 import { getHardcoreStore, isHardcoreUnlocked, saveHardcoreStore } from '../core/meta-store.js';
-import { HARDCORE_OPERATIONS } from '../data/hardcore-operations.js';
+import { HARDCORE_OPERATIONS, getHardcoreOperation } from '../data/hardcore-operations.js';
 import { on } from '../core/utils.js';
 
 var selectedOpId = 'op_01';
@@ -17,10 +17,7 @@ function el(tag, className, text) {
 export function getSelectedHardcoreOperation() {
   var store = getHardcoreStore();
   var id = store.selectedOperation || selectedOpId || 'op_01';
-  for (var i = 0; i < HARDCORE_OPERATIONS.length; i += 1) {
-    if (HARDCORE_OPERATIONS[i].id === id) return HARDCORE_OPERATIONS[i];
-  }
-  return HARDCORE_OPERATIONS[0];
+  return getHardcoreOperation(id) || HARDCORE_OPERATIONS[0];
 }
 
 export function selectHardcoreOperation(opId) {
@@ -36,13 +33,8 @@ export function selectHardcoreOperation(opId) {
 }
 
 export function cycleHardcoreOperation(delta) {
-  var currentIndex = 0;
-  for (var i = 0; i < HARDCORE_OPERATIONS.length; i += 1) {
-    if (HARDCORE_OPERATIONS[i].id === selectedOpId) {
-      currentIndex = i;
-      break;
-    }
-  }
+  var currentIndex = HARDCORE_OPERATIONS.findIndex(function (op) { return op.id === selectedOpId; });
+  if (currentIndex === -1) currentIndex = 0;
   var nextIndex = (currentIndex + delta + HARDCORE_OPERATIONS.length) % HARDCORE_OPERATIONS.length;
   var nextOp = HARDCORE_OPERATIONS[nextIndex];
   if (isHardcoreUnlocked(nextOp.id)) {

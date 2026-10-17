@@ -50,13 +50,6 @@ var SHAKE_MAX_OFFSET = 18.0;
 var SHAKE_MAX_ANGLE = 0.022; // ~1.26 deg
 
 export function initCamera(cam, worldW, worldH, viewW, viewH) {
-  if (typeof cam === 'number') {
-    viewH = viewW;
-    viewW = worldH;
-    worldH = worldW;
-    worldW = cam;
-    cam = camera;
-  }
   cam = cam || camera;
   cam.worldW = worldW || 3520;
   cam.worldH = worldH || 2640;
@@ -95,13 +88,6 @@ export function addCameraTrauma(amount, cam) {
 }
 
 export function updateCamera(cam, player, input, dt, reducedMotion) {
-  // Support flexible argument patterns
-  if (typeof cam === 'number') {
-    dt = cam;
-    cam = camera;
-    player = rt.state && rt.state.player;
-    input = rt.input;
-  }
   cam = cam || (rt && rt.camera) || camera;
   if (!cam) return;
   player = player || (rt.state && rt.state.player);

@@ -91,13 +91,16 @@ export function drawOrb(ctx, orb) {
   var groundY = orb.y + 4;
   ctx.save();
   ctx.translate(orb.x, groundY);
-  if (power) {
-    // Overclock Core ground shadow & pulsing aura ring
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 1.35, s * 0.65, 0, 0, TAU);
-    ctx.fillStyle = 'rgba(4, 4, 6, 0.82)';
-    ctx.fill();
 
+  var shadowW = (repair || crate) ? s * 1.4 : s * 1.35;
+  var shadowH = (repair || crate) ? s * 0.7 : s * 0.65;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, shadowW, shadowH, 0, 0, TAU);
+  ctx.fillStyle = (repair || crate) ? 'rgba(4, 4, 6, 0.85)' : 'rgba(4, 4, 6, 0.82)';
+  ctx.fill();
+
+  if (power) {
+    // Overclock Core pulsing aura ring
     var ocPulse = reduced ? 0.8 : (0.65 + 0.35 * Math.sin((rt.renderTime || 0) * 8 + (orb.x || 0)));
     ctx.beginPath();
     ctx.ellipse(0, 0, s * 1.45, s * 0.72, 0, 0, TAU);
@@ -108,12 +111,7 @@ export function drawOrb(ctx, orb) {
     ctx.lineWidth = 1.4;
     ctx.stroke();
   } else if (repair) {
-    // Repair Scrap ground shadow & emergency ring
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 1.4, s * 0.7, 0, 0, TAU);
-    ctx.fillStyle = 'rgba(4, 3, 6, 0.85)';
-    ctx.fill();
-
+    // Repair Scrap emergency ring
     var repPulse = reduced ? 0.8 : (0.6 + 0.4 * Math.sin((rt.renderTime || 0) * 6 + (orb.x || 0)));
     ctx.beginPath();
     ctx.ellipse(0, 0, s * 1.45, s * 0.72, 0, 0, TAU);
@@ -123,19 +121,8 @@ export function drawOrb(ctx, orb) {
     ctx.strokeStyle = 'rgba(255, 77, 61, ' + (0.75 * repPulse).toFixed(3) + ')';
     ctx.lineWidth = 1.4;
     ctx.stroke();
-  } else if (crate) {
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 1.4, s * 0.7, 0, 0, TAU);
-    ctx.fillStyle = 'rgba(4, 4, 6, 0.85)';
-    ctx.fill();
-  } else {
-    // Normal Scrap: Ground shadow fixed at y + 4px
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 1.35, s * 0.65, 0, 0, TAU);
-    ctx.fillStyle = 'rgba(4, 4, 6, 0.82)';
-    ctx.fill();
-
-    // 12px diameter pulsing holographic halo (thin mint green / gold)
+  } else if (!crate) {
+    // Normal Scrap: 12px diameter pulsing holographic halo (thin mint green / gold)
     var scrapPulse = reduced ? 0.75 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * 6 + (orb.x || 0)));
     ctx.beginPath();
     ctx.ellipse(0, 0, 6, 3.2, 0, 0, TAU); // 12px diameter

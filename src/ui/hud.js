@@ -35,12 +35,6 @@ var slamKey = '';
 var lastSector = '';
 var lastStorm = '';
 var lastQuality = '';
-var lastCachedWaveKey = '';
-var lastCachedWaveStr = '';
-var lastCachedKillsKey = '';
-var lastCachedKillsStr = '';
-var lastCachedTimerKey = '';
-var lastCachedTimerStr = '';
 
 function motionOff() {
   try { return isReducedMotion(); } catch (e) { return false; }
@@ -595,21 +589,11 @@ export function updateDomUi() {
   setText(rt.ui.xpMax, rt.state.xpNext);
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
-  var waveKey = (rt.state.act || 1) + ':' + rt.state.wave + ':' + (zh ? 'zh' : 'en');
-  if (waveKey !== lastCachedWaveKey) {
-    lastCachedWaveKey = waveKey;
-    lastCachedWaveStr = zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0'));
-  }
-  setText(rt.ui.wave, lastCachedWaveStr);
+  setText(rt.ui.wave, zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
   pulse(rt.ui.wave, 'wave', rt.state.wave);
   syncScore();
   setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
-  var killsKey = rt.state.kills + ':' + (zh ? 'zh' : 'en');
-  if (killsKey !== lastCachedKillsKey) {
-    lastCachedKillsKey = killsKey;
-    lastCachedKillsStr = rt.state.kills + (zh ? ' 敵機' : ' HOSTILES');
-  }
-  setText(rt.ui.kills, lastCachedKillsStr);
+  setText(rt.ui.kills, rt.state.kills + (zh ? ' 敵機' : ' HOSTILES'));
   if (rt.ui.objectiveText) {
     var objKey = rt.state.bountyClaimed ? 'claimed' : (rt.state.bountyTarget + ':' + rt.state.bountyReward + ':' + (zh ? 'zh' : 'en'));
     if (rt.ui.objectiveText._lastObjKey !== objKey) {
@@ -639,13 +623,8 @@ export function updateDomUi() {
   if (rt.ui.waveTimer) {
     var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
     var storm = isStormFront();
-    var timerKey = seconds + ':' + (storm ? '1' : '0') + ':' + (zh ? 'zh' : 'en');
-    if (timerKey !== lastCachedTimerKey) {
-      lastCachedTimerKey = timerKey;
-      var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
-      lastCachedTimerStr = prefix + String(seconds).padStart(2, '0') + 's';
-    }
-    setText(rt.ui.waveTimer, lastCachedTimerStr);
+    var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
+    setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
   }
   syncHealth();
   if (rt.ui.healthFill && rt.ui.healthFill.parentElement) {
@@ -743,28 +722,6 @@ export function updateDomUi() {
     }
 
     syncScoreBreakdown();
-    if (!rt.ui.telAccuracy && rt.ui.gameOver) {
-      var tel = typeof document !== 'undefined' ? document.getElementById('runTelemetry') : null;
-      if (!tel && typeof document !== 'undefined') {
-        var resGrid = rt.ui.gameOver.querySelector && rt.ui.gameOver.querySelector('.result-grid');
-        if (resGrid) {
-          tel = document.createElement('div');
-          tel.id = 'runTelemetry';
-          tel.className = 'telemetry-grid';
-          resGrid.insertAdjacentElement('afterend', tel);
-        }
-      }
-      if (tel) {
-        var accPct = Math.round(acc * 100);
-        tel.innerHTML =
-          '<div><span>' + (zh ? '命中率' : 'ACCURACY') + '</span><strong>' + accPct + '% <small>(' + stats.shotsHit + '/' + stats.shotsFired + ')</small></strong></div>' +
-          '<div><span>' + (zh ? '暴擊次數' : 'CRITS') + '</span><strong>' + stats.crits + '</strong></div>' +
-          '<div><span>' + (zh ? '擦彈次數' : 'GRAZES') + '</span><strong>' + stats.grazes + '</strong></div>' +
-          '<div><span>' + (zh ? '引爆核心' : 'CORES DETONATED') + '</span><strong>' + stats.coresDetonated + '</strong></div>' +
-          '<div><span>' + (zh ? '最高連擊' : 'MAX COMBO') + '</span><strong>x' + stats.maxCombo + '</strong></div>' +
-          '<div><span>' + (zh ? '總傷害量' : 'DAMAGE DEALT') + '</span><strong>' + stats.damageDealt + '</strong></div>';
-      }
-    }
   }
   if (rt.ui.accountSaveBadge) rt.ui.accountSaveBadge.hidden = !rt.state.over || !rt.accountRunSaved;
   fitGameOverOverlay();
@@ -775,13 +732,9 @@ export function updateDomUi() {
 
 if (typeof onLanguageChange === 'function') {
   onLanguageChange(function () {
-    lastCachedWaveKey = '';
-    lastCachedKillsKey = '';
-    lastCachedTimerKey = '';
     breakdownRoll.key = '';
     ensureBreakdown();
     updateDomUi();
   });
 }
 
-export { drawTacticalMinimap, drawOffscreenChevrons } from '../render/overlay.js';

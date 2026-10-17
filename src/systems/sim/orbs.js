@@ -16,21 +16,24 @@ function isCrate(orb) {
   return !!orb && (orb.kind === 'crate' || orb.type === 'crate');
 }
 
+function grantBulkheadShield(p, leftover) {
+  if (leftover > 0 && p.tempArmorCap) {
+    var curShield = p.shield || 0;
+    var shieldGain = Math.min(leftover, Math.max(0, p.tempArmorCap - curShield));
+    if (shieldGain > 0) {
+      p.shield = curShield + shieldGain;
+      logEvent('SCRAP BULKHEAD // +' + Math.round(shieldGain) + ' TEMP SHIELD');
+    }
+  }
+}
+
 function applyCrate(orb, p) {
   var id = orb.payload || 'repair';
   var amount = orb.amount || 0;
   if (id === 'repair') {
     var healed = Math.max(0, Math.min(amount || 30, p.maxHp - p.hp));
     p.hp += healed;
-    var leftoverCrate = (amount || 30) - healed;
-    if (leftoverCrate > 0 && p.tempArmorCap) {
-      var curShield = p.shield || 0;
-      var shieldGain = Math.min(leftoverCrate, Math.max(0, p.tempArmorCap - curShield));
-      if (shieldGain > 0) {
-        p.shield = curShield + shieldGain;
-        logEvent('SCRAP BULKHEAD // +' + Math.round(shieldGain) + ' TEMP SHIELD');
-      }
-    }
+    grantBulkheadShield(p, (amount || 30) - healed);
     noteMetaEvent('repair-pickup', { healed: healed });
     AudioFX.pickup('repair');
     if (healed > 0) logEvent('SUPPLY CRATE // +' + Math.round(healed) + ' HULL');
@@ -94,15 +97,7 @@ export function stepOrbs(dt, frame) {
         var healCap = getHeatModifiers(rt.state.heat || 0).repairHeal + ((typeof p.repairBonus === 'number') ? p.repairBonus : 0);
         var healed = Math.max(0, Math.min(healCap, p.maxHp - p.hp));
         p.hp += healed;
-        var leftoverHeal = healCap - healed;
-        if (leftoverHeal > 0 && p.tempArmorCap) {
-          var curShield = p.shield || 0;
-          var shieldGain = Math.min(leftoverHeal, Math.max(0, p.tempArmorCap - curShield));
-          if (shieldGain > 0) {
-            p.shield = curShield + shieldGain;
-            logEvent('SCRAP BULKHEAD // +' + Math.round(shieldGain) + ' TEMP SHIELD');
-          }
-        }
+        grantBulkheadShield(p, healCap - healed);
         noteMetaEvent('repair-pickup', { healed: healed });
         AudioFX.pickup('repair');
         if (healed > 0) {

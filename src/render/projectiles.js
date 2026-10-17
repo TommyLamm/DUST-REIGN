@@ -59,15 +59,6 @@ export function getHostileBulletColor(b) {
   return HOSTILE_MAGENTA;
 }
 
-export function getHostileGlowColor(b) {
-  if (!b) return HOSTILE_MAGENTA;
-  var t = b.type || 'basic';
-  if (t === 'acid') return HOSTILE_LIME;
-  if (t === 'heavy' || t === 'plasma' || t === 'boss' || t === 'mortar') return HOSTILE_ORANGE;
-  if (t === 'void' || t === 'gravity') return HOSTILE_VIOLET;
-  return HOSTILE_MAGENTA;
-}
-
 var budStamp = -1;
 var bud = { depth: 1, key: false, reduced: false, contrast: false, tier: 'low' };
 
@@ -467,7 +458,7 @@ export function drawEnemyBullets(ctx) {
     var rawGlow = glowB.glowColor;
     var glow = (rawGlow && rawGlow !== '#7cf0c8' && rawGlow !== '#75d1b0')
       ? rawGlow
-      : (hostile ? HOSTILE_ORANGE : getHostileGlowColor(glowB));
+      : (hostile ? HOSTILE_ORANGE : getHostileBulletColor(glowB));
     drawGlow(ctx, glowB.x, glowB.y, gr + (hostile ? 16 : 12), glow, hostile ? 0.92 : 0.82);
   }
   endGlowBatch();

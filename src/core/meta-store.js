@@ -70,13 +70,7 @@ function defaultStats() {
 }
 
 function stringList(list) {
-  var out = [];
-  var i;
-  if (!Array.isArray(list)) return out;
-  for (i = 0; i < list.length; i += 1) {
-    if (typeof list[i] === 'string' && list[i] && out.indexOf(list[i]) === -1) out.push(list[i]);
-  }
-  return out;
+  return Array.from(new Set((Array.isArray(list) ? list : []).filter(function (x) { return typeof x === 'string' && x; })));
 }
 
 function copyStrings(src) {

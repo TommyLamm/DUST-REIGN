@@ -223,7 +223,13 @@ while (simTime < runDuration) {
   var isDashing = (simTime % 4 < 0.2);
   var isFiring = (simTime % 0.2 < 0.05);
 
-  recorder.step(simDt, px, py, pAim, isDashing, isFiring);
+  recorder.sample(simTime, {
+    x: px,
+    y: py,
+    aim: pAim,
+    cooldown: isFiring ? 1 : 0,
+    dashPulse: isDashing ? 1 : 0
+  });
 }
 
 var ghostPayload = recorder.finalize(true, 120000, 120.0);

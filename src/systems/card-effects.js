@@ -327,14 +327,7 @@ function tickScorch(dt) {
   if (!marks || marks.length === 0) return;
   var enemyBullets = rt.state.enemyBullets || [];
 
-  var hasVaporize = false;
-  var i;
-  for (i = 0; i < marks.length; i += 1) {
-    if (marks[i].vaporize) {
-      hasVaporize = true;
-      break;
-    }
-  }
+  var hasVaporize = marks.some(function (m) { return m && m.vaporize; });
 
   if (hasVaporize && enemyBullets.length > 0) {
     populateEnemyBulletGrid(enemyBullets);
@@ -342,7 +335,7 @@ function tickScorch(dt) {
 
   var vaporizedAny = false;
 
-  for (i = marks.length - 1; i >= 0; i -= 1) {
+  for (var i = marks.length - 1; i >= 0; i -= 1) {
     var mark = marks[i];
     mark.life -= dt;
     mark.tick = (mark.tick || 0) + dt;

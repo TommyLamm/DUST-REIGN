@@ -2,7 +2,7 @@ import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRi
 import { getCampaignStore, readBestScoreV2, readDaily, readLegacyBestScore, readMeta, writeMeta } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
-import { CAMPAIGN_STAGES } from '../data/campaign-stages.js';
+import { CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { RIGS, getRig } from '../data/rigs.js';
 import { peekRunUnlocks, resolveSelection } from '../systems/meta.js';
@@ -63,9 +63,7 @@ function el(tag, className, text) {
 }
 
 function padScore(value) {
-  var text = String(Math.max(0, Math.round(Number(value) || 0)));
-  while (text.length < 6) text = '0' + text;
-  return text;
+  return String(Math.max(0, Math.round(Number(value) || 0))).padStart(6, '0');
 }
 
 function formatMult(heat) {
@@ -217,13 +215,7 @@ function refresh() {
       campaignStageBar.hidden = false;
       var campStore = getCampaignStore();
       var selStageId = campStore.selectedStage || 'stage_1_1';
-      var stgObj = null;
-      for (var sIdx = 0; sIdx < CAMPAIGN_STAGES.length; sIdx += 1) {
-        if (CAMPAIGN_STAGES[sIdx].id === selStageId) {
-          stgObj = CAMPAIGN_STAGES[sIdx];
-          break;
-        }
-      }
+      var stgObj = getCampaignStage(selStageId);
       var stgRecord = (campStore.stages && campStore.stages[selStageId]) || { stars: 0 };
       var starsStr = (stgRecord.stars >= 1 ? '★' : '☆') + (stgRecord.stars >= 2 ? '★' : '☆') + (stgRecord.stars >= 3 ? '★' : '☆');
 

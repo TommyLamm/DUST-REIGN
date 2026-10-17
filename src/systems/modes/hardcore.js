@@ -47,15 +47,7 @@ export function stepHardcoreMode(dt, frame) {
   } else {
     currentR = Math.max(450, 700 - (elapsed - 90) * 12);
   }
-
-  if (!state.toxicRing) {
-    state.toxicRing = { x: cx, y: cy, r: currentR, active: true };
-  } else {
-    state.toxicRing.x = cx;
-    state.toxicRing.y = cy;
-    state.toxicRing.r = currentR;
-    state.toxicRing.active = true;
-  }
+  state.toxicRing = Object.assign(state.toxicRing || {}, { x: cx, y: cy, r: currentR, active: true });
 
   // Player distance to storm epicenter
   var pDist = Math.hypot(p.x - cx, p.y - cy);

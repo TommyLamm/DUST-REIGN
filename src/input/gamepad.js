@@ -212,24 +212,18 @@ function pollGamepadInner(dt) {
 
     if (rt.ui && rt.ui.pauseModal && !rt.ui.pauseModal.hidden) {
       if (rt.gamepadState.navDebounce > 0) rt.gamepadState.navDebounce -= dt;
-      var leftPressed = isBtnPressed(buttons[14]) || (axes.length > 0 && axes[0] < -0.5);
-      var rightPressed = isBtnPressed(buttons[15]) || (axes.length > 0 && axes[0] > 0.5);
-      var upPressed = isBtnPressed(buttons[12]) || (axes.length > 1 && axes[1] < -0.5);
-      var downPressed = isBtnPressed(buttons[13]) || (axes.length > 1 && axes[1] > 0.5);
+      leftPressed = isBtnPressed(buttons[14]) || (axes.length > 0 && axes[0] < -0.5);
+      rightPressed = isBtnPressed(buttons[15]) || (axes.length > 0 && axes[0] > 0.5);
+      upPressed = isBtnPressed(buttons[12]) || (axes.length > 1 && axes[1] < -0.5);
+      downPressed = isBtnPressed(buttons[13]) || (axes.length > 1 && axes[1] > 0.5);
 
       if (rt.gamepadState.navDebounce <= 0) {
-        if (leftPressed) {
+        if (leftPressed || rightPressed) {
           rt.gamepadState.navDebounce = 0.22;
           var tabOrder = ['system', 'build', 'controls'];
           var curIdx = tabOrder.indexOf(getCurrentPauseTab());
-          var nextIdx = (curIdx - 1 + tabOrder.length) % tabOrder.length;
-          switchPauseTab(tabOrder[nextIdx]);
-        } else if (rightPressed) {
-          rt.gamepadState.navDebounce = 0.22;
-          var tabOrder2 = ['system', 'build', 'controls'];
-          var curIdx2 = tabOrder2.indexOf(getCurrentPauseTab());
-          var nextIdx2 = (curIdx2 + 1) % tabOrder2.length;
-          switchPauseTab(tabOrder2[nextIdx2]);
+          var delta = leftPressed ? -1 : 1;
+          switchPauseTab(tabOrder[(curIdx + delta + tabOrder.length) % tabOrder.length]);
         } else if (downPressed || upPressed) {
           rt.gamepadState.navDebounce = 0.22;
           var focusables = qa('button:not([hidden]):not([disabled]), input:not([hidden]):not([disabled])', rt.ui.pauseModal);

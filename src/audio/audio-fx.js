@@ -969,7 +969,3 @@ export var AudioFX = (function () {
     LEGACY_AUDIO_VOLUME_KEY: LEGACY_AUDIO_VOLUME_KEY
   };
 })();
-
-export var AUDIO_KEY = 'dust-reign:audio:v1';
-export var LEGACY_AUDIO_MUTED_KEY = 'dust_reign_audio_muted';
-export var LEGACY_AUDIO_VOLUME_KEY = 'dust_reign_master_volume';

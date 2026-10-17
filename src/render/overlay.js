@@ -12,10 +12,6 @@ var titanLag = 1;
 var titanRef = null;
 var deathGhost = 0;
 
-function hudColor(group, name, fallback) {
-  var bucket = PALETTE && PALETTE[group];
-  return (bucket && bucket[name]) || fallback;
-}
 
 function hashNoise(i, salt) {
   var n = ((i + 1) * 1103515245 + salt * 12345) % 2147483647;
@@ -143,7 +139,7 @@ function drawTitanBar(ctx, titan) {
   var barY = 20;
   var boxExtraH = hasParts ? 20 : 0;
   var enraged = Boolean(titan.phase2Triggered);
-  var stroke = enraged ? hudColor('emissive', 'hostile', '#ff6a3d') : hudColor('emissive', 'gold', '#ffd36b');
+  var stroke = enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold;
   var fill = enraged ? '#ff4d2e' : '#d4af37';
 
   ctx.fillStyle = 'rgba(14, 12, 10, 0.94)';
@@ -226,7 +222,7 @@ function drawWaveBanner(ctx) {
   var boxY = y - boxH / 2;
   ctx.fillStyle = 'rgba(16, 17, 14, 0.78)';
   ctx.fillRect(boxX, boxY, textW, boxH);
-  ctx.strokeStyle = rt.state.bannerText ? hudColor('hud', 'mint', '#96baa0') : hudColor('hud', 'amber', '#e8b94e');
+  ctx.strokeStyle = rt.state.bannerText ? PALETTE.hud.mint : PALETTE.hud.amber;
   ctx.lineWidth = 1;
   ctx.strokeRect(boxX, boxY, textW, boxH);
   ctx.fillStyle = ctx.strokeStyle;
@@ -625,9 +621,6 @@ export function renderDamageNumbers(ctx, numbers, numMax) {
   ctx.restore();
 }
 
-export function drawDamageNumbers(ctx) {
-  renderDamageNumbers(ctx, null, 0);
-}
 
 var _CHEVRON_SCREEN_POS = { x: 0, y: 0 };
 var _CHEVRON_INTERSECT = { x: 0, y: 0, angle: 0 };
@@ -701,7 +694,6 @@ export function drawOffscreenChevrons(ctx) {
       ctx.restore();
 
       // 距離數字
-      ctx.save();
       ctx.font = '700 9px ui-monospace, SFMono-Regular, Consolas, monospace';
       ctx.fillStyle = '#ff4d2e';
       ctx.textAlign = 'center';
@@ -709,7 +701,6 @@ export function drawOffscreenChevrons(ctx) {
       var bxOffset = clamp(bRes.x - Math.cos(bRes.angle) * 15, 36, viewW - 36);
       var byOffset = clamp(bRes.y - Math.sin(bRes.angle) * 15, 18, viewH - 18);
       ctx.fillText((boss.name ? boss.name.toUpperCase() : 'BOSS') + ' ' + bDistM + 'm', bxOffset, byOffset);
-      ctx.restore();
     }
   }
 
@@ -732,7 +723,6 @@ export function drawOffscreenChevrons(ctx) {
         ctx.fill();
         ctx.restore();
 
-        ctx.save();
         ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
         ctx.fillStyle = '#00e5a3';
         ctx.textAlign = 'center';
@@ -740,7 +730,6 @@ export function drawOffscreenChevrons(ctx) {
         var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * 14, 32, viewW - 32);
         var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * 14, 18, viewH - 18);
         ctx.fillText('SPIRE ' + sDistM + 'm', sxOffset, syOffset);
-        ctx.restore();
       }
     }
   }
@@ -769,7 +758,6 @@ export function drawOffscreenChevrons(ctx) {
             ctx.fill();
             ctx.restore();
 
-            ctx.save();
             ctx.font = '700 8px ui-monospace, SFMono-Regular, Consolas, monospace';
             ctx.fillStyle = '#ff9800';
             ctx.textAlign = 'center';
@@ -777,7 +765,6 @@ export function drawOffscreenChevrons(ctx) {
             var exOffset = clamp(eRes.x - Math.cos(eRes.angle) * 13, 28, viewW - 28);
             var eyOffset = clamp(eRes.y - Math.sin(eRes.angle) * 13, 18, viewH - 18);
             ctx.fillText(eDistM + 'm', exOffset, eyOffset);
-            ctx.restore();
           }
         }
       }

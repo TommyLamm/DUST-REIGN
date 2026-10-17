@@ -272,18 +272,12 @@ h1 {
   color: var(--amber);
 }
 
-.signal-dot,
 .arena-state i,
 .feed-dot {
   display: inline-block;
   border-radius: 50%;
   background: var(--mint);
   box-shadow: 0 0 0 3px rgba(150, 186, 160, 0.12), 0 0 13px rgba(150, 186, 160, 0.65);
-}
-
-.signal-dot {
-  width: 7px;
-  height: 7px;
 }
 
 .game-layout {
@@ -354,13 +348,4 @@ h1 {
   box-shadow: 0 0 0 2px rgba(150, 186, 160, 0.12), 0 0 8px rgba(150, 186, 160, 0.65);
 }
 
-.arena-state--storm {
-  color: var(--rust) !important;
-}
 
-.arena-state.arena-state--storm i,
-.arena-state:has(.arena-state--storm) i,
-.arena-state--storm i {
-  background: var(--rust) !important;
-  box-shadow: 0 0 0 2px rgba(237, 104, 66, 0.25), 0 0 10px rgba(237, 104, 66, 0.85) !important;
-}

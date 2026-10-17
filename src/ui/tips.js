@@ -61,12 +61,6 @@ function inputKind() {
   return 'key';
 }
 
-function moveShootText() {
-  var kind = inputKind();
-  if (kind === 'touch') return 'STICK TO MOVE · FIRE LOCKS THE NEAREST SIGNAL';
-  if (kind === 'pad') return 'LEFT STICK MOVE · RT FIRE · A OR LT DASH';
-  return 'WASD MOVE · MOUSE AIM / FIRE · SPACE OR SHIFT DASH';
-}
 
 function mutatorText() {
   var m = rt.state && rt.state.mutator;

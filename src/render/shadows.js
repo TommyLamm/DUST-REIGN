@@ -6,7 +6,6 @@ import { markBorn } from './entity-style.js';
 
 var SHADOW_CORE = 'rgba(2, 3, 5, 0.94)';
 var SHADOW_PENUMBRA = 'rgba(4, 6, 9, 0.45)';
-var SHADOW_DEEP = 'rgba(2, 3, 5, 0.96)';
 
 var ROT = 0.46;
 var ROT_COS = Math.cos(ROT);
@@ -31,39 +30,6 @@ function pushShadow(x, y, r, stretch, lead, alt) {
   SHADOW_LEAD[shadowCount] = lead || 0;
   SHADOW_ALT[shadowCount] = alt > 0 ? alt : 0;
   shadowCount += 1;
-}
-
-export function contact(ctx, x, y, radius, deep, stretch, lead, altitude) {
-  if (!(radius > 0.5)) return;
-  var alt = altitude || 0;
-  if (alt < 0) alt = 0;
-  var s = stretch || 1;
-
-  // Tier 2 (Penumbra): ~135% radius with elevation spread
-  var penScale = 1 + alt * 0.45;
-  var rxPen = radius * 1.35 * (0.78 + 0.22 * s) * penScale;
-  var ryPen = radius * 1.35 * (0.34 + 0.05 * s) * penScale;
-  var oxPen = radius * 0.26 * s;
-  var oyPen = radius * 0.34 * s + (lead || 0) + alt * 14;
-
-  ctx.fillStyle = SHADOW_PENUMBRA;
-  ctx.beginPath();
-  ctx.ellipse(x + oxPen, y + oyPen, Math.max(1, rxPen), Math.max(0.6, ryPen), ROT, 0, TAU);
-  ctx.fill();
-
-  // Tier 1 (Core AO): ~70% radius hard contact line
-  if (alt < 0.85) {
-    var shrink = 1 - alt * 0.4;
-    var rxCore = radius * 0.70 * (0.78 + 0.22 * s) * shrink;
-    var ryCore = radius * 0.70 * (0.34 + 0.05 * s) * shrink;
-    var oxCore = radius * 0.18 * s;
-    var oyCore = radius * 0.24 * s + (lead ? lead * 0.7 : 0);
-
-    ctx.fillStyle = deep ? SHADOW_DEEP : (PALETTE.shadow || SHADOW_CORE);
-    ctx.beginPath();
-    ctx.ellipse(x + oxCore, y + oyCore, Math.max(0.8, rxCore), Math.max(0.5, ryCore), ROT, 0, TAU);
-    ctx.fill();
-  }
 }
 
 export function drawContactShadows(ctx, culledIndices, culledCount) {

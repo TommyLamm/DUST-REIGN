@@ -6,9 +6,9 @@ var QUALITY_LIMIT = 0.019;
 var STALL_GAP = 1;
 
 var BUDGETS = {
-  high: { lightmap: true, grain: true, maxParticles: 600, motes: 140, terrainDetail: true, arcDepth: 3, keyGlowsOnly: false },
-  medium: { lightmap: false, grain: false, maxParticles: 350, motes: 70, terrainDetail: true, arcDepth: 2, keyGlowsOnly: false },
-  low: { lightmap: false, grain: false, maxParticles: 180, motes: 0, terrainDetail: false, arcDepth: 1, keyGlowsOnly: true }
+  high: { tier: 'high', lightmap: true, grain: true, maxParticles: 600, motes: 140, terrainDetail: true, arcDepth: 3, keyGlowsOnly: false },
+  medium: { tier: 'medium', lightmap: false, grain: false, maxParticles: 350, motes: 70, terrainDetail: true, arcDepth: 2, keyGlowsOnly: false },
+  low: { tier: 'low', lightmap: false, grain: false, maxParticles: 180, motes: 0, terrainDetail: false, arcDepth: 1, keyGlowsOnly: true }
 };
 
 var autoTier = '';
@@ -75,31 +75,8 @@ export function getQuality() {
   return autoTier || initialTier();
 }
 
-var budgetOut = {
-  tier: '',
-  lightmap: false,
-  grain: false,
-  maxParticles: 0,
-  motes: 0,
-  terrainDetail: false,
-  arcDepth: 1,
-  keyGlowsOnly: false
-};
-
 export function getBudget() {
-  var tier = getQuality();
-  var src = BUDGETS[tier] || BUDGETS.high;
-  if (budgetOut.tier !== tier) {
-    budgetOut.tier = tier;
-    budgetOut.lightmap = src.lightmap;
-    budgetOut.grain = src.grain;
-    budgetOut.maxParticles = src.maxParticles;
-    budgetOut.motes = src.motes;
-    budgetOut.terrainDetail = src.terrainDetail;
-    budgetOut.arcDepth = src.arcDepth;
-    budgetOut.keyGlowsOnly = src.keyGlowsOnly;
-  }
-  return budgetOut;
+  return BUDGETS[getQuality()] || BUDGETS.high;
 }
 
 export function sampleFrame(dt) {
