@@ -27,25 +27,26 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
-| `src/core/spatial-grid.js` | 2D 空間雜湊網格（Spatial Hash Grid），以 TypedArray 達成 0 GC 執行期廣域碰撞篩選。 |
-| `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，以及共用工具與事件註冊。 |
+| `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
+| `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，Swap-and-Pop 實體快速移除（`fastUnorderedRemove`），平方距離計算（`dist2`），以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
 | `src/core/meta-store.js`、`src/core/cloud-save.js` | 局外存檔、v2 最高分、每日成績、提示紀錄、闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口，以及全進度 Unified Save 與雲端存檔智慧合併。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
-| `src/input/` | 鍵盤、滑鼠、觸控事件與每幀手把輪詢。 |
+| `src/input/` | 鍵盤、滑鼠、觸控事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、生成、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
-| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取（負空間地表、低頻沙丘、減噪防偽警報碎石與座標網格）與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻）、三階接地陰影（Core AO 咬合、Penumbra 柔影、Z-Elevation 浮空縮放）。 |
-| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點（導航基座環、朝向標、反應核、砲管脊線）、敵型雙層反差描邊、街機立體戰利品（廢料浮空脈衝與救命光柱）、敵我色譜隔離與三層三明治彈體（阻光盾＋霓虹環＋光核）及斑馬預警軌道、Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）。 |
+| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取（負空間地表、低頻沙丘、減噪防偽警報碎石與座標網格）與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻，單遍距離平方線性剪裁 $O(N)$）、雙 Pass 全合流接地陰影（全場僅發出 2 次 `ctx.fill()` 繪製所有實體之 Penumbra 柔影與 Core AO 硬咬合）。 |
+| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點、敵型雙層反差描邊、街機立體戰利品、敵我色譜隔離與三層三明治彈體及斑馬預警軌道、敵彈 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染、字體排版分組批處理 Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）。 |
 | `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子（3-Tier 優先級架構與玩家 120px 徑向視線保護圈 Alpha Culling）、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
-| `src/render/entity-style.js` | 受擊閃白與雙層反差描邊等逐實體視覺暫存。 |
-| `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段負空間地表色調（$L^* \in [4.6\%, 13.5\%]$）、畫質預算（粒子池 HIGH 600 / MEDIUM 350 / LOW 180）與自動降級、預渲染光暈／雜訊貼圖快取。 |
-| `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、改裝工坊（`workshop-panel.js`）、星級金庫（`vault-panel.js`）、每日懸賞（`bounties-panel.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
+| `src/render/entity-style.js` | 受擊閃白、單例 `POSE_SCRATCH` 姿態暫存、以及 `drawDualOutlineZeroCost` 手動屬性復原（消除 `save`/`restore` 堆疊開銷）等逐實體視覺暫存。 |
+| `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段負空間地表色調（$L^* \in [4.6\%, 13.5\%]$）、畫質預算（粒子池 HIGH 600 / MEDIUM 350 / LOW 180）與自動降級、自適應 DPR 收斂（1.0~1.25）以緩解 Canvas fillrate 負載、預渲染光暈／雜訊貼圖快取。 |
+| `src/ui/` | DOM 對應、尺寸適配、DOM 髒檢查快取（`setText`、`style.width`，消除強制同步重排）、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、改裝工坊（`workshop-panel.js`）、星級金庫（`vault-panel.js`）、每日懸賞（`bounties-panel.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
+| `src/audio/audio-fx.js` | Web Audio API 節點自動斷開回收（`cleanupVoice()` / `.disconnect()`）、分頁可見度休眠（`visibilitychange`）與狀態持久化。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績與雲端存檔樂觀鎖同步橋接（Playroom SDK 1.1.0）、能力協商、錯誤碼處理與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
 | `scripts/balance-sim.mjs` | 無頭長流程模擬。 |
@@ -57,6 +58,9 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `rt` 保存跨模組會重新賦值的資料，包括 `state`、`ui`、輸入、RAF／事件資源與帳號局次。單局資料放在 `rt.state`；只由單一模組管理的狀態留在該模組，以函式提供存取。
 - `rt.renderTime` 與 `rt.renderDt` 由 `src/main.js` 的 `frame()` 每幀寫入，暫停與 hitstop 時仍前進。`rt.fxEvents` 在 `src/core/runtime.js` 初始為 `null`，由 `pushFxEvent`／`drainFxEvents` 首次使用時建立上限 64 的環形佇列（滿額覆寫最舊一筆）。事件只供視覺使用。種類與欄位以呼叫處及 `src/render/fx.js` 的處理為準：`kill`、`crit`、`core`、`barrel`、`mortar`、`emp`、`spire`、`dash`、`graze`、`playerHit`、`titanPhase`、`bounty`、`surge`、`burst`。
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 與雙層描邊快取只由 `src/render/entity-style.js` 的 `tickFlash` 維護；怪物血條滯後白條（`ghostHp`、`ghostTimer`）與傷害數字的 `numHp` 只由 render 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
+- 0-GC 記憶體防線：子彈軌跡使用平坦環形緩衝區（`Float32Array(8)`）與靜態 `trailPool` 復用物件；逐實體姿態與每幀位移步進以單例物件 `POSE_SCRATCH` 與 `STEP_SCRATCH` 傳遞；貫穿彈命中歷史採用 64-bit Bitmask（`hitMask0`, `hitMask1`）紀錄取代陣列物件；全域無序實體陣列（子彈、敵彈、粒子、掉落物等）全面採用 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice`，移除時切斷死者懸空參照避免隱式記憶體洩漏。
+- 物理空間加速：空間雜湊網格單元格鎖定 55px，提供零分配回調 `queryGridCallback` 供酸池、焦痕、自爆友傷與碰撞查詢；全域幾何判定以平方距離 $d^2 \le r^2$ 替代 `Math.hypot`；Titan 4 大可拆解部位以單幀快取旋轉矩陣（`updateTitanPartCache`）與逆向局部坐標判定；視錐台剔除（Frustum Culling）避免螢幕外實體之網格插入與射擊計時器推進。
+- 繪圖管線合流：敵彈採 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染，消除重複 Dark Halo 狀態切換；接地陰影以雙 Pass 全合流繪製（全場僅發出 2 次 `ctx.fill()`）；`drawDualOutlineZeroCost` 手動復原繪圖屬性替代 `save/restore` 堆疊開銷；傷害數字採字體分組批處理，消滅 CSS 字體抖動。
 - `src/main.js` 與 `src/ui/` 可以匯入 render。`src/systems/**` 不得讀取 `entity.fx`，也不得 import `src/render/**`。系統透過共用 `rt.state` 協作，並會呼叫 UI 與音效；這些目錄是責任分工，並非互相隔離的單向分層。
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
