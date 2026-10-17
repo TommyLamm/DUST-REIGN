@@ -489,19 +489,30 @@ export function drawOverheadBars(ctx) {
 var FONT_NUM = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
 var FONT_CRIT = '700 18px ui-monospace, SFMono-Regular, Consolas, monospace';
 
+// 0-GC Preallocated Pools and Buckets for Damage Numbers Batching
+var NORMAL_LIST = [];
+var CRIT_LIST = [];
+var NUM_POOL = [];
+var POOL_MAX = 128;
+for (var np = 0; np < POOL_MAX; np += 1) {
+  NUM_POOL[np] = { x: 0, y: 0, alpha: 1, label: '', textColor: '#ffffff', popScale: 1 };
+}
+
 export function renderDamageNumbers(ctx, numbers, numMax) {
   if (!ctx) return;
   drawOverheadBars(ctx);
 
   if (!numbers) return;
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
   var maxN = numMax || numbers.length;
-  var reduced = isReducedMotion();
+  if (!maxN) return;
 
-  for (var i = 0; i < maxN; i += 1) {
+  var reduced = isReducedMotion();
+  NORMAL_LIST.length = 0;
+  CRIT_LIST.length = 0;
+  var poolIdx = 0;
+  var i;
+
+  for (i = 0; i < maxN; i += 1) {
     var n = numbers[i];
     if (!n || !n.active) continue;
     var alpha = n.maxLife ? n.life / n.maxLife : 1;
@@ -526,10 +537,6 @@ export function renderDamageNumbers(ctx, numbers, numMax) {
       }
     }
 
-    // Colors:
-    // 普通傷害純白字 #ffffff (13px 粗體)
-    // 暴擊傷害金黃 #ffd700 (18px 粗體 + 0.08s 1.25x Pop-in 彈跳)
-    // 玩家受傷刺目紅 #ff2233
     var textColor = '#ffffff';
     if (n.owner && (n.owner === (rt.state && rt.state.player) || n.owner.isPlayer || n.isPlayerHurt)) {
       textColor = '#ff2233';
@@ -537,26 +544,83 @@ export function renderDamageNumbers(ctx, numbers, numMax) {
       textColor = '#ffd700';
     }
 
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(n.x, n.y);
-    if (popScale !== 1) {
-      ctx.scale(popScale, popScale);
+    if (poolIdx >= NUM_POOL.length) {
+      NUM_POOL.push({ x: 0, y: 0, alpha: 1, label: '', textColor: '#ffffff', popScale: 1 });
     }
-    ctx.font = isCrit ? FONT_CRIT : FONT_NUM;
+    var item = NUM_POOL[poolIdx];
+    poolIdx += 1;
+    item.x = n.x;
+    item.y = n.y;
+    item.alpha = alpha;
+    item.label = label;
+    item.textColor = textColor;
+    item.popScale = popScale;
 
-    // 雙層高反差描邊：
-    // 外層：lineWidth = 4.5, strokeStyle = '#000000', 深黑護城河阻隔一切火光與電漿
-    ctx.lineWidth = 4.5;
-    ctx.strokeStyle = '#000000';
-    ctx.strokeText(label, 0, 0);
-
-    // 內層：文字本體
-    ctx.fillStyle = textColor;
-    ctx.fillText(label, 0, 0);
-
-    ctx.restore();
+    if (isCrit) {
+      CRIT_LIST.push(item);
+    } else {
+      NORMAL_LIST.push(item);
+    }
   }
+
+  if (NORMAL_LIST.length === 0 && CRIT_LIST.length === 0) return;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 4.5;
+
+  // 1. Normal Group Batch (13px Font set once)
+  if (NORMAL_LIST.length > 0) {
+    ctx.font = FONT_NUM;
+    ctx.strokeStyle = '#000000';
+    for (i = 0; i < NORMAL_LIST.length; i += 1) {
+      var norm = NORMAL_LIST[i];
+      ctx.globalAlpha = norm.alpha;
+      ctx.strokeText(norm.label, norm.x, norm.y);
+    }
+    for (i = 0; i < NORMAL_LIST.length; i += 1) {
+      var normF = NORMAL_LIST[i];
+      ctx.globalAlpha = normF.alpha;
+      ctx.fillStyle = normF.textColor;
+      ctx.fillText(normF.label, normF.x, normF.y);
+    }
+  }
+
+  // 2. Crit Group Batch (18px Font set once)
+  if (CRIT_LIST.length > 0) {
+    ctx.font = FONT_CRIT;
+    ctx.strokeStyle = '#000000';
+    for (i = 0; i < CRIT_LIST.length; i += 1) {
+      var crt = CRIT_LIST[i];
+      ctx.globalAlpha = crt.alpha;
+      if (crt.popScale !== 1) {
+        ctx.save();
+        ctx.translate(crt.x, crt.y);
+        ctx.scale(crt.popScale, crt.popScale);
+        ctx.strokeText(crt.label, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.strokeText(crt.label, crt.x, crt.y);
+      }
+    }
+    for (i = 0; i < CRIT_LIST.length; i += 1) {
+      var crtF = CRIT_LIST[i];
+      ctx.globalAlpha = crtF.alpha;
+      ctx.fillStyle = crtF.textColor;
+      if (crtF.popScale !== 1) {
+        ctx.save();
+        ctx.translate(crtF.x, crtF.y);
+        ctx.scale(crtF.popScale, crtF.popScale);
+        ctx.fillText(crtF.label, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.fillText(crtF.label, crtF.x, crtF.y);
+      }
+    }
+  }
+
   ctx.restore();
 }
 

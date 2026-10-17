@@ -1,6 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { clamp, first, on } from '../core/utils.js';
 import { clearSpriteCache } from '../render/sprites.js';
+import { getQuality } from '../render/quality.js';
 import { chooseUpgrade } from '../systems/progression.js';
 import { rebuildTerrain } from '../systems/spawning.js';
 import { initCodexPanel } from './codex-panel.js';
@@ -294,7 +295,30 @@ export function resize() {
   var rect = rt.ui.canvas.getBoundingClientRect ? rt.ui.canvas.getBoundingClientRect() : {};
   var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || window.innerWidth || 960));
   var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || window.innerHeight || 640));
-  var dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  // Adaptive DPR: Mobile (pointer: coarse) or visual quality 'low' clamps to 1.0~1.25; desktop high to 1.5
+  var isCoarse = false;
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    try { isCoarse = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
+  }
+  var q = 'high';
+  try { q = getQuality(); } catch (e) {}
+
+  var maxDpr = 1.5;
+  if (isCoarse) {
+    maxDpr = q === 'low' ? 1.0 : 1.25;
+  } else if (q === 'low') {
+    maxDpr = 1.0;
+  } else if (q === 'medium') {
+    maxDpr = 1.25;
+  } else {
+    maxDpr = 1.5;
+  }
+
+  var rawDpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+  var dpr = Math.min(maxDpr, Math.max(1, rawDpr));
+  dpr = Math.round(dpr * 100) / 100;
+
   var changed = width !== rt.ui.width || height !== rt.ui.height;
   if (!changed && dpr === rt.ui.dpr && rt.terrain.length) return;
   rt.ui.width = width;

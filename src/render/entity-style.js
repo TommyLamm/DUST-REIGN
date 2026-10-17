@@ -189,7 +189,11 @@ export function drawDualOutline(ctx, r, kind, options) {
   var finalOuterW = hc ? Math.max(4.6, outerW + 1.2) : outerW;
   var finalRimW = hc ? Math.max(2.2, rimW + 0.6) : rimW;
 
-  ctx.save();
+  var prevWidth = ctx.lineWidth;
+  var prevStroke = ctx.strokeStyle;
+  var prevCap = ctx.lineCap;
+  var prevJoin = ctx.lineJoin;
+
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   // 1. Outer Inky Dark Halo (3.6~4.2px, #030204, alpha 1.0)
@@ -210,8 +214,15 @@ export function drawDualOutline(ctx, r, kind, options) {
     ctx.lineWidth = hc ? 1.4 : 0.8;
     ctx.stroke();
   }
-  ctx.restore();
+
+  // Zero-cost manual property restoration
+  ctx.lineWidth = prevWidth;
+  ctx.strokeStyle = prevStroke;
+  ctx.lineCap = prevCap;
+  ctx.lineJoin = prevJoin;
 }
+
+export var drawDualOutlineZeroCost = drawDualOutline;
 
 export function outline(ctx, width) {
   ctx.lineJoin = 'round';

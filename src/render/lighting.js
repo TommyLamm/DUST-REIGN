@@ -50,26 +50,23 @@ function addLight(x, y, radius, color, alpha, px, py, w, h) {
   L.d2 = dx * dx + dy * dy;
 }
 
+var MAX_LIGHT_DIST_SQ = 422500; // 650px radius squared
+
 function trimLights() {
   if (lightCount <= LIGHT_CAP) return;
-  var i;
-  for (i = 0; i < LIGHT_CAP; i += 1) {
-    var best = i;
-    var bestD = lights[i].d2;
-    var j;
-    for (j = i + 1; j < lightCount; j += 1) {
-      if (lights[j].d2 < bestD) {
-        best = j;
-        bestD = lights[j].d2;
+  var kept = 0;
+  for (var i = 0; i < lightCount; i += 1) {
+    if (lights[i].d2 < MAX_LIGHT_DIST_SQ) {
+      if (kept !== i) {
+        var tmp = lights[kept];
+        lights[kept] = lights[i];
+        lights[i] = tmp;
       }
-    }
-    if (best !== i) {
-      var tmp = lights[i];
-      lights[i] = lights[best];
-      lights[best] = tmp;
+      kept += 1;
+      if (kept >= LIGHT_CAP) break;
     }
   }
-  lightCount = LIGHT_CAP;
+  lightCount = kept;
 }
 
 function collect(w, h) {
