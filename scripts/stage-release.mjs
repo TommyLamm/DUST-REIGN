@@ -30,11 +30,19 @@ for (const [dir, ext] of Object.entries(assetDirs)) files.push(...collectDir(dir
 for (const name of rootFiles) {
   if (!fs.lstatSync(path.join(root, name)).isFile()) throw new Error(`Invalid asset: ${name}`);
 }
+for (const name of files) {
+  if (name.startsWith('.playroom') || name.startsWith('.git') || name.startsWith('.github')) {
+    throw new Error(`Platform tools or repository metadata must not be staged: ${name}`);
+  }
+}
 const seen = new Set();
 for (const name of files) {
   const key = name.toLowerCase();
   if (seen.has(key)) throw new Error(`Case-colliding asset: ${name}`);
   seen.add(key);
+}
+if (process.argv.includes('--clean') || process.argv.includes('--force')) {
+  fs.rmSync(output, { recursive: true, force: true });
 }
 if (fs.existsSync(output)) throw new Error(`Staging directory already exists: ${output}`);
 
