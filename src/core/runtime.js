@@ -3,6 +3,7 @@
 export var rt = {
   state: null,
   ui: null,
+  camera: null,
   raf: 0,
   lastTime: 0,
   started: false,

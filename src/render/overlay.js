@@ -6,6 +6,7 @@ import { tickHudPresentation } from '../ui/hud.js';
 import { PALETTE } from './palette.js';
 import { drawGlow } from './sprites.js';
 import { isChinese, tBanner } from '../core/i18n.js';
+import { worldToScreen } from '../core/camera.js';
 
 var titanLag = 1;
 var titanRef = null;
@@ -626,5 +627,284 @@ export function renderDamageNumbers(ctx, numbers, numMax) {
 
 export function drawDamageNumbers(ctx) {
   renderDamageNumbers(ctx, null, 0);
+}
+
+var _CHEVRON_SCREEN_POS = { x: 0, y: 0 };
+var _CHEVRON_INTERSECT = { x: 0, y: 0, angle: 0 };
+
+function computeEdgeIntersection(worldX, worldY, cam, viewW, viewH, margin, out) {
+  worldToScreen(worldX, worldY, cam, _CHEVRON_SCREEN_POS);
+  var sx = _CHEVRON_SCREEN_POS.x;
+  var sy = _CHEVRON_SCREEN_POS.y;
+
+  var minX = margin;
+  var maxX = viewW - margin;
+  var minY = margin;
+  var maxY = viewH - margin;
+
+  // If target is inside screen bounds, no offscreen chevron needed
+  if (sx >= minX && sx <= maxX && sy >= minY && sy <= maxY) {
+    return null;
+  }
+
+  var cx = viewW * 0.5;
+  var cy = viewH * 0.5;
+  var vx = sx - cx;
+  var vy = sy - cy;
+
+  var tx = 1e9;
+  if (vx > 0.0001) tx = (maxX - cx) / vx;
+  else if (vx < -0.0001) tx = (minX - cx) / vx;
+
+  var ty = 1e9;
+  if (vy > 0.0001) ty = (maxY - cy) / vy;
+  else if (vy < -0.0001) ty = (minY - cy) / vy;
+
+  var t = Math.min(tx, ty);
+  if (t < 0 || t >= 1e8) return null;
+
+  out.x = cx + vx * t;
+  out.y = cy + vy * t;
+  out.angle = Math.atan2(vy, vx);
+  return out;
+}
+
+export function drawOffscreenChevrons(ctx) {
+  if (!ctx || !rt.state || !rt.state.player || !rt.ui) return;
+  if (rt.state.over) return;
+  if (rt.ui.startScreen && !rt.ui.startScreen.hidden) return;
+
+  var p = rt.state.player;
+  var cam = rt.camera;
+  var viewW = rt.ui.width || 960;
+  var viewH = rt.ui.height || 640;
+  var margin = 24;
+
+  ctx.save();
+
+  // 1. Boss Indicators (猩紅箭頭附距離數字) - Priority P0
+  var boss = rt.state.boss;
+  if (boss && boss.hp > 0) {
+    var bRes = computeEdgeIntersection(boss.x, boss.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
+    if (bRes) {
+      var bDistM = Math.round(Math.hypot(boss.x - p.x, boss.y - p.y) / 16);
+      ctx.save();
+      ctx.translate(bRes.x, bRes.y);
+      ctx.rotate(bRes.angle);
+
+      // 猩紅雙尖角 (Double Chevron)
+      ctx.fillStyle = '#ff4d2e';
+      ctx.beginPath();
+      ctx.moveTo(4, 0); ctx.lineTo(-6, -6); ctx.lineTo(-3, 0); ctx.lineTo(-6, 6); ctx.closePath();
+      ctx.moveTo(12, 0); ctx.lineTo(2, -6); ctx.lineTo(5, 0); ctx.lineTo(2, 6); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 距離數字
+      ctx.save();
+      ctx.font = '700 9px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#ff4d2e';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var bxOffset = clamp(bRes.x - Math.cos(bRes.angle) * 15, 36, viewW - 36);
+      var byOffset = clamp(bRes.y - Math.sin(bRes.angle) * 15, 18, viewH - 18);
+      ctx.fillText((boss.name ? boss.name.toUpperCase() : 'BOSS') + ' ' + bDistM + 'm', bxOffset, byOffset);
+      ctx.restore();
+    }
+  }
+
+  // 2. Key POI Indicators (POI 綠色箭頭) - Priority P1
+  var spires = rt.state.spires;
+  if (spires && spires.length > 0) {
+    for (var si = 0; si < spires.length; si += 1) {
+      var sp = spires[si];
+      var sRes = computeEdgeIntersection(sp.x, sp.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
+      if (sRes) {
+        var sDistM = Math.round(Math.hypot(sp.x - p.x, sp.y - p.y) / 16);
+        ctx.save();
+        ctx.translate(sRes.x, sRes.y);
+        ctx.rotate(sRes.angle);
+
+        // 綠色箭頭
+        ctx.fillStyle = '#00e5a3';
+        ctx.beginPath();
+        ctx.moveTo(8, 0); ctx.lineTo(-3, -5.5); ctx.lineTo(-1, 0); ctx.lineTo(-3, 5.5); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+        ctx.fillStyle = '#00e5a3';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * 14, 32, viewW - 32);
+        var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * 14, 18, viewH - 18);
+        ctx.fillText('SPIRE ' + sDistM + 'm', sxOffset, syOffset);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 3. Elite Enemy Indicators (菁英橙色箭頭) - Priority P1
+  var enemies = rt.state.enemies;
+  if (enemies && enemies.length > 0) {
+    var eliteCount = 0;
+    for (var ei = 0; ei < enemies.length && eliteCount < 4; ei += 1) {
+      var en = enemies[ei];
+      if (en.elite && en.hp > 0) {
+        var eDist = Math.hypot(en.x - p.x, en.y - p.y);
+        if (eDist <= 1600) {
+          var eRes = computeEdgeIntersection(en.x, en.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
+          if (eRes) {
+            eliteCount += 1;
+            var eDistM = Math.round(eDist / 16);
+            ctx.save();
+            ctx.translate(eRes.x, eRes.y);
+            ctx.rotate(eRes.angle);
+
+            // 橙色箭頭
+            ctx.fillStyle = '#ff9800';
+            ctx.beginPath();
+            ctx.moveTo(7, 0); ctx.lineTo(-3, -4.5); ctx.lineTo(-1, 0); ctx.lineTo(-3, 4.5); ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.font = '700 8px ui-monospace, SFMono-Regular, Consolas, monospace';
+            ctx.fillStyle = '#ff9800';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            var exOffset = clamp(eRes.x - Math.cos(eRes.angle) * 13, 28, viewW - 28);
+            var eyOffset = clamp(eRes.y - Math.sin(eRes.angle) * 13, 18, viewH - 18);
+            ctx.fillText(eDistM + 'm', exOffset, eyOffset);
+            ctx.restore();
+          }
+        }
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+export function drawTacticalMinimap(ctx) {
+  if (!ctx || !rt.state || !rt.ui) return;
+  if (rt.ui.startScreen && !rt.ui.startScreen.hidden) return;
+
+  var viewW = rt.ui.width || 960;
+  var viewH = rt.ui.height || 640;
+  var cam = rt.camera;
+  var worldW = (cam && cam.worldW) || 3520;
+  var worldH = (cam && cam.worldH) || 2640;
+
+  var mapW = 128;
+  var mapH = 96; // 128 * (2640 / 3520) = 96 (exact 4:3 aspect ratio)
+  var mapX = viewW - mapW - 16;
+  var mapY = 16;
+
+  ctx.save();
+
+  // Background and Tactical Frame
+  ctx.fillStyle = 'rgba(12, 10, 8, 0.82)';
+  ctx.fillRect(mapX, mapY, mapW, mapH);
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(mapX, mapY, mapW, mapH);
+
+  // Inner Tactical Crosshair
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mapX + mapW * 0.5, mapY);
+  ctx.lineTo(mapX + mapW * 0.5, mapY + mapH);
+  ctx.moveTo(mapX, mapY + mapH * 0.5);
+  ctx.lineTo(mapX + mapW, mapY + mapH * 0.5);
+  ctx.stroke();
+
+  var sx = mapW / worldW;
+  var sy = mapH / worldH;
+
+  // 4 桶批次繪製 (Batched 4-Bucket Zero-GC Pipeline)
+
+  // 桶 1: 白框視口 (Camera Viewport Frame)
+  var camX = cam ? (cam.clampedX !== undefined ? cam.clampedX : cam.x) : viewW * 0.5;
+  var camY = cam ? (cam.clampedY !== undefined ? cam.clampedY : cam.y) : viewH * 0.5;
+  var cViewW = cam ? cam.viewW : viewW;
+  var cViewH = cam ? cam.viewH : viewH;
+  var vx = (camX - cViewW * 0.5) * sx;
+  var vy = (camY - cViewH * 0.5) * sy;
+  var vw = cViewW * sx;
+  var vh = cViewH * sy;
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(mapX + vx, mapY + vy, vw, vh);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.fillRect(mapX + vx, mapY + vy, vw, vh);
+
+  // 桶 2: 紅點敵怪 (Hostile Entities - Single Batch Fill)
+  var enemies = rt.state.enemies;
+  if (enemies && enemies.length > 0) {
+    ctx.fillStyle = '#ff3b30';
+    ctx.beginPath();
+    for (var i = 0; i < enemies.length; i += 1) {
+      var en = enemies[i];
+      if (en.hp > 0 && !en.isBoss && !en.elite) {
+        ctx.rect(mapX + en.x * sx - 1, mapY + en.y * sy - 1, 2, 2);
+      }
+    }
+    ctx.fill();
+  }
+
+  // 桶 3: 金點 Boss / POI / 菁英怪 (Boss / POI / Elites - Single Batch Fill)
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  if (rt.state.boss && rt.state.boss.hp > 0) {
+    var bx = mapX + rt.state.boss.x * sx;
+    var by = mapY + rt.state.boss.y * sy;
+    ctx.rect(bx - 2.5, by - 2.5, 5, 5);
+  }
+  if (enemies) {
+    for (var j = 0; j < enemies.length; j += 1) {
+      var el = enemies[j];
+      if (el.elite && el.hp > 0) {
+        ctx.rect(mapX + el.x * sx - 1.5, mapY + el.y * sy - 1.5, 3.5, 3.5);
+      }
+    }
+  }
+  if (rt.state.spires) {
+    for (var k = 0; k < rt.state.spires.length; k += 1) {
+      var sp = rt.state.spires[k];
+      ctx.rect(mapX + sp.x * sx - 2, mapY + sp.y * sy - 2, 4, 4);
+    }
+  }
+  ctx.fill();
+
+  // 桶 4: 綠點玩家 (Player Position & Heading Notch)
+  var p = rt.state.player;
+  if (p) {
+    var px = mapX + p.x * sx;
+    var py = mapY + p.y * sy;
+    ctx.fillStyle = '#00ff88';
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + Math.cos(p.aim || 0) * 5, py + Math.sin(p.aim || 0) * 5);
+    ctx.stroke();
+  }
+
+  // Header Label
+  ctx.font = '700 8px ui-monospace, SFMono-Regular, Consolas, monospace';
+  ctx.fillStyle = 'rgba(212, 175, 55, 0.75)';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('TACTICAL // MAP', mapX + 5, mapY + 4);
+
+  ctx.restore();
 }
 

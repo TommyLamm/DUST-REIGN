@@ -13,6 +13,7 @@ import { stepPlayer } from './sim/player.js';
 import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
 import { stepTactical } from './tactical.js';
 import { updateDomUi } from '../ui/hud.js';
+import { updateCamera } from '../core/camera.js';
 
 var cachedFrame = { p: null, boundW: 960, boundH: 640 };
 
@@ -71,5 +72,6 @@ export function update(dt) {
   stepEffects(dt, frame);
   stepContracts(frame);
   stepGhost(dt);
+  if (rt.camera) updateCamera(rt.camera, rt.state.player, rt.input, dt, isReducedMotion());
   updateDomUi();
 }

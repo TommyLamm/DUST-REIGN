@@ -25,6 +25,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/main.js` | 初始化、RAF 主迴圈、暫停／恢復、銷毀及公開 API。 |
 | `src/config.js`、`src/data/` | 共用常數，以及升級、敵人、路線、合約、突變、機體、熱度、每日規則資料，闖關關卡（`campaign-stages.js`）、極限作戰（`hardcore-operations.js`）、改裝工坊模組（`modules.js`）與每日懸賞（`bounties.js`）。 |
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
+| `src/core/camera.js` | 0-GC 單例相機容器、非對稱雙階動態追蹤阻尼、準星動態前瞻（Hermite 曲線）、創傷度正交震屏與震屏解耦雙向坐標轉換（`screenToWorld`／`worldToScreen`）。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
 | `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
@@ -39,9 +40,9 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領在 `sim/bosses.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
-| `src/render/draw.js` | Canvas 繪製入口與圖層順序。 |
+| `src/render/draw.js` | Canvas 繪製入口、相機世界矩陣注入與世界／螢幕圖層分流順序。 |
 | `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | 地表離屏快取（負空間地表、低頻沙丘、減噪防偽警報碎石與座標網格）與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻，單遍距離平方線性剪裁 $O(N)$）、雙 Pass 全合流接地陰影（全場僅發出 2 次 `ctx.fill()` 繪製所有實體之 Penumbra 柔影與 Core AO 硬咬合）。 |
-| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點、敵型雙層反差描邊、街機立體戰利品、敵我色譜隔離與三層三明治彈體及斑馬預警軌道、敵彈 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染、字體排版分組批處理 Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）。 |
+| `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點、敵型雙層反差描邊、街機立體戰利品、敵我色譜隔離與三層三明治彈體及斑馬預警軌道、敵彈 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染、字體排版分組批處理 Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）、視口邊緣雷達指針（`drawOffscreenChevrons`，Ray-AABB 邊界求交）與右上角 128px 戰術小地圖（`drawTacticalMinimap`，4 桶批次繪製）。 |
 | `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子（3-Tier 優先級架構與玩家 120px 徑向視線保護圈 Alpha Culling）、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
 | `src/render/entity-style.js` | 受擊閃白、單例 `POSE_SCRATCH` 姿態暫存、以及 `drawDualOutlineZeroCost` 手動屬性復原（消除 `save`/`restore` 堆疊開銷）等逐實體視覺暫存。 |
 | `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段負空間地表色調（$L^* \in [4.6\%, 13.5\%]$）、畫質預算（粒子池 HIGH 600 / MEDIUM 350 / LOW 180）與自動降級、自適應 DPR 收斂（1.0~1.25）以緩解 Canvas fillrate 負載、預渲染光暈／雜訊貼圖快取。 |
@@ -125,6 +126,7 @@ index.html → src/main.js → init()
 | 環境危險與掉落物拾取 | `src/systems/sim/hazards.js`、`src/systems/sim/orbs.js` |
 | 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/systems/card-effects.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
 | 輸入映射與玩家移動 | `src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`src/systems/sim/player.js` |
+| 相機動力學、準星前瞻與戰術雷達 | `src/core/camera.js`、`src/render/draw.js`、`src/render/overlay.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js` |
 | 地表、大氣與光影 | `src/render/` 的 `draw.js`、`terrain.js`、`atmosphere.js`、`lighting.js`、`shadows.js`、`palette.js` |
 | 實體造型、彈體與戰利品 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |
 | 戰鬥視覺特效與覆蓋層 | `src/render/` 的 `fx.js`、`fx-rand.js`、`sprites.js`、`overlay.js`，以及 `src/core/fx-events.js`；模擬粒子與焦痕見 `src/core/pools.js`、`src/systems/sim/effects.js` |

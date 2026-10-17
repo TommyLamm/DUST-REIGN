@@ -327,15 +327,25 @@ export function drawFarMotes(ctx) {
   if (!(v.w > 0) || !(v.h > 0)) return;
   syncMotes(budget.motes, v.w, v.h);
   stepMotes(v.w, v.h, v.storm, v.reduced);
+  var ax = rt.camera ? (rt.camera.clampedX !== undefined ? rt.camera.clampedX : rt.camera.x) - rt.camera.viewW * 0.5 : 0;
+  var ay = rt.camera ? (rt.camera.clampedY !== undefined ? rt.camera.clampedY : rt.camera.y) - rt.camera.viewH * 0.5 : 0;
+  ctx.save();
+  ctx.translate(ax, ay);
   drawMoteLayer(ctx, 0, v.storm, v.hc);
+  ctx.restore();
 }
 
 export function drawNearAtmosphere(ctx) {
   if (!ctx || !rt.state || !rt.ui) return;
   var v = view();
   if (!(v.w > 0) || !(v.h > 0)) return;
+  var ax = rt.camera ? (rt.camera.clampedX !== undefined ? rt.camera.clampedX : rt.camera.x) - rt.camera.viewW * 0.5 : 0;
+  var ay = rt.camera ? (rt.camera.clampedY !== undefined ? rt.camera.clampedY : rt.camera.y) - rt.camera.viewH * 0.5 : 0;
+  ctx.save();
+  ctx.translate(ax, ay);
   drawFog(ctx, v);
   if (moteCount > farCount) drawMoteLayer(ctx, 1, v.storm, v.hc);
+  ctx.restore();
   updateBolt(v);
 }
 

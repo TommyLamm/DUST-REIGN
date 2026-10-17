@@ -10,6 +10,7 @@ import { rt } from './core/runtime.js';
 import { isHighContrast, isReducedMotion } from './core/settings.js';
 import { getLanguage, setLanguage, toggleLanguage, syncStaticHtml } from './core/i18n.js';
 import { makeState } from './core/state.js';
+import { camera, initCamera, updateCamera } from './core/camera.js';
 import { FUSION_CHIPS } from './data/upgrades.js';
 import { selfCheck } from './dev/self-check.js';
 import { pollGamepad } from './input/gamepad.js';
@@ -55,9 +56,12 @@ function init(options) {
   syncStaticHtml(getLanguage());
   updateSettingsUi();
   syncCombatLayout();
+  rt.camera = camera;
   rt.state = makeState(960, 640);
+  initCamera(camera, 3520, 2640, 960, 640);
   resize();
   rt.state = makeState(rt.ui.width, rt.ui.height);
+  initCamera(camera, 3520, 2640, rt.ui.width, rt.ui.height);
   applyLoadout(rt.state);
   directorStartRun(rt.state);
   rt.state.paused = Boolean(rt.ui.startScreen && !rt.ui.startScreen.hidden);
@@ -130,6 +134,7 @@ function destroy() {
   }
   rt.ui = null;
   rt.state = null;
+  rt.camera = null;
 }
 
 var api = {
@@ -142,6 +147,7 @@ var api = {
   renderBuildInspector: renderBuildInspector,
   calculateCombatRank: calculateCombatRank,
   getState: function () { return rt.state; },
+  getCamera: function () { return rt.camera || camera; },
   getPlayroom: getPlayroom,
   loadAccountProgress: loadAccountProgress,
   saveAccountProgress: saveAccountProgress,

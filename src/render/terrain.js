@@ -339,22 +339,24 @@ function ensure(sector, size, detail, protect) {
   return slot;
 }
 
-function blit(ctx, slot, alpha, w, h) {
+function blit(ctx, slot, alpha, x, y, w, h) {
   if (!slot || !slot.canvas || !(alpha > 0)) return false;
+  if (w === undefined) { w = x; h = y; x = 0; y = 0; }
   if (alpha >= 0.999) {
-    ctx.drawImage(slot.canvas, 0, 0, w, h);
+    ctx.drawImage(slot.canvas, x, y, w, h);
     return true;
   }
   var prev = ctx.globalAlpha;
   ctx.globalAlpha = prev * alpha;
-  ctx.drawImage(slot.canvas, 0, 0, w, h);
+  ctx.drawImage(slot.canvas, x, y, w, h);
   ctx.globalAlpha = prev;
   return true;
 }
 
-function flatFill(ctx, w, h) {
+function flatFill(ctx, x, y, w, h) {
+  if (w === undefined) { w = x; h = y; x = 0; y = 0; }
   ctx.fillStyle = PALETTE.ground.base;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(x, y, w, h);
 }
 
 export function drawGround(ctx) {
@@ -362,8 +364,13 @@ export function drawGround(ctx) {
   var w = rt.ui.width;
   var h = rt.ui.height;
   if (!(w > 0) || !(h > 0)) return;
+  var gx = rt.camera ? (rt.camera.clampedX !== undefined ? rt.camera.clampedX : rt.camera.x) - rt.camera.viewW * 0.5 - 48 : 0;
+  var gy = rt.camera ? (rt.camera.clampedY !== undefined ? rt.camera.clampedY : rt.camera.y) - rt.camera.viewH * 0.5 - 48 : 0;
+  var gw = rt.camera ? rt.camera.viewW + 96 : w;
+  var gh = rt.camera ? rt.camera.viewH + 96 : h;
+
   if (typeof document === 'undefined') {
-    flatFill(ctx, w, h);
+    flatFill(ctx, gx, gy, gw, gh);
     return;
   }
   var size = viewSize();
@@ -379,17 +386,17 @@ export function drawGround(ctx) {
 
   if (!detail) {
     var low = ensure(sector, size, false, null);
-    if (!blit(ctx, low, 1, w, h)) flatFill(ctx, w, h);
+    if (!blit(ctx, low, 1, gx, gy, gw, gh)) flatFill(ctx, gx, gy, gw, gh);
     return;
   }
 
   var fromSlot = ensure(from, size, true, null);
   var toSlot = ensure(sector, size, true, fromSlot);
   if (t >= 1) {
-    if (!blit(ctx, toSlot, 1, w, h)) flatFill(ctx, w, h);
+    if (!blit(ctx, toSlot, 1, gx, gy, gw, gh)) flatFill(ctx, gx, gy, gw, gh);
   } else {
-    if (!blit(ctx, fromSlot, 1, w, h)) flatFill(ctx, w, h);
-    blit(ctx, toSlot, t, w, h);
+    if (!blit(ctx, fromSlot, 1, gx, gy, gw, gh)) flatFill(ctx, gx, gy, gw, gh);
+    blit(ctx, toSlot, t, gx, gy, gw, gh);
   }
   if (waveTime >= WAVE_LENGTH - 2) {
     var next = sectorForWave(wave + 1);

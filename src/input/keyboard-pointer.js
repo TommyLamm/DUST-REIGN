@@ -13,6 +13,7 @@ import { getCurrentPauseTab, handleAbandonClick, switchPauseTab, updateAudioBtn,
 import { readTipsEnabled, resetTipsSeen, writeTipsEnabled } from '../core/meta-store.js';
 import { setLanguage, toggleLanguage } from '../core/i18n.js';
 import { onTipsReset, updateTips } from '../ui/tips.js';
+import { screenToWorld } from '../core/camera.js';
 
 export var cachedCanvasRect = { left: 0, top: 0, width: 1, height: 1 };
 
@@ -32,9 +33,25 @@ function pointerPosition(event) {
     updateCanvasRect();
     if (!cachedCanvasRect.width || !cachedCanvasRect.height) return;
   }
-  rt.input.mouse.x = (event.clientX - cachedCanvasRect.left) * (rt.ui.width / cachedCanvasRect.width);
-  rt.input.mouse.y = (event.clientY - cachedCanvasRect.top) * (rt.ui.height / cachedCanvasRect.height);
+  var sx = (event.clientX - cachedCanvasRect.left) * (rt.ui.width / cachedCanvasRect.width);
+  var sy = (event.clientY - cachedCanvasRect.top) * (rt.ui.height / cachedCanvasRect.height);
+  rt.input.mouse.sx = sx;
+  rt.input.mouse.sy = sy;
   if (event && event.pointerType === 'mouse') rt.input.touchMode = false;
+  if (rt.camera) {
+    screenToWorld(sx, sy, rt.camera, rt.input.mouse);
+  } else {
+    rt.input.mouse.x = sx;
+    rt.input.mouse.y = sy;
+  }
+  var p = rt.state && rt.state.player;
+  if (p) {
+    p.aimX = rt.input.mouse.x;
+    p.aimY = rt.input.mouse.y;
+    var dx = p.aimX - p.x;
+    var dy = p.aimY - p.y;
+    if (dx || dy) p.aim = Math.atan2(dy, dx);
+  }
 }
 
 export function bindInput() {

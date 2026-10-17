@@ -783,3 +783,5 @@ if (typeof onLanguageChange === 'function') {
     updateDomUi();
   });
 }
+
+export { drawTacticalMinimap, drawOffscreenChevrons } from '../render/overlay.js';

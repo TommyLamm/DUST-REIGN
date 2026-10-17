@@ -324,6 +324,11 @@ export function resize() {
   rt.ui.width = width;
   rt.ui.height = height;
   rt.ui.dpr = dpr;
+  if (rt.camera) {
+    rt.camera.viewW = width;
+    rt.camera.viewH = height;
+    rt.camera.dpr = dpr;
+  }
   clearSpriteCache();
   rt.ui.canvas.width = Math.round(width * dpr);
   rt.ui.canvas.height = Math.round(height * dpr);

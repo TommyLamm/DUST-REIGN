@@ -4,7 +4,7 @@ import { drawFarMotes, drawNearAtmosphere, drawScreenPost } from './atmosphere.j
 import { drawEnemy, drawHighContrastMarkers, drawRusherTelegraphs } from './enemies.js';
 import { drawAdditiveFx, drawDamageNumbers, drawScreenFlashes, updateFx } from './fx.js';
 import { drawLightmap } from './lighting.js';
-import { drawHud, drawOverlay } from './overlay.js';
+import { drawHud, drawOverlay, drawOffscreenChevrons, drawTacticalMinimap } from './overlay.js';
 import { drawPlayer } from './player.js';
 import { drawGhostMecha, drawGhostSplitTimer } from './ghost.js';
 import { drawArtilleryTelegraphs, drawEnemyBullets, drawLightningArcs, drawMoltenZones, drawOpticalFlashes, drawPlasmaZones, drawPlayerBullets, drawShockRings, drawVortices } from './projectiles.js';
@@ -20,11 +20,18 @@ export function draw() {
   ctx.setTransform(rt.ui.dpr, 0, 0, rt.ui.dpr, 0, 0);
   updateFx(rt.renderDt || 0);
 
-  var activeShake = isReducedMotion() ? 0 : rt.state.shake;
-  var shakeX = activeShake ? (Math.random() - 0.5) * activeShake : 0;
-  var shakeY = activeShake ? (Math.random() - 0.5) * activeShake : 0;
+  var cam = rt.camera;
   ctx.save();
-  ctx.translate(shakeX, shakeY);
+  if (cam) {
+    ctx.translate(cam.viewW * 0.5 + cam.shakeX, cam.viewH * 0.5 + cam.shakeY);
+    if (cam.shakeAngle !== 0) ctx.rotate(cam.shakeAngle);
+    ctx.translate(-cam.x, -cam.y);
+  } else {
+    var activeShake = isReducedMotion() ? 0 : rt.state.shake;
+    var shakeX = activeShake ? (Math.random() - 0.5) * activeShake : 0;
+    var shakeY = activeShake ? (Math.random() - 0.5) * activeShake : 0;
+    ctx.translate(shakeX, shakeY);
+  }
 
   drawGround(ctx);
   drawDecals(ctx);
@@ -90,7 +97,11 @@ export function draw() {
         if (ctx.globalCompositeOperation === 'saturation') {
           ctx.globalAlpha = chronoA;
           ctx.fillStyle = '#7a7a7a';
-          ctx.fillRect(-48, -48, rt.ui.width + 96, rt.ui.height + 96);
+          var cx = cam ? cam.x - cam.viewW * 0.5 - 48 : -48;
+          var cy = cam ? cam.y - cam.viewH * 0.5 - 48 : -48;
+          var cw = (cam ? cam.viewW : rt.ui.width) + 96;
+          var ch = (cam ? cam.viewH : rt.ui.height) + 96;
+          ctx.fillRect(cx, cy, cw, ch);
         }
         ctx.restore();
       }
@@ -101,6 +112,8 @@ export function draw() {
 
   drawScreenPost(ctx);
   drawScreenFlashes(ctx);
+  drawTacticalMinimap(ctx);
+  drawOffscreenChevrons(ctx);
   drawHud(ctx);
   drawGhostSplitTimer(ctx);
   drawOverlay(ctx);

@@ -274,11 +274,19 @@ function pollGamepadInner(dt) {
   // Right stick: aim (axes[2], axes[3]) with radial deadzone 0.18
   var rx = axes.length > 2 ? axes[2] : 0;
   var ry = axes.length > 3 ? axes[3] : 0;
-  if (Math.hypot(rx, ry) > 0.18) {
+  var rMag = Math.hypot(rx, ry);
+  if (rMag > 0.18) {
     var rAngle = Math.atan2(ry, rx);
     rt.state.player.aim = rAngle;
-    rt.input.mouse.x = rt.state.player.x + Math.cos(rAngle) * 120;
-    rt.input.mouse.y = rt.state.player.y + Math.sin(rAngle) * 120;
+    rt.state.player.aimX = rt.state.player.x + Math.cos(rAngle) * 200;
+    rt.state.player.aimY = rt.state.player.y + Math.sin(rAngle) * 200;
+    rt.input.mouse.x = rt.state.player.aimX;
+    rt.input.mouse.y = rt.state.player.aimY;
+    rt.input.gamepadRightX = rx;
+    rt.input.gamepadRightY = ry;
+  } else {
+    rt.input.gamepadRightX = 0;
+    rt.input.gamepadRightY = 0;
   }
 
   // RT / RB hold sets mouse.down so stepPlayer accumulates continuousFireTime.

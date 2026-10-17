@@ -35,9 +35,12 @@ function shadeStyle(shade) {
   return shadeCss;
 }
 
+var curLx = 0;
+var curLy = 0;
+
 function addLight(x, y, radius, color, alpha, px, py, w, h) {
   if (!(radius > 8) || !(alpha > 0.02) || lightCount >= LIGHT_POOL) return;
-  if (x < -radius || y < -radius || x > w + radius || y > h + radius) return;
+  if (x < curLx - radius || y < curLy - radius || x > curLx + w + radius || y > curLy + h + radius) return;
   var dx = x - px;
   var dy = y - py;
   var L = lights[lightCount];
@@ -217,14 +220,14 @@ function ensureCone() {
   return coneCanvas;
 }
 
-function drawCone(lctx, p, s) {
+function drawCone(lctx, p, s, lx, ly) {
   var sprite = ensureCone();
   if (!sprite) return;
   var len = 280 * s;
   var half = len * Math.tan(CONE_SPREAD);
   if (!(len > 1) || !(half > 0.5)) return;
   lctx.save();
-  lctx.translate(p.x * s, p.y * s);
+  lctx.translate((p.x - (lx || 0)) * s, (p.y - (ly || 0)) * s);
   lctx.rotate(p.aim || 0);
   lctx.drawImage(sprite, 0, -half, len, half * 2);
   lctx.restore();
@@ -269,6 +272,11 @@ export function drawLightmap(ctx) {
   mapCtx.globalAlpha = 1;
   mapCtx.fillStyle = shadeStyle(shade);
   mapCtx.fillRect(0, 0, pw, ph);
+
+  var lx = rt.camera ? (rt.camera.clampedX !== undefined ? rt.camera.clampedX : rt.camera.x) - rt.camera.viewW * 0.5 : 0;
+  var ly = rt.camera ? (rt.camera.clampedY !== undefined ? rt.camera.clampedY : rt.camera.y) - rt.camera.viewH * 0.5 : 0;
+  curLx = lx;
+  curLy = ly;
   collect(w, h);
   var s = pw / w;
   mapCtx.globalCompositeOperation = 'lighter';
@@ -276,10 +284,10 @@ export function drawLightmap(ctx) {
   var n;
   for (n = 0; n < lightCount; n += 1) {
     var L = lights[n];
-    drawGlow(mapCtx, L.x * s, L.y * s, L.radius * s, L.color, L.a);
+    drawGlow(mapCtx, (L.x - lx) * s, (L.y - ly) * s, L.radius * s, L.color, L.a);
   }
   endGlowBatch();
-  drawCone(mapCtx, rt.state.player, s);
+  drawCone(mapCtx, rt.state.player, s, lx, ly);
   mapCtx.globalCompositeOperation = 'source-over';
-  ctx.drawImage(mapCanvas, 0, 0, w, h);
+  ctx.drawImage(mapCanvas, lx, ly, w, h);
 }
