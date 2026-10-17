@@ -2,14 +2,109 @@ import { AudioFX } from '../audio/audio-fx.js';
 import { BEST_SCORE_KEY, LEGACY_BEST_SCORE_KEY } from '../config.js';
 import { rt } from './runtime.js';
 
-var hapticsEnabled = true;
-try {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    hapticsEnabled = window.localStorage.getItem('dust_reign_haptics_enabled') !== 'false';
-  }
-} catch (e) {
-  hapticsEnabled = true;
+export var SETTINGS_KEY = 'dust-reign:settings:v1';
+export var LEGACY_HAPTICS_KEY = 'dust_reign_haptics_enabled';
+export var LEGACY_MOTION_KEY = 'dust_reign_motion_reduction';
+export var LEGACY_CONTRAST_KEY = 'dust_reign_high_contrast';
+export var LEGACY_QUALITY_KEY = 'dust_reign_visual_quality';
+
+function getStore() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+    if (typeof localStorage !== 'undefined') return localStorage;
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
+  } catch (e) {}
+  return null;
 }
+
+var hapticsEnabled = true;
+var motionCached = false;
+var motionValue = false;
+var highContrastEnabled = false;
+var visualQuality = 'auto';
+
+function syncMotionClass(on) {
+  try {
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.classList.toggle('reduced-motion', on);
+    }
+  } catch (e) {}
+}
+
+export function persistSettings() {
+  var store = getStore();
+  if (!store) return;
+  try {
+    var payload = {
+      hapticsEnabled: hapticsEnabled,
+      motionReduction: motionValue,
+      highContrast: highContrastEnabled,
+      visualQuality: visualQuality
+    };
+    store.setItem(SETTINGS_KEY, JSON.stringify(payload));
+    store.setItem(LEGACY_HAPTICS_KEY, hapticsEnabled ? 'true' : 'false');
+    store.setItem(LEGACY_MOTION_KEY, motionValue ? 'true' : 'false');
+    store.setItem(LEGACY_CONTRAST_KEY, highContrastEnabled ? 'true' : 'false');
+    store.setItem(LEGACY_QUALITY_KEY, visualQuality);
+  } catch (e) {}
+}
+
+export function loadSettings() {
+  var store = getStore();
+  if (!store) return;
+  try {
+    var raw = store.getItem(SETTINGS_KEY);
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          if (typeof parsed.hapticsEnabled === 'boolean') {
+            hapticsEnabled = parsed.hapticsEnabled;
+          }
+          if (typeof parsed.motionReduction === 'boolean') {
+            motionValue = parsed.motionReduction;
+            motionCached = true;
+            syncMotionClass(motionValue);
+          }
+          if (typeof parsed.highContrast === 'boolean') {
+            highContrastEnabled = parsed.highContrast;
+          }
+          if (parsed.visualQuality === 'auto' || parsed.visualQuality === 'high' ||
+              parsed.visualQuality === 'medium' || parsed.visualQuality === 'low') {
+            visualQuality = parsed.visualQuality;
+          }
+          return;
+        }
+      } catch (pe) {}
+    }
+
+    var legHaptics = store.getItem(LEGACY_HAPTICS_KEY);
+    var legMotion = store.getItem(LEGACY_MOTION_KEY);
+    var legContrast = store.getItem(LEGACY_CONTRAST_KEY);
+    var legQuality = store.getItem(LEGACY_QUALITY_KEY);
+    var hasLegacy = (legHaptics !== null || legMotion !== null || legContrast !== null || legQuality !== null);
+
+    if (legHaptics !== null) {
+      hapticsEnabled = legHaptics !== 'false';
+    }
+    if (legMotion !== null) {
+      motionValue = legMotion === 'true';
+      motionCached = true;
+      syncMotionClass(motionValue);
+    }
+    if (legContrast !== null) {
+      highContrastEnabled = legContrast === 'true';
+    }
+    if (legQuality === 'auto' || legQuality === 'high' || legQuality === 'medium' || legQuality === 'low') {
+      visualQuality = legQuality;
+    }
+    if (hasLegacy) {
+      persistSettings();
+    }
+  } catch (e) {}
+}
+
+loadSettings();
 
 export function isHapticsEnabled() {
   return hapticsEnabled;
@@ -17,22 +112,24 @@ export function isHapticsEnabled() {
 
 export function setHapticsEnabled(val) {
   hapticsEnabled = Boolean(val);
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('dust_reign_haptics_enabled', hapticsEnabled ? 'true' : 'false');
-    }
-  } catch (e) {}
+  persistSettings();
   return hapticsEnabled;
 }
 
-var motionCached = false;
-var motionValue = false;
-
 function savedMotion() {
+  var store = getStore();
+  if (!store) return null;
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem('dust_reign_motion_reduction');
+    var raw = store.getItem(SETTINGS_KEY);
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && typeof parsed.motionReduction === 'boolean') {
+          return parsed.motionReduction ? 'true' : 'false';
+        }
+      } catch (pe) {}
     }
+    return store.getItem(LEGACY_MOTION_KEY);
   } catch (e) {}
   return null;
 }
@@ -48,14 +145,6 @@ function readMotion() {
   } catch (e) {
     return false;
   }
-}
-
-function syncMotionClass(on) {
-  try {
-    if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.classList.toggle('reduced-motion', on);
-    }
-  } catch (e) {}
 }
 
 export function isReducedMotion() {
@@ -83,38 +172,13 @@ export function setMotionReduction(val) {
   var bool = Boolean(val);
   motionValue = bool;
   motionCached = true;
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('dust_reign_motion_reduction', bool ? 'true' : 'false');
-    }
-    syncMotionClass(bool);
-  } catch (e) {}
+  syncMotionClass(bool);
+  persistSettings();
   return bool;
-}
-
-var highContrastEnabled = false;
-try {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    highContrastEnabled = window.localStorage.getItem('dust_reign_high_contrast') === 'true';
-  }
-} catch (e) {
-  highContrastEnabled = false;
 }
 
 export function isHighContrast() {
   return highContrastEnabled;
-}
-
-var visualQuality = 'auto';
-try {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    var savedQuality = window.localStorage.getItem('dust_reign_visual_quality');
-    if (savedQuality === 'auto' || savedQuality === 'high' || savedQuality === 'medium' || savedQuality === 'low') {
-      visualQuality = savedQuality;
-    }
-  }
-} catch (e) {
-  visualQuality = 'auto';
 }
 
 export function getVisualQuality() {
@@ -124,11 +188,7 @@ export function getVisualQuality() {
 export function setVisualQuality(val) {
   var next = val === 'high' || val === 'medium' || val === 'low' || val === 'auto' ? val : 'auto';
   visualQuality = next;
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('dust_reign_visual_quality', next);
-    }
-  } catch (e) {}
+  persistSettings();
   return visualQuality;
 }
 
@@ -141,10 +201,8 @@ export function cycleVisualQuality() {
 
 export function setHighContrast(val) {
   highContrastEnabled = Boolean(val);
+  persistSettings();
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('dust_reign_high_contrast', highContrastEnabled ? 'true' : 'false');
-    }
     if (rt.ui && rt.ui.root) {
       rt.ui.root.classList.toggle('is-high-contrast', highContrastEnabled);
     } else if (typeof document !== 'undefined') {

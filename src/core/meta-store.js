@@ -1013,3 +1013,13 @@ export function recordHardcoreClear(operationId, details) {
   saveHardcoreStore(store);
   return store.operations[operationId];
 }
+
+export {
+  createUnifiedSave,
+  applyUnifiedSave,
+  calculateSaveSize,
+  calculateSaveDepth,
+  smartMergeSaves,
+  CloudSaveManager,
+  UNIFIED_SAVE_SCHEMA_VERSION
+} from './cloud-save.js';

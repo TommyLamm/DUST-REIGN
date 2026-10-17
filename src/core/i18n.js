@@ -1,21 +1,45 @@
 // DUST//REIGN Internationalization (i18n) module.
 // Supports English ('en') and Traditional Chinese ('zh' / 'zh-Hant').
 
-var STORAGE_KEY = 'dust_reign_lang';
+export var LANG_KEY = 'dust-reign:lang:v1';
+export var LEGACY_LANG_KEY = 'dust_reign_lang';
+
+function getStore() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+    if (typeof localStorage !== 'undefined') return localStorage;
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
+  } catch (e) {}
+  return null;
+}
 
 // Default to Traditional Chinese ('zh') for localized distribution, with fallback to saved setting.
 var currentLang = 'zh';
-try {
-  var storage = (typeof window !== 'undefined' && window.localStorage) || (typeof localStorage !== 'undefined' && localStorage);
-  if (storage) {
-    var saved = storage.getItem(STORAGE_KEY);
-    if (saved === 'en' || saved === 'zh') {
-      currentLang = saved;
+
+export function loadLanguage() {
+  try {
+    var storage = getStore();
+    if (storage) {
+      var savedNew = storage.getItem(LANG_KEY);
+      if (savedNew === 'en' || savedNew === 'zh') {
+        currentLang = savedNew;
+        return currentLang;
+      }
+      var savedLegacy = storage.getItem(LEGACY_LANG_KEY);
+      if (savedLegacy === 'en' || savedLegacy === 'zh') {
+        currentLang = savedLegacy;
+        // Smooth migration: write to new standard key
+        storage.setItem(LANG_KEY, currentLang);
+        return currentLang;
+      }
     }
+  } catch (e) {
+    currentLang = 'zh';
   }
-} catch (e) {
-  currentLang = 'zh';
+  return currentLang;
 }
+
+loadLanguage();
 
 var listeners = [];
 
@@ -41,9 +65,10 @@ export function setLanguage(lang) {
   var next = lang === 'en' ? 'en' : 'zh';
   currentLang = next;
   try {
-    var storage = (typeof window !== 'undefined' && window.localStorage) || (typeof localStorage !== 'undefined' && localStorage);
+    var storage = getStore();
     if (storage) {
-      storage.setItem(STORAGE_KEY, next);
+      storage.setItem(LANG_KEY, next);
+      storage.setItem(LEGACY_LANG_KEY, next);
     }
   } catch (e) {}
 

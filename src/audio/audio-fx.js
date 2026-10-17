@@ -18,18 +18,67 @@ export var AudioFX = (function () {
   var masterVolume = 80;
   var isSupported = false;
 
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      muted = window.localStorage.getItem('dust_reign_audio_muted') === 'true';
-      var savedVol = window.localStorage.getItem('dust_reign_master_volume');
-      if (savedVol !== null && !isNaN(Number(savedVol))) {
-        masterVolume = Math.max(0, Math.min(100, Math.round(Number(savedVol))));
-      }
-    }
-  } catch (e) {
-    muted = false;
-    masterVolume = 80;
+  var AUDIO_KEY = 'dust-reign:audio:v1';
+  var LEGACY_AUDIO_MUTED_KEY = 'dust_reign_audio_muted';
+  var LEGACY_AUDIO_VOLUME_KEY = 'dust_reign_master_volume';
+
+  function getStore() {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+      if (typeof localStorage !== 'undefined') return localStorage;
+      if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
+    } catch (e) {}
+    return null;
   }
+
+  function saveAudioSettings() {
+    try {
+      var store = getStore();
+      if (store) {
+        store.setItem(AUDIO_KEY, JSON.stringify({ muted: muted, masterVolume: masterVolume }));
+        store.setItem(LEGACY_AUDIO_MUTED_KEY, muted ? 'true' : 'false');
+        store.setItem(LEGACY_AUDIO_VOLUME_KEY, String(masterVolume));
+      }
+    } catch (e) {}
+  }
+
+  function loadAudioSettings() {
+    try {
+      var store = getStore();
+      if (store) {
+        var raw = store.getItem(AUDIO_KEY);
+        if (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') {
+              if (typeof parsed.muted === 'boolean') muted = parsed.muted;
+              if (typeof parsed.masterVolume === 'number' && !isNaN(parsed.masterVolume)) {
+                masterVolume = Math.max(0, Math.min(100, Math.round(parsed.masterVolume)));
+              }
+              return;
+            }
+          } catch (pe) {}
+        }
+        var legacyMuted = store.getItem(LEGACY_AUDIO_MUTED_KEY);
+        var legacyVol = store.getItem(LEGACY_AUDIO_VOLUME_KEY);
+        var hasLegacy = (legacyMuted !== null || legacyVol !== null);
+        if (legacyMuted !== null) {
+          muted = legacyMuted === 'true';
+        }
+        if (legacyVol !== null && !isNaN(Number(legacyVol))) {
+          masterVolume = Math.max(0, Math.min(100, Math.round(Number(legacyVol))));
+        }
+        if (hasLegacy) {
+          store.setItem(AUDIO_KEY, JSON.stringify({ muted: muted, masterVolume: masterVolume }));
+        }
+      }
+    } catch (e) {
+      muted = false;
+      masterVolume = 80;
+    }
+  }
+
+  loadAudioSettings();
 
   function initContext() {
     if (ctx) return;
@@ -82,11 +131,7 @@ export var AudioFX = (function () {
     var num = Number(val);
     if (isNaN(num)) num = 80;
     masterVolume = Math.max(0, Math.min(100, Math.round(num)));
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('dust_reign_master_volume', String(masterVolume));
-      }
-    } catch (e) {}
+    saveAudioSettings();
     if (masterGain && ctx) {
       masterGain.gain.setValueAtTime(muted ? 0 : 0.35 * (masterVolume / 100), ctx.currentTime);
     }
@@ -95,11 +140,7 @@ export var AudioFX = (function () {
 
   function setMuted(val) {
     muted = Boolean(val);
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('dust_reign_audio_muted', muted ? 'true' : 'false');
-      }
-    } catch (e) {}
+    saveAudioSettings();
     if (masterGain && ctx) {
       masterGain.gain.setValueAtTime(muted ? 0 : 0.35 * (masterVolume / 100), ctx.currentTime);
     }
@@ -820,6 +861,15 @@ export var AudioFX = (function () {
     graze: graze,
     emp: emp,
     getMasterVolume: getMasterVolume,
-    setMasterVolume: setMasterVolume
+    setMasterVolume: setMasterVolume,
+    loadSettings: loadAudioSettings,
+    saveSettings: saveAudioSettings,
+    AUDIO_KEY: AUDIO_KEY,
+    LEGACY_AUDIO_MUTED_KEY: LEGACY_AUDIO_MUTED_KEY,
+    LEGACY_AUDIO_VOLUME_KEY: LEGACY_AUDIO_VOLUME_KEY
   };
 })();
+
+export var AUDIO_KEY = 'dust-reign:audio:v1';
+export var LEGACY_AUDIO_MUTED_KEY = 'dust_reign_audio_muted';
+export var LEGACY_AUDIO_VOLUME_KEY = 'dust_reign_master_volume';
