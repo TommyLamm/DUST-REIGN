@@ -46,12 +46,11 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/render/entity-style.js` | 受擊閃白與雙層反差描邊等逐實體視覺暫存。 |
 | `src/render/palette.js`、`src/render/quality.js`、`src/render/sprites.js` | 區段負空間地表色調（$L^* \in [4.6\%, 13.5\%]$）、畫質預算（粒子池 HIGH 600 / MEDIUM 350 / LOW 180）與自動降級、預渲染光暈／雜訊貼圖快取。 |
 | `src/ui/` | DOM 對應、尺寸適配、HUD、暫停、升級、配裝（`loadout-panel.js`）、圖鑑（`codex-panel.js`）、關卡選單（`campaign-modal.js`）、極限簡報（`hardcore-briefing.js`）、改裝工坊（`workshop-panel.js`）、星級金庫（`vault-panel.js`）、每日懸賞（`bounties-panel.js`）、結算（`game-over.js`）、幕間（`interlude-panel.js`）、合約（`contracts-hud.js`）與提示（`tips.js`）。 |
-| `src/audio/audio-fx.js` | 原生 Web Audio API 程序合成音效（FM 合成跳彈、雙峰帶通破片殼擊、指數衰減低通與全域殘響）、音訊解鎖及音量／靜音偏好。 |
-| `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績橋接與平台訊息協定。 |
+| `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績與雲端存檔樂觀鎖同步橋接（Playroom SDK 1.1.0）、能力協商、錯誤碼處理與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
 | `scripts/balance-sim.mjs` | 無頭長流程模擬。 |
-| `game.json`、`cover.png` | 平台 Manifest 與封面。 |
-| `scripts/stage-release.mjs`、`.github/workflows/release.yml` | 成品白名單 staging、版本核對、完整 ZIP 驗證與 Release 流程。 |
+| `game.json`、`cover.png` | 平台 Manifest（Schema v2）與封面。 |
+| `scripts/stage-release.mjs`、`.playroom/`、`.github/workflows/release.yml` | 成品白名單 staging（阻斷內部工具混入）、官方固定驗證工具（Playroom Game Tools 1.1.0）、SHA-256 鎖定、版本核對、完整 ZIP 驗證與 Release 發布流程。 |
 
 ### 共用邊界
 
@@ -173,9 +172,12 @@ index.html → src/main.js → init()
 | 用途 | 來源／入口 |
 | --- | --- |
 | 核心邏輯自檢 | Node 24 執行 `node scripts/self-check.mjs`；案例與覆蓋範圍以 `src/dev/self-check.js` 為準。瀏覽器亦可呼叫 `window.LunaGame.selfCheck()`。 |
+| 偏好設定與雲端存檔驗證 | Node 24 執行 `node scripts/test-cloud-save.mjs` 與 `node scripts/test-track2-cloud-save.mjs`，驗證命名空間平滑遷移、快照限制、智慧合併與樂觀鎖衝突重試。 |
+| 闖關與局外驗證 | Node 24 執行 `node scripts/test-i18n-verification.mjs`、`node scripts/test-campaign-modes.mjs` 與 `node scripts/test-track3-metagame.mjs`。 |
+| 真實瀏覽器驗收 | Node 24 執行 `node scripts/test-browser-gameplay.mjs`，驗證 40 項端到端操作與無例外。 |
 | 語法檢查與 CI 順序 | `.github/workflows/release.yml`。 |
-| 成品收集 | `node scripts/stage-release.mjs`；白名單為根目錄 Manifest、入口、SDK、封面及 `src/**/*.js`、`css/**/*.css`。 |
+| 成品收集 | `node scripts/stage-release.mjs`；白名單為根目錄 Manifest、入口、SDK、封面及 `src/**/*.js`、`css/**/*.css`，嚴格阻斷 `.playroom` 與版本控制元資料。 |
 | staging 路徑 | `output/release/<version>/game` 與 CI 使用的 `output/game`；版本目錄已存在時 staging 會拒絕覆寫。 |
-| ZIP 驗證與發布 | Release workflow 取得平台 `main` 最新工具，完整打包／驗證成功後建立遊戲 Release；授權與人工驗收依 `AGENTS.md`。 |
+| 官方固定工具與 ZIP 驗收 | `.playroom/tools/playroom-game-tools-1.1.0.zip` 與 `.playroom/game-tools.lock.json`。解壓後由 `node pack-game.mjs output/game output/game.zip` 打包並由 `node validate-game.mjs output/game.zip` 驗收。Release workflow 逐檔校驗 SHA-256 並以 `--prerelease` 發布。 |
 
 staging 不負責編譯，也不等同 ZIP 驗證。核心自檢、完整 ZIP 驗證及真實瀏覽器／平台預覽各有不同範圍；執行結果與發布狀態記錄於專用紀錄，不寫入本文件。
