@@ -38,6 +38,43 @@ export function initCampaignStage(state, stageConfig) {
     state.beaconMaxHp = maxHp;
     state.beaconPlayerStayTime = 0;
   }
+
+  if (type === 'vip_hunt') {
+    if (!state.vipList || state.vipList.length === 0) {
+      state.vipList = [];
+      var vipCount = stageConfig.targetQuota || 2;
+      var vw = boundW;
+      var vh = boundH;
+      var kind = stageConfig.id === 'stage_1_3' ? 'brute' :
+                 stageConfig.id === 'stage_2_2' ? 'elite' :
+                 stageConfig.id === 'stage_3_3' ? 'burrower' : (stageConfig.vipKind || 'brute');
+      for (var vi = 0; vi < vipCount; vi += 1) {
+        var angle = (vi / vipCount) * Math.PI * 2 + Math.PI / 4;
+        var dist = 220;
+        var vipEnemy = {
+          kind: kind,
+          x: vw / 2 + Math.cos(angle) * dist,
+          y: vh / 2 + Math.sin(angle) * dist,
+          r: kind === 'burrower' ? 20 : 22,
+          hp: kind === 'burrower' ? 280 : 380,
+          maxHp: kind === 'burrower' ? 280 : 380,
+          speed: 120,
+          damage: 24,
+          score: 300,
+          isVip: true,
+          color: '#f43f5e',
+          touchCooldown: 0,
+          shootCooldown: 1.0 + vi * 0.5
+        };
+        if (kind === 'elite') {
+          vipEnemy.affix = 'command';
+        }
+        if (!state.enemies) state.enemies = [];
+        state.enemies.push(vipEnemy);
+        state.vipList.push(vipEnemy);
+      }
+    }
+  }
 }
 
 export function stepCampaignMode(dt, frame) {

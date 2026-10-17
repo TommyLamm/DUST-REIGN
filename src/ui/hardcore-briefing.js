@@ -1,6 +1,7 @@
 import { isChinese, onLanguageChange, tRigName, tWeaponName } from '../core/i18n.js';
 import { getHardcoreStore, isHardcoreUnlocked, saveHardcoreStore } from '../core/meta-store.js';
 import { HARDCORE_OPERATIONS, getHardcoreOperation } from '../data/hardcore-operations.js';
+import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
 
 var selectedOpId = 'op_01';
@@ -28,6 +29,9 @@ export function selectHardcoreOperation(opId) {
   saveHardcoreStore(store);
 
   var op = getSelectedHardcoreOperation();
+  if (rt.state && rt.state.mode === 'hardcore') {
+    rt.state.stageConfig = op;
+  }
   if (onSelectCallback) onSelectCallback(op);
   if (currentContainer) renderHardcoreBriefing(currentContainer, onSelectCallback);
 }

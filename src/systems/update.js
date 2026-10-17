@@ -13,8 +13,7 @@ import { stepPlayer } from './sim/player.js';
 import { stepEnemySpawner, stepWaveClock } from './sim/timers-wave.js';
 import { stepTactical } from './tactical.js';
 import { stepPois } from './sim/poi.js';
-import { stepCampaignMode } from './modes/campaign.js';
-import { stepHardcoreMode } from './modes/hardcore.js';
+import { stepMode } from './modes/mode-adapter.js';
 import { updateDomUi } from '../ui/hud.js';
 import { updateCamera } from '../core/camera.js';
 
@@ -62,8 +61,7 @@ export function update(dt) {
   var frame = cachedFrame;
 
   stepWaveClock(dt, frame);
-  if (rt.state.mode === 'campaign') stepCampaignMode(dt, frame);
-  else if (rt.state.mode === 'hardcore') stepHardcoreMode(dt, frame);
+  stepMode(dt, frame);
   stepMutators(frame);
   stepHazards(dt, frame);
   stepPois(dt, frame);

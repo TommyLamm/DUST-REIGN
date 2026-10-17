@@ -37,7 +37,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/input/` | 鍵盤、滑鼠、觸控事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、PSRA 環形生成（`spawning.js`）、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/sim/poi.js` | 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）之生命週期、防守互動與全場戰術增益。 |
-| `src/systems/modes/` | 闖關模式戰役護航/刺殺任務邏輯（`campaign.js`）與極限作戰黑風暴動態縮圈（`hardcore.js`）。 |
+| `src/systems/modes/` | 遊戲模式生命週期配接器（`mode-adapter.js`：`GameModeAdapter` 介面規範 `onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）、闖關戰役任務邏輯（`campaign.js`）與極限作戰黑風暴動態縮圈（`hardcore.js`）。 |
 | `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
@@ -69,6 +69,8 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - 繪圖管線合流：敵彈採 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染，消除重複 Dark Halo 狀態切換；接地陰影以雙 Pass 全合流繪製（全場僅發出 2 次 `ctx.fill()`）；`drawDualOutlineZeroCost` 手動復原繪圖屬性替代 `save/restore` 堆疊開銷；傷害數字採字體分組批處理，消滅 CSS 字體抖動。
 - `src/main.js` 與 `src/ui/` 可以匯入 render。`src/systems/**` 不得讀取 `entity.fx`，也不得 import `src/render/**`。系統透過共用 `rt.state` 協作，並會呼叫 UI 與音效；這些目錄是責任分工，並非互相隔離的單向分層。
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
+- 遊戲模式生命週期架構：`src/systems/modes/mode-adapter.js` 透過 `GameModeAdapter` 統一規範 `standard`、`daily`、`campaign`、`hardcore` 模式生命週期（`onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）。開局與重開（`beginRun`／`restart`）自動注入 `state.mode` 與 `state.stageConfig`，模擬更新由 `stepMode(dt, frame)` 分派，勝利判定與渲染查詢（如 `isStormFront`）徹底解耦，僅由模式配接器於模擬步進與事件觸發時評估。
+- 聲明式星級條件與關卡鏈：`src/data/campaign-stages.js` 定義全 15 關結構化 `starRules`（支援波次、通關時長、血量比率、承傷上限、炸藥桶擊殺、熔岩無傷、精準衝刺、尖塔連鎖、禁用 EMP、連擊與護航信標等條件，以及複合 `all`/`any` 規則），由 `src/systems/director.js` 的 `evaluateStageStars` 以資料驅動聲明式評估，並向下相容文字描述 `starCriteria`；關卡推進鏈（`STAGE_CHAIN`）與區域解鎖門檻星數由 `src/core/meta-store.js` 動態讀取 `CAMPAIGN_STAGES` 與 `CAMPAIGN_SECTORS`，消除硬編碼關卡鏈與前綴比對。
 - 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
 - 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
 - 首領身份是 `isBoss`。Titan 拆解部位（左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
@@ -121,6 +123,7 @@ index.html → src/main.js → init()
 | --- | --- |
 | 開始、暫停、重開、結算與評級 | `src/main.js`、`src/systems/flow.js`、`src/systems/scoring.js`、`src/ui/pause-menu.js`、`src/ui/hud.js` |
 | 幕間、路線、撤離與無盡 | `src/systems/interlude.js`、`src/systems/director.js`、`src/ui/interlude-panel.js` |
+| 遊戲模式、闖關戰役、星級條件與極限作戰 | `src/systems/modes/mode-adapter.js`、`src/systems/modes/campaign.js`、`src/systems/modes/hardcore.js`、`src/data/campaign-stages.js`、`src/data/hardcore-operations.js`、`src/systems/director.js`、`src/ui/campaign-modal.js`、`src/ui/hardcore-briefing.js` |
 | 大世界邊界與戰術 POI | `src/core/constants.js`、`src/systems/sim/poi.js`、`src/render/world.js` |
 | 敵人、首領、波次與生成 | `src/systems/director.js`、`src/systems/spawning.js`、`src/systems/sim/timers-wave.js`、`src/systems/sim/enemies.js`、`src/systems/sim/bosses.js`、`src/systems/sim/new-enemies.js`、`src/systems/sim/enemy-defense.js` |
 | 突變、合約、掉落與持續效果 | `src/systems/mutators.js`、`src/systems/contracts.js`、`src/systems/drops.js`、`src/systems/card-effects.js`、`src/ui/contracts-hud.js` |
@@ -187,7 +190,7 @@ index.html → src/main.js → init()
 | 相機動力學與視口驗證 | Node 24 執行 `node scripts/test-track1-camera.mjs`，驗證非對稱雙階阻尼、軟約束死區、Hermite 準星前瞻、震屏解耦逆映射與邊界夾持。 |
 | 大地圖與視錐剔除驗證 | Node 24 執行 `node scripts/test-track2-terrain-culling.mjs`，驗證 3520x2640 空間網格對齊、視錐幾何 AABB 剔除率與 6 大 POI 生命週期。 |
 | 偏好設定與雲端存檔驗證 | Node 24 執行 `node scripts/test-cloud-save.mjs` 與 `node scripts/test-track2-cloud-save.mjs`，驗證命名空間平滑遷移、快照限制、智慧合併與樂觀鎖衝突重試。 |
-| 闖關與局外驗證 | Node 24 執行 `node scripts/test-i18n-verification.mjs`、`node scripts/test-campaign-modes.mjs` 與 `node scripts/test-track3-metagame.mjs`。 |
+| 闖關與局外驗證 | Node 24 執行 `node scripts/test-i18n-verification.mjs`、`node scripts/test-campaign-modes.mjs`、`node scripts/test-track3-metagame.mjs` 與 `node scripts/test-extensibility-levels.mjs`。 |
 | 真實瀏覽器驗收 | Node 24 執行 `node scripts/test-browser-gameplay.mjs`，驗證 40 項端到端操作與無例外。 |
 | 語法檢查與 CI 順序 | `.github/workflows/release.yml`。 |
 | 成品收集 | `node scripts/stage-release.mjs`；白名單為根目錄 Manifest、入口、SDK、封面及 `src/**/*.js`、`css/**/*.css`，嚴格阻斷 `.playroom` 與版本控制元資料。 |
