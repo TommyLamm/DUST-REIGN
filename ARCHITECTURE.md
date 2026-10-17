@@ -35,11 +35,11 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/meta-store.js`、`src/core/cloud-save.js` | 局外存檔、v2 最高分、每日成績、提示紀錄、闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口，以及全進度 Unified Save 與雲端存檔智慧合併。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
-| `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、PSRA 環形生成（`spawning.js`）、武器、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
+| `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、PSRA 環形生成（`spawning.js`）、武器策略註冊表（`weapon-registry.js`，多態武器策略 `onTick`／`onFire`／`renderGun`）、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/sim/poi.js` | 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）之生命週期、防守互動與全場戰術增益。 |
 | `src/systems/modes/` | 遊戲模式生命週期配接器（`mode-adapter.js`：`GameModeAdapter` 介面規範 `onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）、闖關戰役任務邏輯（`campaign.js`）與極限作戰黑風暴動態縮圈（`hardcore.js`）。 |
-| `src/systems/tactical.js` | 戰術輔助槽位裝備（定點機槍塔、熱誘餌、微型奇點手雷）之冷卻、部署、AI 行為與實體渲染。 |
-| `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及不改卡片資料表的持續效果與融合協同。 |
+| `src/systems/tactical.js` | 戰術裝備註冊表（Tactical Gear Registry：定點機槍塔、熱誘餌、微型奇點手雷）之裝備選擇、冷卻、部署、AI 行為與實體渲染。 |
+| `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及卡片效果與輕量鉤子匯流排（Hook Bus：`onPlayerDamaged`、`onKill`、`onDash`、`onPlayerStep`）與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領重塑在 `sim/bosses.js`，狼群包夾與空間分離在 `sim/enemies.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口、相機世界矩陣注入、視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池，常態 48px / 首領 220px 雙階邊界，剔除 75%~90% 螢幕外實體）與世界／螢幕圖層分流順序。 |
@@ -61,7 +61,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `rt` 保存跨模組會重新賦值的資料，包括 `state`、`ui`、輸入、RAF／事件資源與帳號局次。單局資料放在 `rt.state`；只由單一模組管理的狀態留在該模組，以函式提供存取。
 - `rt.renderTime` 與 `rt.renderDt` 由 `src/main.js` 的 `frame()` 每幀寫入，暫停與 hitstop 時仍前進。`rt.fxEvents` 在 `src/core/runtime.js` 初始為 `null`，由 `pushFxEvent`／`drainFxEvents` 首次使用時建立上限 64 的環形佇列（滿額覆寫最舊一筆）。事件只供視覺使用。種類與欄位以呼叫處及 `src/render/fx.js` 的處理為準：`kill`、`crit`、`core`、`barrel`、`mortar`、`emp`、`spire`、`dash`、`graze`、`playerHit`、`titanPhase`、`bounty`、`surge`、`burst`。
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 與雙層描邊快取只由 `src/render/entity-style.js` 的 `tickFlash` 維護；怪物血條滯後白條（`ghostHp`、`ghostTimer`）與傷害數字的 `numHp` 只由 render 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
-- 0-GC 記憶體防線：子彈軌跡使用平坦環形緩衝區（`Float32Array(8)`）與靜態 `trailPool` 復用物件；逐實體姿態與每幀位移步進以單例物件 `POSE_SCRATCH` 與 `STEP_SCRATCH` 傳遞；貫穿彈命中歷史採用 64-bit Bitmask（`hitMask0`, `hitMask1`）紀錄取代陣列物件；全域無序實體陣列（子彈、敵彈、粒子、掉落物等）全面採用 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice`，移除時切斷死者懸空參照避免隱式記憶體洩漏。
+- 0-GC 記憶體防線：子彈軌跡使用平坦環形緩衝區（`Float32Array(8)`）與靜態 `trailPool` 復用物件；逐實體姿態與每幀位移步進以單例物件 `POSE_SCRATCH` 與 `STEP_SCRATCH` 傳遞；貫穿彈命中歷史採用 128-bit Bitmask（`hitMask0`, `hitMask1`, `hitMask2`, `hitMask3`）紀錄取代陣列物件；全域無序實體陣列（子彈、敵彈、粒子、掉落物等）全面採用 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice`，移除時切斷死者懸空參照避免隱式記憶體洩漏。
 - 物理空間加速：空間雜湊網格單元格鎖定 55px，以 $64 \times 48$ 單元格精確對齊覆蓋 $3520 \times 2640$ 大世界地圖，提供零分配回調 `queryGridCallback` 供酸池、焦痕、自爆友傷與碰撞查詢；全域幾何判定以平方距離 $d^2 \le r^2$ 替代 `Math.hypot`；Titan 4 大可拆解部位以單幀快取旋轉矩陣（`updateTitanPartCache`）與逆向局部坐標判定；視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池）以雙階邊界（常態 48px、首領 220px）避免螢幕外實體之網格插入、渲染與射擊計時器推進。
 - 大世界廢土與中心相機動力學：地圖邊界為 $3520 \times 2640$（邊界緩衝 160px，有效戰術空間 $3200 \times 2320$），玩家初始置中於 $(1760, 1320)$。相機單例 `rt.camera` 具備非對稱雙階動態阻尼（$\lambda_{cruise}=8.5$, $\lambda_{dash}=24$）、76.8px 軟約束死區、Hermite 雙向準星前瞻（最大 140px，死區 70px）與 20px 邊界防出界夾持；創傷度正交震屏（$T^2$ 質數頻率）於 `screenToWorld` 逆映射中徹底扣除 Shake 雜訊，消滅震屏準星抖動。視口邊緣雷達指針（Ray-AABB 邊界求交）與右上角 128px 微型小地圖（4 桶分流單 Pass 繪製）提供廣域態勢感知。地表渲染採用 $1024 \times 1024$ 離屏圖塊經 GPU GL_REPEAT 矩陣平鋪（`terrainPattern.setTransform`），消除全圖分配之 37.2MB 記憶體負擔。
 - PSRA 環形生成架構：內環（視口 $+40\text{px}$）絕對禁刷防暴怪臉貼；中環（$1.15 \sim 1.42\times$ 視口半徑）維持活躍生成；外環（$>1.85\times$）執行靜默回收並退回波次代幣。生成依玩家速度向量預判扇區（$55\% \sim 65\%$ 迎面阻截、$25\% \sim 30\%$ 兩側包夾、$10\% \sim 15\%$ 後方壓迫）與世界邊界切線折射。怪群 AI 支援狼群包夾、55px 空間雜湊局部排斥分離（Separation）與菁英怪 Hyper-Catchup 地底疾行（3.5x 移速）。
@@ -71,7 +71,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 遊戲模式生命週期架構：`src/systems/modes/mode-adapter.js` 透過 `GameModeAdapter` 統一規範 `standard`、`daily`、`campaign`、`hardcore` 模式生命週期（`onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）。開局與重開（`beginRun`／`restart`）自動注入 `state.mode` 與 `state.stageConfig`，模擬更新由 `stepMode(dt, frame)` 分派，勝利判定與渲染查詢（如 `isStormFront`）徹底解耦，僅由模式配接器於模擬步進與事件觸發時評估。
 - 聲明式星級條件與關卡鏈：`src/data/campaign-stages.js` 定義全 15 關結構化 `starRules`（支援波次、通關時長、血量比率、承傷上限、炸藥桶擊殺、熔岩無傷、精準衝刺、尖塔連鎖、禁用 EMP、連擊與護航信標等條件，以及複合 `all`/`any` 規則），由 `src/systems/director.js` 的 `evaluateStageStars` 以資料驅動聲明式評估，並向下相容文字描述 `starCriteria`；關卡推進鏈（`STAGE_CHAIN`）與區域解鎖門檻星數由 `src/core/meta-store.js` 動態讀取 `CAMPAIGN_STAGES` 與 `CAMPAIGN_SECTORS`，消除硬編碼關卡鏈與前綴比對。
-- 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
+- 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，由戰術裝備註冊表（`tactical.js`）統一管理部署與行為，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
 - 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
 - 首領身份是 `isBoss`。Titan 拆解部位（左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
 - 廢料改裝工坊（Scrapyard Workshop）以 6⚡ 負載上限與 3 大改裝插槽運作，模組雙面刃數值在開局前注入玩家屬性；安裝改裝模組進行競速時自動標記為 Mod 模式，與純粹無改裝幽靈競速榜分流隔離。

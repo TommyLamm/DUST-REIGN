@@ -6,6 +6,7 @@ import { clamp } from '../core/utils.js';
 import { ensureFx, keyGlowsOnly, outline, tickFlash, trackStep } from './entity-style.js';
 import { PALETTE } from './palette.js';
 import { drawGlow } from './sprites.js';
+import { getWeaponStrategy } from '../systems/weapon-registry.js';
 
 function updateFacing(fx, fallback) {
   if (fx.moved > 0.75) {
@@ -286,244 +287,19 @@ export function hullPath(ctx, r) {
 }
 
 function drawWeapon(ctx, p, kick, flashing) {
-  var r = p.r;
   var mode = p.weaponMode || 'standard';
-  var metal = flashing ? '#ffffff' : '#d7c094';
-  var trim = flashing ? '#ffffff' : '#f4e2b4';
-  var steel = flashing ? '#ffffff' : '#222927';
-  var gunDark = flashing ? '#ffffff' : '#141c1a';
-  var chargeNeed = (typeof p.chargeNeed === 'number' && p.chargeNeed > 0) ? p.chargeNeed : 0.6;
-  var charge = clamp((p.chargeTime || 0) / chargeNeed, 0, 1);
-
-  if (mode === 'breacher') {
-    var bx = r * 0.12 - kick;
-    var blen = r * 0.72;
-
-    // Underbarrel gas cylinder & pump slide
-    ctx.fillStyle = gunDark;
-    ctx.fillRect(bx + 4, 3.5, blen - 8, 4.5);
-    ctx.fillStyle = flashing ? '#ffffff' : '#72644e';
-    ctx.fillRect(bx + 8, 4, blen * 0.5, 3.5);
-
-    // Heavy main shotgun barrel
-    ctx.fillStyle = metal;
-    ctx.beginPath();
-    ctx.rect(bx, -6.5, blen, 13);
-    ctx.fill();
-    outline(ctx, 1.4);
-
-    // Barrel Specular Ridge (1.2px #ffffff central spine)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(bx + 4, 0);
-    ctx.lineTo(bx + blen - 4, 0);
-    ctx.stroke();
-
-    // Perforated heat-shield cooling holes
-    if (!flashing) {
-      ctx.fillStyle = '#18140f';
-      var hi;
-      for (hi = 0; hi < 3; hi += 1) {
-        ctx.beginPath();
-        ctx.arc(bx + 8 + hi * 9, -2.5, 1.6, 0, TAU);
-        ctx.arc(bx + 8 + hi * 9, 2.5, 1.6, 0, TAU);
-        ctx.fill();
-      }
-    }
-
-    // Heavy flared muzzle brake
-    ctx.fillStyle = trim;
-    ctx.fillRect(bx + blen - 2, -8, 8, 16);
-    ctx.strokeStyle = '#0e0c09';
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(bx + blen - 2, -8, 8, 16);
-
-    // Armored breech & side ammo drum
-    ctx.fillStyle = steel;
-    ctx.beginPath();
-    ctx.rect(-r * 0.18, -r * 0.98, 13, 15);
-    ctx.fill();
-    outline(ctx, 1.4);
-
-    // Ammo drum hazard diagonal markings
-    if (!flashing) {
-      ctx.fillStyle = '#d49b38';
-      ctx.fillRect(-r * 0.15, -r * 0.95, 3.5, 12);
-      ctx.fillRect(-r * 0.05, -r * 0.95, 3.5, 12);
-    }
-
-    // Heavy feed chute
-    ctx.strokeStyle = flashing ? '#ffffff' : '#e7d3a8';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-r * 0.02, -r * 0.88);
-    ctx.lineTo(-r * 0.02, -r * 0.2);
-    ctx.moveTo(-r * 0.12, -r * 0.52);
-    ctx.lineTo(r * 0.12, -r * 0.52);
-    ctx.stroke();
-
-    if ((p.recoil || 0) > 0.05) drawMuzzle(ctx, mode, bx + blen + 6, 0, p.recoil);
-    return;
-  }
-
-  if (mode === 'vanguard') {
-    var vx = r * 0.12 - kick;
-    var vlen = r + 24;
-
-    // Receiver mount block
-    ctx.fillStyle = gunDark;
-    ctx.beginPath();
-    ctx.rect(vx - 4, -4.5, 8, 9);
-    ctx.fill();
-    outline(ctx, 1.2);
-
-    // Upper and lower accelerator rails
-    ctx.fillStyle = flashing ? '#ffffff' : '#142c33';
-    ctx.fillRect(vx, -3.5, vlen, 2.8);
-    ctx.fillRect(vx, 0.7, vlen, 2.8);
-
-    ctx.fillStyle = flashing ? '#ffffff' : '#8fd0d8';
-    ctx.fillRect(vx + 2, -2.8, vlen - 4, 1.4);
-    ctx.fillRect(vx + 2, 1.4, vlen - 4, 1.4);
-
-    // Barrel Specular Ridge (1.2px #ffffff central rail axis)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(vx + 4, 0);
-    ctx.lineTo(vx + vlen - 4, 0);
-    ctx.stroke();
-
-    // Segmented magnetic capacitor rings
-    var seg;
-    for (seg = 0; seg < 5; seg += 1) {
-      var on = p.isCharging && charge >= (seg + 1) / 5;
-      ctx.fillStyle = on ? '#e8fbff' : (flashing ? '#ffffff' : '#1e4852');
-      ctx.fillRect(vx + 6 + seg * ((vlen - 14) / 5), -4.6, 5, 9.2);
-      ctx.strokeStyle = on ? '#5be7ff' : '#0c1a1e';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(vx + 6 + seg * ((vlen - 14) / 5), -4.6, 5, 9.2);
-    }
-
-    if (p.isCharging && charge > 0.05 && !keyGlowsOnly()) {
-      drawGlow(ctx, vx + vlen, 0, 10 + charge * 12, PALETTE.emissive.tech, 0.45 + charge * 0.45);
-      // Spark arcs across rails when charging
-      if (Math.sin((rt.renderTime || 0) * 30) > 0.2) {
-        ctx.strokeStyle = '#e8fbff';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(vx + vlen * 0.5, -2);
-        ctx.lineTo(vx + vlen * 0.65, 0);
-        ctx.lineTo(vx + vlen * 0.5, 2);
-        ctx.stroke();
-      }
-    }
-    if ((p.recoil || 0) > 0.05) drawMuzzle(ctx, mode, vx + vlen, 0, p.recoil);
-    return;
-  }
-
-  if (mode === 'arc-welder') {
-    var ax = r * 0.26 - kick;
-    var tip = ax + r * 0.98;
-
-    // Heavy ceramic insulator blocks
-    ctx.fillStyle = flashing ? '#ffffff' : '#2b3834';
-    ctx.beginPath();
-    ctx.rect(ax - 6, -6.5, 9, 13);
-    ctx.fill();
-    outline(ctx, 1.2);
-
-    // Copper induction coils
-    if (!flashing) {
-      ctx.fillStyle = '#c87842';
-      ctx.fillRect(ax - 4, -5.5, 5, 11);
-      ctx.strokeStyle = '#e29e68';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(ax - 4, -5.5, 5, 11);
-    }
-
-    // Dual tungsten conducting prongs
-    ctx.strokeStyle = flashing ? '#ffffff' : '#9fffe8';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(ax, -4);
-    ctx.lineTo(tip, -8.5);
-    ctx.moveTo(ax, 4);
-    ctx.lineTo(tip, 8.5);
-    ctx.stroke();
-
-    // High-voltage emitter nodes
-    ctx.fillStyle = flashing ? '#ffffff' : '#e8fff8';
-    ctx.beginPath();
-    ctx.arc(tip, -8.5, 2.6, 0, TAU);
-    ctx.arc(tip, 8.5, 2.6, 0, TAU);
-    ctx.fill();
-
-    // Barrel Specular Ridge (1.2px #ffffff central emitter axis)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(ax, 0);
-    ctx.lineTo(tip - 4, 0);
-    ctx.stroke();
-
-    if ((p.recoil || 0) > 0.05) drawMuzzle(ctx, mode, tip + 4, 0, p.recoil);
-    else drawIdleArc(ctx, tip);
-    return;
-  }
-
-  // Standard Mode: Twin Heavy Autocannons
-  var x0 = r * 0.16 - kick;
-  var len = r + 18;
-
-  // Armored receiver block
-  ctx.fillStyle = steel;
-  ctx.beginPath();
-  ctx.rect(x0 - 4, -6.5, 8, 13);
-  ctx.fill();
-  outline(ctx, 1.2);
-
-  // Twin rifled barrels
-  ctx.fillStyle = metal;
-  ctx.fillRect(x0, -5.4, len, 3.6);
-  ctx.fillRect(x0, 1.8, len, 3.6);
-  ctx.strokeStyle = '#0e0c09';
-  ctx.lineWidth = 1.2;
-  ctx.strokeRect(x0, -5.4, len, 3.6);
-  ctx.strokeRect(x0, 1.8, len, 3.6);
-
-  // Barrel Specular Ridge (1.2px #ffffff on each barrel centerline)
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(x0 + 4, -3.6);
-  ctx.lineTo(x0 + len - 4, -3.6);
-  ctx.moveTo(x0 + 4, 3.6);
-  ctx.lineTo(x0 + len - 4, 3.6);
-  ctx.stroke();
-
-  // Barrel cooling flutes
-  if (!flashing) {
-    ctx.fillStyle = '#1c1812';
-    ctx.fillRect(x0 + 4, -4.2, len - 10, 1.2);
-    ctx.fillRect(x0 + 4, 3, len - 10, 1.2);
-  }
-
-  // Slotted muzzle brakes
-  ctx.fillStyle = trim;
-  ctx.fillRect(x0 + len - 4, -6.2, 6, 5.2);
-  ctx.fillRect(x0 + len - 4, 1, 6, 5.2);
-  ctx.strokeStyle = '#0e0c09';
-  ctx.lineWidth = 1.2;
-  ctx.strokeRect(x0 + len - 4, -6.2, 6, 5.2);
-  ctx.strokeRect(x0 + len - 4, 1, 6, 5.2);
-
-  // Twin muzzle flashes aligned with each barrel!
-  if ((p.recoil || 0) > 0.05) {
-    drawMuzzle(ctx, 'standard', x0 + len + 2, -3.6, p.recoil);
-    drawMuzzle(ctx, 'standard', x0 + len + 2, 3.6, p.recoil);
+  var strategy = getWeaponStrategy(mode);
+  if (strategy && typeof strategy.renderGun === 'function') {
+    strategy.renderGun(ctx, p, kick, flashing, {
+      drawMuzzle: drawMuzzle,
+      drawIdleArc: drawIdleArc,
+      outline: outline,
+      keyGlowsOnly: keyGlowsOnly,
+      drawGlow: drawGlow,
+      PALETTE: PALETTE,
+      TAU: TAU,
+      clamp: clamp
+    });
   }
 }
 

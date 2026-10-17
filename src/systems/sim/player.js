@@ -4,10 +4,13 @@ import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { clamp } from '../../core/utils.js';
 import { stormWind } from '../flow.js';
+import { dispatchCardHook } from '../card-effects.js';
+import { getWeaponStrategy } from '../weapon-registry.js';
 import { shoot, vanguardChargeNeed } from '../weapons.js';
 
 export function stepPlayer(dt, frame) {
   var p = frame.p;
+  dispatchCardHook('onPlayerStep', p, dt);
   var boundW = frame.boundW;
   var boundH = frame.boundH;
   var mx = 0;
@@ -33,7 +36,7 @@ export function stepPlayer(dt, frame) {
     if ((p.speedBoostTimer || 0) > 0 && p.speedBoostMult) speedMult *= p.speedBoostMult;
     if (p.toxicSlow) speedMult *= (1 - p.toxicSlow);
     var effectiveSpeed = p.speed * (p.slowTimer > 0 ? 0.55 : 1) * speedMult;
-    if (p.weaponMode === 'vanguard' && p.isCharging) {
+    if (p.isCharging) {
       effectiveSpeed *= 0.65;
     }
     targetVx = (mx / moveLength) * moveScale * effectiveSpeed;
@@ -106,39 +109,15 @@ export function stepPlayer(dt, frame) {
     p.continuousFireTime = 0;
   }
 
-  if (p.weaponMode === 'vanguard') {
-    p.chargeNeed = vanguardChargeNeed(p);
-    if (rt.input.mouse.down) {
-      if (p.cooldown <= 0) {
-        if (!p.isCharging) {
-          p.isCharging = true;
-          if (AudioFX && typeof AudioFX.vanguardChargeStart === 'function') {
-            AudioFX.vanguardChargeStart(p.chargeNeed);
-          }
-        }
-        p.chargeTime += dt;
-        if (p.chargeTime >= p.chargeNeed) {
-          if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
-            AudioFX.vanguardChargeStop();
-          }
-          shoot();
-        }
-      }
-    } else {
-      if (p.isCharging) {
-        if (p.chargeTime >= p.chargeNeed && p.cooldown <= 0) {
-          shoot();
-        }
-        p.chargeTime = 0;
-        p.isCharging = false;
-        if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
-          AudioFX.vanguardChargeStop();
-        }
-      }
-    }
+  var strategy = getWeaponStrategy(p.weaponMode || 'standard');
+  if (strategy && typeof strategy.chargeNeed === 'function') {
+    p.chargeNeed = strategy.chargeNeed(p);
+  }
+  if (strategy && typeof strategy.onTick === 'function') {
+    strategy.onTick(p, dt, Boolean(rt.input && rt.input.mouse && rt.input.mouse.down));
   } else {
     p.chargeTime = 0;
     p.isCharging = false;
-    if (rt.input.mouse.down) shoot();
+    if (rt.input && rt.input.mouse && rt.input.mouse.down) shoot();
   }
 }

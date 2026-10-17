@@ -21,7 +21,12 @@ var WEAPONS = [
   { id: 'arc-welder', name: 'ARC WELDER', rate: 'FAST', pattern: 'CHAIN', line: 'Lightning that jumps targets.' }
 ];
 var MODES = ['standard', 'campaign', 'hardcore', 'daily'];
-var ROWS = ['rig', 'weapon', 'heat', 'mode'];
+var TACTICALS = [
+  { id: 'sentry-turret', name: 'SENTRY TURRET', zhName: '定點機槍塔', cd: '16s', icon: '⛨', line: '120HP auto-turret with aura' },
+  { id: 'thermal-decoy', name: 'THERMAL DECOY', zhName: '熱誘餌干擾彈', cd: '14s', icon: '✦', line: '3 flares distorting enemy fire' },
+  { id: 'singularity-grenade', name: 'SINGULARITY', zhName: '微型奇點手雷', cd: '18s', icon: '◎', line: 'Vortex pulls foes then collapses' }
+];
+var ROWS = ['rig', 'weapon', 'tactical', 'heat', 'mode'];
 
 var built = false;
 var activeRow = 0;
@@ -36,6 +41,8 @@ var tabPanelVault;
 var tabPanelBounties;
 var rigButtons = [];
 var weaponButtons = [];
+var tacticalButtons = [];
+var tacticalRow;
 var heatRow;
 var heatDown;
 var heatUp;
@@ -197,6 +204,22 @@ function refresh() {
     }
   }
 
+  // Tactical Buttons Refresh
+  var currentTac = meta.selectedTactical || 'sentry-turret';
+  for (i = 0; i < tacticalButtons.length; i += 1) {
+    var tac = TACTICALS[i];
+    var tSelected = (tac.id === currentTac);
+    setPressed(tacticalButtons[i], tSelected, lockedHardcore);
+    tacticalButtons[i].classList.toggle('is-locked', lockedHardcore && !tSelected);
+
+    var tTitle = tacticalButtons[i].querySelector('strong');
+    if (tTitle) tTitle.textContent = zh ? tac.zhName : tac.name;
+    var tCd = tacticalButtons[i].querySelector('small:not(.loadout-line)');
+    if (tCd) tCd.textContent = tac.icon + ' ' + (zh ? ('冷卻 ' + tac.cd) : ('CD ' + tac.cd));
+    var tTacLine = tacticalButtons[i].querySelector('.loadout-line');
+    if (tTacLine) tTacLine.textContent = tac.line;
+  }
+
   // Heat Controls Refresh
   if (lockedHardcore) {
     if (heatRow) heatRow.style.display = 'none';
@@ -285,6 +308,8 @@ function refresh() {
   if (rigLabel) rigLabel.textContent = zh ? '機體' : 'RIG';
   var weaponLabel = document.querySelector('#loadoutPanel [data-loadout-row="weapon"] .loadout-label');
   if (weaponLabel) weaponLabel.textContent = zh ? '武器' : 'WEAPON';
+  var tacticalLabel = document.querySelector('#loadoutPanel [data-loadout-row="tactical"] .loadout-label');
+  if (tacticalLabel) tacticalLabel.textContent = zh ? '戰術' : 'TACTICAL';
   var heatLabel = document.querySelector('#loadoutPanel [data-loadout-row="heat"] .loadout-label');
   if (heatLabel) heatLabel.textContent = zh ? '熱度' : 'HEAT';
   var modeLabel = document.querySelector('#loadoutPanel [data-loadout-row="mode"] .loadout-label');
@@ -317,6 +342,24 @@ function chooseWeapon(id) {
   if (meta.selectedMode === 'daily' || meta.selectedMode === 'hardcore') return;
   writeMeta({ selectedWeapon: id });
   refresh();
+}
+
+function chooseTactical(id) {
+  var meta = readMeta();
+  if (meta.selectedMode === 'hardcore') return;
+  writeMeta({ selectedTactical: id });
+  refresh();
+}
+
+function cycleTactical(delta) {
+  var meta = readMeta();
+  if (meta.selectedMode === 'hardcore') return;
+  var current = meta.selectedTactical || 'sentry-turret';
+  var index = 0;
+  for (var i = 0; i < TACTICALS.length; i += 1) {
+    if (TACTICALS[i].id === current) index = i;
+  }
+  chooseTactical(TACTICALS[(index + delta + TACTICALS.length) % TACTICALS.length].id);
 }
 
 function stepHeat(delta) {
@@ -430,6 +473,8 @@ function nudge(key) {
   } else if (activeRow === 1) {
     if (currentMode !== 'hardcore') cycleWeapon(delta);
   } else if (activeRow === 2) {
+    if (currentMode !== 'hardcore') cycleTactical(delta);
+  } else if (activeRow === 3) {
     if (currentMode === 'hardcore') {
       cycleHardcoreOperation(delta);
     } else {
@@ -713,7 +758,34 @@ export function initLoadoutPanel() {
   weaponRow.appendChild(weaponChoices);
   tabPanelLoadout.appendChild(weaponRow);
 
-  // 3. Heat Row
+  // 3. Tactical Row
+  tacticalRow = el('div', 'loadout-row');
+  tacticalRow.setAttribute('data-loadout-row', 'tactical');
+  tacticalRow.setAttribute('role', 'radiogroup');
+  tacticalRow.setAttribute('aria-label', 'Tactical gear');
+  tacticalRow.appendChild(el('span', 'loadout-label', 'TACTICAL'));
+  var tacticalChoices = el('div', 'loadout-choices loadout-choices--tactical');
+  for (i = 0; i < TACTICALS.length; i += 1) {
+    (function (tac) {
+      var button = choiceButton('loadout-card', tac.name, tac.icon + ' CD ' + tac.cd);
+      var line = el('small', 'loadout-line', tac.line);
+      button.appendChild(line);
+      button.setAttribute('role', 'radio');
+      button.setAttribute('data-tactical', tac.id);
+      on(button, 'click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        activeRow = 2;
+        chooseTactical(tac.id);
+      });
+      tacticalButtons.push(button);
+      tacticalChoices.appendChild(button);
+    })(TACTICALS[i]);
+  }
+  tacticalRow.appendChild(tacticalChoices);
+  tabPanelLoadout.appendChild(tacticalRow);
+
+  // 4. Heat Row
   heatRow = el('div', 'loadout-row');
   heatRow.setAttribute('data-loadout-row', 'heat');
   heatRow.setAttribute('aria-label', 'Dust Heat');
@@ -730,19 +802,19 @@ export function initLoadoutPanel() {
   on(heatDown, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 2;
+    activeRow = 3;
     stepHeat(-1);
   });
   on(heatUp, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 2;
+    activeRow = 3;
     stepHeat(1);
   });
   on(heatValue, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 2;
+    activeRow = 3;
   });
   heatChoices.appendChild(heatDown);
   heatChoices.appendChild(heatValue);
@@ -750,7 +822,7 @@ export function initLoadoutPanel() {
   heatRow.appendChild(heatChoices);
   tabPanelLoadout.appendChild(heatRow);
 
-  // 4. Four-Mode Selection Row
+  // 5. Four-Mode Selection Row
   modeRow = el('div', 'loadout-row');
   modeRow.setAttribute('data-loadout-row', 'mode');
   modeRow.setAttribute('role', 'radiogroup');
@@ -781,25 +853,25 @@ export function initLoadoutPanel() {
   on(modeStandard, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 3;
+    activeRow = 4;
     chooseMode('standard');
   });
   on(modeCampaign, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 3;
+    activeRow = 4;
     chooseMode('campaign');
   });
   on(modeHardcore, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 3;
+    activeRow = 4;
     chooseMode('hardcore');
   });
   on(modeDaily, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    activeRow = 3;
+    activeRow = 4;
     chooseMode('daily');
   });
 

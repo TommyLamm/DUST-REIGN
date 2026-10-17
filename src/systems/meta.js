@@ -19,6 +19,7 @@ import { getDailyRule, localDateKey } from '../data/daily.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { applyRig, getRig } from '../data/rigs.js';
 import { FUSION_CHIPS, toPropName } from '../data/upgrades.js';
+import { initPlayerTactical } from './tactical.js';
 
 var WEAPONS = { standard: 1, breacher: 1, vanguard: 1, 'arc-welder': 1 };
 var BASE_DAMAGE = 26;
@@ -102,6 +103,7 @@ export function resolveSelection(dateKey) {
     rule: rule,
     rigId: rigId,
     weaponId: rule ? weaponIdOf(rule.weaponId) : weaponIdOf(meta.selectedWeapon),
+    tacticalId: meta.selectedTactical || 'sentry-turret',
     heat: heat,
     dateKey: key
   };
@@ -119,6 +121,7 @@ export function applyLoadout(state, dateKey) {
   daily = !!(pick.rule && pick.mode === 'daily');
   state.rigId = pick.rigId;
   state.weaponId = pick.weaponId;
+  state.tacticalId = pick.tacticalId;
   state.heat = pick.heat;
   state.daily = daily ? pick.rule : null;
   if (daily) seedRun(pick.rule.seed);
@@ -132,12 +135,13 @@ export function applyLoadout(state, dateKey) {
   state.player.scrapXpMult = daily ? pick.rule.scrapXpMult : 1;
   state.player.crateDropMult = rig.crateDropMult * (daily ? pick.rule.crateMult : 1);
   state.player.weaponMode = pick.weaponId;
+  initPlayerTactical(state.player, pick.tacticalId);
   rerolls = rig.rerolls;
   if ((state.heat | 0) >= 5) rerolls = getHeatModifiers(state.heat).startingRerolls;
   state.rerolls = rerolls;
   if (!daily) {
-    if (pick.meta.selectedRig !== pick.rigId || pick.meta.selectedWeapon !== pick.weaponId || (pick.meta.selectedHeat | 0) !== pick.heat) {
-      writeMeta({ selectedRig: pick.rigId, selectedWeapon: pick.weaponId, selectedHeat: pick.heat });
+    if (pick.meta.selectedRig !== pick.rigId || pick.meta.selectedWeapon !== pick.weaponId || pick.meta.selectedTactical !== pick.tacticalId || (pick.meta.selectedHeat | 0) !== pick.heat) {
+      writeMeta({ selectedRig: pick.rigId, selectedWeapon: pick.weaponId, selectedTactical: pick.tacticalId, selectedHeat: pick.heat });
     }
   }
 

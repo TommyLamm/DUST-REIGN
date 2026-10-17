@@ -7,7 +7,9 @@ import { rt } from '../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../core/settings.js';
 import { clamp, dist2, fastUnorderedRemove } from '../core/utils.js';
 import { triggerReactiveArmor } from './abilities.js';
-import { onEnemyHit, onKill, onLethal, onPlayerDamaged } from './card-effects.js';
+import { onEnemyHit, onKill, onLethal, onPlayerDamaged, registerCardHook, unregisterCardHook, clearCardHooks, dispatchCardHook } from './card-effects.js';
+
+export { registerCardHook, unregisterCardHook, clearCardHooks, dispatchCardHook };
 import { noteContractEvent } from './contracts.js';
 import { checkStageVictory, onBossDefeated } from './director.js';
 import { rollDrops } from './drops.js';
