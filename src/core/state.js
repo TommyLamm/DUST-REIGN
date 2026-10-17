@@ -69,7 +69,8 @@ export function makeState(width, height) {
     batteryMax: 100,
     batteryRegen: 2,
     phoenix: false,
-    shield: 0
+    shield: 0,
+    tacticalSlot: null
   };
 
   var _invuln = 0;
@@ -192,6 +193,7 @@ export function makeState(width, height) {
     vortices: [],
     spires: [],
     pois: (isCustomSize && w < 1000) ? [] : createDefaultPois(),
+    tacticalEntities: [],
     upgradeChoices: [],
     acquiredUpgrades: []
   };

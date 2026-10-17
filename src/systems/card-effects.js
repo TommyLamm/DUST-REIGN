@@ -9,6 +9,49 @@ import { ensureEnemyGrid, getEnemyById, getEnemyBulletById, populateEnemyBulletG
 
 var hookDepth = 0;
 
+var hookRegistry = {
+  onPlayerDamaged: [],
+  onKill: [],
+  onDash: [],
+  onEmp: [],
+  onEnemyHit: [],
+  onLethal: [],
+  onPickup: [],
+  onPlayerStep: []
+};
+
+export function registerCardHook(event, callback) {
+  if (!hookRegistry[event]) hookRegistry[event] = [];
+  hookRegistry[event].push(callback);
+  return function unsubscribe() {
+    unregisterCardHook(event, callback);
+  };
+}
+
+export function unregisterCardHook(event, callback) {
+  if (!hookRegistry[event]) return;
+  var idx = hookRegistry[event].indexOf(callback);
+  if (idx !== -1) hookRegistry[event].splice(idx, 1);
+}
+
+export function clearCardHooks() {
+  for (var k in hookRegistry) {
+    hookRegistry[k].length = 0;
+  }
+}
+
+export function dispatchCardHook(event, arg1, arg2, arg3) {
+  var list = hookRegistry[event];
+  if (!list || !list.length) return;
+  for (var i = 0; i < list.length; i += 1) {
+    try {
+      list[i](arg1, arg2, arg3);
+    } catch (err) {
+      // Isolate subscriber errors so gameplay continues uninterrupted
+    }
+  }
+}
+
 
 function livingEnemies() {
   var list = (rt.state && rt.state.enemies) || [];
@@ -162,6 +205,7 @@ export function onDash(player, info) {
     }
     pushFxEvent('burst', player.x, player.y, { preset: 'dashDust', tint: '#ff7733', scale: 1.1 });
   }
+  dispatchCardHook('onDash', player, info);
 }
 
 export function onEmp(player, info) {
@@ -210,6 +254,7 @@ export function onPlayerDamaged(player, info) {
     });
     pushFxEvent('burst', player.x, player.y, { preset: 'emp', tint: '#bd5bff', scale: 1.1 });
   }
+  dispatchCardHook('onPlayerDamaged', player, info);
 }
 
 export function onLethal(player, info) {
@@ -260,7 +305,7 @@ export function onEnemyHit(enemy, info) {
   }
 }
 
-export function onKill(enemy) {
+export function onKill(enemy, info) {
   if (!enemy || !rt.state || !rt.state.player) return;
   var player = rt.state.player;
   if (player.stormRider && isStormFront() && player.hp > 0 && !rt.state.over) {
@@ -285,6 +330,7 @@ export function onKill(enemy) {
     });
     spawnCombatText(enemy.x, enemy.y - 20, 'OVERDRIVE ORB', true);
   }
+  dispatchCardHook('onKill', enemy, info);
 }
 
 export function onPickup(orb, player) {

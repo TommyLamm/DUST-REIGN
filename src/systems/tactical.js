@@ -21,7 +21,30 @@ export var TACTICAL_ITEMS = {
     enName: 'DEPLOYABLE SENTRY TURRET',
     cooldown: 16,
     icon: '⛨',
-    desc: '部署 120 HP 自動機槍哨塔 (持續 8s)，射速 9 發/秒，帶 90px 友方精準光環'
+    desc: '部署 120 HP 自動機槍哨塔 (持續 8s)，射速 9 發/秒，帶 90px 友方精準光環',
+    onDeploy: function (p, mouse, boundW, boundH) {
+      var tx = clamp(mouse.x, 30, boundW - 30);
+      var ty = clamp(mouse.y, 30, boundH - 30);
+      rt.state.tacticalEntities.push({
+        kind: 'sentry-turret',
+        x: tx,
+        y: ty,
+        hp: 120,
+        maxHp: 120,
+        life: 8.0,
+        maxLife: 8.0,
+        r: 16,
+        fireCd: 0.1,
+        fireRate: 1 / 9,
+        damage: 14,
+        auraR: 90,
+        targetAngle: p.aim || 0
+      });
+      if (AudioFX && typeof AudioFX.levelUp === 'function') AudioFX.levelUp();
+      spawnParticles(tx, ty, '#5be7ff', 18, 140, 3);
+      spawnParticles(tx, ty, '#ffd27d', 10, 100, 2);
+      return true;
+    }
   },
   'thermal-decoy': {
     id: 'thermal-decoy',
@@ -29,7 +52,28 @@ export var TACTICAL_ITEMS = {
     enName: 'DECOY THERMAL FLARE',
     cooldown: 14,
     icon: '✦',
-    desc: '彈射 3 顆飄浮高熱誘餌 (持續 4.5s)，強制扭曲 350px 內敵彈並吸引自爆蟲'
+    desc: '彈射 3 顆飄浮高熱誘餌 (持續 4.5s)，強制扭曲 350px 內敵彈並吸引自爆蟲',
+    onDeploy: function (p, mouse, boundW, boundH) {
+      var moveAng = (p.vx || p.vy) ? Math.atan2(p.vy, p.vx) + Math.PI : (p.aim || 0) + Math.PI;
+      for (var di = 0; di < 3; di += 1) {
+        var spread = (di - 1) * 0.35;
+        var dSpeed = 90 + di * 25;
+        rt.state.tacticalEntities.push({
+          kind: 'thermal-decoy',
+          x: p.x,
+          y: p.y,
+          vx: Math.cos(moveAng + spread) * dSpeed,
+          vy: Math.sin(moveAng + spread) * dSpeed,
+          life: 4.5,
+          maxLife: 4.5,
+          r: 14,
+          pullRadius: 350
+        });
+      }
+      if (AudioFX && typeof AudioFX.mortarLaunch === 'function') AudioFX.mortarLaunch();
+      spawnParticles(p.x, p.y, '#ff7733', 14, 160, 3);
+      return true;
+    }
   },
   'singularity-grenade': {
     id: 'singularity-grenade',
@@ -37,14 +81,65 @@ export var TACTICAL_ITEMS = {
     enName: 'SINGULARITY GRENADE',
     cooldown: 18,
     icon: '◎',
-    desc: '投擲重力子核心吸附 150px 敵軍 2.5s，並在坍縮時爆發 80 點動能衝擊與暈眩'
+    desc: '投擲重力子核心吸附 150px 敵軍 2.5s，並在坍縮時爆發 80 點動能衝擊與暈眩',
+    onDeploy: function (p, mouse, boundW, boundH) {
+      var gx = clamp(mouse.x, 30, boundW - 30);
+      var gy = clamp(mouse.y, 30, boundH - 30);
+      rt.state.tacticalEntities.push({
+        kind: 'singularity-vortex',
+        x: gx,
+        y: gy,
+        r: 150,
+        life: 2.5,
+        maxLife: 2.5,
+        tearTimer: 0,
+        hp: 999
+      });
+      if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+      spawnParticles(gx, gy, '#bd5bff', 24, 200, 3.5);
+      return true;
+    }
   }
 };
 
+export function registerTacticalGear(gear) {
+  if (!gear || !gear.id) throw new Error('Tactical gear must have an id');
+  TACTICAL_ITEMS[gear.id] = gear;
+  return gear;
+}
+
+export function getTacticalGear(id) {
+  return TACTICAL_ITEMS[id] || TACTICAL_ITEMS['sentry-turret'] || null;
+}
+
+export function listTacticalGears() {
+  return Object.values(TACTICAL_ITEMS);
+}
+
+export function setPlayerTactical(p, id) {
+  if (!p) return;
+  var prevCd = p.tacticalSlot ? p.tacticalSlot.cooldown : 0;
+  initPlayerTactical(p, id);
+  if (p.tacticalSlot) {
+    p.tacticalSlot.cooldown = Math.min(prevCd, p.tacticalSlot.maxCooldown);
+  }
+}
+
+export function cyclePlayerTactical(p, delta) {
+  if (!p) return;
+  delta = delta || 1;
+  var keys = Object.keys(TACTICAL_ITEMS);
+  var currentId = (p.tacticalSlot && p.tacticalSlot.id) || 'sentry-turret';
+  var idx = keys.indexOf(currentId);
+  if (idx === -1) idx = 0;
+  var nextId = keys[(idx + delta + keys.length) % keys.length];
+  setPlayerTactical(p, nextId);
+  return nextId;
+}
+
 export function initPlayerTactical(p, id) {
   if (!p) return;
-  var itemId = id && TACTICAL_ITEMS[id] ? id : 'sentry-turret';
-  var def = TACTICAL_ITEMS[itemId];
+  var def = getTacticalGear(id) || TACTICAL_ITEMS['sentry-turret'];
   p.tacticalSlot = {
     id: def.id,
     name: def.name,
@@ -74,64 +169,9 @@ export function triggerTacticalAuxiliary() {
 
   if (!rt.state.tacticalEntities) rt.state.tacticalEntities = [];
 
-  if (tac.id === 'sentry-turret') {
-    var tx = clamp(mouse.x, 30, boundW - 30);
-    var ty = clamp(mouse.y, 30, boundH - 30);
-    rt.state.tacticalEntities.push({
-      kind: 'sentry-turret',
-      x: tx,
-      y: ty,
-      hp: 120,
-      maxHp: 120,
-      life: 8.0,
-      maxLife: 8.0,
-      r: 16,
-      fireCd: 0.1,
-      fireRate: 1 / 9,
-      damage: 14,
-      auraR: 90,
-      targetAngle: p.aim || 0
-    });
-    if (AudioFX && typeof AudioFX.levelUp === 'function') AudioFX.levelUp();
-    spawnParticles(tx, ty, '#5be7ff', 18, 140, 3);
-    spawnParticles(tx, ty, '#ffd27d', 10, 100, 2);
-    executed = true;
-  } else if (tac.id === 'thermal-decoy') {
-    var moveAng = (p.vx || p.vy) ? Math.atan2(p.vy, p.vx) + Math.PI : (p.aim || 0) + Math.PI;
-    for (var di = 0; di < 3; di += 1) {
-      var spread = (di - 1) * 0.35;
-      var dSpeed = 90 + di * 25;
-      rt.state.tacticalEntities.push({
-        kind: 'thermal-decoy',
-        x: p.x,
-        y: p.y,
-        vx: Math.cos(moveAng + spread) * dSpeed,
-        vy: Math.sin(moveAng + spread) * dSpeed,
-        life: 4.5,
-        maxLife: 4.5,
-        r: 14,
-        pullRadius: 350
-      });
-    }
-    if (AudioFX && typeof AudioFX.mortarLaunch === 'function') AudioFX.mortarLaunch();
-    spawnParticles(p.x, p.y, '#ff7733', 14, 160, 3);
-    executed = true;
-  } else if (tac.id === 'singularity-grenade') {
-    var gx = clamp(mouse.x, 30, boundW - 30);
-    var gy = clamp(mouse.y, 30, boundH - 30);
-    rt.state.tacticalEntities.push({
-      kind: 'singularity-vortex',
-      x: gx,
-      y: gy,
-      r: 150,
-      life: 2.5,
-      maxLife: 2.5,
-      tearTimer: 0,
-      hp: 999
-    });
-    if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
-    spawnParticles(gx, gy, '#bd5bff', 24, 200, 3.5);
-    executed = true;
+  var gear = getTacticalGear(tac.id);
+  if (gear && typeof gear.onDeploy === 'function') {
+    executed = gear.onDeploy(p, mouse, boundW, boundH);
   }
 
   if (executed) {

@@ -117,6 +117,7 @@ function defaultMeta() {
     v: 1,
     selectedRig: 'scrapper',
     selectedWeapon: 'standard',
+    selectedTactical: 'sentry-turret',
     selectedHeat: 0,
     selectedMode: 'standard',
     heatUnlocked: 0,
@@ -166,6 +167,7 @@ export function readMeta() {
   if (parsed.v === 1) base.v = 1;
   if (typeof parsed.selectedRig === 'string' && parsed.selectedRig) base.selectedRig = parsed.selectedRig;
   if (typeof parsed.selectedWeapon === 'string' && parsed.selectedWeapon) base.selectedWeapon = parsed.selectedWeapon;
+  if (typeof parsed.selectedTactical === 'string' && parsed.selectedTactical) base.selectedTactical = parsed.selectedTactical;
   if (parsed.selectedMode === 'daily' || parsed.selectedMode === 'campaign' || parsed.selectedMode === 'hardcore') {
     base.selectedMode = parsed.selectedMode;
   }
@@ -246,6 +248,7 @@ export function writeMeta(meta) {
   if (meta && typeof meta === 'object') {
     if (typeof meta.selectedRig === 'string') next.selectedRig = meta.selectedRig;
     if (typeof meta.selectedWeapon === 'string') next.selectedWeapon = meta.selectedWeapon;
+    if (typeof meta.selectedTactical === 'string') next.selectedTactical = meta.selectedTactical;
     if (meta.selectedMode === 'daily' || meta.selectedMode === 'standard' || meta.selectedMode === 'campaign' || meta.selectedMode === 'hardcore') {
       next.selectedMode = meta.selectedMode;
     }

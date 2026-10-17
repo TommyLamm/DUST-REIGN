@@ -405,6 +405,10 @@ export function stepBullets(dt, frame) {
           if (((b.hitMask0 || 0) & (1 << qId)) !== 0) continue;
         } else if (qId < 64) {
           if (((b.hitMask1 || 0) & (1 << (qId - 32))) !== 0) continue;
+        } else if (qId < 96) {
+          if (((b.hitMask2 || 0) & (1 << (qId - 64))) !== 0) continue;
+        } else if (qId < 128) {
+          if (((b.hitMask3 || 0) & (1 << (qId - 96))) !== 0) continue;
         } else {
           if (b.hits && b.hits.indexOf(enemy) !== -1) continue;
         }
@@ -427,11 +431,12 @@ export function stepBullets(dt, frame) {
             b.hitMask0 = (b.hitMask0 || 0) | (1 << qId);
           } else if (qId < 64) {
             b.hitMask1 = (b.hitMask1 || 0) | (1 << (qId - 32));
+          } else if (qId < 96) {
+            b.hitMask2 = (b.hitMask2 || 0) | (1 << (qId - 64));
+          } else if (qId < 128) {
+            b.hitMask3 = (b.hitMask3 || 0) | (1 << (qId - 96));
           } else {
             if (!b.hits) b.hits = [];
-            b.hits.push(enemy);
-          }
-          if (b.hits && b.hits.indexOf(enemy) === -1) {
             b.hits.push(enemy);
           }
           b.hasHitEnemy = true;
