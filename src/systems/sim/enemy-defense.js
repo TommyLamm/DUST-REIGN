@@ -21,7 +21,7 @@ function hasAffix(e, id) {
 function rememberDeath(e, info, amount) {
   if (!e || e.deathQueued || !(e.hp > 0) || e.hp - amount > 0) return;
   var interesting = e.kind === 'scurrier' || e.kind === 'warden' || e.kind === 'mine' ||
-    e.kind === 'dreadnought' || e.kind === 'sovereign' ||
+    e.kind === 'dreadnought' || e.kind === 'sovereign' || e.kind === 'behemoth' ||
     hasAffix(e, 'volatile') || hasAffix(e, 'splitter');
   if (!interesting) return;
   var q = deathQueue();
@@ -92,6 +92,11 @@ export function onEnemyEmp(e) {
   if (!e) return;
   clearEnemyShields(e);
   if (e.kind === 'warden') clearShieldsOwnedBy(e);
+  if (e.kind === 'bulwark') {
+    e.shieldHp = 0;
+    e.shieldBroken = true;
+    e.shieldBreakTimer = 4.0;
+  }
   if (e.kind === 'burrower' && e.burrowed) e.forceEmerge = true;
 }
 
@@ -106,6 +111,7 @@ export function filterEnemyDamage(e, amount, info) {
     if (left <= 0) return 0;
   }
 
+  if (e.defenseAuraTimer > 0) left *= (1 - (e.damageMitigation || 0.35));
   if (e.armorBreakTimer > 0) left *= 1.4;
   if (e.shieldHp > 0) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;

@@ -27,9 +27,16 @@ var BASE = {
   titan: { hp: 4200, speed: 36, damage: 28, r: 32, score: 800, xp: 60, repair: 1, firstWave: 5, color: '#e69535' },
   dreadnought: { hp: 8400, speed: 30, damage: 34, r: 38, score: 1500, xp: 60, repair: 1, firstWave: 10, color: '#d4654a' },
   sovereign: { hp: 5200, speed: 24, damage: 30, r: 34, score: 3000, xp: 60, repair: 1, firstWave: 15, color: '#9ec0ea' },
+  behemoth: { hp: 8800, speed: 32, damage: 32, r: 44, score: 3500, xp: 80, repair: 1, firstWave: 19, color: '#a855f7' },
+  prowler: { hp: 48, speed: 105, damage: 24, r: 12, score: 75, xp: 22, repair: 0.1, firstWave: 16, color: '#c084fc' },
+  bulwark: { hp: 190, speed: 34, damage: 18, r: 21, score: 130, xp: 35, repair: 0.3, firstWave: 16, color: '#38bdf8' },
   stormTower: { hp: 320, speed: 0, damage: 0, r: 20, score: 40, xp: 12, repair: 0, firstWave: 15, color: '#d5e6f5' },
   mine: { hp: 16, speed: 0, damage: 0, r: 8, score: 0, xp: 0, repair: 0, firstWave: 10, color: '#e0a84e' }
 };
+
+export function isBossKind(kind) {
+  return kind === 'titan' || kind === 'dreadnought' || kind === 'sovereign' || kind === 'behemoth';
+}
 
 export function bossCycle(wave, scales) {
   if (scales && typeof scales.bossCycle === 'number') return scales.bossCycle;
@@ -47,6 +54,7 @@ var TITAN_HULL = 4200;
 var TITAN_STEP = 780;
 var DREADNOUGHT_HULL = 8400;
 var SOVEREIGN_HULL = 5200;
+var BEHEMOTH_HULL = 8800;
 
 export function bossHp(kind, wave, scales) {
   var w = wave | 0;
@@ -57,13 +65,13 @@ export function bossHp(kind, wave, scales) {
     if (hp < TITAN_HULL) hp = TITAN_HULL;
     return Math.round(hp * mult);
   }
-  var base = kind === 'dreadnought' ? DREADNOUGHT_HULL : kind === 'sovereign' ? SOVEREIGN_HULL : 0;
+  var base = kind === 'dreadnought' ? DREADNOUGHT_HULL : kind === 'sovereign' ? SOVEREIGN_HULL : kind === 'behemoth' ? BEHEMOTH_HULL : 0;
   if (!(base > 0)) return 0;
   return Math.round(base * mult);
 }
 
 export function bossScore(kind, wave, scales) {
-  var base = kind === 'dreadnought' ? 1500 : kind === 'sovereign' ? 3000 : 800;
+  var base = kind === 'dreadnought' ? 1500 : kind === 'sovereign' ? 3000 : kind === 'behemoth' ? 3500 : 800;
   var w = wave | 0;
   if (w < 20) return base;
   var cycle = bossCycle(w, scales);
@@ -83,7 +91,7 @@ export function enemyProfile(kind, wave, scales) {
   var r = row.r;
   var resolved = kind && BASE[kind] ? kind : 'crawler';
 
-  if (resolved === 'titan' || resolved === 'dreadnought' || resolved === 'sovereign') {
+  if (isBossKind(resolved)) {
     hp = bossHp(resolved, w, scales);
     speed = row.speed;
     damage = resolved === 'titan' ? (28 + w * 1.5) * dmgScale : row.damage * dmgScale;
@@ -104,7 +112,7 @@ export function enemyProfile(kind, wave, scales) {
     speed: speed,
     damage: damage,
     color: row.color,
-    score: resolved === 'titan' || resolved === 'dreadnought' || resolved === 'sovereign' ? bossScore(resolved, w, scales) : row.score,
+    score: isBossKind(resolved) ? bossScore(resolved, w, scales) : row.score,
     xp: row.xp,
     repairChance: row.repair,
     firstWave: row.firstWave

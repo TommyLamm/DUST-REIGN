@@ -73,6 +73,9 @@ function syncLegacyPartHp(enemy, part) {
   else if (part.id === 'right_pod') enemy.rightPodHp = part.hp;
   else if (part.id === 'radiator') enemy.radiatorHp = part.hp;
   else if (part.id === 'treads') enemy.treadHp = part.hp;
+  else if (part.id === 'behemoth_horn') enemy.hornHp = part.hp;
+  else if (part.id === 'behemoth_gland') enemy.acidGlandHp = part.hp;
+  else if (part.id === 'behemoth_tail') enemy.tailHp = part.hp;
 }
 
 function syncLegacyPartDestroyed(enemy, part) {
@@ -89,6 +92,16 @@ function syncLegacyPartDestroyed(enemy, part) {
   } else if (part.id === 'treads') {
     enemy.treadHp = 0;
     enemy.treadDestroyed = true;
+  } else if (part.id === 'behemoth_horn') {
+    enemy.hornHp = 0;
+    enemy.hornDestroyed = true;
+  } else if (part.id === 'behemoth_gland') {
+    enemy.acidGlandHp = 0;
+    enemy.acidGlandDestroyed = true;
+    enemy.acidGlandExposed = false;
+  } else if (part.id === 'behemoth_tail') {
+    enemy.tailHp = 0;
+    enemy.crystalTailDestroyed = true;
   }
 }
 
@@ -97,6 +110,9 @@ function defaultDestroyMsg(part) {
   if (part.id === 'right_pod') return 'TITAN COMPONENT DESTROYED // REINFORCEMENTS DISABLED';
   if (part.id === 'radiator') return 'TITAN COMPONENT DESTROYED // HEAT-SINK FINS OVERLOAD [STUN 4s]';
   if (part.id === 'treads') return 'TITAN COMPONENT DESTROYED // TREAD SKIRTS DAMAGED [-40% SPEED]';
+  if (part.id === 'behemoth_horn') return 'BEHEMOTH COMPONENT DESTROYED // CRYSTAL HORN SHATTERED [STUN 2.2s]';
+  if (part.id === 'behemoth_gland') return 'BEHEMOTH COMPONENT DESTROYED // CORROSIVE GLAND RUPTURED';
+  if (part.id === 'behemoth_tail') return 'BEHEMOTH COMPONENT DESTROYED // SEISMIC TAIL SEVERED [-25% SPEED]';
   return 'BOSS COMPONENT DESTROYED // ' + (part.name || part.id).toUpperCase();
 }
 
@@ -105,6 +121,9 @@ function defaultStatusMsg(part) {
   if (part.id === 'right_pod') return 'TITAN RIGHT POD DESTROYED // MINIONS OFFLINE [STUN 1.8s]';
   if (part.id === 'radiator') return 'TITAN FINS DESTROYED // OVERLOAD CRITICAL [STUN 4.0s]';
   if (part.id === 'treads') return 'TITAN TREADS DESTROYED // MOBILITY CRIPPLED [-40% SPEED]';
+  if (part.id === 'behemoth_horn') return 'BEHEMOTH HORN SHATTERED // FRONTAL REDUCTION LOST [STUN 2.2s]';
+  if (part.id === 'behemoth_gland') return 'BEHEMOTH GLAND RUPTURED // ACID MORTAR SEALED';
+  if (part.id === 'behemoth_tail') return 'BEHEMOTH TAIL SEVERED // AGILITY COMPROMISED [-25% SPEED]';
   return 'BOSS ' + (part.name || part.id).toUpperCase() + ' DESTROYED';
 }
 
@@ -115,6 +134,18 @@ function spawnPartBreakParticles(x, y, part) {
   } else if (part.id === 'radiator') {
     spawnParticles(x, y, '#ffd27d', 24, 200, 4);
     spawnParticles(x, y, '#ff4d2e', 18, 160, 3);
+  } else if (part.id === 'behemoth_horn') {
+    spawnParticles(x, y, '#c084fc', 26, 220, 4.5);
+    spawnParticles(x, y, '#a855f7', 20, 180, 3.5);
+    spawnParticles(x, y, '#e0e7ff', 14, 150, 2.5);
+  } else if (part.id === 'behemoth_gland') {
+    spawnParticles(x, y, '#a3e635', 24, 190, 4);
+    spawnParticles(x, y, '#4ade80', 18, 160, 3);
+    spawnParticles(x, y, '#65a30d', 14, 130, 2.5);
+  } else if (part.id === 'behemoth_tail') {
+    spawnParticles(x, y, '#38bdf8', 24, 200, 4);
+    spawnParticles(x, y, '#818cf8', 18, 160, 3);
+    spawnParticles(x, y, '#e0e7ff', 12, 120, 2);
   } else {
     spawnParticles(x, y, '#ff4d2e', 22, 190, 4);
     spawnParticles(x, y, '#ffd27d', 16, 150, 3);
@@ -170,7 +201,10 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     (closestPart.id === 'left_cannon' && enemy.leftCannonDestroyed) ||
     (closestPart.id === 'right_pod' && enemy.rightPodDestroyed) ||
     (closestPart.id === 'radiator' && enemy.radiatorDestroyed) ||
-    (closestPart.id === 'treads' && enemy.treadDestroyed));
+    (closestPart.id === 'treads' && enemy.treadDestroyed) ||
+    (closestPart.id === 'behemoth_horn' && enemy.hornDestroyed) ||
+    (closestPart.id === 'behemoth_gland' && enemy.acidGlandDestroyed) ||
+    (closestPart.id === 'behemoth_tail' && enemy.crystalTailDestroyed));
   if (isDestroyed) return false;
 
   var pos = getPartWorldPos(enemy, closestPart, cache);
@@ -179,7 +213,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
 
   var partDmg = bullet.damage;
   var isWeakpoint = Boolean(closestPart.isWeakpoint);
-  var isExposed = isWeakpoint && Boolean(closestPart.exposed || (closestPart.id === 'radiator' && enemy.radiatorExposed));
+  var isExposed = isWeakpoint && Boolean(closestPart.exposed || (closestPart.id === 'radiator' && enemy.radiatorExposed) || (closestPart.id === 'behemoth_gland' && enemy.acidGlandExposed));
 
   if (isWeakpoint) {
     if (isExposed) {
@@ -254,8 +288,16 @@ export function checkMultiPartBulletHit(enemy, bullet) {
       damageEnemy(enemy, overloadDmg, { source: 'overload', crit: true, x: ptX, y: ptY });
     }
 
+    if (closestPart.id === 'behemoth_gland') {
+      var glandBacklash = Math.round((enemy.maxHp || enemy.hp) * 0.10);
+      damageEnemy(enemy, glandBacklash, { source: 'backlash', crit: true, x: ptX, y: ptY });
+    }
+
     if (closestPart.speedPenalty || closestPart.id === 'treads') {
       enemy.speed = (enemy.baseSpeed || enemy.speed || 50) * (1 - (closestPart.speedPenalty || 0.4));
+    }
+    if (closestPart.id === 'behemoth_tail') {
+      enemy.turnPenalty = (enemy.turnPenalty || 0) + 0.35;
     }
 
     var logMsg = closestPart.destroyMsg || defaultDestroyMsg(closestPart);
@@ -265,4 +307,79 @@ export function checkMultiPartBulletHit(enemy, bullet) {
   }
 
   return true;
+}
+
+export function initBehemothParts(boss) {
+  if (!boss) return;
+  var hornPart = {
+    id: 'behemoth_horn',
+    name: '晶化角盾',
+    nameZh: '晶化角盾',
+    nameEn: 'HORN',
+    combatText: 'HORN',
+    hp: 1800,
+    maxHp: 1800,
+    r: 20,
+    relX: 38,
+    relY: 0,
+    empStun: 2.2,
+    ringR: 85,
+    ringColor: '#c084fc',
+    rewardKind: 'overdrive',
+    destroyMsg: 'BEHEMOTH COMPONENT DESTROYED // CRYSTAL HORN SHATTERED [STUN 2.2s]',
+    statusMsg: 'BEHEMOTH HORN SHATTERED // FRONTAL REDUCTION LOST [STUN 2.2s]'
+  };
+
+  var glandPart = {
+    id: 'behemoth_gland',
+    name: '腐蝕酸腺',
+    nameZh: '腐蝕酸腺',
+    nameEn: 'GLAND',
+    combatText: 'GLAND',
+    hp: 1400,
+    maxHp: 1400,
+    r: 18,
+    relX: 10,
+    relY: -22,
+    isWeakpoint: true,
+    exposed: false,
+    vulnMultiplier: 2.5,
+    ringR: 75,
+    ringColor: '#a3e635',
+    rewardKind: 'repair',
+    destroyMsg: 'BEHEMOTH COMPONENT DESTROYED // CORROSIVE GLAND RUPTURED [MORTAR SEALED]',
+    statusMsg: 'BEHEMOTH GLAND RUPTURED // ACID MORTAR SEALED'
+  };
+
+  var tailPart = {
+    id: 'behemoth_tail',
+    name: '震盪晶尾',
+    nameZh: '震盪晶尾',
+    nameEn: 'TAIL',
+    combatText: 'TAIL',
+    hp: 1200,
+    maxHp: 1200,
+    r: 18,
+    relX: -42,
+    relY: 0,
+    speedPenalty: 0.25,
+    ringR: 80,
+    ringColor: '#38bdf8',
+    rewardKind: 'repair',
+    destroyMsg: 'BEHEMOTH COMPONENT DESTROYED // SEISMIC TAIL SEVERED [-25% SPEED]',
+    statusMsg: 'BEHEMOTH TAIL SEVERED // AGILITY CRIPPLED [-25% SPEED]'
+  };
+
+  boss.parts = [hornPart, glandPart, tailPart];
+  boss.hornHp = 1800;
+  boss.hornMaxHp = 1800;
+  boss.hornDestroyed = false;
+  boss.acidGlandHp = 1400;
+  boss.acidGlandMaxHp = 1400;
+  boss.acidGlandDestroyed = false;
+  boss.acidGlandExposed = false;
+  boss.tailHp = 1200;
+  boss.tailMaxHp = 1200;
+  boss.crystalTailDestroyed = false;
+  boss.turnPenalty = 0;
 }

@@ -107,13 +107,17 @@ var RIM_BOSS_CRIMSON = '#ff3322';
 var RIM_BOSS_GOLD = '#ffe880';
 var RIM_ACID = '#ccff00';
 var RIM_ARTILLERY = '#ff5500';
+var RIM_PROWLER = '#c084fc';
+var RIM_BULWARK = '#38bdf8';
 var HALO_BLACK = '#030204';
 
 export function getSpecularRimColor(kind, options) {
   if (!kind) return RIM_DEFAULT;
   if (kind === 'rusher' || kind === 'arming') return RIM_RUSHER;
   if (kind === 'brute' || kind === 'warden') return RIM_BRUTE;
-  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') return RIM_BOSS_CRIMSON;
+  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought' || kind === 'behemoth') return RIM_BOSS_CRIMSON;
+  if (kind === 'prowler') return RIM_PROWLER;
+  if (kind === 'bulwark') return RIM_BULWARK;
   if (kind === 'elite') {
     var affix = options && (typeof options === 'string' ? options : (options.affix || options.affix2));
     if (affix === 'mirror') return RIM_ELITE_MIRROR;
@@ -134,7 +138,7 @@ export function drawDualOutline(ctx, r, kind, options) {
   var rimColor = getSpecularRimColor(kind, options);
   var isBoss = false;
 
-  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought') {
+  if (kind === 'titan' || kind === 'sovereign' || kind === 'dreadnought' || kind === 'behemoth') {
     outerW = 4.8;
     rimW = 2.0;
     isBoss = true;
