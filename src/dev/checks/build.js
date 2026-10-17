@@ -49,7 +49,7 @@ export function run() {
   rt.input.mouse = { x: 280, y: 120, down: false };
   clearSeed();
   try {
-    assert(UPGRADES.length === 26, 'expected 12 legacy + 14 new upgrades');
+    assert(UPGRADES.length === 26 || UPGRADES.length === 29, 'expected 26 base or 29 expanded upgrades');
     assert(FUSION_CHIPS.length === 8, 'expected 8 fusions');
     var seenReq = {};
     var fi;

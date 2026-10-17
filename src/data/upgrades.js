@@ -278,6 +278,33 @@ export var UPGRADES = [
     title: 'SCRAP SINGULARITY',
     text: 'Every 40 scrap, a 1.5s vortex pulls foes 120px ahead',
     apply: function (s) { s.player.scrapSingularity = true; }
+  },
+  {
+    id: 'superconductive-resonance',
+    category: 'OFFENSE',
+    rarity: 'rare',
+    maxStacks: 1,
+    title: 'SUPERCONDUCTIVE RESONANCE',
+    text: 'Crits arc 45% damage to 2 nearby foes; fully-charged crits grant +4 energy & -0.3s tactical CD',
+    apply: function (s) { s.player.superconductiveResonance = true; }
+  },
+  {
+    id: 'tactical-overdrive-coil',
+    category: 'TACTICAL',
+    rarity: 'rare',
+    maxStacks: 1,
+    title: 'TACTICAL OVERDRIVE COIL',
+    text: 'Using tactical gear resets dash, grants 3s of +20% move speed, +25% fire rate & instant reloads',
+    apply: function (s) { s.player.tacticalOverdriveCoil = true; }
+  },
+  {
+    id: 'concussion-breaker',
+    category: 'OFFENSE',
+    rarity: 'rare',
+    maxStacks: 1,
+    title: 'CONCUSSION BREAKER',
+    text: 'Shield or part break releases a 130px shockwave (85 dmg + 1.5s stun); victims take +35% damage for 5s',
+    apply: function (s) { s.player.concussionBreaker = true; }
   }
 ];
 

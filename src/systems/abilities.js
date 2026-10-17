@@ -5,7 +5,7 @@ import { pushFxEvent } from '../core/fx-events.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../core/settings.js';
 import { clamp, dist2 } from '../core/utils.js';
-import { onDash, onEmp } from './card-effects.js';
+import { onDash, onEmp, onShieldBreak } from './card-effects.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { onEnemyEmp } from './sim/enemy-defense.js';
 import { noteContractEvent } from './contracts.js';
@@ -299,6 +299,7 @@ export function dash() {
         onEnemyEmp(sEnemy);
         if (sEnemy.kind === 'elite' && (sEnemy.affix === 'mirror' || sEnemy.affix2 === 'mirror')) {
           sEnemy.shieldBrokenTimer = 3.0;
+          onShieldBreak(sEnemy, { x: sEnemy.x, y: sEnemy.y, source: 'mirror_break' });
         }
         spawnParticles(sEnemy.x, sEnemy.y, '#5be7ff', 8, 120, 2.2);
         if (sEnemy.hp <= 0) killEnemy(sEnemy, 'dash');
@@ -402,6 +403,7 @@ export function triggerEmp() {
       onEnemyEmp(enemy);
       if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror')) {
         enemy.shieldBrokenTimer = 3.0;
+        onShieldBreak(enemy, { x: empX, y: empY, source: 'mirror_break' });
       }
       spawnParticles(enemy.x, enemy.y, '#5be7ff', 8, 130, 2.5);
       if (enemy.hp <= 0) {

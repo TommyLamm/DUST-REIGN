@@ -201,6 +201,18 @@ var UPGRADES_I18N = {
   'scrap-singularity': {
     title: { zh: '廢料奇點', en: 'SCRAP SINGULARITY' },
     text: { zh: '每拾取 40 份廢料，在前方 120px 產生持續 1.5 秒的牽引旋渦', en: 'Every 40 scrap, a 1.5s vortex pulls foes 120px ahead' }
+  },
+  'superconductive-resonance': {
+    title: { zh: '超導共鳴晶片', en: 'SUPERCONDUCTIVE RESONANCE' },
+    text: { zh: '暴擊向周圍 2 目標引爆 45% 電弧；全蓄力暴擊回能 4 點且減戰術 CD 0.3s', en: 'Crits arc 45% damage to 2 nearby foes; fully-charged crits grant +4 energy & -0.3s tactical CD' }
+  },
+  'tactical-overdrive-coil': {
+    title: { zh: '戰術過載線圈', en: 'TACTICAL OVERDRIVE COIL' },
+    text: { zh: '開戰術裝備重置衝刺，獲 3s 移速 +20%、射速 +25% 與充能彈藥', en: 'Using tactical gear resets dash, grants 3s of +20% move speed, +25% fire rate & instant reloads' }
+  },
+  'concussion-breaker': {
+    title: { zh: '震盪破甲協議', en: 'CONCUSSION BREAKER' },
+    text: { zh: '破盾或部位破壞引發 130px 震波 (85 傷害 + 1.5s 暈眩)，波及目標 5s 內承受傷害 +35%', en: 'Shield or part break releases a 130px shockwave (85 dmg + 1.5s stun); victims take +35% damage for 5s' }
   }
 };
 
@@ -326,6 +338,12 @@ var WEAPONS_I18N = {
     pattern: { zh: '高頻連鎖', en: 'CHAIN' },
     line: { zh: '在目標間跳躍的雷電弧。', en: 'Lightning that jumps targets.' },
     chassis: { zh: '感應電弧焊接槍 // 超高頻高壓電湧流', en: 'INDUCTION ARC WELDER // ULTRA HIGH-FREQUENCY VOLTAIC STREAM' }
+  },
+  colossus: {
+    name: { zh: '巨神重型軌道砲', en: 'COLOSSUS' },
+    pattern: { zh: '電漿重束', en: 'LANCE' },
+    line: { zh: '二段蓄力軌道電漿束。極強後座反衝。', en: 'Dual-stage rail lance. Devastating recoil.' },
+    chassis: { zh: '巨神重型軌道砲 // 二段蓄力與穿甲衝擊波', en: 'COLOSSUS HEAVY RAILGUN // DUAL-STAGE CHARGE & PIERCING LANCE' }
   }
 };
 

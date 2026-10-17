@@ -4,6 +4,7 @@ import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../../core/settings.js';
 import { damageEnemy } from '../combat.js';
+import { onShieldBreak } from '../card-effects.js';
 import { noteMetaEvent } from '../meta.js';
 import { addScore } from '../scoring.js';
 import { logEvent } from '../../ui/hud.js';
@@ -214,6 +215,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     rt.state.hitstop = 0.08;
 
     notePartDestroyed();
+    onShieldBreak(enemy, { x: ptX, y: ptY, part: closestPart, source: 'part_break' });
     AudioFX.blast();
     rt.state.shake = Math.max(rt.state.shake || 0, closestPart.shake || (closestPart.id === 'radiator' ? 16 : 14));
     triggerHaptic(closestPart.haptic || (closestPart.id === 'radiator' ? [40, 60, 80] : [40, 50, 60]));

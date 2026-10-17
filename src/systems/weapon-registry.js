@@ -29,6 +29,7 @@ export function shotCooldown(p, value) {
   if (p.afterburner && (p.afterburnerTimer || 0) > 0) v *= 0.7;
   if (p.aegisDeployed) v *= (1 / 1.45);
   if (p.surgeUnit && p.surgeUnit.active) v /= 1.40;
+  if (p.tacticalOverdriveTimer && p.tacticalOverdriveTimer > 0) v *= 0.8;
   return v;
 }
 
@@ -702,6 +703,289 @@ registerWeaponStrategy({
       drawMuzzle(ctx, 'arc-welder', tip + 4, 0, p.recoil);
     } else if (drawIdleArc) {
       drawIdleArc(ctx, tip);
+    }
+  }
+});
+
+// ----------------------------------------------------
+// 5. COLOSSUS: Heavy Dual-Stage Particle Railgun
+// ----------------------------------------------------
+registerWeaponStrategy({
+  id: 'colossus',
+  name: 'COLOSSUS',
+  category: 'energy',
+  chargeNeed: function (p) {
+    var need = 0.85;
+    if (!p) return need;
+    if ((p.mastery || 0) >= 1) need *= 0.8; // superconducting: 蓄力時間 -20% (0.68s)
+    if (p.chargeTimeMult) need *= p.chargeTimeMult;
+    return need;
+  },
+  onTick: function (p, dt, isMouseDown) {
+    p.chargeNeed = this.chargeNeed(p);
+    if (isMouseDown) {
+      if (p.cooldown <= 0) {
+        if (!p.isCharging) {
+          p.isCharging = true;
+          p.chargeTime = 0;
+          if (AudioFX && typeof AudioFX.vanguardChargeStart === 'function') {
+            AudioFX.vanguardChargeStart(p.chargeNeed);
+          }
+        }
+        p.chargeTime += dt;
+        if (p.chargeTime >= p.chargeNeed) {
+          if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
+            AudioFX.vanguardChargeStop();
+          }
+          this.onFire(p, p.aim, true);
+        }
+      }
+    } else {
+      if (p.isCharging) {
+        if (p.chargeTime >= p.chargeNeed && p.cooldown <= 0) {
+          this.onFire(p, p.aim, true);
+        } else if (p.cooldown <= 0) {
+          this.onFire(p, p.aim, false);
+        }
+        p.chargeTime = 0;
+        p.isCharging = false;
+        if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
+          AudioFX.vanguardChargeStop();
+        }
+      }
+    }
+  },
+  onFire: function (p, aimAngle, forceCharged) {
+    if (!rt.state) return;
+    var boundW = rt.ui ? rt.ui.width : rt.state.width;
+    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
+    var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
+    var extraPierce = isVulcan ? 1 : 0;
+    var mastery = p.mastery || 0;
+    var isCharged = (forceCharged !== undefined) ? forceCharged : ((p.chargeTime || 0) >= (p.chargeNeed || 0.85));
+
+    if (rt.state.stats) rt.state.stats.shotsFired += 1;
+
+    if (isCharged) {
+      // 蓄滿釋放穿透 99 的重型軌道電漿束
+      var cDmg = Math.round(p.damage * 4.8 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+      var cSpeed = 1550 * (p.bulletSpeedMult || 1);
+      var cR = 8.5 + (isPlasma ? 3 : 0);
+      var cTrail = isPlasma ? 'rgba(255, 77, 46, 0.65)' : (isVulcan ? 'rgba(255, 69, 0, 0.55)' : 'rgba(0, 243, 255, 0.65)');
+      var cCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#00f3ff');
+
+      rt.state.bullets.push({
+        x: p.x + Math.cos(aimAngle) * (p.r + 14),
+        y: p.y + Math.sin(aimAngle) * (p.r + 14),
+        vx: Math.cos(aimAngle) * cSpeed,
+        vy: Math.sin(aimAngle) * cSpeed,
+        r: cR,
+        damage: cDmg,
+        life: 1.4,
+        trail: [],
+        pierce: 99 + extraPierce,
+        bounces: p.bounces || 0,
+        hits: [],
+        hitMask0: 0,
+        hitMask1: 0,
+        hitMask2: 0,
+        hitMask3: 0,
+        ambush: (p.dashAmbushTimer || 0) > 0,
+        knockback: 45,
+        isColossus: true,
+        isColossusCharged: true,
+        colorTrail: cTrail,
+        colorCore: cCore,
+        isVulcan: isVulcan,
+        isPlasmaMeltdown: isPlasma,
+        colossusDisintegration: mastery >= 2,
+        colossusGraviton: mastery >= 3
+      });
+
+      p.cooldown = shotCooldown(p, 0.75 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+      p.recoil = 1.0;
+      var recoilPush = (p.recoilMult || 1);
+      var recoilDist = 7.0 * (mastery >= 1 ? 1.25 : 1.0) * recoilPush;
+      p.x -= Math.cos(p.aim) * recoilDist;
+      p.y -= Math.sin(p.aim) * recoilDist;
+      p.x = clamp(p.x, p.r, boundW - p.r);
+      p.y = clamp(p.y, p.r, boundH - p.r);
+
+      // 極強後座反衝 (superconducting +25% recoil)
+      var baseImpulse = 620 * (mastery >= 1 ? 1.25 : 1.0);
+      applyWeaponRecoil(p, baseImpulse, 7.0);
+
+      ejectCasing(p);
+      if (isVulcan) { ejectCasing(p); ejectCasing(p); }
+      AudioFX.shoot('vanguard');
+      if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
+
+      spawnParticles(p.x + Math.cos(aimAngle) * 28, p.y + Math.sin(aimAngle) * 28, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#00f3ff'), 14, 180, 3.5);
+      spawnParticles(p.x + Math.cos(aimAngle) * 28, p.y + Math.sin(aimAngle) * 28, '#ffffff', 8, 120, 2);
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({
+          x: p.x + Math.cos(aimAngle) * 24,
+          y: p.y + Math.sin(aimAngle) * 24,
+          r: 8,
+          maxR: 45,
+          life: 0.22,
+          maxLife: 0.22,
+          color: '#00f3ff'
+        });
+      }
+      rt.state.shake = Math.max(rt.state.shake, 8.0);
+      rt.state.hitstop = Math.max(rt.state.hitstop, 0.05);
+    } else {
+      // 未滿蓄發射等離子球
+      var orbDmg = Math.round(p.damage * 1.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+      var orbSpeed = 680 * (p.bulletSpeedMult || 1);
+      var orbR = 7.0 + (isPlasma ? 3 : 0);
+      var orbTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(0, 243, 255, 0.45)');
+      var orbCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#38bdf8');
+
+      rt.state.bullets.push({
+        x: p.x + Math.cos(aimAngle) * (p.r + 10),
+        y: p.y + Math.sin(aimAngle) * (p.r + 10),
+        vx: Math.cos(aimAngle) * orbSpeed,
+        vy: Math.sin(aimAngle) * orbSpeed,
+        r: orbR,
+        damage: orbDmg,
+        life: 1.1,
+        trail: [],
+        pierce: 0 + extraPierce,
+        bounces: p.bounces || 0,
+        hits: [],
+        hitMask0: 0,
+        hitMask1: 0,
+        hitMask2: 0,
+        hitMask3: 0,
+        ambush: (p.dashAmbushTimer || 0) > 0,
+        knockback: 18,
+        isColossus: true,
+        isColossusOrb: true,
+        colorTrail: orbTrail,
+        colorCore: orbCore,
+        isVulcan: isVulcan,
+        isPlasmaMeltdown: isPlasma
+      });
+
+      p.cooldown = shotCooldown(p, 0.38 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+      p.recoil = 0.75;
+      var recoilPushOrb = (p.recoilMult || 1);
+      p.x -= Math.cos(p.aim) * 2.5 * recoilPushOrb;
+      p.y -= Math.sin(p.aim) * 2.5 * recoilPushOrb;
+      p.x = clamp(p.x, p.r, boundW - p.r);
+      p.y = clamp(p.y, p.r, boundH - p.r);
+      applyWeaponRecoil(p, 180, 12.0);
+
+      ejectCasing(p);
+      AudioFX.shoot('breacher');
+      spawnParticles(p.x + Math.cos(aimAngle) * 20, p.y + Math.sin(aimAngle) * 20, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#38bdf8'), 6, 110, 2);
+      rt.state.shake = Math.max(rt.state.shake, 3.0);
+    }
+
+    p.chargeTime = 0;
+    p.isCharging = false;
+  },
+  bulletProfile: {
+    damageMult: 4.8,
+    speed: 1550,
+    pierce: 99,
+    knockback: 45,
+    life: 1.4
+  },
+  audio: {
+    shoot: 'vanguard'
+  },
+  renderGun: function (ctx, p, kick, flashing, helpers) {
+    var r = p.r;
+    var gunDark = flashing ? '#ffffff' : '#10171d';
+    var railSteel = flashing ? '#ffffff' : '#1e303d';
+    var outline = (helpers && helpers.outline) || defaultOutline;
+    var drawMuzzle = helpers && helpers.drawMuzzle;
+    var drawGlow = helpers && helpers.drawGlow;
+    var PALETTE = helpers && helpers.PALETTE;
+    var keyGlowsOnly = (helpers && helpers.keyGlowsOnly) ? helpers.keyGlowsOnly : function () { return false; };
+
+    var chargeNeed = (typeof p.chargeNeed === 'number' && p.chargeNeed > 0) ? p.chargeNeed : 0.85;
+    var charge = clamp((p.chargeTime || 0) / chargeNeed, 0, 1);
+
+    var cx = r * 0.1 - kick;
+    var clen = r + 28;
+
+    // Heavy breech chassis
+    ctx.fillStyle = gunDark;
+    ctx.beginPath();
+    ctx.rect(cx - 5, -7.5, 10, 15);
+    ctx.fill();
+    outline(ctx, 1.4);
+
+    // Deploying heat fins: spread out based on charge
+    var finSpread = charge * 5.5;
+    ctx.fillStyle = flashing ? '#ffffff' : '#00f3ff';
+    ctx.strokeStyle = '#051b24';
+    ctx.lineWidth = 1.0;
+    // Top radiator fin
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, -5.5);
+    ctx.lineTo(cx + clen * 0.45, -7.5 - finSpread);
+    ctx.lineTo(cx + clen * 0.65, -7.5 - finSpread);
+    ctx.lineTo(cx + clen * 0.75, -5.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Bottom radiator fin
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, 5.5);
+    ctx.lineTo(cx + clen * 0.45, 7.5 + finSpread);
+    ctx.lineTo(cx + clen * 0.65, 7.5 + finSpread);
+    ctx.lineTo(cx + clen * 0.75, 5.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Dual-rail elongated barrel
+    // Top rail
+    ctx.fillStyle = railSteel;
+    ctx.fillRect(cx, -5.2, clen, 3.5);
+    ctx.strokeStyle = '#051017';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx, -5.2, clen, 3.5);
+
+    // Bottom rail
+    ctx.fillStyle = railSteel;
+    ctx.fillRect(cx, 1.7, clen, 3.5);
+    ctx.strokeStyle = '#051017';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx, 1.7, clen, 3.5);
+
+    // Inner plasma channel with energy core line
+    var energyColor = charge > 0.8 ? '#ffffff' : (charge > 0.3 ? '#00f3ff' : '#145366');
+    ctx.strokeStyle = energyColor;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cx + 2, 0);
+    ctx.lineTo(cx + clen - 2, 0);
+    ctx.stroke();
+
+    // Capacitive power nodes along the dual rail
+    var seg;
+    for (seg = 0; seg < 4; seg += 1) {
+      var on = p.isCharging && charge >= (seg + 1) / 4;
+      ctx.fillStyle = on ? '#00f3ff' : (flashing ? '#ffffff' : '#0d222b');
+      ctx.fillRect(cx + 6 + seg * ((clen - 14) / 4), -5.8, 4, 11.6);
+      ctx.strokeStyle = on ? '#e0fcff' : '#061318';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx + 6 + seg * ((clen - 14) / 4), -5.8, 4, 11.6);
+    }
+
+    if (p.isCharging && charge > 0.05 && !keyGlowsOnly() && drawGlow && PALETTE) {
+      drawGlow(ctx, cx + clen, 0, 12 + charge * 16, PALETTE.emissive.tech, 0.5 + charge * 0.5);
+    }
+    if (drawMuzzle && (p.recoil || 0) > 0.05) {
+      drawMuzzle(ctx, 'vanguard', cx + clen + 4, 0, p.recoil);
     }
   }
 });

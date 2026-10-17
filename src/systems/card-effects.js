@@ -1,4 +1,6 @@
+import { AudioFX } from '../audio/audio-fx.js';
 import { pushFxEvent } from '../core/fx-events.js';
+import { spawnParticles } from '../core/pools.js';
 import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { dist2 } from '../core/utils.js';
@@ -17,7 +19,10 @@ var hookRegistry = {
   onEnemyHit: [],
   onLethal: [],
   onPickup: [],
-  onPlayerStep: []
+  onPlayerStep: [],
+  onCrit: [],
+  onShieldBreak: [],
+  onTacticalUsed: []
 };
 
 export function registerCardHook(event, callback) {
@@ -339,6 +344,100 @@ export function onPickup(orb, player) {
   if (player.scrapSingularity && player.scrapPicked % 40 === 0) spawnScrapVortex(player);
 }
 
+export function onCrit(enemy, info) {
+  if (!enemy || !rt.state || !rt.state.player) return;
+  var player = rt.state.player;
+  if (player.superconductiveResonance && info) {
+    var dmg = Math.max(1, Math.round((info.damage || 20) * 0.45));
+    var enemies = livingEnemies();
+    var hit = 0;
+    for (var i = 0; i < enemies.length; i += 1) {
+      var other = enemies[i];
+      if (other === enemy || other.hp <= 0) continue;
+      if (dist2(enemy.x, enemy.y, other.x, other.y) <= 140 * 140) {
+        damageEnemy(other, dmg, { source: 'superconductive_resonance', x: enemy.x, y: enemy.y });
+        if (rt.state.lightningArcs) {
+          rt.state.lightningArcs.push({
+            x1: enemy.x,
+            y1: enemy.y,
+            x2: other.x,
+            y2: other.y,
+            life: 0.15,
+            maxLife: 0.15,
+            color: '#00f3ff'
+          });
+        }
+        spawnParticles(other.x, other.y, '#00f3ff', 4, 80, 2);
+        if (other.hp <= 0) killEnemy(other, 'superconductive_resonance');
+        hit += 1;
+        if (hit >= 2) break;
+      }
+    }
+    var b = info.bullet;
+    if (b && (b.isColossusCharged || b.isVanguard)) {
+      var cap = (typeof player.batteryMax === 'number') ? player.batteryMax : (player.maxEnergy || 100);
+      player.energy = Math.min(cap, (player.energy || 0) + 4.0);
+      if (player.tacticalSlot && player.tacticalSlot.cooldown > 0) {
+        player.tacticalSlot.cooldown = Math.max(0, player.tacticalSlot.cooldown - 0.3);
+      }
+      spawnParticles(player.x, player.y, '#00f3ff', 6, 90, 2);
+    }
+  }
+  dispatchCardHook('onCrit', enemy, info);
+}
+
+export function onShieldBreak(enemy, info) {
+  if (!rt.state || !rt.state.player) return;
+  var player = rt.state.player;
+  var ox = (info && typeof info.x === 'number') ? info.x : (enemy ? enemy.x : player.x);
+  var oy = (info && typeof info.y === 'number') ? info.y : (enemy ? enemy.y : player.y);
+  if (player.concussionBreaker) {
+    var radius = 130;
+    var damage = 85;
+    var enemies = livingEnemies();
+    for (var i = enemies.length - 1; i >= 0; i -= 1) {
+      var foe = enemies[i];
+      var reach = radius + (foe.r || 0);
+      if (dist2(ox, oy, foe.x, foe.y) <= reach * reach) {
+        damageEnemy(foe, damage, { source: 'concussion_breaker', x: ox, y: oy });
+        foe.empTimer = Math.max(foe.empTimer || 0, 1.5);
+        foe.concussionTimer = 5.0;
+        spawnParticles(foe.x, foe.y, '#f59e0b', 5, 90, 2);
+        if (foe.hp <= 0) killEnemy(foe, 'concussion_breaker');
+      }
+    }
+    if (rt.state.shockRings) {
+      rt.state.shockRings.push({
+        x: ox,
+        y: oy,
+        r: 10,
+        maxR: radius,
+        life: 0.28,
+        maxLife: 0.28,
+        color: '#f59e0b'
+      });
+    }
+    pushFxEvent('burst', ox, oy, { preset: 'emp', tint: '#f59e0b', scale: 0.9 });
+    if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
+  }
+  dispatchCardHook('onShieldBreak', enemy, info);
+}
+
+export function onTacticalUsed(player, info) {
+  if (!player || !rt.state) return;
+  if (player.tacticalOverdriveCoil) {
+    var maxCharges = player.dashCapacitor ? 2 : 1;
+    player.dashCharges = maxCharges;
+    player.dashCooldown = 0;
+    player.tacticalOverdriveTimer = 3.0;
+    var cap = (typeof player.batteryMax === 'number') ? player.batteryMax : (player.maxEnergy || 100);
+    player.energy = cap;
+    spawnParticles(player.x, player.y, '#00f3ff', 12, 120, 2.5);
+    pushFxEvent('burst', player.x, player.y, { preset: 'dashDust', tint: '#00f3ff', scale: 0.8 });
+  }
+  dispatchCardHook('onTacticalUsed', player, info);
+}
+
 function pullScrapVortices(dt) {
   var vortices = rt.state.scrapVortices;
   if (!vortices) return;
@@ -437,6 +536,9 @@ function tickSlows(dt) {
   var i;
   for (i = 0; i < enemies.length; i += 1) {
     var enemy = enemies[i];
+    if (enemy.concussionTimer > 0) {
+      enemy.concussionTimer = Math.max(0, enemy.concussionTimer - dt);
+    }
     if (!(enemy.slowLeft > 0)) continue;
     enemy.slowLeft -= dt;
     if (enemy.slowLeft <= 0 && typeof enemy._baseSpeed === 'number') {
@@ -451,6 +553,7 @@ export function stepCardEffects(dt) {
   var state = rt.state;
   var player = state.player;
   if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && state.xpNext === 100) state.xpNext = 80;
+  if (player.tacticalOverdriveTimer > 0) player.tacticalOverdriveTimer = Math.max(0, player.tacticalOverdriveTimer - dt);
   if (player.afterburnerTimer > 0) player.afterburnerTimer = Math.max(0, player.afterburnerTimer - dt);
   if (player.shieldTimer > 0) {
     player.shieldTimer -= dt;

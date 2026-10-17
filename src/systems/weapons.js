@@ -94,11 +94,27 @@ export function vanguardChargeNeed(p) {
   return need;
 }
 
+export function colossusChargeNeed(p) {
+  var strategy = getWeaponStrategy('colossus');
+  if (strategy && typeof strategy.chargeNeed === 'function') {
+    return strategy.chargeNeed(p);
+  }
+  var need = 0.85;
+  if (!p) return need;
+  if ((p.mastery || 0) >= 1) need *= 0.8;
+  if (p.chargeTimeMult) need *= p.chargeTimeMult;
+  return need;
+}
+
 export function resyncMastery(p, state) {
   if (!p) return;
   if (typeof p.masteryBase !== 'number') p.masteryBase = p.mastery || 0;
   p.mastery = Math.min(3, p.masteryBase + weaponMasteryBonus(p, state));
-  p.chargeNeed = vanguardChargeNeed(p);
+  if ((p.weaponMode || 'standard') === 'colossus') {
+    p.chargeNeed = colossusChargeNeed(p);
+  } else {
+    p.chargeNeed = vanguardChargeNeed(p);
+  }
 }
 
 export function grantArmoryMastery(state) {
@@ -145,6 +161,7 @@ function shotCooldown(p, value) {
   if (p.afterburner && (p.afterburnerTimer || 0) > 0) v *= 0.7;
   if (p.aegisDeployed) v *= (1 / 1.45);
   if (p.surgeUnit && p.surgeUnit.active) v /= 1.40;
+  if (p.tacticalOverdriveTimer && p.tacticalOverdriveTimer > 0) v *= 0.8;
   return v;
 }
 
@@ -152,7 +169,7 @@ export function cycleWeaponMode(targetMode) {
   if (!rt.state || !rt.state.player) return;
   var p = rt.state.player;
   var previous = p.weaponMode || 'standard';
-  if (targetMode && WEAPON_MODES.indexOf(targetMode) !== -1) {
+  if (targetMode && (WEAPON_MODES.indexOf(targetMode) !== -1 || getWeaponStrategy(targetMode))) {
     p.weaponMode = targetMode;
   } else {
     var curIdx = WEAPON_MODES.indexOf(previous);
