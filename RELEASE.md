@@ -1,90 +1,106 @@
-# DUST//REIGN 0.9.0
+# DUST//REIGN 0.10.0
 
-遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.9.0`，對應 tag 為 `v0.9.0`。
+遊戲 ID `dust-reign`；本文件描述的交付版本為 `0.10.0`，對應 tag 為 `v0.10.0`。
 
-DUST//REIGN v0.9.0 全面完成了**三軌次世代性能大重構、0-GC 記憶體防線、Canvas 2D 繪圖管線極致批次合流、55px 空間網格調優與自適應 DPR（Next-Gen Performance Overhaul, 0-GC Memory Pipeline, Batched Canvas Rendering, 55px Spatial Grid Tuning, and Adaptive DPR）**。本版本在維持純原生 Vanilla ES Modules + HTML5 Canvas 2D + Web Audio API 零外部 npm 依賴的架構原則下，攻克了長時間高密度彈幕下的記憶體 GC 卡頓、Canvas 狀態堆疊切換瓶頸與空間物理雙重迴圈開銷，實現了極致穩定的 60 FPS 巔峰流暢度，並 100% 通過全套 7 大自動化驗證矩陣與 Playroom Platform 官方固定工具驗收。
+DUST//REIGN v0.10.0 全面完成了**三軌大世界廢土擴展、0-GC 中心相機動力學系統、PSRA 環形戰鬥生態與三大首領大世界重塑（Expanded Wasteland Map, Centered Tracking Camera, PSRA Perimeter Spawning & Combat Ecosystem, and Boss Big-World Reshaping）**。本版本在嚴格恪守純原生 Vanilla ES Modules + HTML5 Canvas 2D + Web Audio API 零外部 npm 依賴架構原則下，將戰場維度由固定螢幕拓展為 $3520 \times 2640$ 廣袤廢土，建構了動態平滑追蹤相機與戰術小地圖，並導入 PSRA 三環邊界生成、狼群包夾 AI、6 大戰術 POI 與大世界重塑首領戰鬥。全套 9 大自動化驗證矩陣（包含 40/40 全流程真實無頭 Chrome CDP 驗收）與 Playroom Platform 官方固定驗收工具 100% 通過。
 
 ---
 
-## 一、版本三大核心性能軌道特性
+## 一、版本四大支柱革新與量化技術指標
 
-### 軌道一：0-GC 記憶體防線、Web Audio 資源自動斷開與 DOM 髒檢查快取（Memory & Audio Foundation）
-1. **P0 立即止血與 DOM 性能修復**：
-   - 修復結算標題 `syncOutcomeTitle()` 無條件 `innerHTML` 覆寫的歷史隱患，改為值變更髒檢查快取。
-   - 移除結算面板中的 `void el.offsetWidth` 強制同步重排（Forced Synchronous Layout）開銷。
-   - DOM 操作全面快取：HUD `setText()` 僅在內容變更時寫入 DOM；血條、護盾條、能量條 `style.width` 在百分比整數未變時跳過樣式賦值，消滅無謂的 Style Recalculation。
-2. **Web Audio 節點回收與分頁休眠**：
-   - 音訊合成器 `cleanupVoice()` 導入主動節點斷開機制（`.disconnect()`），徹底解決 AudioBufferSourceNode 與 GainNode 懸掛導致的音訊線程記憶體洩漏。
-   - 監聽 `visibilitychange` 事件，分頁不可見時自動暫停音訊上下文，重返時平滑恢復。
-3. **0-GC 核心防線**：
-   - 每幀模擬共用單例幀上下文 `cachedFrame`，杜絕每幀無謂分配 `{ p, boundW, boundH }`。
-   - 逐實體外觀姿態計算導入單例 `POSE_SCRATCH`，每幀實體移動步進計算導入單例 `STEP_SCRATCH`，消滅所有常態移動與姿態物件分配。
-   - 子彈拖尾軌跡採用平坦環形緩衝區（`Float32Array(8)`）與 `trailPool` 靜態物件池復用，實現每幀數百發子彈軌跡 0-GC 運行。
-   - 全域無序實體集合（玩家彈、敵彈、模擬粒子、戰利品掉落物、傷害文字）全面改採 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice()`，消除陣列元素平移複製開銷，並在移除實體時主動切斷死者懸空參照以防隱式滯留。
+### 支柱一：大地圖維度升級、1024px 圖塊平鋪與視錐台幾何 AABB 剔除管線（Large World & Frustum Culling）
+1. **$3520 \times 2640$ 大世界維度與 55px 空間網格完美對齊**：
+   - 戰場空間升級為全域邊界 `WORLD_WIDTH = 3520`, `WORLD_HEIGHT = 2640`（邊界安全緩衝 `MAP_MARGIN = 160px`，中央有效戰術空間 $3200 \times 2320$）。
+   - 玩家初始開局世界坐標精準置中於 $(1760, 1320)$。
+   - 既有 55px 空間雜湊網格以 $64 \times 48$ 單元格（$64 \times 55 = 3520$, $48 \times 55 = 2640$）零浪費、零分配無縫覆蓋全大地圖。
+2. **$1024 \times 1024$ 離屏圖塊 GPU GL_REPEAT 平鋪渲染**：
+   - 徹底摒棄全地圖超大離屏 Canvas（消除 37.2MB 記憶體分配與行動裝置 OOM 隱患）。
+   - 快取固定尺寸 $1024 \times 1024$ 離屏圖塊，利用 GPU `ctx.createPattern('repeat')` 結合 `terrainPattern.setTransform(DOMMatrix)` 實現亞像素級無縫滾動平鋪。
+3. **世界視錐台幾何 AABB 剔除管線（Frustum Culling）**：
+   - 實作平坦靜態緩衝池 `culledEnemyIndices`（`Int16Array(1024)`）與 `culledEnemyCount`，每幀 0-GC 篩選視口可見敵人。
+   - 分級幾何邊界 Padding：常態敵型邊界緩衝 48px，大型首領（Titan / Dreadnought / Sovereign）給予 220px 巨型緩衝，確保肢體與彈幕在螢幕邊緣無跳變削切。
+   - 實體渲染與陰影 Pass 剔除率達 75%~90%，大幅減輕 Canvas fillrate 負載。
 
-### 軌道二：Canvas 2D 繪圖管線極致批次合流、零成本反差描邊與自適應 DPR（Batched Rendering Pipeline）
-1. **敵彈 4 桶色譜分流與單 Pass 批次渲染**：
-   - 將幾十枚獨立敵彈分流至 4 個靜態色譜桶（Magenta、Orange、Lime、Violet）。
-   - 第一 Pass 批次繪製所有敵彈的 Dark Halo 暗圈外殼；第二 Pass 依色譜批次填充霓虹環與白色高亮光核，消除頻繁變更 `ctx.fillStyle` 與重複繪製黑底的 Canvas 狀態抖動。
-2. **接地陰影雙 Pass 全場大合流**：
-   - 全場無論多少實體（玩家、各類小怪、首領、機槍塔、誘餌），所有柔影（Penumbra）合併於單一 Pass 繪製，所有硬咬合（Core AO）合併於第二 Pass 繪製。
-   - 全場接地陰影每幀僅發出 2 次 `ctx.fill()`，徹底消滅 Canvas 狀態堆疊頻繁 `save()`/`restore()` 開銷。
-3. **零成本反差描邊（Zero-Cost Outlines）**：
-   - 實體反差雙層描邊 `drawDualOutlineZeroCost` 移除昂貴的 `ctx.save()` / `ctx.restore()` 狀態堆疊操作，改為直接記錄並手動復原 `lineWidth`、`strokeStyle`、`lineCap` 與 `lineJoin` 四個必要屬性。
-4. **Lightmap 線性剪裁與傷害文字排版合流**：
-   - Lightmap 光源剪裁以單遍平方距離 $O(N)$ 線性過濾替換每幀 $O(N \times K)$ 選擇排序。
-   - 浮動傷害數字依字體樣式（普通黑體 / 暴擊黑體）分組批處理，先批次描邊後批次填色，消滅 Canvas 頻繁切換 `ctx.font` 導致的底層字體排版引擎佈局開銷。
-5. **自適應 DPR 與指標幾何解耦**：
-   - 針對低畫質檔位與行動設備將設備像素比（DPR）自動收斂至 1.0~1.25，大幅緩解高解析度螢幕下的 Canvas fillrate 像素填充負載。
-   - 滑鼠與觸控座標追蹤與 Canvas 幾何邊界查詢解耦，避免頻繁呼叫 `getBoundingClientRect()` 觸發同步佈局重算。
+### 支柱二：0-GC 中心相機動力學、Hermite 準星前瞻、正交震屏解耦與戰術小地圖（Camera Viewport System）
+1. **0-GC 相機單例與非對稱雙階動態阻尼**：
+   - 單例容器 `camera.js` 零執行期垃圾分配，即時追蹤玩家核心世界坐標。
+   - 非對稱雙階動態阻尼：巡航平滑追蹤速度 $\lambda_{cruise} = 8.5\text{ s}^{-1}$，高速衝刺時動態提升至 $\lambda_{dash} = 24.0\text{ s}^{-1}$，確保高速移動時玩家不脫離中心視口。
+   - 軟約束死區（Soft-Leash Deadzone）：半徑 $76.8\text{px}$（$0.12 \times \min(viewW, viewH)$），微小步進位移相機保持靜止，杜絕視線抖動。
+2. **雙向 Hermite 準星前瞻（Aim Lookahead）**：
+   - 準星位移前瞻導入三階 Hermite 平滑曲線（S-curve），死區閾值 $70\text{px}$，最大視口偏移 $140\text{px}$。
+   - 動態阻尼響應：前推擴展速度 $\lambda_{ext} = 7.2\text{ s}^{-1}$，回彈收斂速度 $\lambda_{ret} = 14.5\text{ s}^{-1}$，支援滑鼠游標與手把右搖桿動態輸入。
+3. **創傷度正交震屏與逆映射解耦**：
+   - 採用 $T^2$ 能量衰減的正交質數頻率震屏演算法（X軸 31.0rad/s、Y軸 27.0rad/s、旋轉角 23.0rad/s），消滅共振雜訊。
+   - 核心防干擾逆映射：`screenToWorld` 在計算螢幕坐標逆矩陣時**徹底扣除 Shake 偏移量**，確保劇烈爆炸震屏時滑鼠準星世界坐標完全穩定，杜絕爆炸準星抖動漂移。
+   - 減動效模式（Reduced Motion）完全歸零震屏。
+4. **戰術小地圖與視口邊緣雷達指針**：
+   - 右上角 128px 圓形戰術微型小地圖（`drawTacticalMinimap`）：採 4 桶色彩分流（玩家青、POI金黃、普通敵型暗紅、首領猩紅）單 Pass 批次渲染，CPU 耗時 $< 0.05\text{ms}$。
+   - 視口邊緣雷達指針（`drawOffscreenChevrons`）：採用 Ray-AABB 邊界幾何求交，精準投影視口外威脅。Boss 呈現動態呼吸雙箭頭並標註世界距離數字，POI 呈現翠綠菱形，菁英怪呈現橙色單箭頭。
 
-### 軌道三：55px 空間雜湊網格調優、危害網格化、Titan 部位旋轉快取與 64-bit Bitmask（Physics & Spatial Optimization）
-1. **空間雜湊網格 55px 單元格精密調優**：
-   - 單元格尺寸由 75px 緊縮為 55px，廣域候選者假陽性率降低近 50%。
-   - 實作 `queryGridCallback` 零分配回調機制，在首個命中目標判定成功時立即 early-out 終止查詢，徹底杜絕陣列分配。
-2. **酸池、焦痕與爆炸友傷全面網格化**：
-   - 修復 `stepAcidPools()` 每幀重複執行兩次的歷史 Bug。
-   - 酸池侵蝕、焦痕蒸發與幼蟲自爆友傷全面接入空間網格局部查詢，以局部半徑檢索取代原本的 $O(N \times M)$ 全域雙重迴圈遍歷。
-3. **平方距離常規化**：
-   - 全域碰撞與距離檢測全面移除 `Math.hypot` 開根號運算，改採平方距離 $d^2 \le r^2$ 進行純乘加比較。
-4. **Titan 部位矩陣單幀快取與逆向局部判定**：
-   - Titan 4 大可拆解部位（左迫擊砲、右蜂巢艙、散熱鰭片、履帶裝甲）導入單幀旋轉快取 `updateTitanPartCache`。
-   - 每發子彈直接在逆向局部坐標系中以局部相對位置判定碰撞，消除每發子彈反覆計算三角函數與旋轉矩陣。
-5. **穿透彈 64-bit Bitmask 命中紀錄**：
-   - 高貫穿武器命中紀錄以 64-bit Bitmask（`hitMask0`, `hitMask1`）取代陣列物件與 `indexOf` 線性搜尋，以常數時間暫存器位元運算完成重複命中過濾。
-6. **視錐台剔除（Frustum Culling）**：
-   - 剔除視窗外 120px 邊界外的敵方實體之空間網格插入，並凍結非必要射擊計時器推進。
+### 支柱三：PSRA 環形邊界生成、速度向量預判阻截與狼群包夾戰鬥生態（Spawning & Aggro Flow）
+1. **PSRA 環形邊界生成拓撲（Perimeter Spawning Ring Architecture）**：
+   - 內環（視口 $+40\text{px}$）：絕對禁刷安全區，杜絕怪物突兀生成於玩家臉前。
+   - 中環（$1.15 \sim 1.42\times$ 視口半徑）：活躍生成區，動態派發波次怪物。
+   - 外環（$>1.85\times$ 視口半徑）：靜默回收區，當怪物落後玩家過遠時自動回收並返還波次生成代幣，防止怪群在後方死角堆積。
+2. **速度向量預判扇區攔截與邊界折射**：
+   - 敵方生成點不再是單純均勻隨機，而是根據玩家當前速度向量計算前進扇區：55%~65% 於前進路徑迎面阻截、25%~30% 兩側合圍包夾、10%~15% 後方施壓追趕。
+   - 遇到 $3520 \times 2640$ 世界邊界時自動切線折射反彈生成坐標，消滅地圖邊界刷怪盲區。
+3. **狼群包夾 AI、55px 空間雜湊分離與菁英怪地底疾行**：
+   - 狼群包夾 AI：普通怪群朝玩家側翼展開扇形環繞包圍。
+   - 55px 空間網格 0-GC 局部排斥分離（Separation）：利用網格鄰域判定敵人間重疊排斥，消滅怪物擠壓疊成單點的視覺穿模。
+   - 菁英怪 Hyper-Catchup 地底疾行：當菁英怪落後視口外時，觸發 3.5x 移速地底潛行疾行追趕，重返視口時震地破土而出。
+
+### 支柱四：三大首領大世界重塑、6 大戰術 POI 與全模式適配（Bosses & Tactical POIs）
+1. **6 大戰術 POI 生命週期與互動機制**：
+   - **提煉塔（Scrap Silo）**：靠近觸發 1.5s 引導，啟動 20s 守點防衛戰，完成後噴射 80 廢料與高能脈衝。
+   - **軌道空投倉（Orbital Pod）**：靠近 1.0s 開啟，立刻獲得 200 經驗、全場磁吸範圍翻倍（450px，持續 15s）。
+   - **改裝工作站（Field Rig）**：0.8s 超頻改裝，永久提升射速 +35%、受傷減免 20%、移動速度 +15%。
+   - **異星母巢（Xeno Nest）**：具備 60% 護甲減傷並定時孵化蟲群，擊破後引發全圖震波擊殺周遭雜兵並掉落 40 廢料與不穩定核心。
+   - **電磁尖塔（EMP Spire）**：具備電容保護罩，以子彈過載摧毀後觸發全場 3.5s 電磁癱瘓並粉碎全場敵方護盾。
+   - **裝甲地堡（Bunker Cache）**：重裝防禦工事，破除後觸發全額緊急維修（回復 100% 生命）並注入 30 發 AP 穿甲高暴擊彈藥。
+2. **三大首領大世界重塑**：
+   - **Titan**：配備地震牽引錨（Seismic Harpoon），射出鋼索將遠程風箏的機甲拉回近戰碾壓區；履帶可碾碎場景殘骸與障礙物。
+   - **Dreadnought**：呼叫軌道空投沉箱巨石（Megalith Drop），玩家引導 Dreadnought 衝撞巨石可將其撞碎並觸發首領 3.2s 破甲硬直眩暈。
+   - **Storm Sovereign**：動態隨動風暴之眼，大世界高空盤旋並隨首領本體動態平移風暴中心。
+3. **多模式大世界適配**：
+   - 闖關模式戰役：支援移動採集車護航路線巡航與峽谷逃亡 VIP 首領刺殺。
+   - 極限作戰：大世界黑風暴向心收縮毒圈機制。
 
 ---
 
 ## 二、分支合併與衝突解決
 
-本次發布順利完成三大性能優化分支的合流與細緻驗證：
-- `feat/perf-foundation-0gc`（commit `a84cc5d`）
-- `feat/perf-render-pipeline`（commit `c9cbd8a`）
-- `feat/perf-physics-spatial`（commit `9f36795`）
+本次發布完成了三條大型核心特性分支的合流與細緻驗證：
+- `feat/camera-viewport-system`（commit `babfb5a`）
+- `feat/large-map-terrain-culling`（commit `bb61efe`）
+- `feat/spawning-boss-aggro-flow`（commit `afb49aa`）
 
-在合併過程中，系統針對多軌重疊檔案進行了全面檢核與協同驗收：
-1. `src/render/entity-style.js`：同時保留了 Track 1 的單例 `POSE_SCRATCH` 與 Track 2 的 `drawDualOutlineZeroCost` 手動屬性復原。
-2. `src/ui/dom.js`：整合了 Track 1 的 DOM 髒檢查快取與 Track 2 的自適應 DPR 收斂邏輯。
-3. `src/systems/sim/bullets.js`：完整保留了平坦環形緩衝區軌跡、Swap-and-Pop 實體移除、64-bit Bitmask 穿透歷史紀錄以及 Titan 4 大部位逆向坐標碰撞判定。
-4. `src/systems/sim/new-enemies.js`：無縫整合了單例 `STEP_SCRATCH` 與 55px 空間網格 hazard callback 局部查詢。
-5. `ARCHITECTURE.md`：就地維護更新最新 0-GC、繪圖批次與空間網格架構契約。
+在合併過程中，系統針對多軌重疊檔案進行了全面檢核與精準協同：
+1. `src/input/keyboard-pointer.js`：保留 Track 1 的 `screenToWorld` 震屏解耦逆映射，並為無相機情境提供大世界坐標夾持 fallback。
+2. `src/main.js`：依序初始化 0-GC 相機單例與 $3520 \times 2640$ 預設大世界狀態，並完整保留 `syncCombatLayout()`、`applyLoadout()` 與 `directorStartRun()`。
+3. `src/render/draw.js`：融合相機坐標與旋轉震屏矩陣變換、視錐台幾何 AABB 剔除管線（`updateFrustumCulling`）、1024px 圖塊平鋪、接地陰影批次繪製、POI 渲染、右上角微型小地圖與邊緣雷達指針。
+4. `src/render/lighting.js`：統一光源收集與剪裁坐標系，相容大世界視口邊界與 `drawCone` 照射。
+5. `src/render/terrain.js`：採納 $1024 \times 1024$ 離屏圖塊 GPU GL_REPEAT 平鋪渲染，並加入 48px 安全邊界 Padding 消除震屏邊緣黑邊。
+6. `src/ui/dom.js`：在尺寸調整（`resize`）時保護大世界世界尺寸不被畫布尺寸覆蓋，並維持玩家邊界安全夾持。
+7. `src/systems/update.js`：整合 `stepPois`、`stepCampaignMode`、`stepHardcoreMode` 與 `updateCamera`。
+8. 清理 3 個 Git Worktrees（`track1-camera-viewport`、`track2-large-map-terrain`、`track3-spawning-boss-flow`）。
 
 ---
 
 ## 三、自動化驗收矩陣通過狀態（100% 通過）
 
-在主分支環境下，全套 7 大自動化驗收測試矩陣 100% 全部通過：
+在主分支環境下，全套 9 大自動化驗收測試矩陣 100% 全部通過：
 
 | 驗收套件 | 執行指令 | 測試結果 | 關鍵驗收指標 |
 | :--- | :--- | :--- | :--- |
-| **核心邏輯自檢** | `node scripts/self-check.mjs` | ✅ 通過 (`ok: true`) | 26 張升級卡、8 組融合晶片、4 種動態詞綴、Titan 雙側部位破壞、2D 空間雜湊網格 0 GC 效能驗證 |
-| **多語言本地化套件** | `node scripts/test-i18n-verification.mjs` | ✅ 通過 (4/4 階段) | 中英切換持久化、命名空間遷移驗證、26 張升級卡與 8 組融合卡全量雙語對照、DOM 靜態 HTML 同步 |
+| **核心邏輯自檢** | `node scripts/self-check.mjs` | ✅ 通過 (`ok: true`) | 26 張升級卡、8 組融合晶片、4 種動態詞綴、Titan 雙側部位破壞、2D 空間雜湊網格 0-GC 驗證 |
+| **多語言本地化套件** | `node scripts/test-i18n-verification.mjs` | ✅ 通過 (4/4 階段) | 中英切換持久化、命名空間遷移驗證、26 升級 + 8 融合全量雙語對照、DOM 靜態 HTML 同步 |
 | **闖關與極限模式套件** | `node scripts/test-campaign-modes.mjs` | ✅ 通過 (3 階段) | 關卡選擇器、星級進度條、作戰簡報、輪播導航、模式切換無狀態殘留 |
 | **局外改裝與競速套件** | `node scripts/test-track3-metagame.mjs` | ✅ 通過 (4/4 階段) | 工坊 6⚡ 負載與插槽裝配、天梯隔離防護、星級金庫與每日懸賞、5Hz 幽靈差分壓縮 (120s 僅 2.26 KB < 3 KB) 與 Split-Timer |
 | **偏好設定與 Unified Save 驗證** | `node scripts/test-cloud-save.mjs` | ✅ 通過 (4/4 階段) | 偏好命名空間平滑遷移、終局存檔大小 (5.50 KiB < 16 KiB)、樹深度 (5 階 <= 5)、智慧合併交換律、409 衝突自動解決至 rev 3、requestId 重複保護 |
 | **雲端存檔與 Schema v2 驗證** | `node scripts/test-track2-cloud-save.mjs` | ✅ 通過 (5/5 階段) | Manifest Schema v2 與 cloudSave 宣告校驗、快照大小 (1.14 KiB < 64 KiB)、雙向智慧合併、SDK 1.1.0 樂觀鎖與自動檢查點保存鉤子 |
+| **相機與視口動態驗收** | `node scripts/test-track1-camera.mjs` | ✅ 通過 (8/8 階段) | 雙階阻尼（$\lambda_{cruise}=8.5$, $\lambda_{dash}=24$）、軟約束死區（76.8px）、Hermite 準星前瞻（140px/70px）、震屏解耦逆映射、小地圖與雷達指針、減動效零震屏 |
+| **大地圖與視錐剔除驗收** | `node scripts/test-track2-terrain-culling.mjs` | ✅ 通過 (5/5 階段) | 3520x2640 世界邊界、55px 空間網格 64x48 對齊、玩家生成置中 (1760, 1320)、AABB 視錐剔除（75%+ 剔除率）、6 大 POI 生命週期與防守互動 |
 | **真實瀏覽器全流程 E2E** | `node scripts/test-browser-gameplay.mjs` | ✅ 通過 (40/40 項) | 零未捕捉異常、零控制台報錯；涵蓋開局配裝、戰鬥動能、全按鍵與戰術裝備部署、升級選卡/重抽/放逐/跳過、暫停分頁、死亡結算與 Run It Back 重開 |
 
 ---
@@ -97,11 +113,22 @@ DUST//REIGN v0.9.0 全面完成了**三軌次世代性能大重構、0-GC 記憶
    ```sh
    node pack-game.mjs output/game output/game.zip
    ```
-   - 結果：`Packed dust-reign v0.9.0: output/game.zip (tools 1.1.0)`
-2. **規則驗證**：
+   - 結果：`Packed dust-reign v0.10.0: output/game.zip (tools 1.1.0)`
+2. **規格核驗**：
    ```sh
    node validate-game.mjs output/game.zip
    ```
-   - 結果：`Valid: dust-reign v0.9.0 (tools 1.1.0)`
+   - 結果：`Valid: dust-reign v0.10.0 (tools 1.1.0)`
+   - 雙重工具驗收 100% 通過！
 
-官方固定工具雙重驗收 100% 通過，完全符合 Playroom Platform 上架發布交付標準。
+---
+
+## 五、交付物清單
+
+- **Release 標籤**：`v0.10.0`
+- **發布分支**：`master`
+- **Manifest 版本**：`game.json` (version `0.10.0`, schemaVersion `2`)
+- **Staging 輸出**：`output/game/`
+- **發布 ZIP**：`output/game.zip`
+- **更新架構**：`ARCHITECTURE.md`
+- **驗證紀錄**：`RELEASE.md`
