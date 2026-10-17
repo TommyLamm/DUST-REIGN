@@ -753,6 +753,14 @@ export function evaluateStarCondition(cond, state, stageConfig, ctx) {
       return (state.beaconPlayerStayTime || 0) >= reqStay;
     }
 
+    case 'overload_peak_under': {
+      var maxOverloadRatio = cond.maxOverloadRatio != null ? cond.maxOverloadRatio : (cond.value != null ? cond.value : 0.65);
+      var peakRatio = (state.overloadPeakRatio != null)
+        ? state.overloadPeakRatio
+        : ((state.coreOverload && typeof state.coreOverload.peakRatio === 'number') ? state.coreOverload.peakRatio : 0);
+      return peakRatio <= maxOverloadRatio;
+    }
+
     default:
       return true;
   }

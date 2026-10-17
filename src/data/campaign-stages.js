@@ -31,10 +31,19 @@ export var CAMPAIGN_SECTORS = [
   },
   {
     id: 4,
+    name: '晶化深淵 (Sector 04: Abyss)',
+    code: 'SEC-04',
+    biome: 'crystal',
+    reqStars: 32,
+    desc: '幽邃地脈晶化裂谷，高頻共振水晶、折射屏障與自律防衛機構橫行。',
+    stages: ['stage_4_1', 'stage_4_2', 'stage_4_3', 'stage_4_4', 'stage_4_5']
+  },
+  {
+    id: 5,
     name: '極限試煉 (Sector EX: Trials)',
     code: 'SEC-EX',
     biome: 'night',
-    reqStars: 28,
+    reqStars: 42,
     desc: '超越極限的絕望深淵，唯有精通全武裝之老兵方能踏足。',
     stages: ['stage_ex_1', 'stage_ex_2', 'stage_ex_3']
   }
@@ -47,7 +56,9 @@ export var CAMPAIGN_MILESTONES = [
   { stars: 20, reward: 'paint', id: 'paint_rust_heavy', name: '機體塗裝【鐵鏽重工】' },
   { stars: 25, reward: 'booster', id: 'heavy_pierce', name: '戰術晶片【重裝穿甲】' },
   { stars: 30, reward: 'paint', id: 'paint_storm_emp', name: '機體塗裝【暴風電磁】' },
-  { stars: 36, reward: 'mastery', id: 'paint_aurora_sovereign', name: '傳奇塗裝【極光神君】與稱號【APEX CONQUEROR】' }
+  { stars: 36, reward: 'mastery', id: 'paint_aurora_sovereign', name: '傳奇塗裝【極光神君】與稱號【APEX CONQUEROR】' },
+  { stars: 42, reward: 'booster', id: 'abyss_resonator', name: '戰術晶片【晶化共振核】' },
+  { stars: 50, reward: 'paint', id: 'paint_crystal_prismatic', name: '傳奇塗裝【稜鏡晶芒】與稱號【ABYSS DOMINATOR】' }
 ];
 
 export var CAMPAIGN_STAGES = [
@@ -416,7 +427,7 @@ export var CAMPAIGN_STAGES = [
     id: 'stage_ex_1',
     code: 'STAGE EX-1',
     name: '深淵生存試煉',
-    sector: 4,
+    sector: 5,
     sectorName: '極限試煉',
     biome: 'night',
     type: 'wave_wipeout',
@@ -448,7 +459,7 @@ export var CAMPAIGN_STAGES = [
     id: 'stage_ex_2',
     code: 'STAGE EX-2',
     name: '虛空尖塔守衛',
-    sector: 4,
+    sector: 5,
     sectorName: '極限試煉',
     biome: 'night',
     type: 'beacon_defense',
@@ -480,7 +491,7 @@ export var CAMPAIGN_STAGES = [
     id: 'stage_ex_3',
     code: 'STAGE EX-3',
     name: '三位一體天譴',
-    sector: 4,
+    sector: 5,
     sectorName: '極限試煉',
     biome: 'night',
     type: 'boss_duel',
@@ -508,6 +519,174 @@ export var CAMPAIGN_STAGES = [
     enemyWeights: {},
     boss: 'sovereign'
   },
+
+  // ================= Sector 04: Abyss (晶化深淵) =================
+  {
+    id: 'stage_4_1',
+    code: 'STAGE 4-1',
+    name: '晶石裂隙',
+    sector: 4,
+    sectorName: '晶化深淵',
+    biome: 'crystal',
+    type: 'wave_wipeout',
+    targetWaves: 4,
+    targetQuota: 0,
+    targetTime: 65,
+    threat: 'HIGH',
+    desc: '狹長裂谷地形，高速晶化衝鋒怪包抄，考驗走位拉扯。',
+    recommended: { rig: 'strider', weapon: 'standard' },
+    starCriteria: {
+      star1: '擊破 4 波晶化敵潮',
+      star2: '65 秒內通關',
+      star3: '剩餘 HP ≥ 80% 且達成 12+ 連擊'
+    },
+    starRules: {
+      star1: { type: 'waves_cleared', count: 4 },
+      star2: { type: 'time_under', seconds: 65 },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.8 },
+          { type: 'combo', count: 12 }
+        ]
+      }
+    },
+    enemyWeights: { rusher: 0.4, crawler: 0.3, brute: 0.3 },
+    boss: null
+  },
+  {
+    id: 'stage_4_2',
+    code: 'STAGE 4-2',
+    name: '深淵運輸線',
+    sector: 4,
+    sectorName: '晶化深淵',
+    biome: 'crystal',
+    type: 'payload_escort',
+    targetWaves: 0,
+    targetQuota: 0,
+    targetTime: 90,
+    threat: 'HIGH',
+    desc: '物資推車護送任務，在光圈內維持載具動力，兩側高頻火砲壓制。',
+    recommended: { rig: 'bulwark', weapon: 'vanguard' },
+    starCriteria: {
+      star1: '護送物資車抵達撤離點',
+      star2: '物資車剩餘耐久 ≥ 75%',
+      star3: '在光圈內累計停留 ≥ 50 秒且承受傷害 ≤ 35'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'beacon_hp_ratio', ratio: 0.75 },
+      star3: {
+        all: [
+          { type: 'beacon_stay_time', seconds: 50 },
+          { type: 'damage_taken_under', maxDamage: 35 }
+        ]
+      }
+    },
+    enemyWeights: { artillery: 0.3, crawler: 0.3, rusher: 0.4 },
+    boss: null
+  },
+  {
+    id: 'stage_4_3',
+    code: 'STAGE 4-3',
+    name: '地脈超載防線',
+    sector: 4,
+    sectorName: '晶化深淵',
+    biome: 'crystal',
+    type: 'core_overload',
+    targetWaves: 0,
+    targetQuota: 0,
+    targetTime: 80,
+    threat: 'CRITICAL',
+    desc: '核心能量超載防線，消滅充能精英並在核心散熱區域冷卻熱量。',
+    recommended: { rig: 'salvager', weapon: 'arc-welder' },
+    starCriteria: {
+      star1: '堅守核心直至計時結束且未過載熔毀',
+      star2: '核心超載峰值 ≤ 65% 或 70 秒內完成冷卻',
+      star3: '剩餘 HP ≥ 80% 且達成 4 次極限閃避'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: {
+        any: [
+          { type: 'overload_peak_under', maxOverloadRatio: 0.65 },
+          { type: 'time_under', seconds: 70 }
+        ]
+      },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.8 },
+          { type: 'just_dashes', count: 4 }
+        ]
+      }
+    },
+    enemyWeights: { brute: 0.35, warden: 0.35, scurrier: 0.3 },
+    boss: null
+  },
+  {
+    id: 'stage_4_4',
+    code: 'STAGE 4-4',
+    name: '晶化巨獸獵殺',
+    sector: 4,
+    sectorName: '晶化深淵',
+    biome: 'crystal',
+    type: 'vip_hunt',
+    targetWaves: 1,
+    targetQuota: 3,
+    targetTime: 90,
+    threat: 'CRITICAL',
+    desc: '斬首 3 隻晶化變異巨獸，注意半血狂暴衝撞與酸液轟炸。',
+    recommended: { rig: 'bulwark', weapon: 'breacher' },
+    starCriteria: {
+      star1: '斬首 3 隻晶化變異巨獸',
+      star2: '80 秒內完成斬首',
+      star3: '剩餘 HP ≥ 75% 且承受傷害 ≤ 40'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 80 },
+      star3: {
+        all: [
+          { type: 'hp_ratio', ratio: 0.75 },
+          { type: 'damage_taken_under', maxDamage: 40 }
+        ]
+      }
+    },
+    enemyWeights: { brute: 0.4, burrower: 0.3, spitter: 0.3 },
+    vipKind: 'brute',
+    boss: null
+  },
+  {
+    id: 'stage_4_5',
+    code: 'STAGE 4-5',
+    name: '稜鏡天尊終局',
+    sector: 4,
+    sectorName: '晶化深淵',
+    biome: 'crystal',
+    type: 'boss_duel',
+    targetWaves: 1,
+    targetQuota: 0,
+    targetTime: 150,
+    threat: 'APEX',
+    desc: '晶化深淵終章對決，面對具備多重防禦部位的稜鏡天尊深淵巨獸。',
+    recommended: { rig: 'strider', weapon: 'vanguard' },
+    starCriteria: {
+      star1: '擊潰深淵巨獸首領',
+      star2: '110 秒內完成擊殺',
+      star3: '達成 5 次極限閃避且剩餘 HP ≥ 75%'
+    },
+    starRules: {
+      star1: { type: 'primary_clear' },
+      star2: { type: 'time_under', seconds: 110 },
+      star3: {
+        all: [
+          { type: 'just_dashes', count: 5 },
+          { type: 'hp_ratio', ratio: 0.75 }
+        ]
+      }
+    },
+    enemyWeights: {},
+    boss: 'behemoth'
+  }
 ];
 
 export function getCampaignStage(id) {
