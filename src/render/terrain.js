@@ -29,7 +29,7 @@ function sectorSeed(sector, w, h) {
   return (7919 + (w | 0) * 13 + (h | 0) * 17 + extra) >>> 0;
 }
 
-function paintNoise(ctx, tile, w, h, tileSize, alpha, op, ox, oy) {
+export function paintNoise(ctx, tile, w, h, tileSize, alpha, op, ox, oy) {
   if (!tile || !(tileSize > 0)) return;
   var ts = tileSize;
   var startX = -(((ox % ts) + ts) % ts);
@@ -45,7 +45,7 @@ function paintNoise(ctx, tile, w, h, tileSize, alpha, op, ox, oy) {
   ctx.restore();
 }
 
-function paintDunes(ctx, w, h, colors, detail) {
+export function paintDunes(ctx, w, h, colors, detail) {
   var bands = detail ? 6 : 3;
   var steps = detail ? 32 : 16;
   ctx.save();
@@ -95,7 +95,7 @@ function strokeCrack(ctx, p, q, colors) {
   ctx.stroke();
 }
 
-function paintCracks(ctx, w, h, colors, detail, sector) {
+export function paintCracks(ctx, w, h, colors, detail, sector) {
   var count = detail ? 48 : 16;
   var pts = new Array(count);
   var rand = rng(sectorSeed(sector, w, h));
@@ -212,7 +212,7 @@ function paintScrap(ctx, size, variant, colors, detail) {
   ctx.fillRect(-size * 0.1, size * 0.08, 1.4, 1.4);
 }
 
-function paintProps(ctx, colors, detail) {
+export function paintProps(ctx, colors, detail) {
   // Spatial hash props distributed in 128x128 virtual cells across 1024x1024 tile
   ctx.save();
   ctx.globalAlpha = 0.28;
@@ -240,7 +240,7 @@ function paintProps(ctx, colors, detail) {
   ctx.restore();
 }
 
-function paintGrid(ctx, w, h) {
+export function paintGrid(ctx, w, h) {
   // 64px tactical coordinates grid (16 cells horizontally and vertically across 1024)
   var grid = 64;
   var cx = w * 0.5;
@@ -274,27 +274,136 @@ function paintGrid(ctx, w, h) {
   ctx.restore();
 }
 
+export function paintPlates(ctx, w, h, colors, detail) {
+  // Industrial steel / reinforced plating panels across the tile
+  var panelSize = detail ? 256 : 512;
+  var cols = Math.ceil(w / panelSize);
+  var rows = Math.ceil(h / panelSize);
+  ctx.save();
+  for (var r = 0; r < rows; r += 1) {
+    for (var c = 0; c < cols; c += 1) {
+      var seed = (r * 17 + c * 31) >>> 0;
+      var px = c * panelSize;
+      var py = r * panelSize;
+      // Plate perimeter seam
+      ctx.strokeStyle = colors.crack;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.45;
+      ctx.strokeRect(px + 4, py + 4, panelSize - 8, panelSize - 8);
+
+      // Plate highlight edge
+      ctx.strokeStyle = colors.hi || colors.light;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.15;
+      ctx.beginPath();
+      ctx.moveTo(px + 5, py + panelSize - 5);
+      ctx.lineTo(px + 5, py + 5);
+      ctx.lineTo(px + panelSize - 5, py + 5);
+      ctx.stroke();
+
+      if (detail && (seed % 3 === 0)) {
+        // Corner rivets
+        ctx.fillStyle = colors.dark;
+        ctx.globalAlpha = 0.5;
+        var ro = 12;
+        ctx.fillRect(px + ro, py + ro, 3, 3);
+        ctx.fillRect(px + panelSize - ro - 3, py + ro, 3, 3);
+        ctx.fillRect(px + ro, py + panelSize - ro - 3, 3, 3);
+        ctx.fillRect(px + panelSize - ro - 3, py + panelSize - ro - 3, 3, 3);
+      }
+    }
+  }
+  ctx.restore();
+}
+
+export var BIOME_RENDERERS = {
+  dusk: {
+    name: 'dusk',
+    render: function (ctx, w, h, colors, detail, sector) {
+      var tile = getNoiseTile();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = colors.base;
+      ctx.fillRect(0, 0, w, h);
+      paintNoise(ctx, tile, w, h, detail ? 420 : 512, 0.12, 'soft-light', 12, 20);
+      if (detail) {
+        paintNoise(ctx, tile, w, h, 168, 0.06, 'soft-light', 40, 16);
+      }
+      paintDunes(ctx, w, h, colors, detail);
+      var shade = ctx.createLinearGradient(0, 0, w, h);
+      shade.addColorStop(0, 'rgba(255,220,170,0.03)');
+      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+      shade.addColorStop(1, 'rgba(0,0,0,0.22)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, w, h);
+      paintCracks(ctx, w, h, colors, detail, sector);
+      paintProps(ctx, colors, detail);
+      paintGrid(ctx, w, h);
+    }
+  },
+  rust: {
+    name: 'rust',
+    render: function (ctx, w, h, colors, detail, sector) {
+      var tile = getNoiseTile();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = colors.base;
+      ctx.fillRect(0, 0, w, h);
+      paintNoise(ctx, tile, w, h, detail ? 380 : 512, 0.16, 'soft-light', 24, 12);
+      if (detail) {
+        paintNoise(ctx, tile, w, h, 128, 0.08, 'soft-light', 18, 32);
+      }
+      paintPlates(ctx, w, h, colors, detail);
+      paintDunes(ctx, w, h, colors, detail);
+      var shade = ctx.createLinearGradient(0, 0, w, h);
+      shade.addColorStop(0, 'rgba(235,120,60,0.04)');
+      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+      shade.addColorStop(1, 'rgba(0,0,0,0.26)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, w, h);
+      paintCracks(ctx, w, h, colors, detail, sector);
+      paintProps(ctx, colors, detail);
+      paintGrid(ctx, w, h);
+    }
+  },
+  night: {
+    name: 'night',
+    render: function (ctx, w, h, colors, detail, sector) {
+      var tile = getNoiseTile();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = colors.base;
+      ctx.fillRect(0, 0, w, h);
+      paintNoise(ctx, tile, w, h, detail ? 460 : 512, 0.10, 'soft-light', 8, 8);
+      if (detail) {
+        paintNoise(ctx, tile, w, h, 200, 0.05, 'soft-light', 50, 25);
+      }
+      paintPlates(ctx, w, h, colors, detail);
+      paintDunes(ctx, w, h, colors, detail);
+      var shade = ctx.createLinearGradient(0, 0, w, h);
+      shade.addColorStop(0, 'rgba(100,160,255,0.03)');
+      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+      shade.addColorStop(1, 'rgba(0,0,0,0.30)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, w, h);
+      paintCracks(ctx, w, h, colors, detail, sector);
+      paintProps(ctx, colors, detail);
+      paintGrid(ctx, w, h);
+    }
+  }
+};
+BIOME_RENDERERS.default = BIOME_RENDERERS.dusk;
+
+export function registerBiomeRenderer(name, strategy) {
+  BIOME_RENDERERS[name] = strategy;
+}
+
 function paintGround(ctx, w, h, sector, detail) {
   var colors = groundPalette(sector);
-  var tile = getNoiseTile();
-  ctx.globalAlpha = 1;
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = colors.base;
-  ctx.fillRect(0, 0, w, h);
-  paintNoise(ctx, tile, w, h, detail ? 420 : 512, 0.12, 'soft-light', 12, 20);
-  if (detail) {
-    paintNoise(ctx, tile, w, h, 168, 0.06, 'soft-light', 40, 16);
+  var renderer = BIOME_RENDERERS[sector] || BIOME_RENDERERS.default;
+  if (renderer && typeof renderer.render === 'function') {
+    renderer.render(ctx, w, h, colors, detail, sector);
   }
-  paintDunes(ctx, w, h, colors, detail);
-  var shade = ctx.createLinearGradient(0, 0, w, h);
-  shade.addColorStop(0, 'rgba(255,220,170,0.03)');
-  shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-  shade.addColorStop(1, 'rgba(0,0,0,0.22)');
-  ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, w, h);
-  paintCracks(ctx, w, h, colors, detail, sector);
-  paintProps(ctx, colors, detail);
-  paintGrid(ctx, w, h);
 }
 
 function bakeSlot(slot, sector, detail, key) {

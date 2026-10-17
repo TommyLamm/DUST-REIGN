@@ -28,7 +28,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/camera.js` | 0-GC 單例相機容器、非對稱雙階動態追蹤阻尼、準星動態前瞻（Hermite 曲線）、創傷度正交震屏與震屏解耦雙向坐標轉換（`screenToWorld`／`worldToScreen`）。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，預設對齊 3520x2640 大世界並配置 6 大戰術 POI，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
-| `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid，以 $64 \times 48$ 單元格零分配無縫覆蓋 $3520 \times 2640$ 大世界），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
+| `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid，以 $64 \times 48$ 單元格零分配無縫覆蓋 $3520 \times 2640$ 大世界，提供 `initSpatialGrid` 動態重配置接口與大世界尺寸優先邊界夾持），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，Swap-and-Pop 實體快速移除（`fastUnorderedRemove`），平方距離計算（`dist2`），以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
@@ -36,14 +36,14 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠、觸控事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、PSRA 環形生成（`spawning.js`）、武器策略註冊表（`weapon-registry.js`，多態武器策略 `onTick`／`onFire`／`renderGun`）、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
-| `src/systems/sim/poi.js` | 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）之生命週期、防守互動與全場戰術增益。 |
+| `src/systems/sim/poi.js`、`src/systems/sim/poi-registry.js` | 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）之生命週期、防守互動與全場戰術增益，由通用 POI 註冊表（`POI_REGISTRY`）模組化封裝 `step`、`draw` 與 `getLight` 契約。 |
 | `src/systems/modes/` | 遊戲模式生命週期配接器（`mode-adapter.js`：`GameModeAdapter` 介面規範 `onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）、闖關戰役任務邏輯（`campaign.js`）與極限作戰黑風暴動態縮圈（`hardcore.js`）。 |
 | `src/systems/tactical.js` | 戰術裝備註冊表（Tactical Gear Registry：定點機槍塔、熱誘餌、微型奇點手雷）之裝備選擇、冷卻、部署、AI 行為與實體渲染。 |
 | `src/systems/mutators.js`、`contracts.js`、`drops.js`、`card-effects.js` | 波次突變、合約、掉落，以及卡片效果與輕量鉤子匯流排（Hook Bus：`onPlayerDamaged`、`onKill`、`onDash`、`onPlayerStep`）與融合協同。 |
 | `src/systems/ghost.js`、`src/render/ghost.js` | 5Hz 輕量幽靈殘影競速引擎（Delta 差分與 Base64 壓縮快照、Split-Timer 即時時間差比對、半透明殘影渲染）。 |
 | `src/systems/update.js`、`src/systems/sim/` | 模擬更新協調與按順序執行的單幀步驟。首領重塑在 `sim/bosses.js`，狼群包夾與空間分離在 `sim/enemies.js`，新敵型在 `sim/new-enemies.js`，敵方減傷與護盾在 `sim/enemy-defense.js`，玩家物理後座力在 `sim/player.js`。 |
 | `src/render/draw.js` | Canvas 繪製入口、相機世界矩陣注入、視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池，常態 48px / 首領 220px 雙階邊界，剔除 75%~90% 螢幕外實體）與世界／螢幕圖層分流順序。 |
-| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | $1024 \times 1024$ 離屏圖塊 GPU GL_REPEAT 平鋪渲染（`terrainPattern.setTransform`，消除 37.2MB OOM）、地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻，單遍距離平方線性剪裁 $O(N)$）、雙 Pass 全合流接地陰影（全場僅發出 2 次 `ctx.fill()` 繪製所有實體之 Penumbra 柔影與 Core AO 硬咬合）。 |
+| `src/render/terrain.js`、`src/render/atmosphere.js`、`src/render/lighting.js`、`src/render/shadows.js` | $1024 \times 1024$ 離屏圖塊 GPU GL_REPEAT 平鋪渲染（`terrainPattern.setTransform`，消除 37.2MB OOM）、生態群系策略管線（`BIOME_RENDERERS` 抽象沙丘/龜裂/金屬板/碎屑，解耦大氣微粒色彩 `moteColor` 與風暴色彩 `fogColor`）、地表離屏快取與純視覺貼花、浮塵／霧帶／螢幕後處理、lightmap（0.74 照度抬升門檻，單遍距離平方線性剪裁 $O(N)$）、雙 Pass 全合流接地陰影（全場僅發出 2 次 `ctx.fill()` 繪製所有實體之 Penumbra 柔影與 Core AO 硬咬合）。 |
 | `src/render/player.js`、`src/render/enemies.js`、`src/render/world.js`、`src/render/projectiles.js`、`src/render/overlay.js` | 玩家四錨點、敵型雙層反差描邊、街機立體戰利品、敵我色譜隔離與三層三明治彈體及斑馬預警軌道、敵彈 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染、字體排版分組批處理 Canvas HUD／覆蓋層（4.5px 雙層黑邊傷害數字、0.22s 受擊滯後 Ghost Bar 血條）、視口邊緣雷達指針（`drawOffscreenChevrons`，Ray-AABB 邊界求交）與右上角 128px 戰術小地圖（`drawTacticalMinimap`，4 桶批次繪製）。 |
 | `src/render/fx.js`、`src/render/fx-rand.js` | 視覺粒子（3-Tier 優先級架構與玩家 120px 徑向視線保護圈 Alpha Culling）、傷害數字、螢幕閃光與視覺亂數；與 `pools.js` 的模擬粒子分開。 |
 | `src/render/entity-style.js` | 受擊閃白、單例 `POSE_SCRATCH` 姿態暫存、以及 `drawDualOutlineZeroCost` 手動屬性復原（消除 `save`/`restore` 堆疊開銷）等逐實體視覺暫存。 |
