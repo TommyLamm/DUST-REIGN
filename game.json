@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "dust-reign",
   "name": "DUST//REIGN — Wasteland Run",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "廢土 roguelike 射擊。包含晶化深淵第 4 戰區、巨神重型軌道砲、戰術硬光屏障、深淵晶獸多部位首領與 30 款升級卡牌。開局選擇機體、主武器、戰術裝備與 Dust Heat，或進行每日挑戰並查閱圖鑑。三幕各以首領收尾；第 15 波可撤離或深入無盡。死亡後回到配裝重開。",
   "author": "TommyLam",
   "entry": "index.html",

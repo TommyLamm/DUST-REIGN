@@ -13,13 +13,15 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      PLATFORM_DIR: ${{ runner.temp }}/playroom-platform-tools
-      GAME_ZIP: ${{ runner.temp }}/playroom-release/game.zip
     defaults:
       run:
         shell: bash
     steps:
+      # The runner context is not available in job-level env, so derive temp paths here.
+      - name: Resolve runner temp paths
+        run: |
+          echo "PLATFORM_DIR=$RUNNER_TEMP/playroom-platform-tools" >> "$GITHUB_ENV"
+          echo "GAME_ZIP=$RUNNER_TEMP/playroom-release/game.zip" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
