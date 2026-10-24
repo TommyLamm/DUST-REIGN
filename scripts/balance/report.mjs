@@ -5,7 +5,7 @@ export var TARGETS = {
     dreadnought: [60, 90],
     sovereign: [80, 120]
   },
-  rankScore: { B: 30000, A: 90000, S: 220000 },
+  rankScore: { B: 75000, A: 225000, S: 550000, SSS: 700000 },
   rankPercentiles: { B: 0.6, A: 0.85, S: 0.97 }
 };
 
@@ -249,6 +249,125 @@ function scoreDeviations(score) {
   ];
 }
 
+function clearedWave15(run) {
+  if (run.gate) return true;
+  return (run.deathWave || 0) > 15;
+}
+
+function rate(count, total) {
+  return total > 0 ? round(count / total, 3) : null;
+}
+
+// Wave-15 gate: the extract-or-push decision point. Every run that clears the Sovereign passes it.
+function gateSummary(runs) {
+  var gated = [];
+  for (var i = 0; i < runs.length; i += 1) if (runs[i].gate) gated.push(runs[i]);
+  var ranks = {};
+  for (var g = 0; g < gated.length; g += 1) {
+    var letter = (gated[g].gate.rankIfExtracted && gated[g].gate.rankIfExtracted.letter) || '?';
+    ranks[letter] = (ranks[letter] || 0) + 1;
+  }
+  return {
+    n: gated.length,
+    clearRate: rate(gated.length, runs.length),
+    seconds: dist(numbers(gated, function (run) { return run.gate.simSeconds; })),
+    score: scoreDist(numbers(gated, function (run) { return run.gate.score; })),
+    scoreIfExtracted: scoreDist(numbers(gated, function (run) { return run.gate.scoreIfExtracted; })),
+    rankIfExtracted: ranks,
+    hpRatio: dist(numbers(gated, function (run) { return run.gate.hpRatio; })),
+    breakdown: meanBreakdown(gated.map(function (run) { return { scoreBreakdown: run.gate.breakdown }; }))
+  };
+}
+
+// Endless (overtime past wave 15): how far the survivors get and what each extra wave pays.
+function endlessSummary(runs) {
+  var pushers = [];
+  for (var i = 0; i < runs.length; i += 1) if (runs[i].gate && runs[i].overtime !== false) pushers.push(runs[i]);
+  var perWave = {};
+  var shares = [];
+  for (var p = 0; p < pushers.length; p += 1) {
+    var run = pushers[p];
+    var rows = run.waveTimes || [];
+    var prev = run.gate.score;
+    for (var r = 0; r < rows.length; r += 1) {
+      var row = rows[r];
+      if (!row.completed || row.wave <= 15 || typeof row.score !== 'number') continue;
+      var key = String(row.wave);
+      if (!perWave[key]) perWave[key] = { gain: [], cum: [], seconds: [] };
+      perWave[key].gain.push(row.score - prev);
+      perWave[key].cum.push(row.score);
+      perWave[key].seconds.push(row.seconds);
+      prev = row.score;
+    }
+    if (run.score > 0) shares.push((run.score - run.gate.score) / run.score);
+  }
+  var out = {};
+  var keys = Object.keys(perWave);
+  keys.sort(function (a, b) { return Number(a) - Number(b); });
+  for (var k = 0; k < keys.length; k += 1) {
+    var bucket = perWave[keys[k]];
+    bucket.gain.sort(function (a, b) { return a - b; });
+    bucket.cum.sort(function (a, b) { return a - b; });
+    bucket.seconds.sort(function (a, b) { return a - b; });
+    out[keys[k]] = {
+      n: bucket.gain.length,
+      gainP50: round(quantile(bucket.gain, 0.5), 0),
+      gainP90: round(quantile(bucket.gain, 0.9), 0),
+      cumP50: round(quantile(bucket.cum, 0.5), 0),
+      secondsP50: round(quantile(bucket.seconds, 0.5), 1)
+    };
+  }
+  shares.sort(function (a, b) { return a - b; });
+  return {
+    n: pushers.length,
+    wavesReached: dist(numbers(pushers, function (run) { return run.endlessWaves; })),
+    perWave: out,
+    scoreShareFromEndless: dist(shares)
+  };
+}
+
+function resonanceSummary(runs) {
+  var tiers = { 0: 0, 1: 0, 2: 0, 3: 0 };
+  var counted = 0;
+  var sums = { kinetic: 0, plasma: 0, static: 0, tactical: 0 };
+  for (var i = 0; i < runs.length; i += 1) {
+    var res = runs[i].gate ? runs[i].gate.resonance : runs[i].resonance;
+    if (!res) continue;
+    counted += 1;
+    tiers[res.bestTier] = (tiers[res.bestTier] || 0) + 1;
+    var keys = Object.keys(sums);
+    for (var k = 0; k < keys.length; k += 1) sums[keys[k]] += (res.counts && res.counts[keys[k]]) || 0;
+  }
+  var mean = {};
+  var names = Object.keys(sums);
+  for (var n = 0; n < names.length; n += 1) mean[names[n]] = counted ? round(sums[names[n]] / counted, 2) : null;
+  return { n: counted, bestTier: tiers, meanStacks: mean };
+}
+
+function contractSummary(runs) {
+  var offered = 0;
+  var completed = 0;
+  var doubled = 0;
+  var doubledCompleted = 0;
+  var doubledFailed = 0;
+  for (var i = 0; i < runs.length; i += 1) {
+    var c = runs[i].contracts;
+    if (!c) continue;
+    offered += c.offered || 0;
+    completed += c.completed || 0;
+    doubled += c.doubled || 0;
+    doubledCompleted += c.doubledCompleted || 0;
+    doubledFailed += c.doubledFailed || 0;
+  }
+  return {
+    offered: offered,
+    completeRate: rate(completed, offered),
+    doubled: doubled,
+    doubledCompleteRate: rate(doubledCompleted, doubledCompleted + doubledFailed),
+    doubledFailed: doubledFailed
+  };
+}
+
 export function summarizeBot(runs) {
   var waves = numbers(runs, function (run) { return run.deathWave; });
   var scores = numbers(runs, function (run) { return run.score; });
@@ -269,6 +388,13 @@ export function summarizeBot(runs) {
     deathCauses: tally(runs, function (run) { return run.deathCause; }),
     outcomes: tally(runs, function (run) { return run.outcome; }),
     ranks: letterCounts(runs),
+    clearedWave15: rate(runs.filter(clearedWave15).length, runs.length),
+    gate: gateSummary(runs),
+    endless: endlessSummary(runs),
+    resonance: resonanceSummary(runs),
+    contracts: contractSummary(runs),
+    maxCombo: dist(numbers(runs, function (run) { return run.stats && run.stats.maxCombo; })),
+    flawlessWaves: dist(numbers(runs, function (run) { return run.stats && run.stats.flawlessWaves; })),
     spawnsMean: meanMap(runs, function (run) { return run.spawns; }),
     killsMean: meanMap(runs, function (run) { return run.kills; }),
     scoreBreakdown: meanBreakdown(runs),
@@ -330,6 +456,12 @@ export function renderMarkdown(report) {
   if (meta.startWave > 1) lines.push('- 起始波次：' + fmt(meta.startWave) + '，路線 ' + fmt(meta.route || 'ironfield（第 6 波起）') + '，等級注入 1+round((wave-1)*0.8)');
   if (meta.rig) lines.push('- 機體：' + meta.rig);
   if (meta.weapon) lines.push('- 武器：' + meta.weapon);
+  if (meta.tactical) lines.push('- 戰術裝備：' + meta.tactical);
+  if (meta.cards && meta.cards !== 'default') lines.push('- 選卡：' + meta.cards);
+  if (meta.chargePolicy && meta.chargePolicy !== 'auto') lines.push('- 蓄力策略：' + meta.chargePolicy);
+  if (meta.doubleDown && meta.doubleDown !== 'off') lines.push('- 合約加注：' + meta.doubleDown);
+  if (meta.gate && meta.gate !== 'push') lines.push('- 第 15 波關卡：' + meta.gate);
+  if (meta.world) lines.push('- 場地：3520x2640 大世界，視口 1280x720');
   if (meta.botNotes && meta.botNotes.length) {
     lines.push('- 機器人：idle / kite 維持下限。skilled 改動：');
     var note;
@@ -344,7 +476,21 @@ export function renderMarkdown(report) {
     lines.push('');
     lines.push('- 存活／死亡波次 p10 / p50 / p90：' + fmt(bot.deathWave.p10) + ' / ' + fmt(bot.deathWave.p50) + ' / ' + fmt(bot.deathWave.p90) + '（平均 ' + fmt(bot.deathWave.mean) + '，右刪 ' + bot.censored + '）');
     lines.push('- 分數 p10 / p50 / p90：' + fmt(bot.score.p10) + ' / ' + fmt(bot.score.p50) + ' / ' + fmt(bot.score.p90) + '（平均 ' + fmt(bot.score.mean) + '）');
-    lines.push('- 分數 p60 / p85 / p97：' + fmt(bot.score.p60) + ' / ' + fmt(bot.score.p85) + ' / ' + fmt(bot.score.p97) + '；校準後 B/A/S 為 30000 / 90000 / 220000');
+    lines.push('- 分數 p60 / p85 / p97：' + fmt(bot.score.p60) + ' / ' + fmt(bot.score.p85) + ' / ' + fmt(bot.score.p97) + '；0.14.0 起 B/A/S/SSS 為 75000 / 225000 / 550000 / 700000');
+    if (bot.clearedWave15 != null) lines.push('- 過第 15 波（到達撤離關卡）：' + Math.round(bot.clearedWave15 * 1000) / 10 + '%');
+    if (bot.gate && bot.gate.n) {
+      lines.push('- 關卡分數 p10 / p50 / p90：' + fmt(bot.gate.score.p10) + ' / ' + fmt(bot.gate.score.p50) + ' / ' + fmt(bot.gate.score.p90) + '；若撤離 p50 / p90：' + fmt(bot.gate.scoreIfExtracted.p50) + ' / ' + fmt(bot.gate.scoreIfExtracted.p90) + '；若撤離評級 ' + JSON.stringify(bot.gate.rankIfExtracted) + '；到達秒數 p50 ' + fmt(bot.gate.seconds.p50));
+    }
+    if (bot.endless && bot.endless.n) {
+      var pw = bot.endless.perWave || {};
+      var pwKeys = Object.keys(pw);
+      var pwText = [];
+      for (var pk = 0; pk < pwKeys.length; pk += 1) pwText.push('W' + pwKeys[pk] + ' +' + pw[pwKeys[pk]].gainP50 + '（n=' + pw[pwKeys[pk]].n + '）');
+      lines.push('- 無盡：深入 ' + bot.endless.n + ' 局，多撐波數 p50 / p90 ' + fmt(bot.endless.wavesReached.p50) + ' / ' + fmt(bot.endless.wavesReached.p90) + '；每波分數增量 p50：' + (pwText.join('、') || '—') + '；無盡佔最終分數比 p50 ' + fmt(bot.endless.scoreShareFromEndless.p50));
+    }
+    if (bot.resonance && bot.resonance.n) lines.push('- 共鳴（第 15 波關卡或結束時）最高階分布：' + JSON.stringify(bot.resonance.bestTier) + '，平均疊層 ' + JSON.stringify(bot.resonance.meanStacks));
+    if (bot.contracts && bot.contracts.offered) lines.push('- 合約：出現 ' + bot.contracts.offered + '，完成率 ' + fmt(bot.contracts.completeRate) + '；加注 ' + bot.contracts.doubled + ' 次，成功率 ' + fmt(bot.contracts.doubledCompleteRate));
+    lines.push('- 最高連擊 p50 / p90：' + fmt(bot.maxCombo.p50) + ' / ' + fmt(bot.maxCombo.p90) + '；無傷波數平均 ' + fmt(bot.flawlessWaves.mean));
     lines.push('- 死亡原因前三：' + topCauses(bot.deathCauses, 3));
     lines.push('- 評級字母：' + JSON.stringify(bot.ranks));
     lines.push('- 等級 p50：' + fmt(bot.level.p50) + '，每局牆鐘平均 ' + fmt(bot.wallMs.mean) + ' ms，模擬時間平均 ' + fmt(bot.simSeconds.mean) + ' 秒');
@@ -387,7 +533,7 @@ export function renderMarkdown(report) {
   return lines.join('\n');
 }
 
-var TARGETS_NOTE = '第 1–5 波與 v0.3.0 的中位死亡波次要對兩份報表。首領時間目標是 Titan 40–70 秒、Dreadnought 60–90 秒、Sovereign 80–120 秒。B/A/S 用校準後的 30000 / 90000 / 220000，對齊沒打首領、Titan、Dreadnought、Sovereign 的分數斷層；原始百分位見報表。';
+var TARGETS_NOTE = '第 1–5 波與 v0.3.0 的中位死亡波次要對兩份報表。首領時間目標是 Titan 40–70 秒、Dreadnought 60–90 秒、Sovereign 80–120 秒。B/A/S 用 0.14.0 的 75000 / 225000 / 550000（SSS 700000），對齊沒打首領、Titan、Dreadnought、Sovereign 的分數斷層；原始百分位見報表。';
 
 function SAFETY_LABEL(meta) {
   return meta.safetySeconds || 1200;
@@ -404,6 +550,22 @@ function bossLine(rows) {
   return parts.join('、');
 }
 
+function bossP50Map(left, right) {
+  var out = {};
+  var kinds = Object.keys(TARGETS.bossKillSeconds);
+  for (var i = 0; i < kinds.length; i += 1) {
+    var a = left.bossKills && left.bossKills.kills && left.bossKills.kills[kinds[i]];
+    var b = right.bossKills && right.bossKills.kills && right.bossKills.kills[kinds[i]];
+    out[kinds[i]] = {
+      baseline: a ? a.p50 : null,
+      current: b ? b.p50 : null,
+      baselineN: a ? a.n : 0,
+      currentN: b ? b.n : 0
+    };
+  }
+  return out;
+}
+
 export function compareReports(baseline, current) {
   var names = Object.keys(current.bots || {});
   var bots = {};
@@ -417,10 +579,14 @@ export function compareReports(baseline, current) {
     var ratio = (left.score.p50 > 0 && right.score.p50 != null) ? round(right.score.p50 / left.score.p50, 3) : null;
     var significant = delta != null && Math.abs(delta) > TARGETS.waveMedianDeltaMax;
     if (significant) anySignificant = true;
-    var causes = [
-      '亂數流不同：v0.3.0 的生成、掉落與粒子共用一條 Math.random；目前玩法走 seedRun 分流，coreSpawnTime 與模擬粒子也走 rng()。相同 --seed 不會走出 v0.3.0 的敵人序列。',
-      '武器切換已從輸入移除。兩邊機器人都固定 standard 開局，這項本身不應移動死亡波次中位數。'
-    ];
+    var causes = [];
+    var oldLabel = String((baseline.meta && baseline.meta.label) || '');
+    if (oldLabel.indexOf('0.3') >= 0) {
+      causes.push('亂數流不同：v0.3.0 的生成、掉落與粒子共用一條 Math.random；目前玩法走 seedRun 分流，coreSpawnTime 與模擬粒子也走 rng()。相同 --seed 不會走出 v0.3.0 的敵人序列。');
+      causes.push('武器切換已從輸入移除。兩邊機器人都固定 standard 開局，這項本身不應移動死亡波次中位數。');
+    } else {
+      causes.push('兩份報表使用同一組種子，開局亂數對齊；改動數值後機器人的操作會分叉，局間差距仍有抽樣噪音，局數少時請看 p50 之外的分布。');
+    }
     if (significant) {
       causes.push('死亡波次中位數相差超過 1。20 局的抽樣噪音可能夠大；若加大局數仍超過 1，再核對導演配方的生成率、精英機率，以及傷害入口是否改到了 v0.3 的扣血數字。');
     } else {
@@ -441,7 +607,23 @@ export function compareReports(baseline, current) {
       score: {
         baselineP50: left.score.p50,
         currentP50: right.score.p50,
+        baselineP90: left.score.p90,
+        currentP90: right.score.p90,
         ratioP50: ratio
+      },
+      clearedWave15: {
+        baseline: left.clearedWave15 == null ? null : left.clearedWave15,
+        current: right.clearedWave15 == null ? null : right.clearedWave15
+      },
+      bossKillP50: bossP50Map(left, right),
+      ranks: { baseline: left.ranks, current: right.ranks },
+      gateRanks: {
+        baseline: left.gate ? left.gate.rankIfExtracted : null,
+        current: right.gate ? right.gate.rankIfExtracted : null
+      },
+      endlessWavesP50: {
+        baseline: left.endless && left.endless.n ? left.endless.wavesReached.p50 : null,
+        current: right.endless && right.endless.n ? right.endless.wavesReached.p50 : null
       },
       deathCauses: {
         baseline: (left.deathCauses || []).slice(0, 3),
@@ -459,7 +641,9 @@ export function compareReports(baseline, current) {
     schemaVersion: 1,
     baselineLabel: baseline.meta && baseline.meta.label,
     currentLabel: current.meta && current.meta.label,
-    target: '校準目標是機器人中位死亡波次與 v0.3.0 相差 ≤ 1。這次用目前工作目錄對 v0.3.0；v0.4.0 的新敵、新首領與新計分還沒齊。',
+    target: String((baseline.meta && baseline.meta.label) || '').indexOf('0.3') >= 0
+      ? '校準目標是機器人中位死亡波次與 v0.3.0 相差 ≤ 1。這次用目前工作目錄對 v0.3.0；v0.4.0 的新敵、新首領與新計分還沒齊。'
+      : '改動前後對照：同一組種子、同一組參數。看存活率、首領擊殺秒數與分數 p50 / p90 是否朝目標移動，死亡波次中位數相差 ≤ 1 視為無顯著差異。',
     significant: anySignificant,
     bots: bots
   };
@@ -467,7 +651,7 @@ export function compareReports(baseline, current) {
 
 export function renderCompareMarkdown(compared) {
   var lines = [];
-  lines.push('# P0 對 v0.3.0');
+  lines.push('# ' + (compared.currentLabel || '目前') + ' 對 ' + (compared.baselineLabel || '基準'));
   lines.push('');
   lines.push(compared.target);
   lines.push('');
@@ -479,11 +663,26 @@ export function renderCompareMarkdown(compared) {
     var bot = compared.bots[name];
     lines.push('## ' + name);
     lines.push('');
-    lines.push('- 死亡波次 p10 / p50 / p90：v0.3.0 ' + fmt(bot.deathWave.baseline.p10) + ' / ' + fmt(bot.deathWave.baseline.p50) + ' / ' + fmt(bot.deathWave.baseline.p90) + '；P0 ' + fmt(bot.deathWave.current.p10) + ' / ' + fmt(bot.deathWave.current.p50) + ' / ' + fmt(bot.deathWave.current.p90) + '；p50 差 ' + fmt(bot.deathWave.deltaP50));
-    lines.push('- 分數 p50：v0.3.0 ' + fmt(bot.score.baselineP50) + '，P0 ' + fmt(bot.score.currentP50) + '，比值 ' + fmt(bot.score.ratioP50));
-    lines.push('- 死亡原因前三 v0.3.0：' + topCauses(bot.deathCauses.baseline, 3));
-    lines.push('- 死亡原因前三 P0：' + topCauses(bot.deathCauses.current, 3));
-    lines.push('- 每局牆鐘平均：v0.3.0 ' + fmt(bot.wallMsMean.baseline) + ' ms，P0 ' + fmt(bot.wallMsMean.current) + ' ms');
+    var A = compared.baselineLabel || '基準';
+    var B = compared.currentLabel || '目前';
+    lines.push('- 死亡波次 p10 / p50 / p90：' + A + ' ' + fmt(bot.deathWave.baseline.p10) + ' / ' + fmt(bot.deathWave.baseline.p50) + ' / ' + fmt(bot.deathWave.baseline.p90) + '；' + B + ' ' + fmt(bot.deathWave.current.p10) + ' / ' + fmt(bot.deathWave.current.p50) + ' / ' + fmt(bot.deathWave.current.p90) + '；p50 差 ' + fmt(bot.deathWave.deltaP50));
+    lines.push('- 分數 p50：' + A + ' ' + fmt(bot.score.baselineP50) + '，' + B + ' ' + fmt(bot.score.currentP50) + '，比值 ' + fmt(bot.score.ratioP50) + '；p90：' + fmt(bot.score.baselineP90) + ' → ' + fmt(bot.score.currentP90));
+    if (bot.clearedWave15 && (bot.clearedWave15.baseline != null || bot.clearedWave15.current != null)) {
+      lines.push('- 過第 15 波比率：' + fmt(bot.clearedWave15.baseline) + ' → ' + fmt(bot.clearedWave15.current));
+    }
+    if (bot.bossKillP50) {
+      var bk = Object.keys(bot.bossKillP50);
+      var bkText = [];
+      for (var bi = 0; bi < bk.length; bi += 1) {
+        var bv = bot.bossKillP50[bk[bi]];
+        bkText.push(bk[bi] + ' ' + fmt(bv.baseline) + ' → ' + fmt(bv.current) + ' 秒（n ' + bv.baselineN + ' → ' + bv.currentN + '）');
+      }
+      lines.push('- 首領擊殺 p50：' + bkText.join('、'));
+    }
+    if (bot.ranks) lines.push('- 評級分布：' + JSON.stringify(bot.ranks.baseline) + ' → ' + JSON.stringify(bot.ranks.current));
+    lines.push('- 死亡原因前三 ' + A + '：' + topCauses(bot.deathCauses.baseline, 3));
+    lines.push('- 死亡原因前三 ' + B + '：' + topCauses(bot.deathCauses.current, 3));
+    lines.push('- 每局牆鐘平均：' + A + ' ' + fmt(bot.wallMsMean.baseline) + ' ms，' + B + ' ' + fmt(bot.wallMsMean.current) + ' ms');
     lines.push('- 可能原因：');
     for (var c = 0; c < bot.possibleCauses.length; c += 1) lines.push('  - ' + bot.possibleCauses[c]);
     lines.push('');

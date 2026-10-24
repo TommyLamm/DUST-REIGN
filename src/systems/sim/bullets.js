@@ -103,6 +103,7 @@ function burstVanguard(b) {
   var i;
   for (i = enemies.length - 1; i >= 0; i -= 1) {
     var enemy = enemies[i];
+    if (!enemy) continue;
     var reach = radius + (enemy.r || 0);
     if (dist2(b.x, b.y, enemy.x, enemy.y) > reach * reach) continue;
     damageEnemy(enemy, damage, { source: 'bullet', x: b.x, y: b.y });
@@ -149,6 +150,7 @@ function noteArcHit(p, x, y) {
     if (p.thorHits % 3 === 0 && rt.state && rt.state.enemies) {
       for (var ti = rt.state.enemies.length - 1; ti >= 0; ti -= 1) {
         var te = rt.state.enemies[ti];
+        if (!te) continue;
         if (dist2(x, y, te.x, te.y) <= 90 * 90) {
           damageEnemy(te, 180, { source: 'apocalypse_thor', x: x, y: y });
           te.empTimer = Math.max(te.empTimer || 0, 1.5);
@@ -191,6 +193,7 @@ function noteArcHit(p, x, y) {
   var i;
   for (i = enemies.length - 1; i >= 0; i -= 1) {
     var enemy = enemies[i];
+    if (!enemy) continue;
     var reach = radius + (enemy.r || 0);
     if (dist2(x, y, enemy.x, enemy.y) > reach * reach) continue;
     damageEnemy(enemy, damage, { source: 'emp', x: x, y: y });

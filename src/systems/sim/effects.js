@@ -33,6 +33,7 @@ export function stepEffects(dt, frame) {
         if (rt.state.enemies) {
           for (var pzei = rt.state.enemies.length - 1; pzei >= 0; pzei -= 1) {
             var pzEnemy = rt.state.enemies[pzei];
+            if (!pzEnemy) continue;
             if (dist2(pz.x, pz.y, pzEnemy.x, pzEnemy.y) <= (pz.r + (pzEnemy.r || 10)) * (pz.r + (pzEnemy.r || 10))) {
               damageEnemy(pzEnemy, 16, { source: 'zone', x: pz.x, y: pz.y });
               spawnParticles(pzEnemy.x, pzEnemy.y, '#ff4d2e', 4, 80, 2);

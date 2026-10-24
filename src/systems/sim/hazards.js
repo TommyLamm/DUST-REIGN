@@ -158,6 +158,7 @@ export function stepHazards(dt, frame) {
         if (!bObj.hitEnemies) bObj.hitEnemies = [];
         for (var ebi = rt.state.enemies.length - 1; ebi >= 0; ebi -= 1) {
           var tgtEnemy = rt.state.enemies[ebi];
+          if (!tgtEnemy) continue;
           if (dist2(bObj.x, bObj.y, tgtEnemy.x, tgtEnemy.y) <= (bObj.r + tgtEnemy.r) * (bObj.r + tgtEnemy.r)) {
             var isHeavy = (tgtEnemy.kind === 'brute' || tgtEnemy.kind === 'elite' || tgtEnemy.isBoss || tgtEnemy.kind === 'titan');
             if (isHeavy) {

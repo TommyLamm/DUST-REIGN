@@ -37,6 +37,10 @@ export async function loadGame(root) {
   var scoringMod = await importIfPresent(file('systems/scoring.js'));
   var rigMod = await importIfPresent(file('data/rigs.js'));
   var weaponMod = await importIfPresent(file('systems/weapons.js'));
+  var weaponRegMod = await importIfPresent(file('systems/weapon-registry.js'));
+  var tacticalMod = await importIfPresent(file('systems/tactical.js'));
+  var contractsMod = await importIfPresent(file('systems/contracts.js'));
+  var routesMod = await importIfPresent(file('data/routes.js'));
   return {
     root: root,
     src: src,
@@ -62,7 +66,19 @@ export async function loadGame(root) {
     interlude: interludeMod,
     addXp: progMod.addXp || null,
     applyRig: rigMod && rigMod.applyRig ? rigMod.applyRig : null,
-    cycleWeaponMode: weaponMod && weaponMod.cycleWeaponMode ? weaponMod.cycleWeaponMode : null
+    cycleWeaponMode: weaponMod && weaponMod.cycleWeaponMode ? weaponMod.cycleWeaponMode : null,
+    // v0.14.0 additions. Each degrades to null / [] on older source trees (--src).
+    setTactical: tacticalMod && tacticalMod.setPlayerTactical ? tacticalMod.setPlayerTactical : null,
+    triggerTactical: tacticalMod && tacticalMod.triggerTacticalAuxiliary ? tacticalMod.triggerTacticalAuxiliary : null,
+    doubleDown: contractsMod && contractsMod.doubleDownCurrentContract ? contractsMod.doubleDownCurrentContract : null,
+    evaluateArchetypes: progMod.evaluateArchetypes || null,
+    getWeaponStrategy: weaponRegMod && weaponRegMod.getWeaponStrategy ? weaponRegMod.getWeaponStrategy : null,
+    options: {
+      rigs: rigMod && rigMod.RIGS ? rigMod.RIGS.map(function (r) { return r.id; }) : [],
+      routes: routesMod && routesMod.ROUTES ? routesMod.ROUTES.map(function (r) { return r.id; }) : [],
+      weapons: weaponRegMod && weaponRegMod.listWeaponStrategies ? weaponRegMod.listWeaponStrategies().map(function (w) { return w.id; }) : [],
+      tacticals: tacticalMod && tacticalMod.listTacticalGears ? tacticalMod.listTacticalGears().map(function (t) { return t.id; }) : []
+    }
   };
 }
 

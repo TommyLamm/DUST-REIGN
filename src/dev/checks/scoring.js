@@ -166,13 +166,13 @@ export function run() {
 
     var lowAcc = { shotsFired: 10, shotsHit: 0 };
     assertRank(calculateCombatRank(10, 0, lowAcc), 'C', 'RECRUIT RECLUSE', 'rank-letter--c', 'low score');
-    assertRank(calculateCombatRank(1, 29999, lowAcc), 'C', 'RECRUIT RECLUSE', 'rank-letter--c', 'below B');
-    assertRank(calculateCombatRank(1, 30000, lowAcc), 'B', 'IRON SCRAPPER', 'rank-letter--b', 'B');
-    assertRank(calculateCombatRank(2, 89999, { shotsFired: 4, shotsHit: 4 }), 'B', 'IRON SCRAPPER', 'rank-letter--b', 'below A');
-    assertRank(calculateCombatRank(3, 90000, lowAcc), 'A', 'VETERAN BREACHER', 'rank-letter--a', 'A');
-    assertRank(calculateCombatRank(4, 219999, lowAcc), 'A', 'VETERAN BREACHER', 'rank-letter--a', 'below S');
-    assertRank(calculateCombatRank(1, 220000, lowAcc), 'S', 'APEX SCAVENGER', 'rank-letter--s', 'score S');
-    var perfect = calculateCombatRank(1, 30000, { shotsFired: 10, shotsHit: 10 });
+    assertRank(calculateCombatRank(1, 74999, lowAcc), 'C', 'RECRUIT RECLUSE', 'rank-letter--c', 'below B');
+    assertRank(calculateCombatRank(1, 75000, lowAcc), 'B', 'IRON SCRAPPER', 'rank-letter--b', 'B');
+    assertRank(calculateCombatRank(2, 224999, { shotsFired: 4, shotsHit: 4 }), 'B', 'IRON SCRAPPER', 'rank-letter--b', 'below A');
+    assertRank(calculateCombatRank(3, 225000, lowAcc), 'A', 'VETERAN BREACHER', 'rank-letter--a', 'A');
+    assertRank(calculateCombatRank(4, 549999, lowAcc), 'A', 'VETERAN BREACHER', 'rank-letter--a', 'below S');
+    assertRank(calculateCombatRank(1, 550000, lowAcc), 'S', 'APEX SCAVENGER', 'rank-letter--s', 'score S');
+    var perfect = calculateCombatRank(1, 75000, { shotsFired: 10, shotsHit: 10 });
     if (perfect.letter !== 'B' || perfect.acc !== 1) throw new Error('accuracy must not change the letter');
 
     state.extracted = true;
@@ -180,6 +180,12 @@ export function run() {
     assertRank(calculateCombatRank(1, 0, {}), 'S', 'APEX SCAVENGER', 'rank-letter--s', 'extract heat 1');
     state.heat = 2;
     assertRank(calculateCombatRank(1, 0, lowAcc), 'S+', 'DUST SOVEREIGN', 'rank-letter--splus', 'S+');
+    state.heat = 3;
+    assertRank(calculateCombatRank(1, 699999, lowAcc), 'S+', 'DUST SOVEREIGN', 'rank-letter--splus', 'below SSS');
+    assertRank(calculateCombatRank(1, 700000, lowAcc), 'SSS', 'DUST EMPEROR', 'rank-letter--sss', 'SSS');
+    assertRank(calculateCombatRank(1, 700000, { extracted: false, heat: 3 }), 'S', 'APEX SCAVENGER', 'rank-letter--s', 'SSS needs extract');
+    state.heat = 2;
+    assertRank(calculateCombatRank(1, 700000, lowAcc), 'S+', 'DUST SOVEREIGN', 'rank-letter--splus', 'SSS needs heat 3');
     assertRank(calculateCombatRank(1, 0, { extracted: false, heat: 0 }), 'C', 'RECRUIT RECLUSE', 'rank-letter--c', 'stats override');
     state.extracted = false;
     state.heat = 0;

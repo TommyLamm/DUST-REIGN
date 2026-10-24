@@ -53,7 +53,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/audio/audio-fx.js` | Web Audio API 節點自動斷開回收（`cleanupVoice()` / `.disconnect()`）、分頁可見度休眠（`visibilitychange`）與狀態持久化。 |
 | `src/platform/playroom.js`、`playroom-sdk.js` | 遊戲端成績與雲端存檔樂觀鎖同步橋接（Playroom SDK 1.1.0）、能力協商、錯誤碼處理與平台訊息協定。 |
 | `src/dev/self-check.js`、`src/dev/checks/`、`scripts/self-check.mjs` | 無介面的核心邏輯自檢、分檔案例及 Node 執行入口。 |
-| `scripts/balance-sim.mjs` | 無頭長流程模擬。 |
+| `scripts/balance-sim.mjs`、`scripts/balance-matrix.mjs`、`scripts/balance/` | 無頭長流程模擬（機器人、報表、載入器），以及把武器 x 機體 x 機器人 x Heat 展開成並行子行程並彙整的矩陣驅動。 |
 | `game.json`、`cover.png` | 平台 Manifest（Schema v2）與封面。 |
 | `scripts/stage-release.mjs`、`.playroom/`、`.github/workflows/release.yml` | 成品白名單 staging（阻斷內部工具混入）、官方固定驗證工具（Playroom Game Tools 1.1.0）、SHA-256 鎖定、版本核對、完整 ZIP 驗證與 Release 發布流程。 |
 

@@ -24,27 +24,102 @@ var BOSS_KIND = { titan: true, dreadnought: true, sovereign: true };
 
 var activeBot = 'skilled';
 
+// Per-run bot options (set by setBotContext, read by the pickers and actBot).
+//   cards         default | resonance   card picker (see pickUpgradeIndex)
+//   chargePolicy  auto | hold | tap     charge weapons (colossus); auto = hold on bosses / dense packs, tap otherwise
+//   tactical      auto | none           skilled uses the equipped tactical gear
+//   doubleDown    off | always | smart  accept the contract double-down while the 12s window is open
+//   gate          push | extract        what the bot picks at the wave-15 gate
+var ctx = {
+  cards: 'default',
+  chargePolicy: 'auto',
+  tactical: 'auto',
+  doubleDown: 'off',
+  gate: 'push'
+};
+var botCounters = null;
+
+export var ARCHETYPES = ['kinetic', 'plasma', 'static', 'tactical'];
+
 export var SKILLED_NOTES = [
   'skilled sidesteps shots that will hit within 0.32s and dashes only if impact is under 0.12s (idle still dashes at a 60px gap; kite still does not dash). Acid lob markers and volatile blasts count as telegraphs.',
   'skilled steps out of mortar / meteor / acid / lightning / Dreadnought charge lanes and the Sovereign eye, and flees an arming Scurrier or a Burrower emerge circle.',
   'skilled orbits bosses at 280–420px instead of 160–250px, and shoots Storm Towers first while Sovereign is shielded.',
   'skilled detours to a repair orb inside 260px when hull is under 72%.',
-  'skilled, under 50% hull, ranks DEFENSE above OFFENSE. Fusion stays first. idle and kite keep the original picker.'
+  'skilled, under 50% hull, ranks DEFENSE above OFFENSE. Fusion stays first. idle and kite keep the original picker.',
+  'v0.14.0: --cards resonance keeps FUSION first, then prefers the archetype with the most stacks so far (kinetic / plasma / static / tactical) so the 2 / 4 / 6 resonance tiers are reachable; ties and non-matching hands fall back to the category order.',
+  'v0.14.0: colossus (charge railgun) fires by policy. auto = hold to a full charge while a boss is alive or 5+ enemies are within 380px, otherwise tap-release for plasma orbs. --charge-policy hold|tap forces one. Applies to kite as well as skilled.',
+  'v0.14.0: skilled deploys the equipped tactical gear by rule (sentry turret / flares / singularity grenade / aegis barrier each have a trigger; unknown gear falls back to a 3+ enemy rule). idle and kite never deploy one.',
+  'v0.14.0: --double-down always|smart presses H while the 12s window is open (smart: only above 75% hull and only on combo / elite-hunt contracts, the two this bot actually completes). Backlash and 3x payouts come from the game; the report counts them.'
 ];
 
-export function setBotContext(name) {
+export function setBotContext(name, options) {
   activeBot = name || 'skilled';
+  ctx.cards = 'default';
+  ctx.chargePolicy = 'auto';
+  ctx.tactical = 'auto';
+  ctx.doubleDown = 'off';
+  ctx.gate = 'push';
+  if (options) {
+    if (options.cards) ctx.cards = options.cards;
+    if (options.chargePolicy) ctx.chargePolicy = options.chargePolicy;
+    if (options.tactical) ctx.tactical = options.tactical;
+    if (options.doubleDown) ctx.doubleDown = options.doubleDown;
+    if (options.gate) ctx.gate = options.gate;
+  }
+  botCounters = { tacticalUses: 0, doubleDowns: 0, orbShots: 0, chargeHolds: 0 };
 }
 
-export function pickUpgradeIndex(choices, player) {
+export function getBotCounters() {
+  return botCounters || { tacticalUses: 0, doubleDowns: 0, orbShots: 0, chargeHolds: 0 };
+}
+
+function archetypeOf(card) {
+  var arch = card && card.archetype;
+  return typeof arch === 'string' ? arch : '';
+}
+
+// Archetype with the most acquired stacks so far; earliest acquired wins a tie. '' while nothing is held.
+export function focusArchetype(state) {
+  var list = (state && state.acquiredUpgrades) || [];
+  var counts = {};
+  var order = [];
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var arch = archetypeOf(list[i]);
+    if (!arch) continue;
+    if (!counts[arch]) {
+      counts[arch] = 0;
+      order.push(arch);
+    }
+    counts[arch] += 1;
+  }
+  var best = '';
+  var bestCount = 0;
+  for (i = 0; i < order.length; i += 1) {
+    if (counts[order[i]] > bestCount) {
+      bestCount = counts[order[i]];
+      best = order[i];
+    }
+  }
+  return best;
+}
+
+export function pickUpgradeIndex(choices, player, state) {
   var best = 0;
   var bestRank = 99;
   var hurt = activeBot === 'skilled' && player && player.maxHp > 0 && (player.hp / player.maxHp) < 0.5;
+  var focus = ctx.cards === 'resonance' ? focusArchetype(state) : '';
   if (!choices) return 0;
   for (var i = 0; i < choices.length; i += 1) {
     var cat = String((choices[i] && choices[i].category) || '').toUpperCase();
     var rank = Object.prototype.hasOwnProperty.call(CARD_RANK, cat) ? CARD_RANK[cat] : 4;
     if (hurt && cat === 'DEFENSE') rank = 0.5;
+    // Resonance: stay on the leading archetype. Matching non-fusion cards slot in just behind
+    // FUSION (rank 0) and ahead of every ordinary category rank; the category rank still orders them.
+    if (focus && cat !== 'FUSION' && !(hurt && cat === 'DEFENSE') && archetypeOf(choices[i]) === focus) {
+      rank = 0.8 + rank * 0.01;
+    }
     if (rank < bestRank) {
       bestRank = rank;
       best = i;
@@ -413,12 +488,136 @@ function setKeys(rt, x, y) {
   if (x > 0.28) keys.add('d');
 }
 
+function bossAlive(state) {
+  var list = state.enemies || [];
+  for (var i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (e && e.hp > 0 && isBossEnemy(e)) return e;
+  }
+  return null;
+}
+
+// Colossus: holding the trigger charges to a full-power lance (auto-fires at chargeNeed);
+// releasing early fires a weak plasma orb. Returns the mouse.down value for this frame.
+function chargeTrigger(state, p) {
+  var policy = ctx.chargePolicy;
+  var mode = p.weaponMode || 'standard';
+  if (mode !== 'colossus') return true;
+  var hold = policy === 'hold';
+  if (policy === 'auto') {
+    hold = Boolean(bossAlive(state)) || enemiesWithin(state, p, 380).length >= 5;
+  }
+  if (hold) {
+    if (botCounters) botCounters.chargeHolds += 1;
+    return true;
+  }
+  // tap: press on a ready, idle gun, release next frame
+  if ((p.cooldown || 0) > 0) return false;
+  if (p.isCharging) {
+    if (botCounters) botCounters.orbShots += 1;
+    return false;
+  }
+  return true;
+}
+
+function nearestOf(list, p) {
+  var best = null;
+  var bestD = Infinity;
+  for (var i = 0; i < list.length; i += 1) {
+    var d = hypot(list[i].x - p.x, list[i].y - p.y);
+    if (d < bestD) {
+      bestD = d;
+      best = list[i];
+    }
+  }
+  return best;
+}
+
+function bulletsWithin(state, p, range) {
+  var list = state.enemyBullets || [];
+  var r2 = range * range;
+  var n = 0;
+  for (var i = 0; i < list.length; i += 1) {
+    var b = list[i];
+    if (!b) continue;
+    var dx = b.x - p.x;
+    var dy = b.y - p.y;
+    if (dx * dx + dy * dy <= r2) n += 1;
+  }
+  return n;
+}
+
+// Rule-based tactical deployment. Returns a world-space target { x, y } or null to hold.
+function tacticalTarget(state, p, gearId) {
+  var near = enemiesWithin(state, p, 420);
+  var boss = bossAlive(state);
+  var bossNear = boss && hypot(boss.x - p.x, boss.y - p.y) < 700;
+  var closest = near.length ? nearestOf(near, p) : (bossNear ? boss : null);
+  if (gearId === 'sentry-turret') {
+    if (near.length < 3 && !bossNear) return null;
+    var to = closest || { x: p.x + 80, y: p.y };
+    var dx = to.x - p.x;
+    var dy = to.y - p.y;
+    var len = hypot(dx, dy) || 1;
+    return { x: p.x + (dx / len) * 70, y: p.y + (dy / len) * 70 };
+  }
+  if (gearId === 'thermal-decoy') {
+    var arming = false;
+    var all = state.enemies || [];
+    for (var i = 0; i < all.length; i += 1) {
+      if (all[i] && all[i].kind === 'scurrier' && all[i].arming && hypot(all[i].x - p.x, all[i].y - p.y) < 220) arming = true;
+    }
+    if (!arming && bulletsWithin(state, p, 260) < 4) return null;
+    return { x: p.x + 1, y: p.y };
+  }
+  if (gearId === 'singularity-grenade') {
+    var pack = enemiesWithin(state, p, 300);
+    if (boss && bossNear && pack.length < 4) return { x: boss.x, y: boss.y };
+    if (pack.length < 4) return null;
+    return centroid(pack);
+  }
+  if (gearId === 'aegis-barrier') {
+    var incoming = bulletsWithin(state, p, 320);
+    if (incoming < 2 && !bossNear && near.length < 4) return null;
+    if (!closest) return null;
+    return { x: closest.x, y: closest.y };
+  }
+  // Unknown gear: deploy into a pack of 3+.
+  var crowd = enemiesWithin(state, p, 300);
+  if (crowd.length < 3) return null;
+  return centroid(crowd);
+}
+
+function maybeTactical(game, state, p) {
+  if (ctx.tactical === 'none' || typeof game.triggerTactical !== 'function') return;
+  var slot = p.tacticalSlot;
+  if (!slot || (slot.cooldown || 0) > 0) return;
+  var target = tacticalTarget(state, p, slot.id);
+  if (!target) return;
+  game.rt.input.mouse.x = target.x;
+  game.rt.input.mouse.y = target.y;
+  if (game.triggerTactical() && botCounters) botCounters.tacticalUses += 1;
+}
+
+function maybeDoubleDown(game, state, p) {
+  if (ctx.doubleDown === 'off' || typeof game.doubleDown !== 'function') return;
+  var c = state.contract;
+  if (!c || c.done || c.doubled || (state.waveTime || 0) > 12) return;
+  if (ctx.doubleDown === 'smart') {
+    // The bot only reliably finishes kill-driven contracts (combo, elite hunt); the rest it fails and eats the -25% hull backlash.
+    if (!(p.maxHp > 0 && p.hp / p.maxHp >= 0.75)) return;
+    if (c.id !== 'combo' && c.id !== 'elite-hunt') return;
+  }
+  if (game.doubleDown() && botCounters) botCounters.doubleDowns += 1;
+}
+
 export function actBot(game, botName) {
   var rt = game.rt;
   var state = rt.state;
   var p = state.player;
-  var width = (rt.ui && rt.ui.width) || state.width || 960;
-  var height = (rt.ui && rt.ui.height) || state.height || 640;
+  // state.width is the playfield (960x640 arena, or the 3520x2640 world with --world); rt.ui is only the viewport.
+  var width = state.width || (rt.ui && rt.ui.width) || 960;
+  var height = state.height || (rt.ui && rt.ui.height) || 640;
   var threats = scan(state, p);
   var avoid = botName === 'skilled' ? skilledAvoid(state, p) : null;
   var move = desiredMove(botName, p, threats, width, height);
@@ -472,9 +671,11 @@ export function actBot(game, botName) {
       game.triggerEmp();
     }
   }
+  if (botName === 'skilled') maybeTactical(game, state, p);
+  if (botName !== 'idle') maybeDoubleDown(game, state, p);
   rt.input.mouse.x = aimX;
   rt.input.mouse.y = aimY;
-  rt.input.mouse.down = botName !== 'idle';
+  rt.input.mouse.down = botName !== 'idle' && chargeTrigger(state, p);
   rt.input.gamepadX = 0;
   rt.input.gamepadY = 0;
   rt.input.touchMode = false;
@@ -502,7 +703,7 @@ export function resolveBlockers(game) {
   while (state && !state.over && guard < 12) {
     var choices = state.upgradeChoices;
     if (choices && choices.length) {
-      var index = pickUpgradeIndex(choices, state.player);
+      var index = pickUpgradeIndex(choices, state.player, state);
       var before = choices.length;
       try {
         game.chooseUpgrade(index);
@@ -514,6 +715,12 @@ export function resolveBlockers(game) {
         notes.push('chooseUpgrade did not consume index ' + index + ' (len ' + before + ')');
         return { stuck: true, notes: notes };
       }
+      guard += 1;
+      continue;
+    }
+    if (state.interlude && state.interlude.step === 'extract' && ctx.gate === 'extract' && game.interlude && typeof game.interlude.confirmExtract === 'function') {
+      game.interlude.confirmExtract();
+      notes.push('wave-15 gate: extracted');
       guard += 1;
       continue;
     }

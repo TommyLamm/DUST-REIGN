@@ -81,19 +81,19 @@ export function calculateCombatRank(wave, score, stats) {
   if (typeof stats.extracted === 'boolean') extracted = stats.extracted;
   if (typeof stats.heat === 'number') heat = stats.heat;
 
-  if (extracted && heat >= 3 && s >= 280000) {
+  if (extracted && heat >= 3 && s >= 700000) {
     return rankResult('SSS', 'DUST EMPEROR', 'rank-letter--sss', acc);
   }
   if (extracted && heat >= 2) {
     return rankResult('S+', 'DUST SOVEREIGN', 'rank-letter--splus', acc);
   }
-  if (extracted || s >= 220000) {
+  if (extracted || s >= 550000) {
     return rankResult('S', 'APEX SCAVENGER', 'rank-letter--s', acc);
   }
-  if (s >= 90000) {
+  if (s >= 225000) {
     return rankResult('A', 'VETERAN BREACHER', 'rank-letter--a', acc);
   }
-  if (s >= 30000) {
+  if (s >= 75000) {
     return rankResult('B', 'IRON SCRAPPER', 'rank-letter--b', acc);
   }
   return rankResult('C', 'RECRUIT RECLUSE', 'rank-letter--c', acc);

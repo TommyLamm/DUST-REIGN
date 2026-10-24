@@ -1,10 +1,14 @@
 import { makeUi } from './dom-stub.mjs';
-import { actBot, resolveBlockers, setBotContext } from './bots.mjs';
+import { actBot, getBotCounters, resolveBlockers, setBotContext } from './bots.mjs';
 
 export var DT = 1 / 60;
 export var SAFETY_SECONDS = 1200;
 var ARENA_W = 960;
 var ARENA_H = 640;
+// --world: the shipped 3520x2640 map seen through a 1280x720 viewport (makeState() with no size).
+var VIEW_W = 1280;
+var VIEW_H = 720;
+var RESONANCE_KEYS = ['kinetic', 'plasma', 'static', 'tactical'];
 
 var BOSS_KINDS = {
   titan: true,
@@ -180,7 +184,8 @@ function noteWave(tracker, state, simTime) {
   tracker.waveTimes.push({
     wave: tracker.wave,
     seconds: round(simTime - tracker.waveStart, 3),
-    completed: true
+    completed: true,
+    score: Math.round(state.score || 0)
   });
   tracker.wave = state.wave || tracker.wave;
   tracker.waveStart = simTime;
@@ -229,6 +234,103 @@ function applyChassis(game, state, opts) {
   if (opts.weapon && typeof game.cycleWeaponMode === 'function') {
     game.cycleWeaponMode(opts.weapon);
   }
+  if (opts.tactical && opts.tactical !== 'none' && typeof game.setTactical === 'function') {
+    game.setTactical(state.player, opts.tactical);
+    state.tacticalId = opts.tactical;
+  }
+}
+
+function resonanceTier(count) {
+  return count >= 6 ? 3 : (count >= 4 ? 2 : (count >= 2 ? 1 : 0));
+}
+
+function resonanceSnapshot(game, state) {
+  var p = state && state.player;
+  if (!p) return null;
+  if (typeof game.evaluateArchetypes === 'function') {
+    try { game.evaluateArchetypes(state, true); } catch (error) { /* keep stored counts */ }
+  }
+  var res = p.resonances;
+  if (!res) return null;
+  var counts = {};
+  var tiers = {};
+  var best = 0;
+  for (var i = 0; i < RESONANCE_KEYS.length; i += 1) {
+    var k = RESONANCE_KEYS[i];
+    counts[k] = res[k] || 0;
+    tiers[k] = resonanceTier(counts[k]);
+    if (tiers[k] > best) best = tiers[k];
+  }
+  return { counts: counts, tiers: tiers, bestTier: best };
+}
+
+// Rank the run would file if the bot extracted at the wave-15 gate (extract bonus paid, extracted flag set).
+function rankIfExtracted(game, state, score) {
+  if (typeof game.calculateCombatRank !== 'function') return { letter: '', title: '' };
+  try {
+    var stats = {};
+    var src = state.stats || {};
+    var keys = Object.keys(src);
+    for (var i = 0; i < keys.length; i += 1) stats[keys[i]] = src[keys[i]];
+    stats.extracted = true;
+    stats.heat = state.heat | 0;
+    var rank = game.calculateCombatRank(state.wave, score, stats);
+    return { letter: rank.letter || '', title: rank.title || '' };
+  } catch (error) {
+    return { letter: '', title: '' };
+  }
+}
+
+function noteGate(game, tracker, state, simTime) {
+  var il = state.interlude;
+  if (tracker.gate || !il || il.step !== 'extract') return;
+  var bonus = typeof il.extractBonus === 'number' ? il.extractBonus : 0;
+  var p = state.player || {};
+  tracker.gate = {
+    wave: state.wave || 0,
+    simSeconds: round(simTime, 3),
+    score: Math.round(state.score || 0),
+    extractBonus: bonus,
+    scoreIfExtracted: Math.round(state.score || 0) + bonus,
+    rankIfExtracted: rankIfExtracted(game, state, Math.round(state.score || 0) + bonus),
+    hpRatio: p.maxHp > 0 ? round(p.hp / p.maxHp, 3) : null,
+    level: state.level || 1,
+    breakdown: copyBreakdown(state),
+    resonance: resonanceSnapshot(game, state)
+  };
+}
+
+// Contracts are state.contract objects replaced each offered wave. Watch identity changes.
+function noteContract(tracker, state) {
+  var c = state.contract;
+  var cur = tracker.contractCur;
+  if (cur && cur.ref !== c) closeContract(tracker, cur);
+  if (c && (!cur || cur.ref !== c)) {
+    tracker.contractCur = { ref: c, id: c.id || '', wave: state.wave || 0, doubled: false };
+    tracker.contracts.offered += 1;
+    cur = tracker.contractCur;
+  } else if (!c) {
+    tracker.contractCur = null;
+  }
+  if (cur && c && c.doubled && !cur.doubled) {
+    cur.doubled = true;
+    tracker.contracts.doubled += 1;
+  }
+}
+
+function closeContract(tracker, cur) {
+  var done = Boolean(cur.ref.done);
+  if (done) tracker.contracts.completed += 1;
+  if (cur.doubled) {
+    if (done) tracker.contracts.doubledCompleted += 1;
+    else tracker.contracts.doubledFailed += 1;
+  }
+  var byId = tracker.contracts.byId;
+  if (!byId[cur.id]) byId[cur.id] = { offered: 0, completed: 0, doubled: 0, doubledCompleted: 0 };
+  byId[cur.id].offered += 1;
+  if (done) byId[cur.id].completed += 1;
+  if (cur.doubled) byId[cur.id].doubled += 1;
+  if (cur.doubled && done) byId[cur.id].doubledCompleted += 1;
 }
 
 function injectStartWave(game, state, opts, notes) {
@@ -294,16 +396,21 @@ function startRun(game, opts) {
   if (!rt.input) rt.input = { keys: new Set(), mouse: { x: 0, y: 0, down: false }, touchMode: false, gamepadX: 0, gamepadY: 0 };
   if (!rt.input.keys || typeof rt.input.keys.clear !== 'function') rt.input.keys = new Set();
   rt.input.keys.clear();
-  rt.input.mouse.x = ARENA_W / 2 + 100;
-  rt.input.mouse.y = ARENA_H / 2;
+  rt.input.mouse.x = (opts.world ? 1760 : ARENA_W / 2) + 100;
+  rt.input.mouse.y = opts.world ? 1320 : ARENA_H / 2;
   rt.input.mouse.down = false;
   rt.input.touchMode = false;
   rt.input.gamepadX = 0;
   rt.input.gamepadY = 0;
   if (rt.firePointers && typeof rt.firePointers.clear === 'function') rt.firePointers.clear();
   rt.fxEvents = null;
-  rt.ui = makeUi(ARENA_W, ARENA_H);
-  rt.state = game.makeState(ARENA_W, ARENA_H);
+  if (opts.world) {
+    rt.ui = makeUi(VIEW_W, VIEW_H);
+    rt.state = game.makeState();
+  } else {
+    rt.ui = makeUi(ARENA_W, ARENA_H);
+    rt.state = game.makeState(ARENA_W, ARENA_H);
+  }
   var state = rt.state;
   if (heat || heat === 0) state.heat = heat;
   if (typeof game.applyLoadout === 'function') game.applyLoadout(state);
@@ -377,7 +484,13 @@ export function runOne(game, opts) {
 
 function simulate(game, opts) {
   var started = process.hrtime.bigint();
-  setBotContext(opts.bot);
+  setBotContext(opts.bot, {
+    cards: opts.cards,
+    chargePolicy: opts.chargePolicy,
+    tactical: opts.tactical === 'none' ? 'none' : 'auto',
+    doubleDown: opts.doubleDown,
+    gate: opts.gate
+  });
   var state = startRun(game, opts);
   var notes = (opts._notes || []).slice();
   var maxSeconds = opts.seconds > 0 ? opts.seconds : SAFETY_SECONDS;
@@ -399,13 +512,17 @@ function simulate(game, opts) {
     waveTimes: [],
     level: state.level || 1,
     xpNext: state.xpNext || 0,
-    xpCurve: []
+    xpCurve: [],
+    gate: null,
+    contractCur: null,
+    contracts: { offered: 0, completed: 0, doubled: 0, doubledCompleted: 0, doubledFailed: 0, byId: {} }
   };
   noteLevel(tracker, state, 0);
   syncEnemies(tracker, state, 0, false);
   var frameEvents = [];
 
   while (frames < maxFrames && !state.over) {
+    noteGate(game, tracker, state, simTime);
     var blocked = resolveBlockers(game);
     if (blocked.notes.length) notes = notes.concat(blocked.notes);
     if (blocked.stuck) {
@@ -452,6 +569,7 @@ function simulate(game, opts) {
     if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
     if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = blamed || 'unknown';
     syncEnemies(tracker, state, simTime, true);
+    noteContract(tracker, state);
     noteWave(tracker, state, simTime);
     noteLevel(tracker, state, simTime);
     state = game.rt.state || state;
@@ -470,6 +588,12 @@ function simulate(game, opts) {
   if (outcome === 'wave-cap' && opts.waves > 0) waveReached = opts.waves;
   var deathCause = outcome === 'death' ? (tracker.lethal || 'unknown') : outcome;
   if (outcome === 'extract') deathCause = 'extract';
+  if (tracker.contractCur) {
+    closeContract(tracker, tracker.contractCur);
+    tracker.contractCur = null;
+  }
+  var stats = state.stats || {};
+  var endlessWaves = state.overtime ? Math.max(0, waveReached - 15) : 0;
   var wallMs = Number(process.hrtime.bigint() - started) / 1e6;
   return {
     seed: String(opts.seed),
@@ -498,6 +622,29 @@ function simulate(game, opts) {
     scoreBreakdownPresent: Boolean(state.scoreBreakdown && typeof state.scoreBreakdown === 'object'),
     upgrades: cardList(state.acquiredUpgrades),
     weaponMode: state.player && state.player.weaponMode ? state.player.weaponMode : '',
+    tactical: state.player && state.player.tacticalSlot ? state.player.tacticalSlot.id : '',
+    botOptions: {
+      cards: opts.cards || 'default',
+      chargePolicy: opts.chargePolicy || 'auto',
+      doubleDown: opts.doubleDown || 'off',
+      gate: opts.gate || 'push',
+      world: Boolean(opts.world)
+    },
+    botCounters: getBotCounters(),
+    overtime: Boolean(state.overtime),
+    endlessWaves: endlessWaves,
+    gate: tracker.gate,
+    resonance: resonanceSnapshot(game, state),
+    contracts: tracker.contracts,
+    stats: {
+      maxCombo: stats.maxCombo || 0,
+      flawlessWaves: stats.flawlessWaves || 0,
+      contractsCompleted: stats.contractsCompleted || 0,
+      justDashes: stats.justDashes || 0,
+      shotsFired: stats.shotsFired || 0,
+      shotsHit: stats.shotsHit || 0
+    },
+    flawlessStreak: state.flawlessStreak || 0,
     recipe: state.recipe ? {
       wave: state.recipe.wave,
       boss: state.recipe.boss || null,

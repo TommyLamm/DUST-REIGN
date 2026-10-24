@@ -805,13 +805,13 @@ export function selfCheck() {
     // Phase 3 Step 4: Endgame Telemetry & Combat Rank Evaluation Check
     var rankSplus = calculateCombatRank(15, 0, { shotsFired: 0, shotsHit: 0, extracted: true, heat: 2 });
     var rankS1 = calculateCombatRank(15, 0, { shotsFired: 10, shotsHit: 0, extracted: true, heat: 1 });
-    var rankS2 = calculateCombatRank(3, 220000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
-    var rankA1 = calculateCombatRank(6, 219999, { shotsFired: 100, shotsHit: 44, extracted: false, heat: 0 });
-    var rankA2 = calculateCombatRank(2, 90000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
-    var rankB1 = calculateCombatRank(6, 30000, { shotsFired: 100, shotsHit: 45, extracted: false, heat: 0 });
-    var rankB2 = calculateCombatRank(2, 89999, { shotsFired: 10, shotsHit: 10, extracted: false, heat: 0 });
+    var rankS2 = calculateCombatRank(3, 550000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
+    var rankA1 = calculateCombatRank(6, 549999, { shotsFired: 100, shotsHit: 44, extracted: false, heat: 0 });
+    var rankA2 = calculateCombatRank(2, 225000, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 0 });
+    var rankB1 = calculateCombatRank(6, 75000, { shotsFired: 100, shotsHit: 45, extracted: false, heat: 0 });
+    var rankB2 = calculateCombatRank(2, 224999, { shotsFired: 10, shotsHit: 10, extracted: false, heat: 0 });
     var rankC1 = calculateCombatRank(10, 0, { shotsFired: 10, shotsHit: 10, extracted: false, heat: 0 });
-    var rankC2 = calculateCombatRank(4, 29999, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 5 });
+    var rankC2 = calculateCombatRank(4, 74999, { shotsFired: 0, shotsHit: 0, extracted: false, heat: 5 });
 
     var rankLogicOk = rankSplus.letter === 'S+' && rankSplus.title === 'DUST SOVEREIGN' && rankSplus.classMod === 'rank-letter--splus' &&
       rankS1.letter === 'S' && rankS1.title === 'APEX SCAVENGER' && rankS1.classMod === 'rank-letter--s' &&
@@ -848,7 +848,7 @@ export function selfCheck() {
 
     test.over = true;
     test.wave = 7;
-    test.score = 40000;
+    test.score = 80000;
     test.stats.shotsFired = 50;
     test.stats.shotsHit = 25;
     test.stats.maxCombo = 14;

@@ -69,6 +69,7 @@ function releaseFreeEmp(x, y, radius, stun, damage) {
   var i;
   for (i = enemies.length - 1; i >= 0; i -= 1) {
     var enemy = enemies[i];
+    if (!enemy) continue;
     var reach = radius + (enemy.r || 0);
     if (dist2(x, y, enemy.x, enemy.y) > reach * reach) continue;
     damageEnemy(enemy, damage, { source: 'emp', x: x, y: y });
@@ -277,6 +278,7 @@ export function onEmp(player, info) {
     var enemies = livingEnemies();
     for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
       var foe = enemies[ei];
+      if (!foe) continue;
       var inEmp = info && typeof info.x === 'number' && typeof info.y === 'number' && typeof info.r === 'number'
         ? dist2(info.x, info.y, foe.x, foe.y) <= (info.r + foe.r) * (info.r + foe.r)
         : true;
@@ -544,6 +546,7 @@ export function onShieldBreak(enemy, info) {
     var enemies = livingEnemies();
     for (var i = enemies.length - 1; i >= 0; i -= 1) {
       var foe = enemies[i];
+      if (!foe) continue;
       var reach = radius + (foe.r || 0);
       if (dist2(ox, oy, foe.x, foe.y) <= reach * reach) {
         damageEnemy(foe, damage, { source: 'concussion_breaker', x: ox, y: oy });

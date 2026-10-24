@@ -12,6 +12,8 @@ var HELP = [
   '  node scripts/balance-sim.mjs --runs 20 --seed 1 --bot idle,kite,skilled --waves 15 --seconds 600 --heat 0 --out output/balance/p0-current.json',
   '  node scripts/balance-sim.mjs --src $env:TEMP\\dust-reign-v030 --runs 20 --seed 1 --bot idle,kite,skilled --commit ed2fcf6 --label v0.3.0 --out output/balance/baseline-v0.3.0.json',
   '  node scripts/balance-sim.mjs --compare output/balance/baseline-v0.3.0.json output/balance/p0-current.json --out output/balance/compare-p0-vs-v030.json',
+  '  node scripts/balance-sim.mjs --runs 20 --seed 1 --bot skilled,kite --weapon colossus --rig bulwark --tactical aegis-barrier --cards resonance --double-down smart --waves 20 --out output/balance/colossus-bulwark.json',
+  '  node scripts/balance-matrix.mjs --help        （武器 x 機體 x 機器人 x Heat 全矩陣，多行程並行；詳見該檔案）',
   '',
   '參數',
   '  --runs N        每個機器人的局數（預設 1）',
@@ -24,13 +26,20 @@ var HELP = [
   '                  依「1 + round((N-1)*0.8)」注入等級並用機器人選卡。',
   '                  第 6 波起若沒給 --route，套用 ironfield',
   '  --route ID      開局路線（scorched, ironfield, static, blackout, convoy, stormwall）',
-  '  --rig ID        開局機體（scrapper, strider, bulwark, salvager）',
-  '  --weapon ID     主武器（standard, breacher, vanguard, arc-welder）',
+  '  --rig ID        開局機體（scrapper, strider, bulwark, salvager；有效清單讀自 src/data/rigs.js）',
+  '  --weapon ID     主武器（standard, breacher, vanguard, arc-welder, colossus；清單讀自武器註冊表）',
+  '  --tactical ID   戰術裝備（sentry-turret, thermal-decoy, singularity-grenade, aegis-barrier；清單讀自戰術註冊表）。',
+  '                  none = 保留遊戲預設裝備，但機器人不部署。skilled 預設會依規則部署目前裝備',
+  '  --cards MODE    選卡策略：default（融合 > 攻擊 > 防禦 > 其他）或 resonance（融合優先，其次集中同一原型以推到 2 / 4 / 6 共鳴階）',
+  '  --charge-policy P  蓄力武器（colossus）開火：auto（首領或 380px 內 5 隻以上時蓄滿，否則點放電漿球）、hold、tap。預設 auto',
+  '  --double-down [M]  接受合約加注（H 鍵，波次前 12 秒）。M = always（預設）或 smart（血量 >= 75% 且只加注 combo / elite-hunt 合約）。不加此旗標則不加注',
+  '  --gate MODE     第 15 波關卡：push（深入無盡，預設）或 extract（撤離結算）。無論選哪個，報表都會記下關卡當下的分數與「若撤離」的評級',
+  '  --world         用正式 3520x2640 大世界與 1280x720 視口（預設沿用 960x640 競技場，與歷史報表可比）',
   '  --out PATH      JSON 路徑。同名 .md 為短摘要。預設 output/balance/<label>.json',
   '  --src DIR       遊戲根目錄（其下要有 src/main.js），或直接指向 src 目錄。預設為本 repository',
   '  --label NAME    報表標題',
   '  --commit SHA    記在報表裡的來源 commit，不影響載入',
-  '  --compare A B   讀兩份 JSON，寫 P0 對 v0.3.0 的差異',
+  '  --compare A B   讀兩份 JSON，寫差異（死亡波次、分數 p50 / p90、過第 15 波、首領擊殺 p50、評級分布）',
   '',
   '機器人',
   '  idle     只躲避（含 60px 內衝刺），不射擊、不放 EMP。生存下限',
@@ -39,13 +48,17 @@ var HELP = [
   '           0.16 秒內才衝刺；離開砲擊／隕石／酸池／雷槍／衝撞線與風暴之眼；',
   '           遠離上膛的 Scurrier 與 Burrower 破土圈；首領戰保持 280–420px；',
   '           血量低於 72% 時去撿維修；血量低於 50% 時防禦卡優先於攻擊卡',
-  '  三種機器人選卡順序相同：融合 > 攻擊（含 WEAPON）> 防禦 > 其他，讓升級面板不會把對局卡住',
+  '  三種機器人選卡順序相同（--cards default）：融合 > 攻擊（含 WEAPON）> 防禦 > 其他，讓升級面板不會把對局卡住',
+  '  v0.14.0 起 skilled 依規則部署戰術裝備、colossus 依 --charge-policy 蓄力／點放（kite 同樣套用），皆可由旗標關閉或強制',
   '  幕間若出現，會呼叫遊戲既有的 chooseRoute / chooseRepair（或同義函式），選第一個路線索引。沒有函式時清掉 state.interlude，不加血',
   '',
   '輸出',
-  '  每局：存活波次、死亡原因、各波秒數、分數與 scoreBreakdown、評級、等級與 XP 曲線、',
-  '  敵型生成數與擊殺數、首領擊殺秒數、牆鐘耗時。',
+  '  每局：存活波次、死亡原因、各波秒數與當時分數、分數與 scoreBreakdown、評級（含 S+ / SSS）、等級與 XP 曲線、',
+  '  敵型生成數與擊殺數、首領擊殺秒數、牆鐘耗時。v0.14.0 起另有：無盡波數（endlessWaves）、',
+  '  第 15 波關卡快照（gate：分數、若撤離的分數與評級、血量比、共鳴階）、共鳴階數、合約與加注結果、',
+  '  最高連擊與無傷波數、機器人計數（戰術部署次數、加注次數）。',
   '  彙總：平均與 p10/p50/p90，並對照 docs/gameplay-overhaul/10-balance-sheet.md 的首領時間與 B/A/S 分數百分位。',
+  '  另有：過第 15 波比率、關卡分數與若撤離評級分布、無盡波數與每波分數增量、加注成功率。',
   '',
   '限制',
   '  不修改 src。不渲染。v0.3.0 的致死來源是由 fx 事件推測，不是傷害入口的 source 欄位。',
@@ -87,6 +100,12 @@ function parseArgs(argv) {
     route: '',
     rig: '',
     weapon: '',
+    tactical: '',
+    cards: 'default',
+    chargePolicy: 'auto',
+    doubleDown: 'off',
+    gate: 'push',
+    world: false,
     out: '',
     src: '',
     label: '',
@@ -106,6 +125,15 @@ function parseArgs(argv) {
     else if (arg === '--route') out.route = String(take(argv, i, arg)), i += 1;
     else if (arg === '--rig') out.rig = String(take(argv, i, arg)), i += 1;
     else if (arg === '--weapon') out.weapon = String(take(argv, i, arg)), i += 1;
+    else if (arg === '--tactical') out.tactical = String(take(argv, i, arg)), i += 1;
+    else if (arg === '--cards') out.cards = String(take(argv, i, arg)), i += 1;
+    else if (arg === '--charge-policy') out.chargePolicy = String(take(argv, i, arg)), i += 1;
+    else if (arg === '--gate') out.gate = String(take(argv, i, arg)), i += 1;
+    else if (arg === '--world') out.world = true;
+    else if (arg === '--double-down') {
+      if (i + 1 < argv.length && argv[i + 1].indexOf('--') !== 0) out.doubleDown = String(argv[i + 1]), i += 1;
+      else out.doubleDown = 'always';
+    }
     else if (arg === '--out') out.out = take(argv, i, arg), i += 1;
     else if (arg === '--src') out.src = take(argv, i, arg), i += 1;
     else if (arg === '--label') out.label = take(argv, i, arg), i += 1;
@@ -130,6 +158,16 @@ function botsFrom(text) {
   }
   if (!out.length) fail('至少要一個機器人');
   return out;
+}
+
+function checkChoice(flag, value, allowed, strict) {
+  if (!value) return;
+  // An older --src tree may not expose a list; only validate when there is one.
+  if (!allowed || !allowed.length) {
+    if (strict) fail(flag + ' 沒有可用清單');
+    return;
+  }
+  if (allowed.indexOf(value) < 0) fail('未知 ' + flag + '：' + value + '（可用 ' + allowed.join(', ') + '）');
 }
 
 function resolveSrc(dir) {
@@ -181,6 +219,14 @@ async function runSuite(args) {
   installDomStub();
   console.error('載入 ' + src);
   var game = await loadGameWithRetry(src, 12);
+  checkChoice('--rig', args.rig, game.options.rigs);
+  checkChoice('--route', args.route, game.options.routes);
+  checkChoice('--weapon', args.weapon, game.options.weapons);
+  checkChoice('--tactical', args.tactical === 'none' ? '' : args.tactical, game.options.tacticals);
+  checkChoice('--cards', args.cards, ['default', 'resonance'], true);
+  checkChoice('--charge-policy', args.chargePolicy, ['auto', 'hold', 'tap'], true);
+  checkChoice('--double-down', args.doubleDown, ['off', 'always', 'smart'], true);
+  checkChoice('--gate', args.gate, ['push', 'extract'], true);
   var label = args.label || (game.seedRun ? 'p0-current' : 'v0.3.0');
   var outPath = args.out || path.join(ROOT, 'output', 'balance', label + '.json');
   var runs = [];
@@ -199,7 +245,13 @@ async function runSuite(args) {
           startWave: args.startWave,
           route: args.route,
           rig: args.rig,
-          weapon: args.weapon
+          weapon: args.weapon,
+          tactical: args.tactical,
+          cards: args.cards,
+          chargePolicy: args.chargePolicy,
+          doubleDown: args.doubleDown,
+          gate: args.gate,
+          world: args.world
         });
       } catch (error) {
         record = {
@@ -260,9 +312,15 @@ async function runSuite(args) {
     route: args.route || null,
     rig: args.rig || null,
     weapon: args.weapon || null,
+    tactical: args.tactical || null,
+    cards: args.cards,
+    chargePolicy: args.chargePolicy,
+    doubleDown: args.doubleDown,
+    gate: args.gate,
+    world: args.world,
     botNotes: SKILLED_NOTES,
     dt: DT,
-    arena: { width: 960, height: 640 },
+    arena: args.world ? { width: 3520, height: 2640, viewport: [1280, 720] } : { width: 960, height: 640 },
     node: process.version
   }, runs);
   var written = writePair(outPath, report, renderMarkdown(report));

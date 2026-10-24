@@ -50,10 +50,11 @@ addScore(20, 'kill');
 
 | 評級 | 條件 | 稱號（沿用既有） |
 | --- | --- | --- |
+| `SSS` | 撤離通關、Heat ≥ 3 且分數 ≥ 700000 | `DUST EMPEROR` |
 | `S+` | 撤離通關且 Heat ≥ 2 | `DUST SOVEREIGN`（新） |
-| `S` | 撤離通關，或分數 ≥ 220000 | `APEX SCAVENGER` |
-| `A` | 分數 ≥ 90000 | `VETERAN BREACHER` |
-| `B` | 分數 ≥ 30000 | `IRON SCRAPPER` |
+| `S` | 撤離通關，或分數 ≥ 550000 | `APEX SCAVENGER` |
+| `A` | 分數 ≥ 225000 | `VETERAN BREACHER` |
+| `B` | 分數 ≥ 75000 | `IRON SCRAPPER` |
 | `C` | 其餘 | `RECRUIT RECLUSE` |
 
 - 命中率不再影響評級（穿透可讓命中率超過 100%，不適合當門檻），仍顯示在結算。

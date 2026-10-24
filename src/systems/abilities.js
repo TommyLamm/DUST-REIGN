@@ -343,6 +343,7 @@ function landDash(p, m) {
   var pulseDamage = p.damage * (isJustDash ? 2.2 : 0.8);
   for (var di = rt.state.enemies.length - 1; di >= 0; di -= 1) {
     var enemy = rt.state.enemies[di];
+    if (!enemy) continue;
     if (dist2(p.x, p.y, enemy.x, enemy.y) > pulseRadius * pulseRadius) continue;
     hitCount += 1;
     var isStaggered = (enemy.staggerTimer || 0) > 0;
@@ -432,6 +433,7 @@ function landDash(p, m) {
     spawnParticles(p.x, p.y, '#a8f5e5', 16, 160, 2.5);
     for (var sti = rt.state.enemies.length - 1; sti >= 0; sti -= 1) {
       var sEnemy = rt.state.enemies[sti];
+      if (!sEnemy) continue;
       if (dist2(p.x, p.y, sEnemy.x, sEnemy.y) <= (tempestRange + (sEnemy.r || 10)) * (tempestRange + (sEnemy.r || 10))) {
         damageEnemy(sEnemy, tempestDamage, { source: 'dash', x: p.x, y: p.y });
         sEnemy.empTimer = Math.max(sEnemy.empTimer || 0, 1.8);
@@ -535,6 +537,7 @@ export function triggerEmp() {
   var hitCount = 0;
   for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
     var enemy = rt.state.enemies[ei];
+    if (!enemy) continue;
     var eDist2 = dist2(enemy.x, enemy.y, empX, empY);
     if (eDist2 <= (empR + enemy.r) * (empR + enemy.r)) {
       hitCount += 1;
@@ -577,6 +580,7 @@ export function triggerEmp() {
 
         for (var dnei = rt.state.enemies.length - 1; dnei >= 0; dnei -= 1) {
           var dne = rt.state.enemies[dnei];
+          if (!dne) continue;
           if (dist2(tent.x, tent.y, dne.x, dne.y) <= (novaR + dne.r) * (novaR + dne.r)) {
             damageEnemy(dne, 45, { source: 'decoy-supernova', x: tent.x, y: tent.y });
             dne.empTimer = Math.max(dne.empTimer || 0, 3.2);
@@ -633,6 +637,8 @@ export function triggerSpireResonance(spire) {
   if (rt.state.enemies) {
     for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
       var enemy = rt.state.enemies[ei];
+      // killEnemy swap-and-pops; a chain kill can shorten the list under the cursor.
+      if (!enemy) continue;
       var ed2 = dist2(enemy.x, enemy.y, spire.x, spire.y);
       if (ed2 <= (megaR + enemy.r) * (megaR + enemy.r)) {
         chainHits += 1;
@@ -761,6 +767,7 @@ export function triggerSpireMicroResonance(spire, srcX, srcY) {
   if (rt.state.enemies) {
     for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
       var enemy = rt.state.enemies[ei];
+      if (!enemy) continue;
       if (dist2(enemy.x, enemy.y, spire.x, spire.y) <= (90 + enemy.r) * (90 + enemy.r)) {
         damageEnemy(enemy, 15, { source: 'spire', x: spire.x, y: spire.y });
         enemy.empTimer = Math.max(enemy.empTimer || 0, 1.0);
@@ -790,6 +797,7 @@ export function triggerReactiveArmor(threatX, threatY) {
   rt.state.shake = Math.max(rt.state.shake, p.overchargeRetaliation ? 8 : 6);
   for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
     var enemy = rt.state.enemies[ei];
+    if (!enemy) continue;
     if (dist2(p.x, p.y, enemy.x, enemy.y) <= (pulseR + enemy.r) * (pulseR + enemy.r)) {
       damageEnemy(enemy, pulseDmg, { source: 'armor', x: p.x, y: p.y });
       var pdx = enemy.x - p.x;

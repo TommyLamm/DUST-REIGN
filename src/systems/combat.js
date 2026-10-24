@@ -146,6 +146,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
     if (p.reactiveMicroEmp.stun > 0 && rt.state.enemies) {
       for (var mei = rt.state.enemies.length - 1; mei >= 0; mei -= 1) {
         var menemy = rt.state.enemies[mei];
+        if (!menemy) continue;
         if (dist2(menemy.x, menemy.y, p.x, p.y) <= (microR + menemy.r) * (microR + menemy.r)) {
           menemy.empTimer = Math.max(menemy.empTimer || 0, p.reactiveMicroEmp.stun);
           spawnParticles(menemy.x, menemy.y, '#5be7ff', 6, 120, 2);
@@ -357,6 +358,7 @@ export function killEnemy(enemyOrIndex, cause) {
     if (rt.state.enemies) {
       for (var fIdx = rt.state.enemies.length - 1; fIdx >= 0; fIdx -= 1) {
         var foe = rt.state.enemies[fIdx];
+        if (!foe) continue;
         if (foe && !foe.isBoss && foe !== e && !foe.isVip) {
           foe.empTimer = Math.max(foe.empTimer || 0, 4.0);
           foe.hp -= 80;
@@ -392,6 +394,7 @@ export function killEnemy(enemyOrIndex, cause) {
     spawnParticles(e.x, e.y, '#ff4d2e', 16, 180, 3.5);
     for (var cfi = rt.state.enemies.length - 1; cfi >= 0; cfi -= 1) {
       var foe = rt.state.enemies[cfi];
+      if (!foe) continue;
       if (foe && foe !== e && dist2(foe.x, foe.y, e.x, e.y) <= (blastR + foe.r) * (blastR + foe.r)) {
         damageEnemy(foe, 60, { source: 'chain-explosion', x: e.x, y: e.y });
         if (foe.hp <= 0) killEnemy(foe, 'chain-explosion');
@@ -415,6 +418,7 @@ export function explodeCore(core, index) {
   triggerHaptic([25, 35, 45]);
   for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
     var enemy = rt.state.enemies[ei];
+    if (!enemy) continue;
     if (dist2(core.x, core.y, enemy.x, enemy.y) <= (blastR + enemy.r) * (blastR + enemy.r)) {
       if (enemy.isBoss || enemy.kind === 'titan') {
         damageEnemy(enemy, 350, { source: 'core', x: core.x, y: core.y });
@@ -479,6 +483,7 @@ export function explodeBarrel(barrel, index, isKicked) {
 
   for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
     var enemy = rt.state.enemies[ei];
+    if (!enemy) continue;
     if (dist2(barrel.x, barrel.y, enemy.x, enemy.y) <= (blastR + enemy.r) * (blastR + enemy.r)) {
       var dmg = blastDmg;
       var bossKick = (enemy.isBoss || enemy.kind === 'titan') && isKicked;

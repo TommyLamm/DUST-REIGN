@@ -287,6 +287,7 @@ export function stepTactical(dt, frame) {
         }
         for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
           var targetEnemy = enemies[ei];
+          if (!targetEnemy) continue;
           if (dist2(ent.x, ent.y, targetEnemy.x, targetEnemy.y) <= (blastR + targetEnemy.r) * (blastR + targetEnemy.r)) {
             damageEnemy(targetEnemy, collapseDmg, { source: 'singularity', x: ent.x, y: ent.y });
             targetEnemy.empTimer = Math.max(targetEnemy.empTimer || 0, 1.0);
