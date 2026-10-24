@@ -672,18 +672,10 @@ export function drawGround(ctx, camX, camY, viewW, viewH) {
   var cx = (typeof camX === 'number') ? camX : (rt.camera && typeof rt.camera.x === 'number') ? rt.camera.x : (rt.state && rt.state.player ? rt.state.player.x : ((rt.state && rt.state.width) || 3520) * 0.5);
   var cy = (typeof camY === 'number') ? camY : (rt.camera && typeof rt.camera.y === 'number') ? rt.camera.y : (rt.state && rt.state.player ? rt.state.player.y : ((rt.state && rt.state.height) || 2640) * 0.5);
 
-  var halfW = w * 0.5;
-  var halfH = h * 0.5;
-  var worldW = (rt.state && rt.state.width) || 3520;
-  var worldH = (rt.state && rt.state.height) || 2640;
-
-  var clampedCamX = Math.max(halfW, Math.min(cx, worldW - halfW));
-  var clampedCamY = Math.max(halfH, Math.min(cy, worldH - halfH));
-  if (worldW <= w) clampedCamX = worldW * 0.5;
-  if (worldH <= h) clampedCamY = worldH * 0.5;
-
-  var x0 = clampedCamX - halfW;
-  var y0 = clampedCamY - halfH;
+  // The camera stays on the player at the world edge, so the view can extend
+  // past the map; the void beyond it is painted over by render/boundary.js.
+  var x0 = cx - w * 0.5;
+  var y0 = cy - h * 0.5;
 
   if (typeof document === 'undefined') {
     flatFill(ctx, x0, y0, w, h);

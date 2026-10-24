@@ -1,6 +1,5 @@
 import { rt } from '../core/runtime.js';
 import { isHighContrast, isReducedMotion } from '../core/settings.js';
-import { clamp } from '../core/utils.js';
 import { drawFarMotes, drawNearAtmosphere, drawScreenPost } from './atmosphere.js';
 import { drawEnemy, drawHighContrastMarkers, drawRusherTelegraphs } from './enemies.js';
 import { drawAdditiveFx, drawDamageNumbers, drawScreenFlashes, updateFx } from './fx.js';
@@ -12,6 +11,7 @@ import { drawArtilleryTelegraphs, drawEnemyBullets, drawLightningArcs, drawMolte
 import { drawContactShadows } from './shadows.js';
 import { beginGlowBatch, endGlowBatch } from './sprites.js';
 import { drawDecals, drawGround } from './terrain.js';
+import { drawWorldBoundary, drawWorldBoundaryGlow } from './boundary.js';
 import { drawBarrels, drawCasings, drawCores, drawFieldReadability, drawOrb, drawPois, drawSpires } from './world.js';
 import { drawTacticalEntities } from '../systems/tactical.js';
 
@@ -68,10 +68,6 @@ export function draw() {
   var cam = (rt.camera && typeof rt.camera.x === 'number') ? rt.camera : null;
   var camX = cam ? cam.x : (rt.state && rt.state.player ? rt.state.player.x : worldW * 0.5);
   var camY = cam ? cam.y : (rt.state && rt.state.player ? rt.state.player.y : worldH * 0.5);
-  camX = clamp(camX, halfW, worldW - halfW);
-  camY = clamp(camY, halfH, worldH - halfH);
-  if (worldW <= viewW) camX = worldW * 0.5;
-  if (worldH <= viewH) camY = worldH * 0.5;
 
   var x0 = camX - halfW;
   var y0 = camY - halfH;
@@ -92,6 +88,7 @@ export function draw() {
 
   drawGround(ctx, camX, camY, viewW, viewH);
   drawDecals(ctx, x0, y0, viewW, viewH);
+  drawWorldBoundary(ctx, x0, y0, viewW, viewH);
   drawFarMotes(ctx);
   drawContactShadows(ctx, culledEnemyIndices, culledEnemyCount);
   drawCasings(ctx);
@@ -139,6 +136,7 @@ export function draw() {
   drawLightningArcs(ctx);
   drawOpticalFlashes(ctx);
   drawAdditiveFx(ctx);
+  drawWorldBoundaryGlow(ctx, x0, y0, viewW, viewH);
   endGlowBatch();
   ctx.restore();
 

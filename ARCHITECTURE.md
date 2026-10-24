@@ -25,7 +25,8 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/main.js` | 初始化、RAF 主迴圈、暫停／恢復、銷毀及公開 API。 |
 | `src/config.js`、`src/core/constants.js`、`src/data/` | 共用常數、大世界地圖邊界（`WORLD_WIDTH = 3520`, `WORLD_HEIGHT = 2640`，邊界緩衝 160px，有效戰術空間 $3200 \times 2320$）與初始生成坐標（1760, 1320），以及升級、敵人、路線、合約、突變、機體、熱度、每日規則資料，闖關關卡（`campaign-stages.js`）、極限作戰（`hardcore-operations.js`）、改裝工坊模組（`modules.js`）與每日懸賞（`bounties.js`）。 |
 | `src/core/runtime.js` | 跨模組共用的可變容器 `rt`。 |
-| `src/core/camera.js` | 0-GC 單例相機容器、非對稱雙階動態追蹤阻尼、準星動態前瞻（Hermite 曲線）、創傷度正交震屏與震屏解耦雙向坐標轉換（`screenToWorld`／`worldToScreen`）。 |
+| `src/core/camera.js` | 0-GC 單例相機容器、玩家硬鎖定置中（無追蹤延遲、無準星前瞻、不受世界邊界夾持）、創傷度正交震屏與震屏解耦雙向坐標轉換（`screenToWorld`／`worldToScreen`）。 |
+| `src/render/boundary.js` | 世界邊界呈現：視口超出地圖時繪製界外虛空與斜紋、邊緣危險警示條、邊界能量屏障線，以及玩家接近／貼牆時的屏障閃焰（純渲染狀態，減動效時停止脈動）。 |
 | `src/core/state.js` | `makeState()` 建立單局狀態與玩家初始資料，預設對齊 3520x2640 大世界並配置 6 大戰術 POI，支援 standard、campaign、hardcore、daily 模式與關卡計數。 |
 | `src/core/rng.js` | 具名亂數流。未設種子時回傳 `Math.random()`。 |
 | `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid，以 $64 \times 48$ 單元格零分配無縫覆蓋 $3520 \times 2640$ 大世界，提供 `initSpatialGrid` 動態重配置接口與大世界尺寸優先邊界夾持），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
@@ -63,7 +64,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - `entity.fx` 是掛在實體上、只由 render 讀寫的視覺暫存，由 render 惰性建立。模擬不得讀取它。render 不得改寫 `rt.state` 的玩法欄位。受擊閃白的 `lastHp` 與雙層描邊快取只由 `src/render/entity-style.js` 的 `tickFlash` 維護；怪物血條滯後白條（`ghostHp`、`ghostTimer`）與傷害數字的 `numHp` 只由 render 維護。足跡等純視覺貼花走 `addVisualDecal`，不寫入 `rt.state.decals`。
 - 0-GC 記憶體防線：子彈軌跡使用平坦環形緩衝區（`Float32Array(8)`）與靜態 `trailPool` 復用物件；逐實體姿態與每幀位移步進以單例物件 `POSE_SCRATCH` 與 `STEP_SCRATCH` 傳遞；貫穿彈命中歷史採用 128-bit Bitmask（`hitMask0`, `hitMask1`, `hitMask2`, `hitMask3`）紀錄取代陣列物件；全域無序實體陣列（子彈、敵彈、粒子、掉落物等）全面採用 Swap-and-Pop（`fastUnorderedRemove`）替代 `splice`，移除時切斷死者懸空參照避免隱式記憶體洩漏。
 - 物理空間加速：空間雜湊網格單元格鎖定 55px，以 $64 \times 48$ 單元格精確對齊覆蓋 $3520 \times 2640$ 大世界地圖，提供零分配回調 `queryGridCallback` 供酸池、焦痕、自爆友傷與碰撞查詢；全域幾何判定以平方距離 $d^2 \le r^2$ 替代 `Math.hypot`；通用可拆解部位系統（`boss-parts.js`，包含 Titan 4 大可拆解部位與未來多部位首領）以單幀快取旋轉矩陣（`updateEnemyPartCache`）與逆向局部坐標判定；視錐台幾何 AABB 剔除管線（`culledEnemyIndices` Int16Array 靜態池）以雙階邊界（常態 48px、首領 220px）避免螢幕外實體之網格插入、渲染與射擊計時器推進。
-- 大世界廢土與中心相機動力學：地圖邊界為 $3520 \times 2640$（邊界緩衝 160px，有效戰術空間 $3200 \times 2320$），玩家初始置中於 $(1760, 1320)$。相機單例 `rt.camera` 具備非對稱雙階動態阻尼（$\lambda_{cruise}=8.5$, $\lambda_{dash}=24$）、76.8px 軟約束死區、Hermite 雙向準星前瞻（最大 140px，死區 70px）與 20px 邊界防出界夾持；創傷度正交震屏（$T^2$ 質數頻率）於 `screenToWorld` 逆映射中徹底扣除 Shake 雜訊，消滅震屏準星抖動。視口邊緣雷達指針（Ray-AABB 邊界求交）與右上角 128px 微型小地圖（4 桶分流單 Pass 繪製）提供廣域態勢感知。地表渲染採用 $1024 \times 1024$ 離屏圖塊經 GPU GL_REPEAT 矩陣平鋪（`terrainPattern.setTransform`），消除全圖分配之 37.2MB 記憶體負擔。
+- 大世界廢土與中心相機動力學：地圖邊界為 $3520 \times 2640$（邊界緩衝 160px，有效戰術空間 $3200 \times 2320$），玩家初始置中於 $(1760, 1320)$。相機單例 `rt.camera` 每幀硬鎖定於玩家座標，移動、衝刺與瞄準時玩家恆在畫面正中；玩家由模擬層夾持在世界內，到達邊界時相機仍以玩家為中心，界外區域由 `render/boundary.js` 繪製虛空、警示條與能量屏障；創傷度正交震屏（$T^2$ 質數頻率）於 `screenToWorld` 逆映射中徹底扣除 Shake 雜訊，消滅震屏準星抖動。視口邊緣雷達指針（Ray-AABB 邊界求交）與右上角 128px 微型小地圖（4 桶分流單 Pass 繪製）提供廣域態勢感知。地表渲染採用 $1024 \times 1024$ 離屏圖塊經 GPU GL_REPEAT 矩陣平鋪（`terrainPattern.setTransform`），消除全圖分配之 37.2MB 記憶體負擔。
 - PSRA 環形生成架構：內環（視口 $+40\text{px}$）絕對禁刷防暴怪臉貼；中環（$1.15 \sim 1.42\times$ 視口半徑）維持活躍生成；外環（$>1.85\times$）執行靜默回收並退回波次代幣。生成依玩家速度向量預判扇區（$55\% \sim 65\%$ 迎面阻截、$25\% \sim 30\%$ 兩側包夾、$10\% \sim 15\%$ 後方壓迫）與世界邊界切線折射。怪群 AI 支援狼群包夾、55px 空間雜湊局部排斥分離（Separation）與菁英怪 Hyper-Catchup 地底疾行（3.5x 移速）。
 - 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）具備獨立互動半徑、防守計時與破壞回饋，提供戰地超頻、全圖過載脈衝、空投戰備與防守獎勵。三大首領大世界重塑：Titan 導入地震牽引錨拉扯遠程機甲與履帶障礙碾壓；Dreadnought 具備巨石空投撞擊暈眩（3.2s 破甲硬直）；Sovereign 隨動動態風暴之眼。
 - 繪圖管線合流：敵彈採 4 桶色譜分流（Magenta/Orange/Lime/Violet）與單 Pass 批次渲染，消除重複 Dark Halo 狀態切換；接地陰影以雙 Pass 全合流繪製（全場僅發出 2 次 `ctx.fill()`）；`drawDualOutlineZeroCost` 手動復原繪圖屬性替代 `save/restore` 堆疊開銷；傷害數字採字體分組批處理，消滅 CSS 字體抖動。
@@ -135,7 +136,7 @@ index.html → src/main.js → init()
 | 環境危險與掉落物拾取 | `src/systems/sim/hazards.js`、`src/systems/sim/orbs.js` |
 | 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/systems/card-effects.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
 | 輸入映射與玩家移動 | `src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`src/systems/sim/player.js` |
-| 相機動力學、準星前瞻與戰術雷達 | `src/core/camera.js`、`src/render/draw.js`、`src/render/overlay.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js` |
+| 相機置中、世界邊界呈現與戰術雷達 | `src/core/camera.js`、`src/render/draw.js`、`src/render/boundary.js`、`src/render/overlay.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js` |
 | 地表、大氣與光影 | `src/render/` 的 `draw.js`、`terrain.js`、`atmosphere.js`、`lighting.js`、`shadows.js`、`palette.js` |
 | 實體造型、彈體與戰利品 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |
 | 戰鬥視覺特效與覆蓋層 | `src/render/` 的 `fx.js`、`fx-rand.js`、`sprites.js`、`overlay.js`，以及 `src/core/fx-events.js`；模擬粒子與焦痕見 `src/core/pools.js`、`src/systems/sim/effects.js` |
@@ -187,7 +188,7 @@ index.html → src/main.js → init()
 | 用途 | 來源／入口 |
 | --- | --- |
 | 核心邏輯自檢 | Node 24 執行 `node scripts/self-check.mjs`；案例與覆蓋範圍以 `src/dev/self-check.js` 為準。瀏覽器亦可呼叫 `window.LunaGame.selfCheck()`。 |
-| 相機動力學與視口驗證 | Node 24 執行 `node scripts/test-track1-camera.mjs`，驗證非對稱雙階阻尼、軟約束死區、Hermite 準星前瞻、震屏解耦逆映射與邊界夾持。 |
+| 相機動力學與視口驗證 | Node 24 執行 `node scripts/test-track1-camera.mjs`，驗證巡航／衝刺硬鎖定置中、準星不偏移視角、世界邊界不夾持相機、震屏解耦逆映射與減動效零震屏。 |
 | 大地圖與視錐剔除驗證 | Node 24 執行 `node scripts/test-track2-terrain-culling.mjs`，驗證 3520x2640 空間網格對齊、視錐幾何 AABB 剔除率與 6 大 POI 生命週期。 |
 | 偏好設定與雲端存檔驗證 | Node 24 執行 `node scripts/test-cloud-save.mjs` 與 `node scripts/test-track2-cloud-save.mjs`，驗證命名空間平滑遷移、快照限制、智慧合併與樂觀鎖衝突重試。 |
 | 闖關與局外驗證 | Node 24 執行 `node scripts/test-i18n-verification.mjs`、`node scripts/test-campaign-modes.mjs`、`node scripts/test-track3-metagame.mjs` 與 `node scripts/test-extensibility-levels.mjs`。 |

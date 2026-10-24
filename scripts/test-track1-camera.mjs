@@ -22,105 +22,71 @@ assert.strictEqual(camera.lookaheadY, 0, 'Initial lookaheadY must be 0');
 assert.strictEqual(camera.trauma, 0, 'Initial trauma must be 0');
 console.log(' -> Camera singleton dimensions & initial contracts verified.');
 
-// 2. AC-01: Asymmetric Dual-Stage Damping & Soft-Leash Deadzone
-console.log('[2/9] Verifying AC-01: Asymmetric Dual-Stage Damping & Soft-Leash Deadzone...');
+// 2. AC-01: Hard player lock while moving and dashing
+console.log('[2/9] Verifying AC-01: Hard Player Lock (cruise & dash)...');
 var mockPlayer = { x: 850, y: 1000, vx: 100, vy: 0, dashPulse: 0, aimX: 850, aimY: 1000 };
 camera.x = 800;
 camera.y = 1000;
-
-// Cruise tracking (lambda = 7.0)
 updateCamera(camera, mockPlayer, {}, 0.016, false);
-var cruiseMoved = camera.x - 800;
-
-// Reset and test Dash tracking (lambda = 16.0)
-camera.x = 800;
-camera.y = 1000;
+assert.strictEqual(camera.x, mockPlayer.x, 'Camera must sit exactly on the player while cruising');
+assert.strictEqual(camera.y, mockPlayer.y, 'Camera must sit exactly on the player while cruising');
 mockPlayer.dashPulse = 1.0;
-updateCamera(camera, mockPlayer, {}, 0.016, false);
-var dashMoved = camera.x - 800;
-
-assert(dashMoved > cruiseMoved * 2, `Dash tracking (${dashMoved}) must be > 2x faster than cruise (${cruiseMoved})`);
-
-// Soft-leash deadzone test: Player far ahead, leash max = min(960, 640) * 0.12 = 76.8px
 mockPlayer.x = 2000;
-mockPlayer.y = 1000;
-mockPlayer.aimX = 2000;
-mockPlayer.aimY = 1000;
-camera.x = 1000;
-camera.y = 1000;
-camera.lookaheadX = 0;
-camera.lookaheadY = 0;
-camera.lookaheadVX = 0;
-camera.lookaheadVY = 0;
-updateCamera(camera, mockPlayer, {}, 0.001, false); // Tiny dt
-var distAfterLeash = Math.hypot(mockPlayer.x - camera.x, mockPlayer.y - camera.y);
-assert(distAfterLeash <= 76.8001, `Camera must be hard-leashed to <= 76.8px, got ${distAfterLeash}`);
-console.log(' -> AC-01 Asymmetric dual-stage damping and soft-leash deadzone verified.');
+updateCamera(camera, mockPlayer, {}, 0.001, false);
+assert.strictEqual(camera.x, 2000, 'Camera must sit exactly on the player while dashing');
+for (var mf = 0; mf < 120; mf += 1) {
+  mockPlayer.x += 4.5;
+  mockPlayer.y += 2.0;
+  updateCamera(camera, mockPlayer, {}, 1 / 60, true);
+  assert.strictEqual(camera.x, mockPlayer.x, 'Camera must never lag the player');
+  assert.strictEqual(camera.y, mockPlayer.y, 'Camera must never lag the player');
+}
+mockPlayer.dashPulse = 0;
+console.log(' -> AC-01 Camera is hard-locked to the player.');
 
-// 3. AC-02: Aim Lookahead Deadzone (L <= 70px -> offset = 0)
-console.log('[3/9] Verifying AC-02: Aim Lookahead Deadzone (L <= 70px)...');
+// 3. AC-02: Cursor aim never pushes the player off center
+console.log('[3/9] Verifying AC-02: No Aim Lookahead Offset...');
 mockPlayer.x = 1760;
 mockPlayer.y = 1320;
 mockPlayer.vx = 0;
 mockPlayer.vy = 0;
-mockPlayer.dashPulse = 0;
-camera.x = 1760;
-camera.y = 1320;
-camera.lookaheadX = 0;
-camera.lookaheadY = 0;
-camera.lookaheadVX = 0;
-camera.lookaheadVY = 0;
-
-// Aim 50px away (within 70px deadzone)
-mockPlayer.aimX = 1760 + 50;
-mockPlayer.aimY = 1320;
-updateCamera(camera, mockPlayer, {}, 0.05, false);
-assert.strictEqual(camera.targetLookaheadX, 0, 'Target lookahead must be 0 within 70px deadzone');
-assert.strictEqual(camera.targetLookaheadY, 0, 'Target lookahead must be 0 within 70px deadzone');
-assert(Math.abs(camera.lookaheadX) < 0.001, 'Lookahead offset must remain 0');
-console.log(' -> AC-02 Aim lookahead deadzone verified.');
-
-// 4. AC-03: Long-range Aim Lookahead Extension & Retraction Damping
-console.log('[4/9] Verifying AC-03: Long-Range Lookahead & Hermite Curve...');
-// Aim 450px away (max lookahead distance)
 mockPlayer.aimX = 1760 + 450;
 mockPlayer.aimY = 1320;
-updateCamera(camera, mockPlayer, {}, 0.5, false);
-var O_max = 640 * 0.18; // 115.2 px
-assert(camera.lookaheadX > O_max * 0.7, `Lookahead must extend smoothly toward O_max (${O_max}), got ${camera.lookaheadX}`);
+updateCamera(camera, mockPlayer, { mouse: { sx: 960, sy: 0, x: 0, y: 0 } }, 0.5, false);
+assert.strictEqual(camera.x, 1760, 'Far cursor must not shift the view');
+assert.strictEqual(camera.y, 1320, 'Far cursor must not shift the view');
+assert.strictEqual(camera.lookaheadX, 0, 'Lookahead must stay 0');
+assert.strictEqual(camera.lookaheadY, 0, 'Lookahead must stay 0');
+console.log(' -> AC-02 Player stays centered regardless of aim.');
 
-// Aim retraction (switching back to center)
-mockPlayer.aimX = 1760;
-mockPlayer.aimY = 1320;
-var lookBeforeRetract = camera.lookaheadX;
-updateCamera(camera, mockPlayer, {}, 0.05, false);
-assert(camera.lookaheadX < lookBeforeRetract, 'Lookahead must rapidly retract when aim returns to center');
-console.log(' -> AC-03 Long-range lookahead extension & retraction verified.');
+// 4. AC-03: Player-centered view maps the screen center to the player
+console.log('[4/9] Verifying AC-03: Screen Center Maps To Player...');
+var centerWorld = { x: 0, y: 0 };
+screenToWorld(480, 320, camera, centerWorld);
+assert.strictEqual(centerWorld.x, 1760, 'Screen center must map to player x');
+assert.strictEqual(centerWorld.y, 1320, 'Screen center must map to player y');
+var playerScreen = { x: 0, y: 0 };
+worldToScreen(1760, 1320, camera, playerScreen);
+assert.strictEqual(playerScreen.x, 480, 'Player must project to screen center x');
+assert.strictEqual(playerScreen.y, 320, 'Player must project to screen center y');
+console.log(' -> AC-03 Player projects to the exact view center.');
 
-// 5. AC-04: Boundary Clamping (20px safety padding, no underdraw)
-console.log('[5/9] Verifying AC-04: World Boundary Clamping...');
-camera.lookaheadX = 0;
-camera.lookaheadY = 0;
-camera.lookaheadVX = 0;
-camera.lookaheadVY = 0;
-// Test left boundary: Player at x = 50
-mockPlayer.x = 50;
+// 5. AC-04: World edge does not clamp the camera
+console.log('[5/9] Verifying AC-04: View Stays Centered At The World Edge...');
+// Left boundary: player held at x = r by the simulation
+mockPlayer.x = 15;
 mockPlayer.y = 1320;
-mockPlayer.aimX = 50;
+mockPlayer.aimX = 15;
 mockPlayer.aimY = 1320;
-camera.x = 50;
-camera.y = 1320;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-var minExpectedX = 960 * 0.5 + 20; // 500 px
-assert(camera.clampedX >= minExpectedX - 0.01, `clampedX must clamp to >= ${minExpectedX}, got ${camera.clampedX}`);
-
-// Test right boundary: Player at x = 3500
-mockPlayer.x = 3500;
-camera.x = 3500;
+assert.strictEqual(camera.clampedX, 15, `Camera must stay on the player at the left edge, got ${camera.clampedX}`);
+// Bottom-right corner
+mockPlayer.x = 3505;
+mockPlayer.y = 2625;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-var maxExpectedX = 3520 - 960 * 0.5 - 20; // 3020 px
-assert(camera.clampedX <= maxExpectedX + 0.01, `clampedX must clamp to <= ${maxExpectedX}, got ${camera.clampedX}`);
-console.log(' -> AC-04 Boundary clamping verified (no underdraw).');
+assert.strictEqual(camera.clampedX, 3505, `Camera must stay on the player at the right edge, got ${camera.clampedX}`);
+assert.strictEqual(camera.clampedY, 2625, `Camera must stay on the player at the bottom edge, got ${camera.clampedY}`);
+console.log(' -> AC-04 Camera follows the player past the world edge.');
 
 // 6. AC-05: Trauma Shake & Decoupled Inverse Coordinate Transform
 console.log('[6/9] Verifying AC-05: Trauma Shake Decoupling for Aiming...');
@@ -167,57 +133,18 @@ assert.strictEqual(camera.shakeY, 0, 'shakeY must be strictly 0 when reducedMoti
 assert.strictEqual(camera.shakeAngle, 0, 'shakeAngle must be strictly 0 when reducedMotion is active');
 console.log(' -> AC-08 Reduced motion zero-shake verified.');
 
-// 9. AC-09: Cursor lookahead has no feedback loop and pans calmly
-console.log('[9/9] Verifying AC-09: Stable, Gentle Cursor Lookahead...');
+// 9. AC-09: Cursor sweeps never move the view
+console.log('[9/9] Verifying AC-09: Cursor Sweep Keeps The View Still...');
 initCamera(camera, 3520, 2640, 960, 640);
 mockPlayer.x = 1760;
 mockPlayer.y = 1320;
-mockPlayer.vx = 0;
-mockPlayer.vy = 0;
-mockPlayer.dashPulse = 0;
-camera.x = 1760;
-camera.y = 1320;
-camera.lookaheadX = 0;
-camera.lookaheadY = 0;
-camera.lookaheadVX = 0;
-camera.lookaheadVY = 0;
-// Cursor parked at the right screen edge: the camera must settle, not keep chasing.
-var edgeInput = { mouse: { sx: 960, sy: 320, x: 0, y: 0 } };
-var maxFrameStep = 0;
-var lastX = camera.x;
-for (var f = 0; f < 600; f += 1) {
-  updateCamera(camera, mockPlayer, edgeInput, 1 / 60, true);
-  maxFrameStep = Math.max(maxFrameStep, Math.abs(camera.x - lastX));
-  lastX = camera.x;
+var sweepInput = { mouse: { sx: 960, sy: 320, x: 0, y: 0 } };
+for (var f = 0; f < 120; f += 1) {
+  sweepInput.mouse.sx = (f % 2) ? 0 : 960;
+  updateCamera(camera, mockPlayer, sweepInput, 1 / 60, true);
+  assert.strictEqual(camera.x, 1760, 'Cursor sweep must not pan the view');
 }
-var lookMax = 640 * 0.18;
-assert(camera.x - 1760 <= lookMax + 0.01, `Camera offset must settle within O_max (${lookMax}), got ${camera.x - 1760}`);
-assert(camera.x - 1760 > lookMax * 0.9, `Camera must reach the lookahead target, got ${camera.x - 1760}`);
-assert(maxFrameStep <= 260 / 60 + 0.01, `Lookahead pan must stay <= 260 px/s, got ${maxFrameStep * 60} px/s`);
-// Sweeping the cursor to the opposite edge must not snap the view.
-edgeInput.mouse.sx = 0;
-lastX = camera.x;
-updateCamera(camera, mockPlayer, edgeInput, 1 / 60, true);
-assert(Math.abs(camera.x - lastX) <= 260 / 60 + 0.01, 'Cursor sweep must pan gently, not snap');
-// From rest, the pan breaks away slowly and accelerates (spring ease-in), then settles.
-initCamera(camera, 3520, 2640, 960, 640);
-camera.x = 1760;
-camera.y = 1320;
-var easeInput = { mouse: { sx: 960, sy: 320, x: 0, y: 0 } };
-var easeSteps = [];
-lastX = camera.x;
-for (var ef = 0; ef < 90; ef += 1) {
-  updateCamera(camera, mockPlayer, easeInput, 1 / 60, true);
-  easeSteps.push(camera.x - lastX);
-  lastX = camera.x;
-}
-var easePeak = Math.max.apply(null, easeSteps);
-var easePeakIdx = easeSteps.indexOf(easePeak);
-assert(easeSteps[0] < easePeak * 0.25, `Lookahead must start slowly, first step ${easeSteps[0]} vs peak ${easePeak}`);
-assert(easePeakIdx >= 4, `Lookahead must accelerate before peaking, peak at frame ${easePeakIdx}`);
-assert(easeSteps[easeSteps.length - 1] < easePeak * 0.2, 'Lookahead must ease out as it settles');
-assert(camera.x - 1760 <= lookMax + 0.01, 'Lookahead spring must not overshoot O_max');
-console.log(' -> AC-09 Cursor lookahead is bounded and gentle.');
+console.log(' -> AC-09 Cursor sweep keeps the player centered.');
 
 console.log('\n================================================================');
 console.log('  ALL TRACK 1 CAMERA & VIEWPORT CRITERIA VERIFIED (100%)');

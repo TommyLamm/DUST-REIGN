@@ -1,13 +1,11 @@
 /**
- * DUST//REIGN - Camera Tracking Dynamics, Aim Lookahead & Viewport System
+ * DUST//REIGN - Camera Tracking & Viewport System
  * Core Invariants:
- * 1. Asymmetric Dual-Stage Damping (Cruise: 7.0 s^-1, Dash: 16.0 s^-1)
- * 2. Soft-Leash Deadzone (0.12 * min(viewW, viewH))
- * 3. Bi-directional Aim Lookahead (Hermite curve on cursor screen offset, deadzone 70px,
- *    O_max = 0.18 * min(viewW, viewH); critically damped spring, ease-in/ease-out, <= 260 px/s)
- * 4. Trauma-based Orthogonal Screen Shake (Prime non-resonant frequencies, decoupling for mouse aim)
- * 5. Strict Boundary Clamping (20px safety padding)
- * 6. 0-GC Execution Budget
+ * 1. Hard Player Lock (view center == player position every frame, including at the world edge)
+ * 2. No world clamp on the camera; the player is clamped by the simulation and the
+ *    out-of-bounds void / barrier is drawn by render/boundary.js
+ * 3. Trauma-based Orthogonal Screen Shake (Prime non-resonant frequencies, decoupling for mouse aim)
+ * 4. 0-GC Execution Budget
  */
 import { rt } from './runtime.js';
 import { clamp } from './utils.js';
@@ -53,11 +51,6 @@ export var camera = {
   viewOriginY: 320
 };
 
-var LOOKAHEAD_MAX_RATIO = 0.18;
-var LOOKAHEAD_MAX_SPEED = 260.0; // px/s
-var LOOKAHEAD_OMEGA_EXTEND = 5.5; // rad/s
-var LOOKAHEAD_OMEGA_RETRACT = 7.0; // rad/s
-var LOOKAHEAD_SUBSTEP = 1 / 120;
 var SHAKE_MAX_OFFSET = 18.0;
 var SHAKE_MAX_ANGLE = 0.022; // ~1.26 deg
 
@@ -121,143 +114,33 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
   cam.viewH = viewH;
   if (rt.ui && rt.ui.dpr) cam.dpr = rt.ui.dpr;
 
-  // cam.x/cam.y is the rendered center (follow + lookahead). The follow point is
-  // kept apart so lookahead never feeds back into the next frame's tracking.
-  // An outside write to cam.x (init, tests, respawn) rebases the follow point.
-  if (cam.followX === undefined || cam.x !== cam.renderedX || cam.y !== cam.renderedY) {
-    cam.followX = cam.x - (cam.lookaheadX || 0);
-    cam.followY = cam.y - (cam.lookaheadY || 0);
-  }
-
+  // Hard lock: the player is always the exact view center. The world edge is not
+  // a camera limit; the player is held inside the world by the simulation and the
+  // void past the edge is drawn by render/boundary.js.
   if (player) {
     cam.targetX = player.x;
     cam.targetY = player.y;
-
-    // 1. Asymmetric Dual-Stage Dynamic Damping
-    // Cruise: lambda = 7.0 s^-1 (half-life ~ 99 ms)
-    // High-speed / Dash (V > 380 px/s or dashing): lambda = 16.0 s^-1 (half-life ~ 43 ms)
-    var pSpeed = Math.hypot(player.vx || 0, player.vy || 0);
-    var isDashing = Boolean((player.dashPulse && player.dashPulse > 0) || player.isDashing || (pSpeed > 380));
-    var lambdaFollow = isDashing ? 16.0 : 7.0;
-    var decayFollow = Math.exp(-lambdaFollow * dt);
-
-    cam.followX = cam.targetX + (cam.followX - cam.targetX) * decayFollow;
-    cam.followY = cam.targetY + (cam.followY - cam.targetY) * decayFollow;
-
-    // Soft-Leash Deadzone: R_leash_max = min(viewW, viewH) * 0.12 (~76.8 px)
-    var maxLeash = Math.min(viewW, viewH) * 0.12;
-    var dx = player.x - cam.followX;
-    var dy = player.y - cam.followY;
-    var leashDist = Math.hypot(dx, dy);
-    if (leashDist > maxLeash && leashDist > 0.0001) {
-      cam.followX = player.x - (dx / leashDist) * maxLeash;
-      cam.followY = player.y - (dy / leashDist) * maxLeash;
-    }
-
-    // 2. Aim Lookahead
-    var maxLookahead = Math.min(viewW, viewH) * LOOKAHEAD_MAX_RATIO; // ~115 px
-    var targetLookX = 0;
-    var targetLookY = 0;
-
-    // Gamepad right stick support
-    var stickX = (input && (input.gamepadRightX || input.gamepadAimX)) || 0;
-    var stickY = (input && (input.gamepadRightY || input.gamepadAimY)) || 0;
-    var stickMag = Math.hypot(stickX, stickY);
-
-    if (stickMag > 0.18) {
-      var stickNorm = (stickMag - 0.18) / 0.82;
-      var stickFactor = Math.pow(stickNorm, 1.4);
-      targetLookX = (stickX / stickMag) * maxLookahead * stickFactor;
-      targetLookY = (stickY / stickMag) * maxLookahead * stickFactor;
-    } else {
-      // Mouse/Pointer Lookahead. Prefer the cursor's screen offset from the view
-      // center: it does not move when the camera moves, so lookahead cannot chase
-      // its own output. World aim is the fallback when no screen point exists.
-      var aimDx;
-      var aimDy;
-      if (input && input.mouse && typeof input.mouse.sx === 'number' && !input.gamepadFiring) {
-        aimDx = input.mouse.sx - viewW * 0.5;
-        aimDy = input.mouse.sy - viewH * 0.5;
-      } else {
-        var aimTargetX = (player.aimX !== undefined) ? player.aimX : (input && input.mouse ? input.mouse.x : player.x);
-        var aimTargetY = (player.aimY !== undefined) ? player.aimY : (input && input.mouse ? input.mouse.y : player.y);
-        aimDx = aimTargetX - player.x;
-        aimDy = aimTargetY - player.y;
-      }
-      var L = Math.hypot(aimDx, aimDy);
-
-      // Deadzone: L <= 70px -> offset = 0
-      // Hermite smooth curve: t = clamp((L - 70) / (450 - 70), 0, 1), w(t) = 3t^2 - 2t^3
-      if (L > 70) {
-        var t = clamp((L - 70) / (450 - 70), 0, 1);
-        var w = t * t * (3 - 2 * t);
-        var mag = maxLookahead * w;
-        targetLookX = (aimDx / L) * mag;
-        targetLookY = (aimDy / L) * mag;
-      }
-    }
-
-    cam.targetLookaheadX = targetLookX;
-    cam.targetLookaheadY = targetLookY;
-
-    // Critically damped spring lookahead: it starts from rest (slow break-away),
-    // accelerates, then settles without overshoot - the same feel as the dash.
-    // Omega: extend 5.5 rad/s, retract 7.0 rad/s; speed capped at 260 px/s.
-    var curLookMag = Math.hypot(cam.lookaheadX, cam.lookaheadY);
-    var targetLookMag = Math.hypot(targetLookX, targetLookY);
-    var isRetracting = targetLookMag < curLookMag;
-    var omega = isRetracting ? LOOKAHEAD_OMEGA_RETRACT : LOOKAHEAD_OMEGA_EXTEND;
-    var lookVX = cam.lookaheadVX || 0;
-    var lookVY = cam.lookaheadVY || 0;
-    var substeps = Math.max(1, Math.ceil(dt / LOOKAHEAD_SUBSTEP));
-    var h = dt / substeps;
-    for (var si = 0; si < substeps; si += 1) {
-      lookVX += (omega * omega * (targetLookX - cam.lookaheadX) - 2 * omega * lookVX) * h;
-      lookVY += (omega * omega * (targetLookY - cam.lookaheadY) - 2 * omega * lookVY) * h;
-      var lookSpeed = Math.hypot(lookVX, lookVY);
-      if (lookSpeed > LOOKAHEAD_MAX_SPEED) {
-        lookVX *= LOOKAHEAD_MAX_SPEED / lookSpeed;
-        lookVY *= LOOKAHEAD_MAX_SPEED / lookSpeed;
-      }
-      cam.lookaheadX += lookVX * h;
-      cam.lookaheadY += lookVY * h;
-    }
-    cam.lookaheadVX = lookVX;
-    cam.lookaheadVY = lookVY;
+    cam.x = player.x;
+    cam.y = player.y;
   }
-
-  // 3. World Boundary Clamping
-  // Center including lookahead
-  var desiredCenterX = cam.followX + cam.lookaheadX;
-  var desiredCenterY = cam.followY + cam.lookaheadY;
+  cam.followX = cam.x;
+  cam.followY = cam.y;
+  cam.lookaheadX = 0;
+  cam.lookaheadY = 0;
+  cam.lookaheadVX = 0;
+  cam.lookaheadVY = 0;
+  cam.targetLookaheadX = 0;
+  cam.targetLookaheadY = 0;
 
   var halfW = viewW * 0.5;
   var halfH = viewH * 0.5;
-  var shakePad = 20.0;
-
-  var minX = halfW + shakePad;
-  var maxX = cam.worldW - halfW - shakePad;
-  var minY = halfH + shakePad;
-  var maxY = cam.worldH - halfH - shakePad;
-
-  if (maxX < minX) {
-    cam.x = (minX + maxX) * 0.5;
-  } else {
-    cam.x = clamp(desiredCenterX, minX, maxX);
-  }
-
-  if (maxY < minY) {
-    cam.y = (minY + maxY) * 0.5;
-  } else {
-    cam.y = clamp(desiredCenterY, minY, maxY);
-  }
 
   cam.clampedX = cam.x;
   cam.clampedY = cam.y;
   cam.renderedX = cam.x;
   cam.renderedY = cam.y;
 
-  // 4. Trauma-based Screen Shake (Prime non-resonant frequencies)
+  // 2. Trauma-based Screen Shake (Prime non-resonant frequencies)
   if (rt && rt.state && rt.state.shake > 0) {
     var legacyTrauma = Math.min(1.0, rt.state.shake / 18.0);
     if (legacyTrauma > cam.trauma) cam.trauma = legacyTrauma;

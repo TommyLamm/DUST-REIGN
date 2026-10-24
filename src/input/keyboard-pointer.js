@@ -45,16 +45,8 @@ function pointerPosition(event) {
     var camY = (rt.state && rt.state.player ? rt.state.player.y : ((rt.state && rt.state.height) || 2640) * 0.5);
     var viewW = (rt.ui && rt.ui.width) || 960;
     var viewH = (rt.ui && rt.ui.height) || 640;
-    var halfW = viewW * 0.5;
-    var halfH = viewH * 0.5;
-    var worldW = (rt.state && rt.state.width) || 3520;
-    var worldH = (rt.state && rt.state.height) || 2640;
-    var clampedCamX = Math.max(halfW, Math.min(camX, worldW - halfW));
-    var clampedCamY = Math.max(halfH, Math.min(camY, worldH - halfH));
-    if (worldW <= viewW) clampedCamX = worldW * 0.5;
-    if (worldH <= viewH) clampedCamY = worldH * 0.5;
-    rt.input.mouse.x = sx + (clampedCamX - halfW);
-    rt.input.mouse.y = sy + (clampedCamY - halfH);
+    rt.input.mouse.x = sx + (camX - viewW * 0.5);
+    rt.input.mouse.y = sy + (camY - viewH * 0.5);
   }
   var p = rt.state && rt.state.player;
   if (p) {

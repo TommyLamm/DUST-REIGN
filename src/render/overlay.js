@@ -1046,10 +1046,11 @@ export function drawTacticalMinimap(ctx) {
   var camY = cam ? (cam.clampedY !== undefined ? cam.clampedY : cam.y) : viewH * 0.5;
   var cViewW = cam ? cam.viewW : viewW;
   var cViewH = cam ? cam.viewH : viewH;
-  var vx = (camX - cViewW * 0.5) * sx;
-  var vy = (camY - cViewH * 0.5) * sy;
-  var vw = cViewW * sx;
-  var vh = cViewH * sy;
+  // The view can extend past the world edge; keep the frame inside the map.
+  var vx = clamp((camX - cViewW * 0.5) * sx, 0, mapW);
+  var vy = clamp((camY - cViewH * 0.5) * sy, 0, mapH);
+  var vw = clamp((camX + cViewW * 0.5) * sx, 0, mapW) - vx;
+  var vh = clamp((camY + cViewH * 0.5) * sy, 0, mapH) - vy;
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
   ctx.lineWidth = 1;

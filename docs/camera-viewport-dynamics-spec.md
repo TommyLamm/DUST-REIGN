@@ -5,6 +5,8 @@
 > **系統負責**：相機動力學、準星前瞻與視口追蹤策劃專家 (Camera Dynamics, Aim Lookahead & Viewport Lead)  
 > **目標讀者**：Lead Designer, System Architect, Core Gameplay Engineers, QA Test Engineers  
 > **技術基底**：Canvas 2D / 0-GC ES Modules / High-DPR Responsive Viewport  
+>
+> **現行行為（取代本文的阻尼、前瞻與邊界夾持章節）**：相機改為每幀硬鎖定玩家座標，移除追蹤阻尼、軟約束死區與準星前瞻；世界邊界不再夾持相機，玩家由模擬層夾持在地圖內，界外視野由 `src/render/boundary.js` 繪製虛空、警示條與能量屏障。震屏與震屏解耦逆映射維持不變。驗收見 `scripts/test-track1-camera.mjs`。  
 
 ---
 
