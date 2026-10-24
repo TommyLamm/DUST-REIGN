@@ -19,6 +19,32 @@ import { updateCamera } from '../core/camera.js';
 
 var cachedFrame = { p: null, boundW: 960, boundH: 640 };
 
+// Micro hitstops (crits, combo kills, stagger/shield breaks, chip damage) would freeze the sim
+// several times a second under rapid fire. They are dropped while the trigger is held and
+// rate-limited otherwise; major freezes (>= HITSTOP_MAJOR) always land.
+var HITSTOP_MAJOR = 0.07;
+var HITSTOP_REFRACTORY = 0.5;
+var SUSTAINED_FIRE = 0.3;
+var hitstopCooldown = 0;
+var hitstopActive = false;
+
+function gateHitstop(dt) {
+  if (hitstopCooldown > 0) hitstopCooldown = Math.max(0, hitstopCooldown - dt);
+  if (!(rt.state.hitstop > 0)) {
+    hitstopActive = false;
+    return;
+  }
+  if (hitstopActive) return;
+  var p = rt.state.player;
+  var sustained = !!p && (p.continuousFireTime || 0) >= SUSTAINED_FIRE;
+  if (rt.state.hitstop < HITSTOP_MAJOR && (sustained || hitstopCooldown > 0)) {
+    rt.state.hitstop = 0;
+    return;
+  }
+  hitstopActive = true;
+  hitstopCooldown = HITSTOP_REFRACTORY;
+}
+
 export function update(dt) {
   if (!rt.state || rt.state.paused) return;
   if (rt.state.over) {
@@ -38,10 +64,12 @@ export function update(dt) {
     rt.state.hitstop = 0;
     rt.state.hitstopDilation = 0;
   }
+  gateHitstop(dt);
   if (rt.state.hitstop > 0) {
     var freeze = Math.min(dt, rt.state.hitstop);
     rt.state.hitstop -= freeze;
     dt -= freeze;
+    if (rt.state.hitstop <= 0) hitstopActive = false;
   }
   if (dt <= 0) { updateDomUi(); return; }
 

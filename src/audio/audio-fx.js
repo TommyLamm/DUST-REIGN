@@ -203,7 +203,9 @@ export var AudioFX = (function () {
   var lastHitTime = 0;
   var lastGrazeTime = 0;
   var lastRicochetTime = 0;
+  var lastCritTime = 0;
   var THROTTLE_HIT = 0.04;
+  var THROTTLE_CRIT = 0.05;
   var THROTTLE_GRAZE = 0.05;
   var THROTTLE_RICOCHET = 0.04;
 
@@ -725,6 +727,8 @@ export var AudioFX = (function () {
   function critHit() {
     if (!canPlay()) return;
     var t = ctx.currentTime;
+    if (t - lastCritTime < THROTTLE_CRIT) return;
+    lastCritTime = t;
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
     osc.type = 'triangle';

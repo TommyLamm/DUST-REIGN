@@ -26,6 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          check-latest: true
       - name: Check syntax, run self-check and stage allowlisted assets
         env:
           RELEASE_TAG: ${{ github.ref_name }}
