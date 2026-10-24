@@ -3,6 +3,7 @@ import { addDecal } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { clamp } from '../../core/utils.js';
+import { stepDash } from '../abilities.js';
 import { stormWind } from '../flow.js';
 import { dispatchCardHook } from '../card-effects.js';
 import { getWeaponStrategy } from '../weapon-registry.js';
@@ -86,19 +87,21 @@ export function stepPlayer(dt, frame) {
     p.isSkidding = false;
   }
 
-  p.vx = targetVx;
-  p.vy = targetVy;
-
   // Vector recoil integration with exponential damping
   var recoilLambda = p.recoilLambda || 14.0;
   p.recoilVx = (p.recoilVx || 0) * Math.exp(-recoilLambda * dt);
   p.recoilVy = (p.recoilVy || 0) * Math.exp(-recoilLambda * dt);
-  p.x = clamp(p.x + (p.vx + p.recoilVx) * dt, p.r, boundW - p.r);
-  p.y = clamp(p.y + (p.vy + p.recoilVy) * dt, p.r, boundH - p.r);
-  var wind = stormWind();
-  if (wind) {
-    p.x = clamp(p.x + Math.cos(wind.angle) * wind.power * dt, p.r, boundW - p.r);
-    p.y = clamp(p.y + Math.sin(wind.angle) * wind.power * dt, p.r, boundH - p.r);
+  // An active dash owns movement until it lands; walking, recoil drift and wind resume after.
+  if (!stepDash(p, dt, boundW, boundH)) {
+    p.vx = targetVx;
+    p.vy = targetVy;
+    p.x = clamp(p.x + (p.vx + p.recoilVx) * dt, p.r, boundW - p.r);
+    p.y = clamp(p.y + (p.vy + p.recoilVy) * dt, p.r, boundH - p.r);
+    var wind = stormWind();
+    if (wind) {
+      p.x = clamp(p.x + Math.cos(wind.angle) * wind.power * dt, p.r, boundW - p.r);
+      p.y = clamp(p.y + Math.sin(wind.angle) * wind.power * dt, p.r, boundH - p.r);
+    }
   }
   var aimDx = rt.input.mouse.x - p.x;
   var aimDy = rt.input.mouse.y - p.y;

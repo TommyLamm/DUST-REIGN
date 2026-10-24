@@ -8,7 +8,7 @@ import { run as runDirectorChecks } from './checks/director.js';
 import { run as runEnemyChecks } from './checks/enemies.js';
 import { run as runMetaChecks } from './checks/meta.js';
 import { run as runScoringChecks } from './checks/scoring.js';
-import { dash, triggerEmp, triggerReactiveArmor, triggerSpireMicroResonance } from '../systems/abilities.js';
+import { completeDash, dash, triggerEmp, triggerReactiveArmor, triggerSpireMicroResonance } from '../systems/abilities.js';
 import { explodeBarrel, explodeCore, killEnemy } from '../systems/combat.js';
 import { calculateCombatRank, isStormFront } from '../systems/flow.js';
 import { randomUpgradeChoices } from '../systems/progression.js';
@@ -159,6 +159,7 @@ export function selfCheck() {
     test.enemyBullets = [];
     test.enemies = [];
     dash();
+    completeDash();
     var normalOk = (test.player.dashCooldown === 2.2 && test.player.dashAmbushTimer === 0.6);
 
     test.player.x = 100;
@@ -169,6 +170,7 @@ export function selfCheck() {
     test.enemies = [{ x: 240, y: 100, r: 10, hp: 100 }];
     test.hitstop = 0;
     dash();
+    completeDash();
     var bulletJustOk = (test.player.dashCooldown === 0.35 && test.player.dashAmbushTimer === 1.2 && test.hitstop === 0.22 && test.enemies[0].hp === 78);
 
     test.player.x = 100;
@@ -178,6 +180,7 @@ export function selfCheck() {
     test.enemies = [{ x: 125, y: 100, r: 10, hp: 100 }];
     test.hitstop = 0;
     dash();
+    completeDash();
     var enemyJustOk = (test.player.dashCooldown === 0.35 && test.player.dashAmbushTimer === 1.2 && test.hitstop === 0.22);
     justDashOk = normalOk && bulletJustOk && enemyJustOk;
 
@@ -189,6 +192,7 @@ export function selfCheck() {
     test.enemies = [];
     rt.input.keys = new Set(['d']);
     dash();
+    completeDash();
     barrelKickOk = Boolean(test.barrels[0] && test.barrels[0].state === 'flying' && (test.barrels[0].vx === 540 || test.barrels[0].vx === 480) && test.barrels[0].flyingTimer === 1.2);
 
     test.barrels = [{ x: 200, y: 200, vx: 0, vy: 0, r: 14, hp: 10, maxHp: 20, state: 'idle', flyingTimer: 0, rot: 0 }];
@@ -342,6 +346,7 @@ export function selfCheck() {
     test.stats.damageDealt = 0;
     rt.input.keys = new Set();
     dash();
+    completeDash();
     var staticTempestOk = test.lightningArcs.length === 6 &&
       test.enemies.length === 1 &&
       test.enemies[0].empTimer >= 1.7 &&
@@ -938,6 +943,7 @@ export function selfCheck() {
     ];
     rt.input.keys = new Set();
     dash();
+    completeDash();
     var executionOk = test.enemies[0].hp < 150 && test.player.dashCooldown === 0;
 
     runBuildChecks();

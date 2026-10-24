@@ -18,6 +18,15 @@ var DASH_HEAT_WINDOW = 3;
 var heatClockState = null;
 var heatClockTime = 0;
 
+// Dash travel: a short real move instead of a blink. The profile breaks away
+// slowly (start resistance), accelerates, then lands softly.
+export var DASH_TRAVEL_TIME = 0.18;
+
+export function dashTravelProgress(t) {
+  var u = Math.pow(clamp(t, 0, 1), 1.6);
+  return u * u * (3 - 2 * u);
+}
+
 // Layers 0–3 → 0.35 / 0.65 / 0.95 / 1.25. Lookup keeps the self-check's 0.35 exact.
 export function justDashCooldown(heat) {
   var h = heat | 0;
@@ -103,6 +112,7 @@ export function dash() {
   if (typeof p.dashCharges !== 'number') p.dashCharges = maxCharges;
   if (p.dashCharges < maxCharges && !(p.dashCooldown > 0)) p.dashCharges += 1;
   if (p.dashCharges <= 0) return;
+  completeDash();
   var startX = p.x;
   var startY = p.y;
 
@@ -141,12 +151,84 @@ export function dash() {
   if (!dx && !dy && (rt.input.gamepadX || rt.input.gamepadY)) { dx = rt.input.gamepadX; dy = rt.input.gamepadY; }
   if (!dx && !dy) { dx = Math.cos(p.aim); dy = Math.sin(p.aim); }
   var length = Math.hypot(dx, dy) || 1;
-  var boundW = rt.ui ? rt.ui.width : rt.state.width;
-  var boundH = rt.ui ? rt.ui.height : rt.state.height;
   var baseDist = (typeof p.dashDistance === 'number' && p.dashDistance > 0) ? p.dashDistance : 140;
   var dashDist = baseDist * (p.dashDistanceMult || 1);
-  p.x = clamp(p.x + (dx / length) * dashDist, p.r, boundW - p.r);
-  p.y = clamp(p.y + (dy / length) * dashDist, p.r, boundH - p.r);
+
+  triggerHaptic(isJustDash ? [30, 20, 50] : [15]);
+  var cooledHeat = isJustDash ? liveJustHeat(p) : 0;
+  var cdMult = (typeof p.dashCooldownMult === 'number' && p.dashCooldownMult > 0) ? p.dashCooldownMult : 1;
+  p.dashCharges -= 1;
+  p.lastDashJust = isJustDash;
+  if (p.dashCharges <= 0) {
+    p.dashCooldown = (isJustDash ? justDashCooldown(cooledHeat) : 2.2) * cdMult;
+  } else if (p.dashIndependent && !(p.dashCooldown > 0)) {
+    p.dashCooldown = dashRechargeCooldown(p) * cdMult;
+  }
+  // Travel time is added so the post-landing invulnerability matches the old blink.
+  p.invulnerable = Math.max(p.invulnerable, 0.32 + (p.dashInvulnBonus || 0) + DASH_TRAVEL_TIME);
+  p.dashAmbushTimer = isJustDash ? 1.2 : 0.6;
+  AudioFX.dash();
+
+  p.dashMove = {
+    startX: startX,
+    startY: startY,
+    dirX: dx / length,
+    dirY: dy / length,
+    dist: dashDist,
+    t: 0,
+    done: 0,
+    just: isJustDash,
+    maxCharges: maxCharges
+  };
+  p.isDashing = true;
+  p.dashActive = DASH_TRAVEL_TIME;
+}
+
+// Advances an active dash by dt. Moves are applied as deltas so knockback or
+// pulls during travel still count. Returns true while the dash owns movement.
+export function stepDash(p, dt, boundW, boundH) {
+  var m = p && p.dashMove;
+  if (!m) return false;
+  if (!(dt > 0)) return true;
+  m.t = Math.min(1, m.t + dt / DASH_TRAVEL_TIME);
+  var s = dashTravelProgress(m.t);
+  var step = (s - m.done) * m.dist;
+  m.done = s;
+  p.x = clamp(p.x + m.dirX * step, p.r, boundW - p.r);
+  p.y = clamp(p.y + m.dirY * step, p.r, boundH - p.r);
+  p.vx = m.dirX * step / dt;
+  p.vy = m.dirY * step / dt;
+  p.dashActive = Math.max(0, (1 - m.t) * DASH_TRAVEL_TIME);
+  if (m.t >= 1) {
+    p.dashMove = null;
+    p.isDashing = false;
+    p.dashActive = 0;
+    p.vx = 0;
+    p.vy = 0;
+    landDash(p, m);
+  }
+  return true;
+}
+
+// Finishes an in-flight dash at once (a new dash press, or synchronous checks).
+export function completeDash() {
+  var p = rt.state && rt.state.player;
+  if (!p || !p.dashMove) return;
+  var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
+  stepDash(p, DASH_TRAVEL_TIME, boundW, boundH);
+}
+
+// Landing effects: pulse, just-dash payoff, intercepts and card hooks fire on arrival.
+function landDash(p, m) {
+  if (!rt.state) return;
+  var startX = m.startX;
+  var startY = m.startY;
+  var isJustDash = m.just;
+  var maxCharges = m.maxCharges;
+  var dx = m.dirX;
+  var dy = m.dirY;
+  var length = 1;
   addDecal(p.x, p.y, 6, 8, 0.35, '#141210');
 
   if (p.plasmaTrail && rt.state.plasmaZones) {
@@ -191,20 +273,7 @@ export function dash() {
     pushFxEvent('emp', p.x, p.y, { radius: blastRadius });
   }
 
-  triggerHaptic(isJustDash ? [30, 20, 50] : [15]);
-  var cooledHeat = isJustDash ? liveJustHeat(p) : 0;
-  var cdMult = (typeof p.dashCooldownMult === 'number' && p.dashCooldownMult > 0) ? p.dashCooldownMult : 1;
-  p.dashCharges -= 1;
-  p.lastDashJust = isJustDash;
-  if (p.dashCharges <= 0) {
-    p.dashCooldown = (isJustDash ? justDashCooldown(cooledHeat) : 2.2) * cdMult;
-  } else if (p.dashIndependent && !(p.dashCooldown > 0)) {
-    p.dashCooldown = dashRechargeCooldown(p) * cdMult;
-  }
-  p.invulnerable = Math.max(p.invulnerable, 0.32 + (p.dashInvulnBonus || 0));
   p.dashPulse = DASH_PULSE_DURATION;
-  p.dashAmbushTimer = isJustDash ? 1.2 : 0.6;
-  AudioFX.dash();
   if (isJustDash) {
     rt.state.combo = Math.min(MAX_COMBO, (rt.state.combo || 0) + 2);
     rt.state.comboTimer = 4.0;
@@ -406,8 +475,8 @@ export function triggerEmp() {
     return;
   }
 
-  var boundW = rt.ui ? rt.ui.width : rt.state.width;
-  var boundH = rt.ui ? rt.ui.height : rt.state.height;
+  var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
 
   var empX;
   var empY;

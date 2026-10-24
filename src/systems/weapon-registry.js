@@ -96,8 +96,8 @@ registerWeaponStrategy({
   },
   onFire: function (p, aimAngle) {
     if (!rt.state) return;
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
@@ -252,8 +252,8 @@ registerWeaponStrategy({
   },
   onFire: function (p, aimAngle) {
     if (!rt.state) return;
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
@@ -441,8 +441,8 @@ registerWeaponStrategy({
   },
   onFire: function (p, aimAngle) {
     if (!rt.state) return;
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
@@ -596,8 +596,8 @@ registerWeaponStrategy({
   },
   onFire: function (p, aimAngle) {
     if (!rt.state) return;
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
@@ -760,8 +760,8 @@ registerWeaponStrategy({
   },
   onFire: function (p, aimAngle, forceCharged) {
     if (!rt.state) return;
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var isVulcan = !!(p.vulcanMeltdown && ((p.continuousFireTime || 0) >= 1.2));
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;

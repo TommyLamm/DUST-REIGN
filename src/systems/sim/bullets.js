@@ -126,8 +126,8 @@ function triggerColossusGraviton(b) {
   if (!b.colossusGraviton || b.gravitonDone || !rt.state) return;
   b.gravitonDone = true;
   if (!rt.state.tacticalEntities) rt.state.tacticalEntities = [];
-  var boundW = rt.ui ? rt.ui.width : rt.state.width;
-  var boundH = rt.ui ? rt.ui.height : rt.state.height;
+  var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
   rt.state.tacticalEntities.push({
     kind: 'singularity-vortex',
     x: clamp(b.x, 20, boundW - 20),

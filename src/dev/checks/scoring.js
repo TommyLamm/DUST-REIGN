@@ -1,7 +1,7 @@
 import { clearSeed, rng, seedRun } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { damagePlayer } from '../../systems/combat.js';
-import { dash, justDashCooldown, stepDashHeat } from '../../systems/abilities.js';
+import { completeDash, dash, justDashCooldown, stepDashHeat } from '../../systems/abilities.js';
 import { addScore, calculateCombatRank, calculateFlawlessBonus } from '../../systems/scoring.js';
 import { MAX_COMBO } from '../../config.js';
 
@@ -209,6 +209,7 @@ export function run() {
     var dashesBefore = state.stats ? (state.stats.justDashes || 0) : 0;
     state.enemies = [{ x: p.x + 18, y: p.y, r: 10, hp: 500, kind: 'crawler' }];
     dash();
+    completeDash();
     if (p.dashCooldown !== 0.35 || p.dashAmbushTimer !== 1.2 || p.dashHeat !== 1 || p.dashHeatArmed) {
       throw new Error('first just dash should stay 0.35 with heat 1 unarmed');
     }
@@ -223,6 +224,7 @@ export function run() {
     p.x = 200;
     p.y = 120;
     dash();
+    completeDash();
     if (p.dashCooldown !== 0.65 || p.dashHeat !== 2) throw new Error('second just dash expected 0.65 / heat 2');
     stepDashHeat(0.2);
     p.dashCharges = 1;
@@ -230,6 +232,7 @@ export function run() {
     p.x = 200;
     p.y = 120;
     dash();
+    completeDash();
     if (p.dashCooldown !== 0.95 || p.dashHeat !== 3) throw new Error('third just dash expected 0.95 / heat 3');
     stepDashHeat(0.2);
     p.dashCharges = 1;
@@ -237,6 +240,7 @@ export function run() {
     p.x = 200;
     p.y = 120;
     dash();
+    completeDash();
     if (p.dashCooldown !== 1.25 || p.dashHeat !== 3) throw new Error('fourth just dash expected 1.25 / heat capped at 3');
     if (state.score !== 160 || state.scoreBreakdown.style !== 160) throw new Error('four just dashes should score 160 style');
     var timerHot = p.dashHeatTimer;
@@ -253,6 +257,7 @@ export function run() {
     p.x = 200;
     p.y = 120;
     dash();
+    completeDash();
     if (p.dashCooldown !== 2.2 || p.dashHeat !== 2 || p.dashHeatTimer !== 2 || p.lastDashJust) {
       throw new Error('normal dash must not stack or clear heat');
     }

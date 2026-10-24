@@ -434,8 +434,8 @@ export function explodeCore(core, index) {
     }
   }
   if (dist2(core.x, core.y, p.x, p.y) <= (blastR + p.r) * (blastR + p.r)) {
-    var boundW = rt.ui ? rt.ui.width : rt.state.width;
-    var boundH = rt.ui ? rt.ui.height : rt.state.height;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var pkdx = p.x - core.x;
     var pkdy = p.y - core.y;
     var pkd = Math.hypot(pkdx, pkdy) || 1;
@@ -499,8 +499,8 @@ export function explodeBarrel(barrel, index, isKicked) {
   }
 
   if (p && dist2(barrel.x, barrel.y, p.x, p.y) <= (blastR + p.r) * (blastR + p.r)) {
-    var boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
-    var boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+    var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+    var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
     var pkdx = p.x - barrel.x;
     var pkdy = p.y - barrel.y;
     var pkd = Math.hypot(pkdx, pkdy) || 1;

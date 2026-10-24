@@ -194,8 +194,8 @@ export function triggerTacticalAuxiliary() {
     return false;
   }
 
-  var boundW = (rt.ui && rt.ui.width) || rt.state.width || 960;
-  var boundH = (rt.ui && rt.ui.height) || rt.state.height || 640;
+  var boundW = (rt.state && rt.state.width) || (rt.ui && rt.ui.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || (rt.ui && rt.ui.height) || 2640;
   var mouse = (rt.input && rt.input.mouse) || { x: p.x + Math.cos(p.aim || 0) * 120, y: p.y + Math.sin(p.aim || 0) * 120 };
   var executed = false;
 

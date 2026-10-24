@@ -9,7 +9,7 @@ import {
   rarityWeights,
   stackCount
 } from '../../data/upgrades.js';
-import { dash } from '../../systems/abilities.js';
+import { completeDash, dash, DASH_TRAVEL_TIME, stepDash } from '../../systems/abilities.js';
 import { damagePlayer, damageEnemy } from '../../systems/combat.js';
 import { onDash, onEmp, onKill } from '../../systems/card-effects.js';
 import {
@@ -185,9 +185,57 @@ export function run() {
     state.enemies = [];
     state.enemyBullets = [];
     dash();
+    completeDash();
     assert(state.player.dashCharges === 1 && state.player.dashCooldown === 2.2, 'second dash charge starts its own cooldown');
     dash();
+    completeDash();
     assert(state.player.dashCharges === 0, 'both dash charges can be spent');
+    // Far from the map origin a dash or shot must stay in the world, not snap to the viewport size.
+    var savedUi = rt.ui;
+    var savedW = state.width;
+    var savedH = state.height;
+    rt.ui = Object.assign({}, savedUi || {}, { width: 960, height: 640 });
+    state.width = 3520;
+    state.height = 2640;
+    state.player.dashCharges = 1;
+    state.player.dashCooldown = 0;
+    state.player.x = 2400;
+    state.player.y = 1800;
+    dash();
+    completeDash();
+    assert(state.player.x > 2000 && state.player.y > 1400, 'dash far from origin keeps world position');
+    // Dash travels over time: slow break-away, acceleration, soft landing, pulse on arrival.
+    state.player.dashCharges = 1;
+    state.player.dashCooldown = 0;
+    state.player.dashPulse = 0;
+    state.player.aim = 0;
+    state.player.x = 2400;
+    state.player.y = 1800;
+    dash();
+    assert(state.player.x === 2400 && state.player.dashMove, 'dash starts travel instead of blinking');
+    var travelSteps = [];
+    var travelPrevX = state.player.x;
+    for (var ts = 0; ts < 12 && state.player.dashMove; ts += 1) {
+      stepDash(state.player, DASH_TRAVEL_TIME / 12, 3520, 2640);
+      travelSteps.push(state.player.x - travelPrevX);
+      travelPrevX = state.player.x;
+      if (state.player.dashMove) assert(state.player.dashPulse === 0, 'dash pulse waits for landing');
+    }
+    var travelTotal = state.player.x - 2400;
+    var travelPeak = Math.max.apply(null, travelSteps);
+    assert(!state.player.dashMove && state.player.dashPulse > 0, 'dash lands and pulses after its travel time');
+    assert(Math.abs(travelTotal - 140 * (state.player.dashDistanceMult || 1)) < 0.01, 'dash still covers its full distance');
+    assert(travelSteps[0] < travelPeak * 0.2, 'dash breaks away slowly before accelerating');
+    assert(travelSteps[travelSteps.length - 1] < travelPeak * 0.5, 'dash eases into its landing');
+    state.player.weaponMode = 'standard';
+    state.player.cooldown = 0;
+    state.player.x = 2400;
+    state.player.y = 1800;
+    shoot();
+    assert(state.player.x > 2380 && state.player.y > 1780, 'firing far from origin keeps world position');
+    rt.ui = savedUi;
+    state.width = savedW;
+    state.height = savedH;
     rt.input.keys = savedKeys;
     findUpgrade('emp-amplifier').apply(state);
     assert(state.player.empCost === 40 && state.player.empRadiusBonus === 40, 'emp amplifier');

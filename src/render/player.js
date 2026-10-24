@@ -39,15 +39,30 @@ function noteDash(p, fx) {
       if (fx.dashTrail[i].life < 0) fx.dashTrail[i].life = 0;
     }
   }
-  if (!(fx.moved > 48)) return;
-  var ox = p.x - fx.dx;
-  var oy = p.y - fx.dy;
+  var ox;
+  var oy;
+  var spanX;
+  var spanY;
+  if (p.dashMove) {
+    // Travelling dash: spread the after-images over the path covered so far.
+    ox = p.dashMove.startX;
+    oy = p.dashMove.startY;
+    spanX = p.x - ox;
+    spanY = p.y - oy;
+    if (!(Math.hypot(spanX, spanY) > 12)) return;
+  } else {
+    if (!(fx.moved > 48)) return;
+    ox = p.x - fx.dx;
+    oy = p.y - fx.dy;
+    spanX = fx.dx;
+    spanY = fx.dy;
+  }
   var move = fx.moveAng == null ? p.aim : fx.moveAng;
   for (i = 0; i < fx.dashTrail.length; i += 1) {
     var t = (i + 1) / 4;
     var slot = fx.dashTrail[i];
-    slot.x = ox + fx.dx * t;
-    slot.y = oy + fx.dy * t;
+    slot.x = ox + spanX * t;
+    slot.y = oy + spanY * t;
     slot.aim = p.aim;
     slot.move = move;
     slot.life = 0.2 + i * 0.05;
@@ -55,7 +70,7 @@ function noteDash(p, fx) {
 }
 
 function noteChrono(p, fx) {
-  if (fx.moved > 70 && (p.dashAmbushTimer || 0) > 0.85) {
+  if ((fx.moved > 70 || p.dashMove) && (p.dashAmbushTimer || 0) > 0.85) {
     fx.chronoUntil = (rt.renderTime || 0) + 0.28;
   }
 }
