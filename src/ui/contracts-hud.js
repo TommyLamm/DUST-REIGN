@@ -1,7 +1,23 @@
 import { rt } from '../core/runtime.js';
-import { isChinese, tContractLabel, tMutatorBlurb, tMutatorName, tRewardLabel } from '../core/i18n.js';
+import { isChinese, tContractLabel, tDoubleDownHint, tMutatorBlurb, tMutatorName, tRewardLabel } from '../core/i18n.js';
+import { doubleDownCurrentContract } from '../systems/contracts.js';
 
 var lastSig = '';
+var keysBound = false;
+
+function ensureContractsKey() {
+  if (keysBound || typeof window === 'undefined') return;
+  keysBound = true;
+  window.addEventListener('keydown', function (e) {
+    if (e.repeat) return;
+    var k = String(e.key || '').toLowerCase();
+    if (k === 'h') {
+      if (doubleDownCurrentContract()) {
+        updateContractsHud();
+      }
+    }
+  });
+}
 
 function el(tag, className, text) {
   var node = document.createElement(tag);
@@ -31,13 +47,16 @@ export function updateContractsHud() {
   if (typeof document === 'undefined') return;
   var root = document.getElementById('contractTracker');
   if (!root || !rt.state) return;
+  ensureContractsKey();
   var zh = isChinese();
   var contract = rt.state.contract;
   var mutator = rt.state.mutator;
   var mutId = mutator && typeof mutator === 'object' ? mutator.id : (typeof mutator === 'string' ? mutator : '');
   var cId = contract && contract.id ? contract.id : '';
   var progress = contract && contract.progress ? Math.floor(contract.progress * 10) : 0;
-  var sig = cId + '|' + progress + '|' + (contract && contract.done ? 1 : 0) + '|' + (contract && contract.resets ? contract.resets : 0) + '|' + mutId + '|' + (zh ? 'zh' : 'en');
+  var canDouble = contract && !contract.done && !contract.doubled && (rt.state.waveTime || 0) <= 12 ? 1 : 0;
+  var isDoubled = contract && contract.doubled ? 1 : 0;
+  var sig = cId + '|' + progress + '|' + (contract && contract.done ? 1 : 0) + '|' + isDoubled + '|' + canDouble + '|' + (contract && contract.resets ? contract.resets : 0) + '|' + mutId + '|' + (zh ? 'zh' : 'en');
   if (!cId && !mutId) {
     lastSig = '';
     root.hidden = true;
@@ -58,7 +77,7 @@ export function updateContractsHud() {
     root.appendChild(chip);
   }
   if (cId) {
-    var card = el('div', 'contract-card' + (contract.done ? ' is-complete' : '') + (contract.resets ? ' is-reset' : ''));
+    var card = el('div', 'contract-card' + (contract.done ? ' is-complete' : '') + (isDoubled ? ' is-doubled' : '') + (contract.resets ? ' is-reset' : ''));
     card.appendChild(el('span', 'contract-kicker', zh ? '作戰合約' : 'CONTRACT'));
     card.appendChild(el('strong', null, progressText(contract)));
     var rewText = (zh ? tRewardLabel(contract.reward) : null) || (contract.reward && contract.reward.label) || '';
@@ -66,7 +85,22 @@ export function updateContractsHud() {
     reward.setAttribute('aria-hidden', 'true');
     reward.dataset.mark = rewardMark(contract.reward);
     card.appendChild(reward);
-    if (contract.done) card.appendChild(el('span', 'contract-check', zh ? '已達成' : 'SEALED'));
+    if (contract.done) {
+      card.appendChild(el('span', 'contract-check', zh ? '已達成' : 'SEALED'));
+    } else if (canDouble) {
+      var ddBtn = el('button', 'contract-doubledown-btn', zh ? '[H] 超頻加注' : '[H] DOUBLE-DOWN');
+      ddBtn.type = 'button';
+      ddBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (doubleDownCurrentContract()) {
+          updateContractsHud();
+        }
+      });
+      card.appendChild(ddBtn);
+    } else if (isDoubled) {
+      card.appendChild(el('span', 'contract-doubled-badge', zh ? '⚡ 超頻加注 (3x)' : '⚡ OVERCLOCKED (3x)'));
+    }
     root.appendChild(card);
   }
 }

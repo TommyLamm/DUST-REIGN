@@ -98,3 +98,28 @@
   color: #ffffff;
   border-color: #ffffff;
 }
+
+/* Double Down (加注) 高危樣式 */
+.contract-card.is-doubled {
+  border-left-color: #ff3344;
+  border-color: rgba(255, 68, 68, 0.65);
+  background: rgba(32, 10, 10, 0.88);
+  box-shadow: 0 0 14px rgba(255, 51, 68, 0.32);
+}
+
+.contract-card.is-doubled strong {
+  color: #ffcc44;
+  text-shadow: 0 0 8px rgba(255, 204, 68, 0.45);
+}
+
+.contract-hotkey-hint {
+  display: inline-block;
+  margin-top: 4px;
+  font: 700 9px var(--mono);
+  color: #ffaa33;
+  letter-spacing: 0.08em;
+  padding: 1px 5px;
+  background: rgba(255, 170, 51, 0.16);
+  border: 1px solid rgba(255, 170, 51, 0.45);
+  border-radius: 2px;
+}

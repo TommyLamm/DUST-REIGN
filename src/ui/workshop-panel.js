@@ -26,6 +26,7 @@ export function refreshWorkshopPanel(container) {
   var wsState = getWorkshopState();
   var loadout = wsState.loadout;
   var unlocked = wsState.unlockedModules || {};
+  var tuning = wsState.tuning || {};
   var usedWattage = getEquippedWattage();
   var meta = readMeta();
   var mode = meta.selectedMode || 'standard';
@@ -93,8 +94,10 @@ export function refreshWorkshopPanel(container) {
     var sBody = el('div', 'socket-card-body');
     if (equippedMod) {
       var modTier = unlocked[equippedMod.id] || 1;
+      var modTuning = (tuning && tuning[equippedMod.id]) || 0;
+      var tierText = 'T' + modTier + (modTuning > 0 ? ' [+' + (modTuning * 5) + '%]' : '');
       sBody.appendChild(el('strong', 'socket-mod-title', (equippedMod.code ? equippedMod.code + ' ' : '') + (zh ? equippedMod.nameZh : equippedMod.name)));
-      sBody.appendChild(el('span', 'socket-tier-badge', 'T' + modTier));
+      sBody.appendChild(el('span', 'socket-tier-badge', tierText));
 
       var detachBtn = el('button', 'workshop-detach-btn', zh ? '卸下模組' : 'DETACH');
       detachBtn.type = 'button';
@@ -122,6 +125,8 @@ export function refreshWorkshopPanel(container) {
   var catalogGrid = el('div', 'workshop-catalog-grid');
   MODULES.forEach(function (mod) {
     var currentTier = unlocked[mod.id] || 1;
+    var tuningLevel = (tuning && tuning[mod.id]) || 0;
+    var tuningMultiplier = 1 + 0.05 * tuningLevel;
     var isEquipped = (loadout[mod.branch] === mod.id);
     var card = el('div', 'module-card' + (isEquipped ? ' is-equipped' : ''));
 
@@ -140,14 +145,20 @@ export function refreshWorkshopPanel(container) {
 
     // Tier indicator
     var tierBar = el('div', 'module-tier-bar');
-    tierBar.appendChild(el('span', 'module-tier-label', 'TIER ' + currentTier + ' / 3'));
+    var tierLabelText = 'TIER ' + currentTier + ' / 3' + (tuningLevel > 0 ? ' [OC Lv.' + tuningLevel + ']' : '');
+    tierBar.appendChild(el('span', 'module-tier-label', tierLabelText));
     card.appendChild(tierBar);
 
     // Stats: Bonus & Trade-off
     var statsDiv = el('div', 'module-stats-box');
     var tierData = getModuleTierData(mod.id, currentTier);
     if (tierData) {
-      statsDiv.appendChild(el('p', 'module-bonus-text', '▲ ' + (zh ? tierData.bonusDescZh : tierData.bonusDesc)));
+      var bonusText = zh ? tierData.bonusDescZh : tierData.bonusDesc;
+      if (tuningLevel > 0) {
+        var ocBonusPct = Math.round(tuningLevel * 5);
+        bonusText += ' ' + (zh ? '(超頻 +' + ocBonusPct + '% 主加成 x' + tuningMultiplier.toFixed(2) + ')' : '(OVERCLOCK +' + ocBonusPct + '% x' + tuningMultiplier.toFixed(2) + ')');
+      }
+      statsDiv.appendChild(el('p', 'module-bonus-text', '▲ ' + bonusText));
     }
     if (mod.tradeOff) {
       statsDiv.appendChild(el('p', 'module-penalty-text', '▼ ' + (zh ? mod.tradeOff.descZh : mod.tradeOff.desc)));
@@ -188,7 +199,7 @@ export function refreshWorkshopPanel(container) {
     }
     actionsRow.appendChild(equipBtn);
 
-    // Upgrade
+    // Upgrade / Overclock
     var upgradeBtn = el('button', 'module-action-btn is-upgrade');
     upgradeBtn.type = 'button';
     if (currentTier < 3) {
@@ -206,8 +217,23 @@ export function refreshWorkshopPanel(container) {
         upgradeBtn.disabled = true;
         upgradeBtn.classList.add('is-disabled');
       }
+    } else if (tuningLevel < 3) {
+      var ocCost = 250;
+      var canAffordOc = (scrap >= ocCost);
+      upgradeBtn.textContent = (zh ? '超頻微調 +1 (250 廢料)' : 'OVERCLOCK +1 (250 SCRAP)');
+      if (canAffordOc) {
+        on(upgradeBtn, 'click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          upgradeModule(mod.id);
+          refreshWorkshopPanel(container);
+        });
+      } else {
+        upgradeBtn.disabled = true;
+        upgradeBtn.classList.add('is-disabled');
+      }
     } else {
-      upgradeBtn.textContent = zh ? '最高階 ★★★' : 'MAX TIER ★★★';
+      upgradeBtn.textContent = zh ? '超頻已滿階 (MAX)' : 'MAX OVERCLOCKED';
       upgradeBtn.disabled = true;
       upgradeBtn.classList.add('is-max');
     }

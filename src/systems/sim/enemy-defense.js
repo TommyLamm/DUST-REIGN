@@ -4,6 +4,8 @@ import { rt } from '../../core/runtime.js';
 import { addScore } from '../scoring.js';
 import { filterEnemyStrategyDamage } from './enemy-registry.js';
 import { onShieldBreak } from '../card-effects.js';
+import { spawnCombatText } from '../../render/fx.js';
+import { spawnParticles } from '../../core/pools.js';
 
 function angDiff(a, b) {
   return Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -93,6 +95,10 @@ export function onEnemyEmp(e) {
   if (!e) return;
   clearEnemyShields(e);
   if (e.kind === 'warden') clearShieldsOwnedBy(e);
+  if (e.kind === 'elite' && (e.affix === 'mirror' || e.affix2 === 'mirror')) {
+    e.shieldBrokenTimer = Math.max(e.shieldBrokenTimer || 0, 3.5);
+    onShieldBreak(e, { x: e.x, y: e.y, source: 'mirror_break' });
+  }
   if (e.kind === 'bulwark') {
     e.shieldHp = 0;
     e.shieldBroken = true;
@@ -115,6 +121,77 @@ export function filterEnemyDamage(e, amount, info) {
   if (e.defenseAuraTimer > 0) left *= (1 - (e.damageMitigation || 0.35));
   if (e.armorBreakTimer > 0) left *= 1.4;
   if (e.concussionTimer > 0) left *= 1.35;
+  if (e.commandChanneling) {
+    e.commandDamageTaken = (e.commandDamageTaken || 0) + left;
+    var cmdThreshold = (e.maxHp || e.hp || 100) * 0.18;
+    if (e.commandDamageTaken >= cmdThreshold || (info && (info.isCounter || info.counter)) || e.empTimer > 0) {
+      e.commandChanneling = false;
+      e.commandTimer = 4.5;
+      e.commandDamageTaken = 0;
+      e.hp = Math.max(1, e.hp - 45);
+      e.staggerTimer = Math.max(e.staggerTimer || 0, 2.0);
+      spawnCombatText(e.x, e.y - 14, 'WAR-CRY INTERRUPT!', true);
+      if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
+      pushFxEvent('burst', e.x, e.y, { preset: 'emp', tint: '#f59e0b', scale: 0.9 });
+      spawnParticles(e.x, e.y, '#f59e0b', 16, 160, 3);
+    }
+  }
+  if (e.blinkTelegraph && e.blinkDestLocked) {
+    var isHeavyHit = false;
+    if (info) {
+      if (info.isCounter || info.counter) isHeavyHit = true;
+      else if (info.bullet && (info.bullet.isVanguard || info.bullet.isColossus || (info.bullet.pierce !== undefined && info.bullet.pierce >= 2))) isHeavyHit = true;
+    }
+    if (e.staggerTimer > 0 || isHeavyHit) {
+      e.blinkDestLocked = false;
+      e.blinkTelegraph = false;
+      e.blinkTimer = 3.5;
+      e.staggerTimer = Math.max(e.staggerTimer || 0, 1.8);
+      spawnCombatText(e.x, e.y - 14, 'BLINK INTERCEPTED!', true);
+      if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+      spawnParticles(e.x, e.y, '#75d1b0', 16, 160, 3);
+    }
+  }
+  if (e.kind === 'elite' || e.kind === 'brute' || e.kind === 'bulwark') {
+    if (e.maxStaggerHp === undefined) {
+      e.maxStaggerHp = Math.round((e.maxHp || e.hp || 100) * 0.35);
+    }
+    if (e.staggerHp === undefined) {
+      e.staggerHp = e.maxStaggerHp;
+    }
+  }
+  if (e.staggerTimer > 0) {
+    left *= 1.35;
+  } else if (e.maxStaggerHp > 0) {
+    var isHeavyOrCounter = false;
+    if (info) {
+      if (info.isCounter || info.counter) {
+        isHeavyOrCounter = true;
+      } else if (info.bullet) {
+        var b = info.bullet;
+        if (b.isVanguard || b.isColossus || (b.pierce !== undefined && b.pierce >= 2) || (b.isBreacher && info.isClose)) {
+          isHeavyOrCounter = true;
+        }
+      }
+    }
+    var staggerLoss = isHeavyOrCounter ? left * 1.8 : left;
+    e.staggerHp -= staggerLoss;
+    if (e.staggerHp <= 0) {
+      e.staggerTimer = 1.6;
+      e.staggerHp = e.maxStaggerHp;
+      if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+      pushFxEvent('burst', e.x, e.y, { preset: 'emp', tint: '#f59e0b', scale: 0.8 });
+      if (rt.state) {
+        rt.state.combo = (rt.state.combo || 0) + 2;
+        if (rt.state.stats && rt.state.combo > (rt.state.stats.maxCombo || 0)) {
+          rt.state.stats.maxCombo = rt.state.combo;
+        }
+        rt.state.comboTimer = Math.max(rt.state.comboTimer || 0, 3.5);
+        rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.060);
+      }
+      spawnCombatText(e.x, e.y - 14, 'STAGGER BREAK!', true);
+    }
+  }
   if (e.shieldHp > 0) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;
     e.shieldHp -= absorb;

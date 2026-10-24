@@ -2530,6 +2530,7 @@ export function drawEnemy(ctx, e) {
 
   ctx.restore();
   if (e.kind === 'elite' && (e.affix === 'command' || e.affix2 === 'command')) drawCommandAntenna(ctx, e, reduced);
+  if (e.maxStaggerHp > 0) drawStaggerBar(ctx, e);
 }
 
 var tagWidths = Object.create(null);
@@ -2623,6 +2624,35 @@ function drawCommandLinks(ctx) {
   ctx.restore();
 }
 
+export function drawStaggerBar(ctx, e) {
+  if (!e || !(e.maxStaggerHp > 0) || e.hp <= 0) return;
+  if (!((e.maxHp > 0 && e.hp < e.maxHp) || e.staggerTimer > 0 || (e.staggerHp !== undefined && e.staggerHp < e.maxStaggerHp))) return;
+  e._staggerDrawnTime = (rt && rt.renderTime) || 0;
+  var w = Math.max(18, e.r * 2);
+  var left = Math.round(e.x - w * 0.5);
+  var top = Math.round(e.y - e.r - 4);
+  var barH = 2.5;
+  var pad = 1;
+
+  ctx.fillStyle = 'rgba(4, 4, 6, 0.92)';
+  ctx.fillRect(left - pad, top - pad, w + pad * 2, barH + pad * 2);
+
+  ctx.fillStyle = '#1c1712';
+  ctx.fillRect(left, top, w, barH);
+
+  if (e.staggerTimer > 0) {
+    var flash = (Math.floor((rt.renderTime || 0) * 14) % 2 === 0);
+    ctx.fillStyle = flash ? '#ef4444' : '#fbbf24';
+    var staggerRatio = clamp(e.staggerTimer / 1.6, 0, 1);
+    ctx.fillRect(left, top, Math.max(2, w * staggerRatio), barH);
+  } else {
+    var curStagger = e.staggerHp !== undefined ? e.staggerHp : e.maxStaggerHp;
+    var ratio = clamp(curStagger / e.maxStaggerHp, 0, 1);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(left, top, Math.max(0, w * ratio), barH);
+  }
+}
+
 function drawLabels(ctx) {
   var list = rt.state.enemies;
   if (!list) return;
@@ -2631,7 +2661,13 @@ function drawLabels(ctx) {
   ctx.save();
   for (i = 0; i < list.length; i += 1) {
     var e = list[i];
+    if (e.maxStaggerHp > 0 && (!rt || e._staggerDrawnTime !== rt.renderTime)) {
+      drawStaggerBar(ctx, e);
+    }
     var lift = (e.maxHp > 0 && e.hp < e.maxHp) ? 8 : 0;
+    if (e.maxStaggerHp > 0 && ((e.maxHp > 0 && e.hp < e.maxHp) || e.staggerTimer > 0 || (e.staggerHp !== undefined && e.staggerHp < e.maxStaggerHp))) {
+      lift += 4;
+    }
     var y = e.y - e.r - (hc ? 30 : 18) - lift;
     if (e.kind === 'elite' && e.affix) {
       var tag = e.affix === 'mirror' ? '[MRR]' :

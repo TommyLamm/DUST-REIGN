@@ -194,6 +194,10 @@ var UPGRADES_I18N = {
     title: { zh: '電弧晶格', en: 'ARC LATTICE' },
     text: { zh: '連鎖目標 +1 且連鎖傷害由 70% 提升至 80%。精通等級 +1', en: '+1 chain target and chain damage 70% → 80%. Mastery +1' }
   },
+  'superconducting-flux': {
+    title: { zh: '超導通量', en: 'SUPERCONDUCTING FLUX' },
+    text: { zh: '巨神傷害 +18%，蓄力速度 +15%。精通等級 +1', en: 'Colossus damage +18%, charge speed +15%. Mastery +1' }
+  },
   'phoenix-core': {
     title: { zh: '鳳凰核心', en: 'PHOENIX CORE' },
     text: { zh: '首次致命傷將以 40% 生命重生，無敵 2 秒並釋放免費 EMP', en: 'First lethal hit revives at 40% HP, 2s invulnerable, free EMP' }
@@ -248,6 +252,14 @@ var FUSIONS_I18N = {
   'solar-afterburner': {
     title: { zh: '日冕風暴羽翼', en: 'SOLAR AFTERBURNER' },
     text: { zh: '衝刺鋪設白熾火徑蒸發敵彈，焚燒踩踏敵軍並在風暴中扇形擴散', en: 'Dash lays an incandescent fire trench vaporizing enemy bullets, burning foes and fanning out in sandstorms' }
+  },
+  'event-horizon': {
+    title: { zh: '事件視界', en: 'EVENT HORIZON' },
+    text: { zh: '蓄滿軌道砲撕裂空間形成超大質量黑洞，撕碎目標護甲並引發強烈重力大災變', en: 'Fully-charged rail blasts tear space into a supermassive singularity, shattering armor and triggering graviton cataclysm' }
+  },
+  'graviton-cataclysm': {
+    title: { zh: '重力大災變', en: 'GRAVITON CATACLYSM' },
+    text: { zh: '蓄滿軌道砲撕裂空間形成超大質量黑洞，撕碎目標護甲並引發強烈重力大災變', en: 'Fully-charged rail blasts tear space into a supermassive singularity, shattering armor and triggering graviton cataclysm' }
   },
   'static-tempest': {
     title: { zh: '靜電風暴', en: 'STATIC TEMPEST' },
@@ -768,6 +780,13 @@ export function tContractDetail(id) {
   return '';
 }
 
+
+export function tDoubleDownHint(isDoubled) {
+  if (currentLang === 'zh') {
+    return isDoubled ? '⚡ 超頻加注 (3x 獎勵)' : '[H] 超頻加注';
+  }
+  return isDoubled ? '⚡ OVERCLOCKED (3x)' : '[H] DOUBLE-DOWN';
+}
 export function tRewardLabel(reward) {
   if (!reward) return '';
   if (currentLang === 'zh') {
@@ -862,6 +881,15 @@ export function tRankTitle(title) {
 
 export function tLog(msg) {
   if (currentLang !== 'zh' || !msg) return msg;
+  if (msg.indexOf('RESONANCE ASCENSION //') === 0) {
+    return msg.replace('RESONANCE ASCENSION //', '流派共鳴晉階 //').replace('KINETIC', '動能穿甲').replace('PLASMA', '熱能爆破').replace('STATIC', '電磁超載').replace('TACTICAL', '機動戰術').replace('TIER', '階級');
+  }
+  if (msg === 'CONTRACT OVERCLOCKED // REWARD x3 [HIGH RISK]') return '合約超頻加注 // 獎勵 x3 [高危契約]';
+  if (msg === 'OVERCLOCKED CONTRACT COMPLETED // 3x REWARD + TACTICAL CRATE') return '超頻合約達成 // 3x 獎勵 + 戰術補給箱';
+  if (msg === 'CONTRACT FAILED // BACKLASH -25% HP') return '合約超頻失敗 // 反噬扣除 25% 生命';
+  if (msg === 'STORM CORES DETECTED // HARVEST FOR OVERDRIVE') return '偵測到風暴晶核 // 採集以獲取超頻';
+  if (msg === 'STORM CORE SIPHONED // OVERDRIVE 3s + EMP SHOCKWAVE') return '風暴晶核已採集 // 3 秒超頻 + 離子震波';
+  if (msg.indexOf('STORM HARVEST GRAND SLAM') === 0) return msg.replace('STORM HARVEST GRAND SLAM', '風暴採集大滿貫').replace('SCORE', '分數');
   if (msg.indexOf('GAMEPAD ONLINE') === 0) return msg.replace('GAMEPAD ONLINE', '手把已連線');
   if (msg === 'GAMEPAD OFFLINE') return '手把已斷線';
   if (msg === 'PERFECT DASH // CHRONO DILATION') return '精準衝刺 // 時間膨脹';
@@ -986,7 +1014,6 @@ export function tStatus(text) {
 export function tTip(id, kind) {
   if (currentLang !== 'zh') {
     if (id === 'move-shoot') {
-      if (kind === 'touch') return 'STICK TO MOVE · FIRE LOCKS THE NEAREST SIGNAL';
       if (kind === 'pad') return 'LEFT STICK MOVE · RT FIRE · A OR LT DASH';
       return 'WASD MOVE · MOUSE AIM / FIRE · SPACE OR SHIFT DASH';
     }
@@ -1002,7 +1029,6 @@ export function tTip(id, kind) {
     return '';
   }
   if (id === 'move-shoot') {
-    if (kind === 'touch') return '滑動搖桿移動 · 開火會自動鎖定最近的目標';
     if (kind === 'pad') return '左搖桿移動 · RT 開火 · A 或 LT 衝刺';
     return 'WASD 移動 · 滑鼠瞄準 / 開火 · 空白鍵或 SHIFT 衝刺';
   }
@@ -1033,6 +1059,10 @@ export function tBanner(text) {
   if (text === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';
   if (text === 'WIND SHIFT // INBOUND') return '風向驟變 // 暴風來襲';
   if (text === 'TITAN ENRAGED // BARRAGE PROTOCOL') return '泰坦暴怒 // 彈幕齊射協議';
+  if (text === 'CONTRACT OVERCLOCKED // REWARD x3 [HIGH RISK]') return '合約超頻加注 // 獎勵 x3 [高危契約]';
+  if (text === 'OVERCLOCKED CONTRACT COMPLETED // 3x REWARD + TACTICAL CRATE') return '超頻合約達成 // 3x 獎勵 + 戰術補給箱';
+  if (text === 'CONTRACT FAILED // BACKLASH -25% HP') return '合約超頻失敗 // 反噬扣除 25% 生命';
+  if (text.indexOf('STORM HARVEST GRAND SLAM') === 0) return text.replace('STORM HARVEST GRAND SLAM', '風暴採集大滿貫').replace('SCORE', '分數');
   if (text === 'STORM BREAKER // SURGE UNLOCKED') return '風暴破除者 // 湧浪解鎖';
   if (text.indexOf('TITAN APPROACHING') !== -1) {
     return text.replace('TITAN APPROACHING', '泰坦逼近').replace('SECTOR', '區段');
@@ -1164,8 +1194,8 @@ export function syncStaticHtml(lang) {
     if (sBtnSpan) sBtnSpan.textContent = zh ? '踏入塵暴' : 'ENTER THE DUST';
     var sControls = startScreen.querySelector('.overlay-foot-controls');
     if (sControls) sControls.textContent = zh
-      ? '觸控: 搖桿 + 開火 (自動瞄準) · 鍵鼠: WASD + 滑鼠左鍵 / 空白鍵 · 手把: 類比搖桿 + RT / A'
-      : 'TOUCH: D-PAD + FIRE (AUTO-AIM) · DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A';
+      ? '鍵鼠: WASD + 滑鼠左鍵 / 空白鍵 · 手把: 類比搖桿 + RT / A'
+      : 'DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A';
     var sFootSpans = startScreen.querySelectorAll('.overlay-foot span');
     if (sFootSpans && sFootSpans.length >= 2) {
       sFootSpans[1].innerHTML = zh ? '殘命易逝 <i aria-hidden="true">/</i> 彈藥難尋' : 'RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT';
@@ -1279,28 +1309,27 @@ export function syncStaticHtml(lang) {
 
     // Controls Matrix
     var matrixHead = pauseModal.querySelectorAll('.controls-matrix-head span');
-    if (matrixHead && matrixHead.length >= 4) {
+    if (matrixHead && matrixHead.length >= 3) {
       matrixHead[0].textContent = zh ? '動作' : 'ACTION';
       matrixHead[1].textContent = zh ? '鍵盤 / 滑鼠' : 'KEYBOARD / MOUSE';
       matrixHead[2].textContent = zh ? '手把' : 'GAMEPAD';
-      matrixHead[3].textContent = zh ? '觸控面板' : 'TOUCHPAD';
     }
     var matrixRows = pauseModal.querySelectorAll('.controls-matrix-row');
     if (matrixRows && matrixRows.length >= 7) {
       var r0 = matrixRows[0].querySelectorAll('span');
-      if (r0.length >= 4) { r0[0].textContent = zh ? '移動機體' : 'MOVE RIG'; r0[1].textContent = zh ? 'W A S D / 方向鍵' : 'W A S D / ARROWS'; r0[2].textContent = zh ? '左搖桿 / 十字鍵' : 'L-STICK / D-PAD'; r0[3].textContent = zh ? '浮動搖桿' : 'FLOATING JOYSTICK'; }
+      if (r0.length >= 3) { r0[0].textContent = zh ? '移動機體' : 'MOVE RIG'; r0[1].textContent = zh ? 'W A S D / 方向鍵' : 'W A S D / ARROWS'; r0[2].textContent = zh ? '左搖桿 / 十字鍵' : 'L-STICK / D-PAD'; }
       var r1 = matrixRows[1].querySelectorAll('span');
-      if (r1.length >= 4) { r1[0].textContent = zh ? '瞄準 / 轉向' : 'AIM / LOOK'; r1[1].textContent = zh ? '滑鼠游標' : 'MOUSE POINTER'; r1[2].textContent = zh ? '右搖桿 (360°)' : 'R-STICK (360°)'; r1[3].textContent = zh ? '自動鎖定目標' : 'AUTO-AIM TARGET'; }
+      if (r1.length >= 3) { r1[0].textContent = zh ? '瞄準 / 轉向' : 'AIM / LOOK'; r1[1].textContent = zh ? '滑鼠游標' : 'MOUSE POINTER'; r1[2].textContent = zh ? '右搖桿 (360°)' : 'R-STICK (360°)'; }
       var r2 = matrixRows[2].querySelectorAll('span');
-      if (r2.length >= 4) { r2[0].textContent = zh ? '開火射擊' : 'FIRE WEAPON'; r2[1].textContent = zh ? '滑鼠左鍵 (長按)' : 'LMB (HOLD)'; r2[2].textContent = 'RT / RB'; r2[3].textContent = zh ? '開火按鈕' : 'FIRE BUTTON'; }
+      if (r2.length >= 3) { r2[0].textContent = zh ? '開火射擊' : 'FIRE WEAPON'; r2[1].textContent = zh ? '滑鼠左鍵 (長按)' : 'LMB (HOLD)'; r2[2].textContent = 'RT / RB'; }
       var r3 = matrixRows[3].querySelectorAll('span');
-      if (r3.length >= 4) { r3[0].textContent = zh ? 'EMP 衝擊' : 'EMP BLAST'; r3[1].textContent = zh ? 'Q / E / 滑鼠右鍵' : 'Q / E / RMB'; r3[2].textContent = zh ? 'LB / B 鍵' : 'LB / B BUTTON'; r3[3].textContent = zh ? 'EMP 按鈕' : 'EMP BUTTON'; }
+      if (r3.length >= 3) { r3[0].textContent = zh ? 'EMP 衝擊' : 'EMP BLAST'; r3[1].textContent = zh ? 'Q / E / 滑鼠右鍵' : 'Q / E / RMB'; r3[2].textContent = zh ? 'LB / B 鍵' : 'LB / B BUTTON'; }
       var r4 = matrixRows[4].querySelectorAll('span');
-      if (r4.length >= 4) { r4[0].textContent = zh ? '推進器衝刺' : 'THRUSTER DASH'; r4[1].textContent = zh ? '空白鍵 / SHIFT' : 'SPACEBAR / SHIFT'; r4[2].textContent = zh ? 'LT / A 鍵' : 'LT / A BUTTON'; r4[3].textContent = zh ? '衝刺按鈕' : 'DASH BUTTON'; }
+      if (r4.length >= 3) { r4[0].textContent = zh ? '推進器衝刺' : 'THRUSTER DASH'; r4[1].textContent = zh ? '空白鍵 / SHIFT' : 'SPACEBAR / SHIFT'; r4[2].textContent = zh ? 'LT / A 鍵' : 'LT / A BUTTON'; }
       var r5 = matrixRows[5].querySelectorAll('span');
-      if (r5.length >= 4) { r5[0].textContent = zh ? '暫停 / 繼續' : 'PAUSE / RESUME'; r5[1].textContent = 'ESC / P'; r5[2].textContent = zh ? 'START / 選單鍵' : 'START / MENU'; r5[3].textContent = zh ? '頂部暫停按鈕' : 'TOPBAR PAUSE'; }
+      if (r5.length >= 3) { r5[0].textContent = zh ? '暫停 / 繼續' : 'PAUSE / RESUME'; r5[1].textContent = 'ESC / P'; r5[2].textContent = zh ? 'START / 選單鍵' : 'START / MENU'; }
       var r6 = matrixRows[6].querySelectorAll('span');
-      if (r6.length >= 4) { r6[0].textContent = zh ? '選擇強化' : 'SELECT UPGRADE'; r6[1].textContent = zh ? '數字鍵 1, 2, 3' : 'KEYS 1, 2, 3'; r6[2].textContent = 'X / Y / B (OR A)'; r6[3].textContent = zh ? '點擊強化卡片' : 'TAP UPGRADE CARD'; }
+      if (r6.length >= 3) { r6[0].textContent = zh ? '選擇強化' : 'SELECT UPGRADE'; r6[1].textContent = zh ? '數字鍵 1, 2, 3' : 'KEYS 1, 2, 3'; r6[2].textContent = 'X / Y / B (OR A)'; }
     }
 
     var resumeSpan = pauseModal.querySelector('#pauseResumeBtn span');
@@ -1343,21 +1372,11 @@ export function syncStaticHtml(lang) {
     }
     var ctrlNote = rail.querySelector('.controls-note');
     if (ctrlNote) ctrlNote.textContent = zh
-      ? '提示: 紅色沙塵逼近時保持移動。觸控「開火」會鎖定最近的目標。'
-      : 'Tip: keep moving when the red dust starts to climb. Touch FIRE locks the nearest signal.';
+      ? '提示: 紅色沙塵逼近時保持移動。'
+      : 'Tip: keep moving when the red dust starts to climb.';
     var signoff = rail.querySelector('.rail-signoff');
     if (signoff) signoff.innerHTML = zh ? '<span>無神明</span><i aria-hidden="true">×</i><span>無地圖</span>' : '<span>NO GODS</span><i aria-hidden="true">×</i><span>NO MAPS</span>';
   }
-
-  // Touch Controls
-  var joyGuide = document.querySelector('.joystick-guide');
-  if (joyGuide) joyGuide.textContent = zh ? '移動' : 'MOVE';
-  var touchSpecial = document.getElementById('touchSpecial');
-  if (touchSpecial) touchSpecial.textContent = 'EMP';
-  var touchDash = document.getElementById('touchDash');
-  if (touchDash) touchDash.textContent = zh ? '衝刺' : 'DASH';
-  var touchShoot = document.getElementById('touchShoot');
-  if (touchShoot) touchShoot.textContent = zh ? '開火' : 'FIRE';
 
   // Arena Footer & System Footer
   var feed = document.getElementById('feedText');

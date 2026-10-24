@@ -3,7 +3,7 @@ import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
-import { fastUnorderedRemove } from '../../core/utils.js';
+import { dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerReactiveArmor } from '../abilities.js';
 import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { triggerGameOver } from '../flow.js';
@@ -13,6 +13,7 @@ import { clearEnemyShields, clearShieldsOwnedBy } from './enemy-defense.js';
 import { stepEnemyHazards, sweepDefeated } from './new-enemies.js';
 import { getEnemyById, populateEnemyGrid, queryGridCallback } from '../../core/spatial-grid.js';
 import { primeEnemyStrategy, stepEnemyStrategy } from './enemy-registry.js';
+import { spawnCombatText } from '../../render/fx.js';
 
 var repCurrentEnemy = null;
 var repCurrentIdx = -1;
@@ -31,6 +32,37 @@ function repulseCallback(otherId) {
     var force = (1 - rdist / 38) * 420;
     repForceX += (rx / rdist) * force;
     repForceY += (ry / rdist) * force;
+  }
+}
+
+var dominoSource = null;
+var dominoSourceIdx = -1;
+
+function dominoCallback(otherId) {
+  if (otherId === dominoSourceIdx || !dominoSource) return;
+  var other = getEnemyById(otherId);
+  if (!other || other.hp <= 0 || other.burrowed || other.untargetable) return;
+  var d2 = dist2(dominoSource.x, dominoSource.y, other.x, other.y);
+  var hitR = (dominoSource.r || 12) + (other.r || 12);
+  if (d2 <= hitR * hitR && d2 > 0) {
+    var kb = dominoSource._recentKb || 12;
+    var crushDmg = Math.max(12, Math.round(kb * 1.5));
+    damageEnemy(other, crushDmg, { source: 'domino_crush', x: other.x, y: other.y });
+    damageEnemy(dominoSource, Math.round(crushDmg * 0.5), { source: 'domino_crush', x: dominoSource.x, y: dominoSource.y });
+    other.staggerTimer = Math.max(other.staggerTimer || 0, 0.45);
+    other._recentKb = (other._recentKb || 0) + kb * 0.6;
+    other._recentKbTimer = 0.35;
+    var dist = Math.sqrt(d2) || 1;
+    var nx = (other.x - dominoSource.x) / dist;
+    var ny = (other.y - dominoSource.y) / dist;
+    other.x += nx * (kb * 0.5);
+    other.y += ny * (kb * 0.5);
+    spawnCombatText(other.x, other.y - 12, 'CRUSH!', true);
+    spawnParticles(other.x, other.y, '#f59e0b', 4, 80, 2);
+    if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+    if (other.hp <= 0) killEnemy(other, 'domino_crush');
+    if (dominoSource.hp <= 0) killEnemy(dominoSource, 'domino_crush');
+    dominoSource._recentKb *= 0.5;
   }
 }
 
@@ -80,6 +112,15 @@ export function stepEnemies(dt, frame) {
 
     if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
     if (e.armorBreakTimer > 0) e.armorBreakTimer = Math.max(0, e.armorBreakTimer - dt);
+    if (e.staggerTimer > 0) e.staggerTimer = Math.max(0, e.staggerTimer - dt);
+    if (e.wallSlamCd > 0) e.wallSlamCd = Math.max(0, e.wallSlamCd - dt);
+    if (e._recentKbTimer > 0) e._recentKbTimer = Math.max(0, e._recentKbTimer - dt);
+    if (e._recentKb >= 12 && !e.burrowed && !e.isBoss && e.hp > 0) {
+      dominoSource = e;
+      dominoSourceIdx = j;
+      queryGridCallback(e.x, e.y, (e.r || 12) + 24, dominoCallback);
+    }
+    else e._recentKb = 0;
     var dx = p.x - e.x;
     var dy = p.y - e.y;
     var d = Math.hypot(dx, dy) || 1;
@@ -102,6 +143,17 @@ export function stepEnemies(dt, frame) {
     }
 
     var empFrozen = false;
+    if (e.staggerTimer > 0) {
+      speed *= 0.15;
+      if (e.burstTime > 0) e.burstTime = 0;
+      if (e.burstCd !== undefined && e.burstCd < 0.5) e.burstCd = 1.5;
+      if (e.telegraph > 0) e.telegraph = 0;
+      if (e.lungeTimer > 0) e.lungeTimer = 0;
+      if (e.shootCd !== undefined && e.shootCd < 1.0) e.shootCd = 1.5;
+      if (rng('combat') < 0.20) {
+        spawnParticles(e.x, e.y, '#f59e0b', 2, 50, 1.5);
+      }
+    }
     if (e.empTimer > 0) {
       e.empTimer -= dt;
       speed *= 0.3;
@@ -149,6 +201,47 @@ export function stepEnemies(dt, frame) {
 
       e.x += e.vx * dt;
       e.y += e.vy * dt;
+
+      var minX = e.r || 12;
+      var maxX = boundW - (e.r || 12);
+      var minY = e.r || 12;
+      var maxY = boundH - (e.r || 12);
+      var hitWall = false;
+
+      if (e.x <= minX) {
+        e.x = minX;
+        if (e.vx < -20 || (e._recentKb && e._recentKb > 3)) hitWall = true;
+        e.vx = 0;
+      } else if (e.x >= maxX) {
+        e.x = maxX;
+        if (e.vx > 20 || (e._recentKb && e._recentKb > 3)) hitWall = true;
+        e.vx = 0;
+      }
+
+      if (e.y <= minY) {
+        e.y = minY;
+        if (e.vy < -20 || (e._recentKb && e._recentKb > 3)) hitWall = true;
+        e.vy = 0;
+      } else if (e.y >= maxY) {
+        e.y = maxY;
+        if (e.vy > 20 || (e._recentKb && e._recentKb > 3)) hitWall = true;
+        e.vy = 0;
+      }
+
+      if (hitWall && (e.wallSlamCd || 0) <= 0) {
+        e.wallSlamCd = 0.6;
+        e._recentKb = 0;
+        damageEnemy(e, 25, { source: 'wall_slam', x: e.x, y: e.y });
+        e.staggerTimer = Math.max(e.staggerTimer || 0, 0.5);
+        spawnCombatText(e.x, e.y - 14, 'WALL SLAM!', true);
+        if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+        spawnParticles(e.x, e.y, '#e69535', 8, 120, 2);
+        if (rt.state) rt.state.shake = Math.max(rt.state.shake || 0, 6);
+        if (e.hp <= 0) {
+          killEnemy(e, 'wall_slam');
+          continue;
+        }
+      }
     }
     e.touchCooldown = Math.max(0, e.touchCooldown - dt);
 

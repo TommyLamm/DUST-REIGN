@@ -5,6 +5,7 @@ import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { clamp } from '../core/utils.js';
 import { weaponModActive } from '../data/upgrades.js';
+import { addCameraTrauma } from '../core/camera.js';
 
 var WEAPON_REGISTRY = new Map();
 
@@ -28,7 +29,7 @@ export function shotCooldown(p, value) {
   var v = value;
   if (p.afterburner && (p.afterburnerTimer || 0) > 0) v *= 0.7;
   if (p.aegisDeployed) v *= (1 / 1.45);
-  if (p.surgeUnit && p.surgeUnit.active) v /= 1.40;
+  if (p.surgeUnit && p.surgeUnit.active) v /= 1 + 0.40 * (p.surgeUnit.tune || 1);
   if (p.tacticalOverdriveTimer && p.tacticalOverdriveTimer > 0) v *= 0.8;
   return v;
 }
@@ -308,6 +309,7 @@ registerWeaponStrategy({
     spawnParticles(p.x + Math.cos(aimAngle) * 24, p.y + Math.sin(aimAngle) * 24, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#f7d48a'), 12, 130, 2.5);
     if (isVulcan) spawnParticles(p.x + Math.cos(aimAngle) * 24, p.y + Math.sin(aimAngle) * 24, '#ffd700', 8, 110, 2);
     rt.state.shake = Math.max(rt.state.shake, 4.5);
+    addCameraTrauma(0.09);
   },
   bulletProfile: {
     damageMult: 0.42,
@@ -497,6 +499,7 @@ registerWeaponStrategy({
     if (isVulcan) spawnParticles(p.x + Math.cos(aimAngle) * 24, p.y + Math.sin(aimAngle) * 24, '#ffd700', 8, 120, 2);
     rt.state.shake = Math.max(rt.state.shake, 6.0);
     rt.state.hitstop = Math.max(rt.state.hitstop, 0.04);
+    addCameraTrauma(0.15);
     p.chargeTime = 0;
     p.isCharging = false;
   },
@@ -800,7 +803,8 @@ registerWeaponStrategy({
         isVulcan: isVulcan,
         isPlasmaMeltdown: isPlasma,
         colossusDisintegration: mastery >= 2,
-        colossusGraviton: mastery >= 3
+        colossusGraviton: mastery >= 3,
+        isEventHorizon: Boolean(p.eventHorizon)
       });
 
       p.cooldown = shotCooldown(p, 0.75 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
@@ -836,6 +840,7 @@ registerWeaponStrategy({
       }
       rt.state.shake = Math.max(rt.state.shake, 8.0);
       rt.state.hitstop = Math.max(rt.state.hitstop, 0.05);
+      addCameraTrauma(0.22);
     } else {
       // 未滿蓄發射等離子球
       var orbDmg = Math.round(p.damage * 1.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
@@ -883,6 +888,7 @@ registerWeaponStrategy({
       AudioFX.shoot('breacher');
       spawnParticles(p.x + Math.cos(aimAngle) * 20, p.y + Math.sin(aimAngle) * 20, isPlasma ? '#ff4d2e' : (isVulcan ? '#ff4500' : '#38bdf8'), 6, 110, 2);
       rt.state.shake = Math.max(rt.state.shake, 3.0);
+      addCameraTrauma(0.08);
     }
 
     p.chargeTime = 0;

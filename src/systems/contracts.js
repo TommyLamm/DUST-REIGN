@@ -1,11 +1,31 @@
 import { rt } from '../core/runtime.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
+import { spawnCrate } from './drops.js';
+import { logEvent } from '../ui/hud.js';
 
 function contract() {
   var c = rt.state && rt.state.contract;
   if (!c || typeof c !== 'object' || !c.id || c.done) return null;
   return c;
+}
+
+var DOUBLE_DOWN_REWARD_MULT = 3;
+var REPAIR_OVERFLOW_SCORE = 150;
+
+/** Pays out a contract reward; `mult` scales rerolls, healing, and score alike. */
+function applyContractReward(reward, mult) {
+  if (reward.type === 'reroll') {
+    rt.state.rerolls = (rt.state.rerolls || 0) + (reward.amount || 1) * mult;
+  } else if (reward.type === 'repair') {
+    var p = rt.state.player;
+    var amount = (reward.amount || 25) * mult;
+    if (!p || p.hp >= p.maxHp) addScore(REPAIR_OVERFLOW_SCORE * mult, 'contract');
+    else p.hp = Math.min(p.maxHp, p.hp + amount);
+  } else {
+    var score = reward.amount || (300 * (rt.state.act || 1));
+    addScore(score * mult, 'contract');
+  }
 }
 
 function finish(c) {
@@ -20,16 +40,14 @@ function finish(c) {
     reward: c.reward || null
   });
   var reward = c.reward || {};
-  if (reward.type === 'reroll') {
-    rt.state.rerolls = (rt.state.rerolls || 0) + (reward.amount || 1);
-  } else if (reward.type === 'repair') {
-    var p = rt.state.player;
-    var amount = reward.amount || 25;
-    if (!p || p.hp >= p.maxHp) addScore(150, 'contract');
-    else p.hp = Math.min(p.maxHp, p.hp + amount);
-  } else {
-    var score = reward.amount || (300 * (rt.state.act || 1));
-    addScore(score, 'contract');
+  applyContractReward(reward, c.doubled ? DOUBLE_DOWN_REWARD_MULT : 1);
+
+  if (c.doubled) {
+    var pl = rt.state.player;
+    if (pl) {
+      spawnCrate(pl.x + 30, pl.y + 30, 0, 0);
+    }
+    logEvent('OVERCLOCKED CONTRACT COMPLETED // 3x REWARD + TACTICAL CRATE');
   }
   rt.state.banner = Math.max(rt.state.banner || 0, 1.8);
   rt.state.bannerText = 'CONTRACT SEALED // ' + (reward.label || c.name || c.id);
@@ -101,4 +119,16 @@ export function stepContracts(frame) {
   if (!(dt > 0)) return;
   if (dt > 0.05) dt = 0.05;
   bump(c, dt);
+}
+
+export function doubleDownCurrentContract() {
+  if (!rt.state || !rt.state.contract) return false;
+  var c = rt.state.contract;
+  if (c.done || c.doubled || (rt.state.waveTime || 0) > 12) return false;
+  c.doubled = true;
+  c.goal = Math.ceil(c.goal * 1.5);
+  rt.state.banner = Math.max(rt.state.banner || 0, 2.5);
+  rt.state.bannerText = 'CONTRACT OVERCLOCKED // REWARD x3 [HIGH RISK]';
+  logEvent('CONTRACT OVERCLOCKED // REWARD x3 [HIGH RISK]');
+  return true;
 }

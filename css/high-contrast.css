@@ -23,11 +23,6 @@
   background: #00ffff !important;
 }
 
-.game-root.is-high-contrast .touch-button {
-  border: 2px solid #ffffff !important;
-  color: #ffffff !important;
-}
-
 .game-root.is-high-contrast .overlay-inner {
   border: 2px solid #ffffff !important;
   border-left: 6px solid #ffffff !important;

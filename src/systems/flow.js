@@ -17,6 +17,7 @@ import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
 import { updateDomUi } from '../ui/hud.js';
 import { syncCombatLayout } from '../ui/dom.js';
+import { evaluateArchetypes } from './progression.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
 export { calculateCombatRank };
@@ -75,6 +76,7 @@ export function beginRun() {
 
   applyLoadout(state);
   initMode(state, state.mode, state.stageConfig);
+  evaluateArchetypes(state);
 
   directorStartRun(rt.state);
   AudioFX.unlock();
@@ -134,6 +136,7 @@ export function restart() {
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   syncCombatLayout();
   rt.state = makeState();
+  evaluateArchetypes(rt.state);
   var meta = readMeta();
   var selectedMode = (meta && meta.selectedMode) || 'standard';
   rt.state.mode = selectedMode;
@@ -156,7 +159,6 @@ export function restart() {
   rt.input.mouse.down = false;
   rt.firePointers.clear();
   rt.input.keys.clear();
-  rt.input.touchMode = false;
   rt.input.gamepadX = 0;
   rt.input.gamepadY = 0;
   if (rt.input.aimLock) rt.input.aimLock = null;

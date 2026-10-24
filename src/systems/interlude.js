@@ -18,7 +18,8 @@ var WEAPON_COPY = {
   standard: { name: 'STANDARD', detail: 'Steady rifle. The dryline default.' },
   breacher: { name: 'BREACHER', detail: 'Five-round burst. Close and loud.' },
   vanguard: { name: 'VANGUARD', detail: 'Charge a lance. Slow while you hold it.' },
-  'arc-welder': { name: 'ARC-WELDER', detail: 'Chain lightning between hulls.' }
+  'arc-welder': { name: 'ARC-WELDER', detail: 'Chain lightning between hulls.' },
+  colossus: { name: 'COLOSSUS', detail: 'Dual-stage rail lance. Devastating charge blast.' }
 };
 
 function cloneRoute(route) {
@@ -71,15 +72,18 @@ function armoryOptions() {
   return [
     { id: 'swap', name: 'SWAP WEAPON', detail: 'Change the main gun. Cards stay.' },
     { id: 'mastery', name: 'WEAPON MASTERY', detail: 'Mastery +1 on the gun you hold.' },
-    { id: 'repair', name: 'FIELD REPAIR', detail: 'Restore 50% hull and gain +1 reroll.' }
+    { id: 'repair', name: 'FIELD REPAIR', detail: 'Restore 50% hull and gain +1 reroll.' },
+    { id: 'smuggler', name: 'BLACK-MARKET OVERCLOCK', detail: 'Sacrifice 25% HP for Mastery +1, +2 Rerolls, +1 Banish, 6s Overdrive & +800 Score.' }
   ];
 }
 
 function weaponOptions() {
   var out = [];
+  var modes = WEAPON_MODES.slice();
+  if (modes.indexOf('colossus') === -1) modes.push('colossus');
   var i;
-  for (i = 0; i < WEAPON_MODES.length; i += 1) {
-    var id = WEAPON_MODES[i];
+  for (i = 0; i < modes.length; i += 1) {
+    var id = modes[i];
     var copy = WEAPON_COPY[id] || { name: id.toUpperCase(), detail: 'Main weapon.' };
     out.push({ id: id, name: copy.name, detail: copy.detail });
   }
@@ -153,8 +157,22 @@ function applyRepair(state) {
   state.rerolls = (state.rerolls || 0) + 1;
 }
 
+function applySmuggler(state) {
+  var p = state.player;
+  if (!p) return;
+  var loss = Math.round((p.hp || 100) * 0.25);
+  p.hp = Math.max(15, (p.hp || 100) - loss);
+  grantArmoryMastery(state);
+  state.rerolls = (state.rerolls || 0) + 2;
+  state.banishes = (state.banishes || 0) + 1;
+  p.overdrive = Math.max(p.overdrive || 0, 6.0);
+  addScore(800, 'style');
+}
+
 function applyWeapon(state, id) {
-  if (!state || !id || WEAPON_MODES.indexOf(id) === -1) return;
+  var modes = WEAPON_MODES.slice();
+  if (modes.indexOf('colossus') === -1) modes.push('colossus');
+  if (!state || !id || modes.indexOf(id) === -1) return;
   cycleWeaponMode(id);
 }
 
@@ -181,6 +199,7 @@ export function chooseInterlude(index) {
     }
     if (choice.id === 'mastery') grantArmoryMastery(state);
     else if (choice.id === 'repair') applyRepair(state);
+    else if (choice.id === 'smuggler') applySmuggler(state);
     enterTitle(state);
     return;
   }

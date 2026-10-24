@@ -7,6 +7,7 @@ import { damageEnemy, killEnemy } from './combat.js';
 import { onEnemyEmp } from './sim/enemy-defense.js';
 import { dispatchCardHook, launchMicroMissiles } from './card-effects.js';
 import { spawnParticles } from '../core/pools.js';
+import { addCameraTrauma } from '../core/camera.js';
 
 function pushBullet(b) {
   if (!rt.state) return;
@@ -207,6 +208,7 @@ export function triggerTacticalAuxiliary() {
 
   if (executed) {
     tac.cooldown = tac.maxCooldown;
+    addCameraTrauma(0.15);
     triggerHaptic([35, 20, 45]);
     dispatchCardHook('onTacticalUsed', p, gear || tac);
     if (rt.state.shockRings) {
@@ -233,7 +235,18 @@ export function stepTactical(dt, frame) {
   var tac = p.tacticalSlot;
 
   if (tac.cooldown > 0) {
+    var prevCd = tac.cooldown;
     tac.cooldown = Math.max(0, tac.cooldown - dt);
+    if (prevCd > 0 && tac.cooldown === 0) {
+      if (AudioFX && typeof AudioFX.tacticalReady === 'function') {
+        AudioFX.tacticalReady();
+      }
+      if (rt.ui && rt.ui.statusText) {
+        var readyGear = getTacticalGear(tac.id);
+        var readyGearName = (readyGear && readyGear.enName) || 'TACTICAL GEAR';
+        rt.ui.statusText.textContent = readyGearName + ' // READY';
+      }
+    }
   }
 
   var entities = rt.state.tacticalEntities;
@@ -249,15 +262,32 @@ export function stepTactical(dt, frame) {
 
     if (ent.life <= 0 || (typeof ent.hp === 'number' && ent.hp <= 0)) {
       if (ent.kind === 'singularity-vortex') {
-        // Expiry shockwave: 80 kinetic blast + 1s stun (or reflected absorbed damage)
+        // Expiry shockwave: 80 kinetic blast + absorbed damage supernova collapse
         if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
         rt.state.shake = Math.max(rt.state.shake || 0, 10);
         spawnParticles(ent.x, ent.y, '#bd5bff', 28, 220, 4);
         spawnParticles(ent.x, ent.y, '#ffffff', 14, 160, 2.5);
-        var collapseDmg = Math.max(80, Math.round(ent.absorbedDamage || 0));
+        var absorbed = Math.round(ent.absorbedDamage || 0);
+        var collapseDmg = 80 + absorbed;
+        var extraR = Math.min(45, Math.round(absorbed * 0.5));
+        var blastR = ent.r + extraR;
+        if (absorbed > 30) {
+          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SUPERNOVA COLLAPSE! +' + absorbed + ' BONUS DMG';
+        }
+        if (rt.state.shockRings) {
+          rt.state.shockRings.push({
+            x: ent.x,
+            y: ent.y,
+            r: 10,
+            maxR: blastR,
+            life: 0.35,
+            maxLife: 0.35,
+            color: '#bd5bff'
+          });
+        }
         for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
           var targetEnemy = enemies[ei];
-          if (dist2(ent.x, ent.y, targetEnemy.x, targetEnemy.y) <= (ent.r + targetEnemy.r) * (ent.r + targetEnemy.r)) {
+          if (dist2(ent.x, ent.y, targetEnemy.x, targetEnemy.y) <= (blastR + targetEnemy.r) * (blastR + targetEnemy.r)) {
             damageEnemy(targetEnemy, collapseDmg, { source: 'singularity', x: ent.x, y: ent.y });
             targetEnemy.empTimer = Math.max(targetEnemy.empTimer || 0, 1.0);
             onEnemyEmp(targetEnemy);
@@ -336,11 +366,18 @@ export function stepTactical(dt, frame) {
         }
       }
 
+      var isOvercharged = (ent.overchargeTimer || 0) > 0;
+      if (isOvercharged) {
+        ent.overchargeTimer = Math.max(0, ent.overchargeTimer - dt);
+      }
       if (nearest) {
         ent.targetAngle = Math.atan2(nearest.y - ent.y, nearest.x - ent.x);
         ent.fireCd = (ent.fireCd || 0) - dt;
         if (ent.fireCd <= 0) {
-          ent.fireCd = ent.fireRate || (1 / 9);
+          var baseRate = ent.fireRate || (1 / 9);
+          var effectiveRate = isOvercharged ? (baseRate * 0.6) : baseRate;
+          var effectiveDmg = isOvercharged ? Math.round(ent.damage * 1.25) : ent.damage;
+          ent.fireCd = effectiveRate;
           var bSpeed = 460;
           pushBullet({
             x: ent.x + Math.cos(ent.targetAngle) * (ent.r + 4),
@@ -348,16 +385,17 @@ export function stepTactical(dt, frame) {
             vx: Math.cos(ent.targetAngle) * bSpeed,
             vy: Math.sin(ent.targetAngle) * bSpeed,
             r: 3.5,
-            damage: ent.damage,
+            damage: effectiveDmg,
             pierce: 0,
             bounces: 0,
             life: 0.9,
-            colorCore: '#5be7ff',
+            colorCore: isOvercharged ? '#ffd700' : '#5be7ff',
             trail: [],
-            isTurret: true
+            isTurret: true,
+            isOvercharged: isOvercharged
           });
           if (AudioFX && typeof AudioFX.shoot === 'function') AudioFX.shoot();
-          spawnParticles(ent.x + Math.cos(ent.targetAngle) * (ent.r + 4), ent.y + Math.sin(ent.targetAngle) * (ent.r + 4), '#5be7ff', 3, 60, 1.5);
+          spawnParticles(ent.x + Math.cos(ent.targetAngle) * (ent.r + 4), ent.y + Math.sin(ent.targetAngle) * (ent.r + 4), isOvercharged ? '#ffd700' : '#5be7ff', 3, 60, 1.5);
         }
       }
     } else if (ent.kind === 'thermal-decoy') {

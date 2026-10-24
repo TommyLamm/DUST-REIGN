@@ -307,6 +307,18 @@ export function smartMergeSaves(localSave, remoteSave) {
     }
   }
 
+  var lTune = lWs.tuning || {};
+  var rTune = rWs.tuning || {};
+  var mergedTuning = {};
+  for (modId in lTune) {
+    if (Object.prototype.hasOwnProperty.call(lTune, modId)) mergedTuning[modId] = Number(lTune[modId]) || 0;
+  }
+  for (modId in rTune) {
+    if (Object.prototype.hasOwnProperty.call(rTune, modId)) {
+      mergedTuning[modId] = Math.max(mergedTuning[modId] || 0, Number(rTune[modId]) || 0);
+    }
+  }
+
   var lCos = lMeta.cosmetics || {};
   var rCos = rMeta.cosmetics || {};
 
@@ -349,6 +361,7 @@ export function smartMergeSaves(localSave, remoteSave) {
     },
     workshop: {
       unlockedModules: mergedModules,
+      tuning: mergedTuning,
       loadout: {
         propulsion: (lWs.loadout && lWs.loadout.propulsion) || (rWs.loadout && rWs.loadout.propulsion) || null,
         armor: (lWs.loadout && lWs.loadout.armor) || (rWs.loadout && rWs.loadout.armor) || null,

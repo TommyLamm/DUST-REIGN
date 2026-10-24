@@ -109,6 +109,14 @@ export function resolveSelection(dateKey) {
   };
 }
 
+var OVERCLOCK_STEP = 0.05;
+
+/** Primary-bonus multiplier for a module's overclock level (1 when untuned). */
+function overclockScale(tuning, moduleId) {
+  var level = (moduleId && tuning && tuning[moduleId]) || 0;
+  return 1 + OVERCLOCK_STEP * level;
+}
+
 export function applyLoadout(state, dateKey) {
   var pick;
   var rig;
@@ -154,54 +162,58 @@ export function applyLoadout(state, dateKey) {
   if (!isHardcore) {
     var p = state.player;
     var unlocked = wsState.unlockedModules || {};
+    var tuning = wsState.tuning || {};
 
     // 1. Propulsion module
     var propId = wsState.loadout.propulsion;
     var propTier = propId && unlocked[propId];
+    var propOc = overclockScale(tuning, propId);
     if (propTier > 0) {
       if (propId === 'm_phase_bearing') {
         p.speed *= 0.95;
-        p.justDashWindowBonus = propTier >= 2 ? 0.40 : 0.25;
-        p.dashInvulnBonus = propTier >= 2 ? 0.10 : 0;
+        p.justDashWindowBonus = (propTier >= 2 ? 0.40 : 0.25) * propOc;
+        p.dashInvulnBonus = (propTier >= 2 ? 0.10 : 0) * propOc;
         if (propTier >= 3) p.justDashCooldownReset = true;
       } else if (propId === 'm_vector_thruster') {
         p.dashDistanceMult = 1.15;
-        p.speed *= (propTier >= 2 ? 1.18 : 1.12);
+        p.speed *= 1 + (propTier >= 2 ? 0.18 : 0.12) * propOc;
         if (propTier >= 2) {
-          p.plasmaTrail = { duration: 1.5, dps: 40, slow: propTier >= 3 ? 0.35 : 0 };
+          p.plasmaTrail = { duration: 1.5, dps: 40 * propOc, slow: propTier >= 3 ? 0.35 * propOc : 0 };
         }
       } else if (propId === 'm_kinetic_turbine') {
-        p.grazeRadiusMult = 0.90;
+        // No numeric primary bonus below T3, so overclock eases the graze-radius trade-off instead.
+        p.grazeRadiusMult = 1 - 0.10 / propOc;
         p.grazeKineticCharge = true;
         p.kineticCharges = 0;
         if (propTier >= 2) p.dashDetonateKinetic = true;
-        if (propTier >= 3) p.kineticKnockbackDamage = 0.15;
+        if (propTier >= 3) p.kineticKnockbackDamage = 0.15 * propOc;
       }
     }
 
     // 2. Armor module
     var armId = wsState.loadout.armor;
     var armTier = armId && unlocked[armId];
+    var armOc = overclockScale(tuning, armId);
     if (armTier > 0) {
       if (armId === 'b_reactive_plasma') {
         p.hitboxRadiusMult = 1.06;
         p.r = Math.round(p.r * 1.06);
         p.reactiveMicroEmp = {
-          radius: armTier >= 2 ? 160 : 120,
-          cd: armTier >= 2 ? 12 : 18,
+          radius: (armTier >= 2 ? 160 : 120) * armOc,
+          cd: (armTier >= 2 ? 12 : 18) / armOc,
           timer: 0,
-          stun: armTier >= 3 ? 1.0 : 0
+          stun: (armTier >= 3 ? 1.0 : 0) * armOc
         };
       } else if (armId === 'b_scrap_bulkhead') {
         p.repairPickupRadiusMult = 0.85;
-        p.tempArmorCap = armTier >= 2 ? 30 : 15;
-        if (armTier >= 3) p.shieldCollisionDamageReduction = 0.20;
+        p.tempArmorCap = Math.round((armTier >= 2 ? 30 : 15) * armOc);
+        if (armTier >= 3) p.shieldCollisionDamageReduction = 0.20 * armOc;
       } else if (armId === 'b_aegis_core') {
         p.maxHp = Math.max(1, Math.round(p.maxHp * 0.85));
         p.hp = p.maxHp;
         p.aegisProtocol = {
-          invuln: armTier >= 2 ? 2.5 : 1.5,
-          burstSpeed: armTier >= 2 ? 1.6 : 1.0,
+          invuln: (armTier >= 2 ? 2.5 : 1.5) * armOc,
+          burstSpeed: armTier >= 2 ? 1 + 0.6 * armOc : 1.0,
           refillEmp: armTier >= 3,
           used: false
         };
@@ -211,20 +223,23 @@ export function applyLoadout(state, dateKey) {
     // 3. Tactical module
     var tacId = wsState.loadout.tactical;
     var tacTier = tacId && unlocked[tacId];
+    var tacOc = overclockScale(tuning, tacId);
     if (tacTier > 0) {
       if (tacId === 'c_resonance_fc') {
         p.resonanceFireControl = {
           tier: tacTier,
+          tune: tacOc,
           streakPenaltyTimer: 0
         };
       } else if (tacId === 'c_flux_condenser') {
         p.recoilMult = 1.20;
-        p.chargeTimeMult = tacTier >= 2 ? 0.65 : 0.80;
-        p.bulletSpeedMult = tacTier >= 2 ? 1.25 : 1.0;
+        p.chargeTimeMult = 1 - (1 - (tacTier >= 2 ? 0.65 : 0.80)) * tacOc;
+        p.bulletSpeedMult = 1 + ((tacTier >= 2 ? 1.25 : 1.0) - 1) * tacOc;
         if (tacTier >= 3) p.shatterArmorPierced = true;
       } else if (tacId === 'c_surge_unit') {
         p.surgeUnit = {
           tier: tacTier,
+          tune: tacOc,
           active: false,
           timer: 0
         };

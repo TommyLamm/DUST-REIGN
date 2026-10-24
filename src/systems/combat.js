@@ -5,6 +5,7 @@ import { pushFxEvent } from '../core/fx-events.js';
 import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../core/settings.js';
+import { addCameraTrauma } from '../core/camera.js';
 import { clamp, dist2, fastUnorderedRemove } from '../core/utils.js';
 import { triggerReactiveArmor } from './abilities.js';
 import { onCrit, onEnemyHit, onKill, onLethal, onPlayerDamaged, onShieldBreak, onTacticalUsed, registerCardHook, unregisterCardHook, clearCardHooks, dispatchCardHook } from './card-effects.js';
@@ -34,6 +35,15 @@ function killBaseScore(e) {
   if (e.kind === 'rusher') return 35;
   if (e.kind === 'titan') return 800;
   return 20;
+}
+
+export function getComboWindow(combo) {
+  var c = combo || 1;
+  if (c >= 31) return 2.2;
+  if (c >= 23) return 2.6;
+  if (c >= 15) return 3.0;
+  if (c >= 9) return 3.5;
+  return 4.0;
 }
 
 function canDropLoot(e) {
@@ -159,6 +169,20 @@ export function damagePlayer(amount, source, threatX, threatY) {
   }
 
   var info = { amount: applied, requested: requested, source: source || '', saved: saved };
+  if (applied > 0) {
+    var nowHurt = (rt.state && typeof rt.state.waveTime === 'number') ? rt.state.waveTime : 0;
+    if (!p._lastHurtTime || (nowHurt - p._lastHurtTime >= 0.18) || nowHurt < p._lastHurtTime) {
+      p._lastHurtTime = nowHurt;
+      AudioFX.hurt();
+      rt.state.shake = Math.max(rt.state.shake || 0, 6);
+    }
+    if (applied >= 18) {
+      if (!isReducedMotion()) {
+        rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.035);
+      }
+      addCameraTrauma(0.32);
+    }
+  }
   onPlayerDamaged(p, info);
   noteContractEvent('player-damaged', info);
   noteMetaEvent('player-damaged', info);
@@ -207,6 +231,11 @@ export function damageEnemy(e, amount, info) {
   if (!(applied > 0)) return 0;
   e.hp -= applied;
   if (rt.state.stats) rt.state.stats.damageDealt += applied;
+  if (rt.state.player) {
+    var p = rt.state.player;
+    p.hitmarkerTime = rt.renderTime || 0;
+    p.hitmarkerType = (info.staggerBreak || info.execution || info.source === 'execution' || info.source === 'phase-intercept' || (e.staggerTimer > 0 && info.source === 'dash')) ? 3 : (info.crit ? 2 : 1);
+  }
   onEnemyHit(e, {
     amount: applied,
     source: info.source || '',
@@ -256,11 +285,16 @@ export function killEnemy(enemyOrIndex, cause) {
   var elite = e.kind === 'elite';
   var isTitan = e.kind === 'titan';
   var baseScore = killBaseScore(e);
+  var p = rt.state.player;
   rt.state.combo = rt.state.comboTimer > 0 ? Math.min(MAX_COMBO, rt.state.combo + 1) : 1;
   if (rt.state.stats && rt.state.combo > rt.state.stats.maxCombo) {
     rt.state.stats.maxCombo = rt.state.combo;
   }
-  rt.state.comboTimer = COMBO_WINDOW;
+  rt.state.comboTimer = getComboWindow(rt.state.combo);
+  if (rt.state.combo >= 15 && p) {
+    p.speedBoostTimer = Math.max(p.speedBoostTimer || 0, 1.5);
+    p.speedBoostMult = Math.max(p.speedBoostMult || 1, 1.12);
+  }
   if (baseScore > 0) addScore(Math.round(baseScore * (1 + (rt.state.combo - 1) * 0.25)), 'kill');
 
   if (isTitan) {
@@ -341,7 +375,6 @@ export function killEnemy(enemyOrIndex, cause) {
   noteMetaEvent('kill', killInfo);
 
   // C-03 Black-Market Surge Unit kill extension (+0.5s per kill, max +3s extra)
-  var p = rt.state.player;
   if (p && p.surgeUnit && p.surgeUnit.active) {
     if ((p.surgeUnit.bonusTime || 0) < 3.0) {
       var addSec = Math.min(0.5, 3.0 - (p.surgeUnit.bonusTime || 0));

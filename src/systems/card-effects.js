@@ -8,6 +8,7 @@ import { damageEnemy, killEnemy } from './combat.js';
 import { isStormFront } from './flow.js';
 import { spawnCombatText } from '../render/fx.js';
 import { ensureEnemyGrid, getEnemyById, getEnemyBulletById, populateEnemyBulletGrid, queryEnemyBulletGridCallback, queryGridCallback } from '../core/spatial-grid.js';
+import { evaluateArchetypes } from './progression.js';
 
 var hookDepth = 0;
 
@@ -57,7 +58,6 @@ export function dispatchCardHook(event, arg1, arg2, arg3) {
   }
 }
 
-
 function livingEnemies() {
   var list = (rt.state && rt.state.enemies) || [];
   return list.filter(function (enemy) { return enemy && enemy.hp > 0; });
@@ -88,6 +88,37 @@ function releaseFreeEmp(x, y, radius, stun, damage) {
   }
   pushFxEvent('emp', x, y, { r: radius });
   pushFxEvent('burst', x, y, { preset: 'emp', scale: Math.max(0.35, radius / 140) });
+}
+
+function releaseThermalNova(x, y) {
+  if (!rt.state) return;
+  var novaRadius = 150;
+  var novaDmg = 55;
+  var foes = livingEnemies();
+  for (var ni = 0; ni < foes.length; ni += 1) {
+    var foe = foes[ni];
+    if (foe.hp <= 0) continue;
+    var reach = novaRadius + (foe.r || 0);
+    if (dist2(x, y, foe.x, foe.y) <= reach * reach) {
+      damageEnemy(foe, novaDmg, { source: 'thermal_nova', x: x, y: y });
+      foe.burnStacks = Math.min(10, (foe.burnStacks || 0) + 2);
+      foe.burnTimer = 3.5;
+      if (foe.hp <= 0) killEnemy(foe, 'thermal_nova');
+    }
+  }
+  if (rt.state.shockRings) {
+    rt.state.shockRings.push({
+      x: x,
+      y: y,
+      r: 12,
+      maxR: novaRadius,
+      life: 0.32,
+      maxLife: 0.32,
+      color: '#ff5500'
+    });
+  }
+  pushFxEvent('burst', x, y, { preset: 'emp', tint: '#ff5500', scale: 1.25 });
+  spawnCombatText(x, y - 24, 'THERMAL NOVA', true);
 }
 
 export function launchMicroMissiles(player, info) {
@@ -210,6 +241,15 @@ export function onDash(player, info) {
     }
     pushFxEvent('burst', player.x, player.y, { preset: 'dashDust', tint: '#ff7733', scale: 1.1 });
   }
+
+  // Tactical Resonance Tier 3: 6 層每次衝刺結束後獲得 1.5 秒 Overdrive 超頻射速加成
+  var res = player.resonances;
+  if (res && res.tactical >= 6) {
+    player.overdrive = Math.max(player.overdrive || 0, 1.5);
+    spawnCombatText(player.x, player.y - 14, 'DASH OVERDRIVE 1.5s', true);
+    pushFxEvent('burst', player.x, player.y, { preset: 'dashDust', tint: '#ffd700', scale: 0.9 });
+  }
+
   dispatchCardHook('onDash', player, info);
 }
 
@@ -219,6 +259,20 @@ export function onEmp(player, info) {
     player.shield = Math.max(player.shield || 0, 30);
     player.shieldTimer = 2;
   }
+
+  var res = player.resonances;
+  // Plasma Resonance Tier 3: 6 層施放 EMP 或進入 Overdrive 時對周圍敵人釋放高熱新星
+  if (res && res.plasma >= 6) {
+    releaseThermalNova(player.x, player.y);
+  }
+  // Static Resonance Tier 3: 6 層施放 EMP 後返還 20 點能量並獲得 3 秒超頻
+  if (res && res.static >= 6) {
+    var bCap = (typeof player.batteryMax === 'number') ? player.batteryMax : (player.maxEnergy || 100);
+    player.energy = Math.min(bCap, (player.energy || 0) + 20);
+    player.overdrive = Math.max(player.overdrive || 0, 3.0);
+    spawnCombatText(player.x, player.y - 14, 'STATIC OVERCLOCK 3s', true);
+  }
+
   if (player.thermalShock && rt.state) {
     var enemies = livingEnemies();
     for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
@@ -294,6 +348,38 @@ export function onEnemyHit(enemy, info) {
   if (player.hollowPoint && ratio < 0.3) bonus += applied * 0.35;
   if (player.executioner && (enemy.empTimer || 0) > 0) bonus += applied * 0.5;
   if (player.bloodhoundReaper && ratio < 0.35) bonus += applied * 1.5;
+
+  var res = player.resonances;
+  // Kinetic Resonance Tier 3: 6 層命中時無視/削減目標護甲
+  if (res && res.kinetic >= 6) {
+    if (enemy.armor) enemy.armor = 0;
+    if (enemy.defense) enemy.defense = 0;
+    enemy.armorStripped = true;
+    bonus += Math.max(2, Math.round(applied * 0.15));
+  }
+
+  // Static Resonance Tier 2: 4 層能量高於 70% 命中觸發連鎖電弧
+  var staticEnergyMax = (typeof player.batteryMax === 'number') ? player.batteryMax : (player.maxEnergy || 100);
+  var staticEnergyHigh = staticEnergyMax > 0 && (player.energy || 0) / staticEnergyMax >= 0.7;
+  if (res && res.static >= 4 && staticEnergyHigh && rng('combat') < 0.22) {
+    var sFoes = livingEnemies();
+    for (var si = 0; si < sFoes.length; si += 1) {
+      var sFoe = sFoes[si];
+      if (sFoe === enemy || sFoe.hp <= 0) continue;
+      if (dist2(enemy.x, enemy.y, sFoe.x, sFoe.y) <= 120 * 120) {
+        damageEnemy(sFoe, 22, { source: 'static_arc', x: enemy.x, y: enemy.y });
+        if (rt.state.lightningArcs) {
+          rt.state.lightningArcs.push({
+            x1: enemy.x, y1: enemy.y, x2: sFoe.x, y2: sFoe.y, life: 0.15, maxLife: 0.15, color: '#00f3ff'
+          });
+        }
+        spawnParticles(sFoe.x, sFoe.y, '#00f3ff', 4, 80, 2);
+        if (sFoe.hp <= 0) killEnemy(sFoe, 'static_arc');
+        break;
+      }
+    }
+  }
+
   if (!execute && !(bonus > 0)) return;
   hookDepth += 1;
   try {
@@ -313,6 +399,55 @@ export function onEnemyHit(enemy, info) {
 export function onKill(enemy, info) {
   if (!enemy || !rt.state || !rt.state.player) return;
   var player = rt.state.player;
+  var res = player.resonances;
+
+  // Kinetic Resonance Tier 3: 6 層擊殺時爆發動能衝擊
+  if (res && res.kinetic >= 6) {
+    var kRadius = 80;
+    var kFoes = livingEnemies();
+    for (var ki = 0; ki < kFoes.length; ki += 1) {
+      var kFoe = kFoes[ki];
+      if (kFoe === enemy || kFoe.hp <= 0) continue;
+      if (dist2(enemy.x, enemy.y, kFoe.x, kFoe.y) <= kRadius * kRadius) {
+        damageEnemy(kFoe, 35, { source: 'kinetic_impact', x: enemy.x, y: enemy.y });
+        var kdx = kFoe.x - enemy.x;
+        var kdy = kFoe.y - enemy.y;
+        var kd = Math.hypot(kdx, kdy) || 1;
+        kFoe.x += (kdx / kd) * 22;
+        kFoe.y += (kdy / kd) * 22;
+        if (kFoe.hp <= 0) killEnemy(kFoe, 'kinetic_impact');
+      }
+    }
+    if (rt.state.shockRings) {
+      rt.state.shockRings.push({ x: enemy.x, y: enemy.y, r: 6, maxR: kRadius, life: 0.2, maxLife: 0.2, color: '#f5c76e' });
+    }
+    pushFxEvent('burst', enemy.x, enemy.y, { preset: 'dashDust', tint: '#f5c76e', scale: 0.75 });
+  }
+
+  // Plasma Resonance Tier 2: 4 層擊殺敵人有 35% 機率在原地引發 65px 熱能殉爆（造成 28 點範圍傷害）
+  if (res && res.plasma >= 4) {
+    if (rng('combat') < 0.35) {
+      var plRadius = 65;
+      var plDmg = 28;
+      var plFoes = livingEnemies();
+      for (var pli = 0; pli < plFoes.length; pli += 1) {
+        var plFoe = plFoes[pli];
+        if (plFoe === enemy || plFoe.hp <= 0) continue;
+        if (dist2(enemy.x, enemy.y, plFoe.x, plFoe.y) <= (plRadius + (plFoe.r || 0)) * (plRadius + (plFoe.r || 0))) {
+          damageEnemy(plFoe, plDmg, { source: 'plasma_burst', x: enemy.x, y: enemy.y });
+          plFoe.burnStacks = Math.min(10, (plFoe.burnStacks || 0) + 1);
+          plFoe.burnTimer = 2.5;
+          if (plFoe.hp <= 0) killEnemy(plFoe, 'plasma_burst');
+        }
+      }
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({ x: enemy.x, y: enemy.y, r: 8, maxR: plRadius, life: 0.22, maxLife: 0.22, color: '#ff4d2e' });
+      }
+      pushFxEvent('burst', enemy.x, enemy.y, { preset: 'emp', tint: '#ff4d2e', scale: 0.7 });
+      spawnCombatText(enemy.x, enemy.y - 12, 'THERMAL EXPLODE 28', true);
+    }
+  }
+
   if (player.stormRider && isStormFront() && player.hp > 0 && !rt.state.over) {
     player.hp = Math.min(player.maxHp, player.hp + 1);
   }
@@ -347,6 +482,18 @@ export function onPickup(orb, player) {
 export function onCrit(enemy, info) {
   if (!enemy || !rt.state || !rt.state.player) return;
   var player = rt.state.player;
+  var res = player.resonances;
+
+  // Kinetic Resonance Tier 2: 4 層每次暴擊額外穿透或造成 +15% 暴擊傷害
+  if (res && res.kinetic >= 4) {
+    var extraCritDmg = Math.max(1, Math.round((info && info.damage ? info.damage : 20) * 0.15));
+    damageEnemy(enemy, extraCritDmg, { source: 'kinetic_crit_resonance', x: enemy.x, y: enemy.y });
+    spawnCombatText(enemy.x, enemy.y - 18, '+CRIT ' + extraCritDmg, true);
+    if (info && info.bullet && typeof info.bullet.pierce === 'number') {
+      info.bullet.pierce += 1;
+    }
+  }
+
   if (player.superconductiveResonance && info) {
     var dmg = Math.max(1, Math.round((info.damage || 20) * 0.45));
     var enemies = livingEnemies();
@@ -553,6 +700,36 @@ export function stepCardEffects(dt) {
   var state = rt.state;
   var player = state.player;
   if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && state.xpNext === 100) state.xpNext = 80;
+  if (!player.resonances) evaluateArchetypes(state);
+  var res = player.resonances;
+
+  // Plasma Resonance Tier 3: 6 層施放 EMP 或進入 Overdrive 時對周圍敵人釋放高熱新星
+  var isOverdriveNow = (player.overdrive || 0) > 0;
+  if (isOverdriveNow && !player._wasOverdrive) {
+    if (res && res.plasma >= 6) releaseThermalNova(player.x, player.y);
+  }
+  player._wasOverdrive = isOverdriveNow;
+
+  // Static Resonance Tier 2: 4 層能量高於 70% 時射速提升 12%
+  var staticRes = (res && res.static) || 0;
+  var eMax = (typeof player.batteryMax === 'number') ? player.batteryMax : (player.maxEnergy || 100);
+  var eRatio = eMax > 0 ? ((player.energy || 0) / eMax) : 0;
+  if (staticRes >= 4 && eRatio >= 0.7) {
+    if (!player._staticFireRateBoost) {
+      player._staticFireRateBoost = true;
+      player.fireRate *= 0.88;
+    }
+  } else if (player._staticFireRateBoost) {
+    player._staticFireRateBoost = false;
+    player.fireRate /= 0.88;
+  }
+
+  // Tactical Resonance Tier 2: 4 層戰術裝備冷卻縮短 18%
+  var tactRes = (res && res.tactical) || 0;
+  if (tactRes >= 4 && player.tacticalSlot && player.tacticalSlot.cooldown > 0) {
+    player.tacticalSlot.cooldown = Math.max(0, player.tacticalSlot.cooldown - dt * 0.18);
+  }
+
   if (player.tacticalOverdriveTimer > 0) player.tacticalOverdriveTimer = Math.max(0, player.tacticalOverdriveTimer - dt);
   if (player.afterburnerTimer > 0) player.afterburnerTimer = Math.max(0, player.afterburnerTimer - dt);
   if (player.shieldTimer > 0) {

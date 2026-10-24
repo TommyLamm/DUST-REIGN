@@ -1,5 +1,5 @@
 import { AudioFX } from '../audio/audio-fx.js';
-import { DASH_PULSE_DURATION, DASH_PULSE_RADIUS } from '../config.js';
+import { DASH_PULSE_DURATION, DASH_PULSE_RADIUS, MAX_COMBO } from '../config.js';
 import { addDecal, spawnParticles } from '../core/pools.js';
 import { pushFxEvent } from '../core/fx-events.js';
 import { rt } from '../core/runtime.js';
@@ -206,6 +206,11 @@ export function dash() {
   p.dashAmbushTimer = isJustDash ? 1.2 : 0.6;
   AudioFX.dash();
   if (isJustDash) {
+    rt.state.combo = Math.min(MAX_COMBO, (rt.state.combo || 0) + 2);
+    rt.state.comboTimer = 4.0;
+    if (rt.state.stats && rt.state.combo > (rt.state.stats.maxCombo || 0)) {
+      rt.state.stats.maxCombo = rt.state.combo;
+    }
     if (p.justDashCooldownReset) {
       var nowTime = rt.renderTime || 0;
       if (!p._lastJustReset || (nowTime - p._lastJustReset >= 4.0)) {
@@ -228,6 +233,41 @@ export function dash() {
     spawnParticles(startX, startY, '#f7d48a', 14, 180, 2.8);
     spawnParticles(p.x, p.y, '#f7d48a', 14, 180, 2.8);
   }
+  // Blink Phase Intercept Check (65px from dash endpoints or midpoint)
+  if (rt.state.enemies && rt.state.enemies.length > 0) {
+    for (var bki = 0; bki < rt.state.enemies.length; bki += 1) {
+      var bEnemy = rt.state.enemies[bki];
+      if (bEnemy && bEnemy.blinkTelegraph && bEnemy.blinkDestLocked && typeof bEnemy.blinkDestX === 'number') {
+        var bx = bEnemy.blinkDestX;
+        var by = bEnemy.blinkDestY;
+        var dEnd2 = dist2(p.x, p.y, bx, by);
+        var dStart2 = dist2(startX, startY, bx, by);
+        var dMid2 = dist2((startX + p.x) * 0.5, (startY + p.y) * 0.5, bx, by);
+        if (Math.min(dEnd2, dStart2, dMid2) <= 65 * 65) {
+          bEnemy.phaseIntercepted = true;
+          bEnemy.blinkTelegraph = false;
+          bEnemy.blinkDestLocked = false;
+          var interceptDmg = Math.max(25, Math.round((bEnemy.maxHp || 100) * 0.25));
+          damageEnemy(bEnemy, interceptDmg, { source: 'phase-intercept', x: bx, y: by, crit: true, staggerBreak: true, execution: true });
+          bEnemy.staggerTimer = 2.5;
+          if (bEnemy.hp <= 0) killEnemy(bEnemy, 'phase-intercept');
+          if (AudioFX && typeof AudioFX.staggerBreak === 'function') AudioFX.staggerBreak();
+          if (!isReducedMotion()) {
+            rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.08);
+          }
+          rt.state.shake = Math.max(rt.state.shake || 0, 14);
+          logEvent('PHASE INTERCEPT! // VOID RIFT SHATTERED');
+          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'PHASE INTERCEPT! // VOID RIFT SHATTERED (-25% HP)';
+          spawnParticles(bx, by, '#9d4edd', 24, 240, 4);
+          spawnParticles(bx, by, '#00f3ff', 16, 180, 3);
+          if (rt.state.shockRings) {
+            rt.state.shockRings.push({ x: bx, y: by, r: 12, maxR: 90, life: 0.35, maxLife: 0.35, color: '#9d4edd' });
+          }
+        }
+      }
+    }
+  }
+
   var hitCount = 0;
   var pulseRadius = p.shockwaveDash ? 125 : DASH_PULSE_RADIUS;
   var kbDistance = (p.shockwaveDash ? 50 : 25) * (isJustDash ? 1.8 : 1);
@@ -236,7 +276,37 @@ export function dash() {
     var enemy = rt.state.enemies[di];
     if (dist2(p.x, p.y, enemy.x, enemy.y) > pulseRadius * pulseRadius) continue;
     hitCount += 1;
-    damageEnemy(enemy, pulseDamage, { source: 'dash', x: p.x, y: p.y });
+    var isStaggered = (enemy.staggerTimer || 0) > 0;
+    var dealtDamage = pulseDamage;
+    var isExecution = false;
+    if (isStaggered) {
+      isExecution = true;
+      dealtDamage = pulseDamage * 3.5;
+      var canExecuteKill = !enemy.isBoss && enemy.kind !== 'titan' && (enemy.hp <= (enemy.maxHp || 100) * 0.40);
+      if (canExecuteKill) {
+        dealtDamage = Math.max(dealtDamage, enemy.hp + 1);
+      }
+      p.dashCooldown = 0;
+      p.dashCharges = Math.max(p.dashCharges || 0, 1);
+      if (!isReducedMotion()) {
+        rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.08);
+      }
+      if (AudioFX && typeof AudioFX.staggerBreak === 'function') AudioFX.staggerBreak();
+      logEvent('EXECUTION! // STAGGER PUNISH');
+      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'EXECUTION! // STAGGER PUNISH (DASH RESET)';
+      spawnParticles(enemy.x, enemy.y, '#ff2244', 20, 220, 3.8);
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({ x: enemy.x, y: enemy.y, r: 8, maxR: 65, life: 0.25, maxLife: 0.25, color: '#ff2244' });
+      }
+    }
+    damageEnemy(enemy, dealtDamage, {
+      source: isExecution ? 'execution' : 'dash',
+      x: p.x,
+      y: p.y,
+      crit: isExecution,
+      staggerBreak: isExecution,
+      execution: isExecution
+    });
     onEnemyEmp(enemy);
     if (!enemy.knockbackImmune) {
       var kdx = enemy.x - p.x;
@@ -347,7 +417,7 @@ export function triggerEmp() {
   } else {
     empX = rt.input.mouse.x;
     empY = rt.input.mouse.y;
-    if (rt.input.touchMode || !rt.input.mouse || (rt.input.gamepadX || rt.input.gamepadY) || isNaN(empX) || isNaN(empY)) {
+    if (!rt.input.mouse || (rt.input.gamepadX || rt.input.gamepadY) || isNaN(empX) || isNaN(empY)) {
       empX = p.x + Math.cos(p.aim) * 85;
       empY = p.y + Math.sin(p.aim) * 85;
     }
@@ -356,6 +426,7 @@ export function triggerEmp() {
   empY = clamp(empY, 20, boundH - 20);
 
   var empR = 140 + ((typeof p.empRadiusBonus === 'number') ? p.empRadiusBonus : 0);
+  var decoySupernovaTriggered = false;
 
   AudioFX.emp();
   triggerHaptic([35, 20, 50]);
@@ -412,12 +483,54 @@ export function triggerEmp() {
     }
   }
 
+  if (rt.state.tacticalEntities && rt.state.tacticalEntities.length > 0) {
+    for (var ti = rt.state.tacticalEntities.length - 1; ti >= 0; ti -= 1) {
+      var tent = rt.state.tacticalEntities[ti];
+      if (tent.kind === 'thermal-decoy' && dist2(tent.x, tent.y, empX, empY) <= (empR + (tent.r || 15)) * (empR + (tent.r || 15))) {
+        var novaR = 260;
+        AudioFX.blast();
+        rt.state.shake = Math.max(rt.state.shake || 0, 16);
+        if (rt.state.shockRings) {
+          rt.state.shockRings.push({
+            x: tent.x,
+            y: tent.y,
+            r: 15,
+            maxR: novaR,
+            life: 0.4,
+            maxLife: 0.4,
+            color: '#ff4d2e'
+          });
+        }
+        spawnParticles(tent.x, tent.y, '#ff4d2e', 32, 260, 4.5);
+        spawnParticles(tent.x, tent.y, '#ffd27d', 20, 200, 3);
+        logEvent('DECOY SUPERNOVA! // PLASMA CASCADE');
+        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'DECOY SUPERNOVA! // PLASMA CASCADE';
+
+        for (var dnei = rt.state.enemies.length - 1; dnei >= 0; dnei -= 1) {
+          var dne = rt.state.enemies[dnei];
+          if (dist2(tent.x, tent.y, dne.x, dne.y) <= (novaR + dne.r) * (novaR + dne.r)) {
+            damageEnemy(dne, 45, { source: 'decoy-supernova', x: tent.x, y: tent.y });
+            dne.empTimer = Math.max(dne.empTimer || 0, 3.2);
+            onEnemyEmp(dne);
+            spawnParticles(dne.x, dne.y, '#ff4d2e', 8, 140, 2.5);
+            if (dne.hp <= 0) killEnemy(dne, 'decoy-supernova');
+          }
+        }
+        tent.life = 0;
+        tent.hp = 0;
+        decoySupernovaTriggered = true;
+      }
+    }
+  }
+
   if (hitCount >= 2 && !isReducedMotion()) {
     rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.03);
   }
 
   logEvent('EMP BLAST // SECTOR DISRUPTED');
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'EMP BLAST DISCHARGED // SECTOR DISRUPTED';
+  if (rt.ui && rt.ui.statusText && !decoySupernovaTriggered) {
+    rt.ui.statusText.textContent = 'EMP BLAST DISCHARGED // SECTOR DISRUPTED';
+  }
 
   if (rt.state.spires && rt.state.spires.length > 0) {
     for (var si = 0; si < rt.state.spires.length; si += 1) {

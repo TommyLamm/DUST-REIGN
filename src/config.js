@@ -1,7 +1,7 @@
 export var TAU = Math.PI * 2;
 export var WAVE_LENGTH = 30;
 export var COMBO_WINDOW = 4;
-export var MAX_COMBO = 8;
+export var MAX_COMBO = 35;
 export var DASH_PULSE_DURATION = 0.24;
 export var DASH_PULSE_RADIUS = 88;
 export var OVERDRIVE_DURATION = 6;

@@ -33,10 +33,18 @@ function readHeatMultiplier(state) {
   return mult;
 }
 
+export function calculateFlawlessBonus(wave, flawlessStreak) {
+  return 50 * (wave || 1) * Math.min(5, Math.max(1, flawlessStreak || 1));
+}
+
 export function addScore(amount, source) {
   if (!rt.state) return 0;
   var n = Number(amount);
   if (!(n > 0)) return 0;
+  if (source === 'flawless' && rt.state) {
+    var streak = Math.max(1, (rt.state.flawlessStreak || 0) + 1);
+    n = n * Math.min(5, Math.max(1, streak));
+  }
   var routeMultiplier = readRouteMultiplier(rt.state);
   var heatMultiplier = readHeatMultiplier(rt.state);
   var finalScore = Math.round(n * routeMultiplier * heatMultiplier);
@@ -73,6 +81,9 @@ export function calculateCombatRank(wave, score, stats) {
   if (typeof stats.extracted === 'boolean') extracted = stats.extracted;
   if (typeof stats.heat === 'number') heat = stats.heat;
 
+  if (extracted && heat >= 3 && s >= 280000) {
+    return rankResult('SSS', 'DUST EMPEROR', 'rank-letter--sss', acc);
+  }
   if (extracted && heat >= 2) {
     return rankResult('S+', 'DUST SOVEREIGN', 'rank-letter--splus', acc);
   }

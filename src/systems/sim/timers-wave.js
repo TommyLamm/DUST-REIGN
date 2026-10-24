@@ -83,6 +83,8 @@ export function commitWaveAdvance(early) {
   rt.state._barrelChainMute = 1;
   rt.state.stormKills = 0;
   rt.state.stormHurt = false;
+  rt.state.stormCoresSpawned = false;
+  rt.state.stormCoresHarvested = 0;
   rt.state.volatileCores = [];
   rt.state.barrels = [];
   rt.state.convoy = null;
@@ -227,6 +229,29 @@ export function stepWaveClock(dt, frame) {
     rt.state.stormAlerted = true;
     AudioFX.stormSiren();
   }
+  if (frontActive() && !rt.state.stormCoresSpawned && !rt.state.over) {
+    rt.state.stormCoresSpawned = true;
+    if (!rt.state.orbs) rt.state.orbs = [];
+    var stormP = rt.state.player || { x: 0, y: 0 };
+    var sLife = stormSeconds();
+    for (var sci = 0; sci < 3; sci += 1) {
+      var scSpot = placeAway(stormP.x, stormP.y, 80, 140);
+      rt.state.orbs.push({
+        kind: 'storm_core',
+        x: scSpot.x,
+        y: scSpot.y,
+        vx: (rng('spawn') - 0.5) * 40,
+        vy: (rng('spawn') - 0.5) * 40,
+        r: 12,
+        life: sLife,
+        maxLife: sLife,
+        color: '#00f3ff'
+      });
+      pushFxEvent('burst', scSpot.x, scSpot.y, { preset: 'emp', tint: '#00f3ff', scale: 0.6 });
+    }
+    logEvent('STORM CORES DETECTED // HARVEST FOR OVERDRIVE');
+  }
+
 
   var recipe = rt.state.recipe;
   var bossKind = recipe ? recipe.boss : null;

@@ -6,6 +6,7 @@ import { clamp, setText } from '../core/utils.js';
 import { sectorForWave } from '../render/palette.js';
 import { getQuality } from '../render/quality.js';
 import { calculateCombatRank, isStormFront } from '../systems/flow.js';
+import { getComboWindow } from '../systems/combat.js';
 import { updateCodexPanel } from './codex-panel.js';
 import { updateContractsHud } from './contracts-hud.js';
 import { updateInterludePanel } from './interlude-panel.js';
@@ -24,9 +25,6 @@ var popValue = 0;
 var popAt = 0;
 var popTimer = 0;
 var hpLagShown = null;
-var dashMax = 2.2;
-var prevDash = 0;
-var shootMax = 0.18;
 var chainWasHot = false;
 var chainBreakUntil = 0;
 var typeJobs = [];
@@ -149,31 +147,10 @@ function syncHealth() {
   }
 }
 
-function setCd(el, value) {
-  if (!el || !el.style || !el.style.setProperty) return;
-  var v = clamp(value, 0, 1).toFixed(3);
-  if (el.dataset && el.dataset.cd === v) return;
-  if (el.dataset) el.dataset.cd = v;
-  el.style.setProperty('--cd', v);
-}
-
 function syncCooldowns() {
   var p = rt.state.player;
   if (!p) return;
-  if ((p.dashCooldown || 0) > prevDash + 0.01) dashMax = p.dashCooldown;
-  prevDash = p.dashCooldown || 0;
-  if ((p.cooldown || 0) <= 0) shootMax = Math.max(0.05, p.fireRate || 0.18);
-  else if (p.cooldown > shootMax) shootMax = p.cooldown;
-  var shoot = rt.ui.touchShoot || byId('touchShoot');
-  var dash = rt.ui.touchDash || byId('touchDash');
-  if (rt.ui) {
-    if (shoot) rt.ui.touchShoot = shoot;
-    if (dash) rt.ui.touchDash = dash;
-  }
-  setCd(shoot, shootMax > 0 ? (p.cooldown || 0) / shootMax : 0);
-  setCd(dash, dashMax > 0 ? (p.dashCooldown || 0) / dashMax : 0);
   var energy = p.energy || 0;
-  setCd(rt.ui.touchSpecial, energy >= 50 ? 0 : 1 - (energy / 50));
   var ready = energy >= 50;
   if (rt.ui.meterEnergy && rt.ui.meterEnergy.classList) rt.ui.meterEnergy.classList.toggle('is-ready', ready);
   var badge = rt.ui.empReady || byId('empReady');
@@ -181,11 +158,8 @@ function syncCooldowns() {
   if (rt.ui && badge) rt.ui.empReady = badge;
 
   var tac = p.tacticalSlot;
-  var touchAux = rt.ui.touchAux || byId('touchAux');
-  if (rt.ui && touchAux) rt.ui.touchAux = touchAux;
   if (tac) {
     var tacRatio = tac.maxCooldown > 0 ? clamp(tac.cooldown / tac.maxCooldown, 0, 1) : 0;
-    if (touchAux) setCd(touchAux, tacRatio);
     var mask = byId('hudTacticalCdMask');
     if (mask && mask.style) {
       mask.style.strokeDashoffset = (tacRatio * 100).toFixed(1);
@@ -204,8 +178,49 @@ function syncCooldowns() {
       var displayName = isChinese() ? (tac.name || tac.id) : (tac.enName || tac.id.toUpperCase());
       if (nameEl.textContent !== displayName) nameEl.textContent = displayName;
     }
-  } else if (touchAux) {
-    setCd(touchAux, 0);
+  }
+}
+
+function getComboTier(combo) {
+  var c = combo || 0;
+  if (c >= 31) return 'SSS';
+  if (c >= 23) return 'S';
+  if (c >= 15) return 'A';
+  if (c >= 9) return 'B';
+  if (c >= 5) return 'C';
+  return 'D';
+}
+
+var lastResSig = '';
+
+/** Mirrors player resonance counts into the HUD pills; ascension audio/log is owned by evaluateArchetypes. */
+export function syncResonances() {
+  if (typeof document === 'undefined') return;
+  var root = document.getElementById('hudResonances');
+  if (!root || !rt.state || !rt.state.player) return;
+  var p = rt.state.player;
+  var res = p.resonances || { kinetic: 0, plasma: 0, static: 0, tactical: 0 };
+  var k = res.kinetic || 0;
+  var pl = res.plasma || 0;
+  var s = res.static || 0;
+  var t = res.tactical || 0;
+  var sig = k + '|' + pl + '|' + s + '|' + t;
+  if (sig === lastResSig) return;
+  lastResSig = sig;
+
+  var archetypes = ['kinetic', 'plasma', 'static', 'tactical'];
+  for (var i = 0; i < archetypes.length; i += 1) {
+    var arch = archetypes[i];
+    var count = res[arch] || 0;
+    var tier = count >= 6 ? 3 : (count >= 4 ? 2 : (count >= 2 ? 1 : 0));
+    var pill = root.querySelector('.resonance-pill[data-archetype="' + arch + '"]');
+    if (pill) {
+      if (pill.dataset.tier !== String(tier)) pill.dataset.tier = String(tier);
+      var countEl = pill.querySelector('.res-count');
+      if (countEl && countEl.textContent !== String(count)) {
+        countEl.textContent = String(count);
+      }
+    }
   }
 }
 
@@ -225,14 +240,25 @@ function syncChain() {
     el.hidden = false;
     if (el.classList) el.classList.remove('is-break');
     if (rt.state.combo > 1) {
-      el.textContent = (isChinese() ? '連擊 x' : 'CHAIN x') + rt.state.combo + (rt.state.grazeCombo > 0 ? (isChinese() ? ' [擦彈 ' : ' [GRAZE ') + rt.state.grazeCombo + ']' : '');
+      var tier = getComboTier(rt.state.combo);
+      el.textContent = (isChinese() ? '連擊 x' : 'CHAIN x') + rt.state.combo + ' [' + tier + ']' + (rt.state.grazeCombo > 0 ? (isChinese() ? ' [擦彈 ' : ' [GRAZE ') + rt.state.grazeCombo + ']' : '');
     } else {
       el.textContent = (isChinese() ? '擦彈 x' : 'GRAZE x') + rt.state.grazeCombo;
     }
     var heat = Math.min(8, Math.max(rt.state.combo || 0, rt.state.grazeCombo || 0));
     if (el.setAttribute) el.setAttribute('data-heat', String(heat));
     if (el.style && el.style.setProperty) {
-      el.style.setProperty('--chain', clamp((rt.state.comboTimer || 0) / COMBO_WINDOW, 0, 1).toFixed(3));
+      var winSec = getComboWindow(rt.state.combo);
+      el.style.setProperty('--chain', clamp((rt.state.comboTimer || 0) / winSec, 0, 1).toFixed(3));
+    }
+    if (el.classList) {
+      el.classList.toggle('is-momentum', (rt.state.combo || 0) >= 15);
+    }
+    if ((rt.state.combo || 0) >= 15 && !rt.state._momentumNotified) {
+      rt.state._momentumNotified = true;
+      logEvent('MOMENTUM SURGE // A-TIER COMBO ONLINE');
+    } else if ((rt.state.combo || 0) < 15) {
+      rt.state._momentumNotified = false;
     }
     chainWasHot = true;
     chainBreakUntil = 0;
@@ -674,13 +700,12 @@ export function updateDomUi() {
     }
   }
   syncCooldowns();
-  if (rt.ui.touchSpecial && rt.ui.touchSpecial.classList) {
-    if ((rt.state.player.energy || 0) >= empCost) {
-      rt.ui.touchSpecial.classList.add('is-ready');
-      rt.ui.touchSpecial.classList.remove('touch-button--cooldown');
-    } else {
-      rt.ui.touchSpecial.classList.remove('is-ready');
-      rt.ui.touchSpecial.classList.add('touch-button--cooldown');
+  var hbPlayer = rt.state && rt.state.player;
+  if (!rt.state.over && !rt.state.paused && !rt.state.interlude && hbPlayer && hbPlayer.hp > 0 && hbPlayer.maxHp > 0 && (hbPlayer.hp / hbPlayer.maxHp <= 0.25)) {
+    var nowHb = (rt.renderTime || 0);
+    if (!rt.state._lastHeartbeat || (nowHb - rt.state._lastHeartbeat >= 0.85) || nowHb < rt.state._lastHeartbeat) {
+      rt.state._lastHeartbeat = nowHb;
+      AudioFX.playHeartbeat();
     }
   }
   syncChain();
@@ -688,6 +713,37 @@ export function updateDomUi() {
   syncComms();
   syncPauseBlur();
   updateContractsHud();
+  syncResonances();
+
+  // Boss Phase Transition Roar Check
+  if (rt.state.boss && rt.state.boss.hp > 0) {
+    var curBPhase = rt.state.boss.phase || 1;
+    if (typeof rt.state.boss._lastSoundPhase !== 'number') rt.state.boss._lastSoundPhase = curBPhase;
+    else if (curBPhase > rt.state.boss._lastSoundPhase) {
+      rt.state.boss._lastSoundPhase = curBPhase;
+      if (AudioFX && typeof AudioFX.bossPhaseRoar === 'function') AudioFX.bossPhaseRoar();
+      logEvent('BOSS PHASE TRANSITION // OVERDRIVE ENGAGED');
+    }
+  }
+
+  // Contract [H] Double-Down Hotkey & Style Sync
+  if (typeof document !== 'undefined' && rt.state && rt.state.contract) {
+    var cCard = document.querySelector('#contractTracker .contract-card');
+    if (cCard) {
+      cCard.classList.toggle('is-doubled', Boolean(rt.state.contract.doubled));
+      if (!rt.state.contract.done && !rt.state.contract.doubled) {
+        if (!cCard.querySelector('.contract-hotkey-hint')) {
+          var hint = document.createElement('span');
+          hint.className = 'contract-hotkey-hint';
+          hint.textContent = '[H] DOUBLE DOWN (1.5x / 2x REWARD)';
+          cCard.appendChild(hint);
+        }
+      } else {
+        var existingHint = cCard.querySelector('.contract-hotkey-hint');
+        if (existingHint) existingHint.remove();
+      }
+    }
+  }
   updateTips();
   updateLoadoutPanel();
   updateInterludePanel();
@@ -710,12 +766,12 @@ export function updateDomUi() {
     if (rt.ui.combatRankLetter) {
       rt.ui.combatRankLetter.textContent = rank.letter;
       if (rt.ui.combatRankLetter.classList) {
-        rt.ui.combatRankLetter.classList.remove('rank-letter--splus', 'rank-letter--s', 'rank-letter--a', 'rank-letter--b', 'rank-letter--c');
+        rt.ui.combatRankLetter.classList.remove('rank-letter--sss', 'rank-letter--splus', 'rank-letter--s', 'rank-letter--a', 'rank-letter--b', 'rank-letter--c');
         rt.ui.combatRankLetter.classList.add(rank.classMod);
       }
     }
     if (rt.ui.combatRankStamp && rt.ui.combatRankStamp.classList) {
-      rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'S' || rank.letter === 'S+');
+      rt.ui.combatRankStamp.classList.toggle('is-s-rank', rank.letter === 'SSS' || rank.letter === 'S' || rank.letter === 'S+');
     }
     if (rt.ui.combatRankTitle) {
       rt.ui.combatRankTitle.textContent = zh ? tRankTitle(rank.title) : rank.title;

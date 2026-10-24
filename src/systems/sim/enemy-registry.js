@@ -11,6 +11,7 @@ import { explodeBarrel } from '../combat.js';
 import { fireArtillery } from '../spawning.js';
 import { dropBossShard } from '../drops.js';
 import { logEvent } from '../../ui/hud.js';
+import { spawnCombatText } from '../../render/fx.js';
 import { stepBoss, stepTitanHarpoon } from './bosses.js';
 import { initBehemothParts, getPartWorldPos, updateEnemyPartCache } from './boss-parts.js';
 import { clearShieldsOwnedBy, refreshSovereignShield } from './enemy-defense.js';
@@ -91,7 +92,7 @@ registerEnemyStrategy('rusher', {
   step: function (e, dt, frame, empFrozen, isCulled) {
     var p = frame.p;
     if (e.burstCd === undefined) { e.burstCd = 1.5 + rng('spawn') * 1.0; e.burstTime = 0; }
-    if (empFrozen || isCulled) return null;
+    if (empFrozen || isCulled || (e.staggerTimer > 0)) return { speed: 0, dx: dx, dy: dy, d: d };
 
     var speed = e.speed * 1.20;
     var dx = p.x - e.x;
@@ -186,11 +187,20 @@ registerEnemyStrategy('artillery', {
 });
 
 registerEnemyStrategy('elite', {
+  filterDamage: function (e, amount, info) {
+    if (e.affix === 'mirror' || e.affix2 === 'mirror') {
+      if (info && (info.isBackstab || (info.bullet && info.bullet._isMirrorBackstab))) {
+        return amount * 1.5;
+      }
+    }
+    return null;
+  },
   step: function (e, dt, frame, empFrozen, isCulled) {
     var p = frame.p;
     var boundW = frame.boundW;
     var boundH = frame.boundH;
 
+    if (e.staggerTimer > 0) return { speed: 0 };
     if (e.affix === 'mirror' || e.affix2 === 'mirror') {
       e.shieldAngle = Math.atan2(p.y - e.y, p.x - e.x);
       if (e.shieldBrokenTimer > 0) {
@@ -200,6 +210,12 @@ registerEnemyStrategy('elite', {
     if (e.affix === 'command' || e.affix2 === 'command') {
       if (!empFrozen) {
         e.commandTimer = (e.commandTimer !== undefined ? e.commandTimer : 2.5) - dt;
+        if (e.commandTimer <= 0.85 && e.commandTimer > 0) {
+          e.commandChanneling = true;
+          if (rng('combat') < 0.25) spawnParticles(e.x, e.y, '#f59e0b', 3, 70, 1.8);
+        } else {
+          e.commandChanneling = false;
+        }
         if (e.commandTimer <= 0) {
           e.commandTimer = 2.5;
           rt.state.shockRings.push({
@@ -223,7 +239,33 @@ registerEnemyStrategy('elite', {
     if (e.affix === 'blink' || e.affix2 === 'blink') {
       if (!empFrozen) {
         e.blinkTimer = (e.blinkTimer !== undefined ? e.blinkTimer : 3.2) - dt;
-        e.blinkTelegraph = (e.blinkTimer <= 0.3 && e.blinkTimer > 0);
+        if (e.blinkTimer <= 0.75 && e.blinkTimer > 0) {
+          e.blinkTelegraph = true;
+          if (!e.blinkDestLocked) {
+            var flankSide = rng('combat') < 0.5 ? 1 : -1;
+            var flankAngle = (p.aim !== undefined ? p.aim : 0) + flankSide * (Math.PI / 2);
+            e.blinkDestX = clamp(p.x + Math.cos(flankAngle) * 110, e.r, boundW - e.r);
+            e.blinkDestY = clamp(p.y + Math.sin(flankAngle) * 110, e.r, boundH - e.r);
+            e.blinkDestLocked = true;
+          }
+          if (rng('combat') < 0.25) {
+            spawnParticles(e.blinkDestX, e.blinkDestY, '#75d1b0', 2, 40, 1.5);
+          }
+          var isDashing = Boolean(p.dashPulse > 0 || p.dashActive > 0 || p.dashAmbushTimer > 0.4 || p.lastDashJust);
+          var distToP = Math.hypot(e.x - p.x, e.y - p.y);
+          var distDestToP = Math.hypot((e.blinkDestX || e.x) - p.x, (e.blinkDestY || e.y) - p.y);
+          if (e.phaseIntercepted || (isDashing && (distToP <= (e.r + p.r + 25) || distDestToP <= (e.r + p.r + 35)))) {
+            e.blinkDestLocked = false;
+            e.blinkTelegraph = false;
+            e.phaseIntercepted = false;
+            e.blinkTimer = 3.5;
+            e.staggerTimer = Math.max(e.staggerTimer || 0, 1.8);
+            spawnCombatText(e.x, e.y - 14, 'BLINK INTERCEPTED!', true);
+            if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+            spawnParticles(e.x, e.y, '#75d1b0', 16, 160, 3);
+            if (rt.state) rt.state.shake = Math.max(rt.state.shake || 0, 6);
+          }
+        }
         if (e.blinkTimer <= 0) {
           e.blinkTimer = 3.2;
           e.blinkTelegraph = false;
@@ -231,8 +273,9 @@ registerEnemyStrategy('elite', {
           var flankAngle = (p.aim !== undefined ? p.aim : 0) + flankSide * (Math.PI / 2);
           var oldX = e.x;
           var oldY = e.y;
-          e.x = clamp(p.x + Math.cos(flankAngle) * 110, e.r, boundW - e.r);
-          e.y = clamp(p.y + Math.sin(flankAngle) * 110, e.r, boundH - e.r);
+          e.x = e.blinkDestLocked ? e.blinkDestX : clamp(p.x + Math.cos(flankAngle) * 110, e.r, boundW - e.r);
+          e.y = e.blinkDestLocked ? e.blinkDestY : clamp(p.y + Math.sin(flankAngle) * 110, e.r, boundH - e.r);
+          e.blinkDestLocked = false;
           spawnParticles(oldX, oldY, '#75d1b0', 10, 140, 2.5);
           spawnParticles(oldX, oldY, '#ffffff', 8, 110, 2);
           spawnParticles(e.x, e.y, '#75d1b0', 12, 160, 3);

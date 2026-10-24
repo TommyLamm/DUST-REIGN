@@ -12,6 +12,8 @@ import { getCampaignStage } from '../data/campaign-stages.js';
 import { assignRoute, onBossCleared } from './interlude.js';
 import { triggerGameOver } from './flow.js';
 import { checkStageVictory, onModeBossDefeated } from './modes/mode-adapter.js';
+import { AudioFX } from '../audio/audio-fx.js';
+import { logEvent } from '../ui/hud.js';
 
 var WEIGHT_KEYS = ['crawler', 'rusher', 'brute', 'artillery', 'spitter', 'scurrier', 'warden', 'burrower'];
 var UNLOCK_WAVE = { crawler: 1, rusher: 1, brute: 1, artillery: 2, spitter: 6, scurrier: 7, warden: 11, burrower: 12 };
@@ -596,6 +598,18 @@ export function onWaveEnd(state) {
   var mutId = state.mutator && state.mutator.id;
   if (!mutId && state.recipe && state.recipe.mutator) mutId = state.recipe.mutator;
   if (mutId === 'barrage') addScore(200, 'wave');
+  // Double-down contract failure backlash
+  if (state.contract && state.contract.doubled && !state.contract.done) {
+    var p = state.player;
+    if (p && p.hp > 1) {
+      var backlash = Math.max(1, Math.round(p.hp * 0.25));
+      p.hp = Math.max(1, p.hp - backlash);
+      logEvent('CONTRACT FAILED // BACKLASH -25% HP');
+      state.shake = Math.max(state.shake || 0, 8);
+      if (AudioFX && typeof AudioFX.hurt === 'function') AudioFX.hurt();
+    }
+  }
+
   noteMetaEvent('wave', { wave: wave });
 }
 

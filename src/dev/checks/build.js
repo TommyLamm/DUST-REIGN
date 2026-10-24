@@ -41,16 +41,19 @@ export function run() {
   var savedState = rt.state;
   var savedUi = rt.ui;
   var savedMouse = rt.input.mouse;
-  var savedTouch = rt.input.touchMode;
   var state = makeState(320, 240);
   rt.state = state;
   rt.ui = null;
-  rt.input.touchMode = false;
   rt.input.mouse = { x: 280, y: 120, down: false };
   clearSeed();
   try {
-    assert(UPGRADES.length === 26 || UPGRADES.length === 29, 'expected 26 base or 29 expanded upgrades');
-    assert(FUSION_CHIPS.length === 8, 'expected 8 fusions');
+    assert(UPGRADES.length === 26 || UPGRADES.length === 29 || UPGRADES.length === 30, 'expected 26 base, 29 expanded, or 30 full upgrades');
+    assert(findUpgrade('superconducting-flux'), 'missing superconducting-flux');
+    assert(findUpgrade('superconducting-flux').weapon === 'colossus', 'superconducting-flux weapon lock');
+    assert(findUpgrade('superconducting-flux').archetype === 'static', 'superconducting-flux archetype');
+    assert(FUSION_CHIPS.length === 9, 'expected 9 fusions');
+    assert(findUpgrade('event-horizon'), 'missing event-horizon');
+    assert(findUpgrade('event-horizon').required.length === 2, 'event-horizon prereqs count');
     var seenReq = {};
     var fi;
     for (fi = 0; fi < FUSION_CHIPS.length; fi += 1) {
@@ -131,6 +134,8 @@ export function run() {
     assert(fusionHand.some(function (card) { return card.id === 'apocalypse-thor' || card.id === 'static-tempest'; }), 'ready fusion was not offered');
     assert(handHas(fusionHand, 'OFFENSE') || handHas(fusionHand, 'WEAPON'), 'fusion hand lost the offense guarantee');
     assert(completesFusionName(state, 'arc-lattice').indexOf('APOCALYPSE THOR') === 0, 'completes label');
+    var ehState = { acquiredUpgrades: [findUpgrade('concussion-breaker')] };
+    assert(completesFusionName(ehState, 'superconducting-flux').indexOf('EVENT HORIZON') === 0, 'completes event-horizon label');
     state.player.apocalypseThor = true;
     state.player.staticTempest = true;
     state.acquiredUpgrades.push(FUSION_CHIPS[2]);
@@ -373,6 +378,5 @@ export function run() {
     rt.state = savedState;
     rt.ui = savedUi;
     rt.input.mouse = savedMouse;
-    rt.input.touchMode = savedTouch;
   }
 }

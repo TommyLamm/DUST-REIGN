@@ -203,8 +203,7 @@
   animation: hullPulse var(--dur-critical) ease-in-out infinite;
 }
 
-.meter--energy.is-ready,
-.touch-button--special.is-ready {
+.meter--energy.is-ready {
   animation: empReady var(--dur-emp) ease-in-out infinite;
 }
 
@@ -325,7 +324,6 @@
   .meter--health.is-hurt,
   .meter--health.is-critical > #healthFill,
   .meter--energy.is-ready,
-  .touch-button--special.is-ready,
   .metric--wave.is-storm::before,
   .hud-chain-badge.is-break,
   .signal-readout strong.is-typing::after,
@@ -363,7 +361,6 @@ html.reduced-motion .action-button--primary::after,
 html.reduced-motion .meter--health.is-hurt,
 html.reduced-motion .meter--health.is-critical > #healthFill,
 html.reduced-motion .meter--energy.is-ready,
-html.reduced-motion .touch-button--special.is-ready,
 html.reduced-motion .metric--wave.is-storm::before,
 html.reduced-motion .hud-chain-badge.is-break,
 html.reduced-motion .signal-readout strong.is-typing::after,

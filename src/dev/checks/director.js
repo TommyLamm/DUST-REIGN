@@ -202,6 +202,22 @@ export function run() {
     }
     if (!arm.interlude || arm.interlude.step !== 'title') throw new Error('mastery did not advance to the act title');
 
+    var armSmuggler = fresh();
+    armSmuggler.wave = 10;
+    armSmuggler.player.weaponMode = 'standard';
+    armSmuggler.player.mastery = 0;
+    armSmuggler.player.hp = 100;
+    armSmuggler.recipe = planWave(10);
+    onBossDefeated({ kind: 'dreadnought', hp: 0, isBoss: true });
+    chooseInterlude(0);
+    if (!armSmuggler.interlude || !armSmuggler.interlude.options || armSmuggler.interlude.options.length !== 4) {
+      throw new Error('armory expected 4 options including smuggler');
+    }
+    chooseInterlude(3);
+    if (armSmuggler.player.hp > 75 || (armSmuggler.banishes || 0) < 2 || (armSmuggler.rerolls || 0) < 3 || (armSmuggler.player.overdrive || 0) < 5.9) {
+      throw new Error('smuggler option failed to grant rewards or cost HP');
+    }
+
     var chain = fresh();
     chain.coreSpawned = true;
     chain.player.x = 400;

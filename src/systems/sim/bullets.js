@@ -4,7 +4,7 @@ import { pushFxEvent } from '../../core/fx-events.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { isReducedMotion, triggerHaptic } from '../../core/settings.js';
-import { getEnemyById, populateEnemyGrid, queryGrid } from '../../core/spatial-grid.js';
+import { getEnemyById, populateEnemyGrid, queryGrid, queryGridCallback } from '../../core/spatial-grid.js';
 import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerSpireAbsorption, triggerSpireMicroResonance } from '../abilities.js';
 import { applyEnemySlow, onCrit, stepCardEffects } from '../card-effects.js';
@@ -18,6 +18,19 @@ import { spawnCombatText } from '../../render/fx.js';
 import { checkMultiPartBulletHit } from './boss-parts.js';
 
 var queriedEnemyIds = [];
+var ehPullBullet = null;
+function ehPullCallback(eId) {
+  if (!ehPullBullet) return;
+  var foe = getEnemyById(eId);
+  if (!foe || foe.hp <= 0 || foe.isBoss || foe.burrowed) return;
+  var d2 = dist2(ehPullBullet.x, ehPullBullet.y, foe.x, foe.y);
+  if (d2 <= 150 * 150 && d2 > 16) {
+    var dist = Math.sqrt(d2) || 1;
+    var pull = (1 - dist / 150) * 160 * 0.016;
+    foe.x += ((ehPullBullet.x - foe.x) / dist) * pull;
+    foe.y += ((ehPullBullet.y - foe.y) / dist) * pull;
+  }
+}
 var MAX_ARC_CANDIDATES = 64;
 var ARC_CANDIDATES = [];
 for (var i = 0; i < MAX_ARC_CANDIDATES; i += 1) {
@@ -238,7 +251,68 @@ export function stepBullets(dt, frame) {
       b.y += Math.sin(wind.angle) * windStep * dt;
     }
     dropScorch(b);
+    var tEntities = rt.state.tacticalEntities;
+    if (tEntities && tEntities.length > 0) {
+      for (var tei = 0; tei < tEntities.length; tei += 1) {
+        var tent = tEntities[tei];
+        if (!tent || tent.life <= 0) continue;
+        if (tent.kind === 'aegis-barrier') {
+          var isPen = b.isVanguard || b.isColossus || (b.pierce !== undefined && b.pierce >= 2);
+          if (isPen && !b._aegisBoosted) {
+            var abDist2 = dist2(tent.x, tent.y, b.x, b.y);
+            var abReach = tent.r + 18;
+            if (abDist2 <= abReach * abReach) {
+              var halfArc = (tent.arc || (130 * Math.PI / 180)) * 0.5;
+              var abAng = Math.atan2(b.y - tent.y, b.x - tent.x);
+              var abDiff = Math.abs(Math.atan2(Math.sin(abAng - tent.angle), Math.cos(abAng - tent.angle)));
+              if (abDiff <= halfArc + 0.35) {
+                b._aegisBoosted = true;
+                b.forceCrit = true;
+                b.crit = true;
+                b.damage = Math.round(b.damage * 1.25);
+                pushFxEvent('burst', b.x, b.y, { preset: 'emp', tint: '#00f3ff', scale: 0.55 });
+                spawnParticles(b.x, b.y, '#00f3ff', 8, 120, 2);
+                if (AudioFX && typeof AudioFX.ricochet === 'function') AudioFX.ricochet();
+              }
+            }
+          }
+        } else if (tent.kind === 'singularity-vortex') {
+          if (b._lastVortexCharged !== tent) {
+            var svDist2 = dist2(tent.x, tent.y, b.x, b.y);
+            if (svDist2 <= tent.r * tent.r) {
+              b._lastVortexCharged = tent;
+              tent.absorbedDamage = Math.min(200, (tent.absorbedDamage || 0) + b.damage * 0.25);
+              spawnParticles(b.x, b.y, '#bd5bff', 3, 50, 1.2);
+            }
+          }
+        } else if (tent.kind === 'sentry-turret') {
+          var isArc = b.isArcWelder || (b.chainCount !== undefined && b.chainCount > 0);
+          if (isArc && !b._turretOvercharged) {
+            var stDist2 = dist2(tent.x, tent.y, b.x, b.y);
+            if (stDist2 <= 36 * 36) {
+              b._turretOvercharged = true;
+              tent.overchargeTimer = 3.5;
+              spawnParticles(tent.x, tent.y, '#5be7ff', 6, 90, 2);
+              if (rt.state.lightningArcs) {
+                rt.state.lightningArcs.push({
+                  x1: b.x, y1: b.y, x2: tent.x, y2: tent.y,
+                  life: 0.15, maxLife: 0.15, color: '#5be7ff'
+                });
+              }
+              if (AudioFX && typeof AudioFX.ricochet === 'function') AudioFX.ricochet();
+            }
+          }
+        }
+      }
+    }
     b.life -= dt;
+    if (b.isEventHorizon && !b._ehDetonated) {
+      ehPullBullet = b;
+      queryGridCallback(b.x, b.y, 150, ehPullCallback);
+      if (rng('combat') < 0.25) {
+        spawnParticles(b.x, b.y, '#9d4edd', 2, 40, 1.2);
+      }
+    }
 
     if (b.bounces > 0) {
       var bouncedX = false;
@@ -438,6 +512,9 @@ export function stepBullets(dt, frame) {
           if (enemy.kind === 'elite' && (enemy.affix === 'mirror' || enemy.affix2 === 'mirror') && (!enemy.shieldBrokenTimer || enemy.shieldBrokenTimer <= 0)) {
             var hitAngle = (dist2(b.x, b.y, enemy.x, enemy.y) > 0.001) ? Math.atan2(b.y - enemy.y, b.x - enemy.x) : Math.atan2(-b.vy, -b.vx);
             var angleDiff = Math.atan2(Math.sin(hitAngle - (enemy.shieldAngle || 0)), Math.cos(hitAngle - (enemy.shieldAngle || 0)));
+            if (Math.abs(angleDiff) >= 1.8) {
+              b._isMirrorBackstab = true;
+            }
             if (Math.abs(angleDiff) <= 1.14) {
               b.vx = -b.vx;
               b.vy = -b.vy;
@@ -467,10 +544,11 @@ export function stepBullets(dt, frame) {
           var streakCritBonus = 0;
           if (res) {
             var streak = p.consecutiveHits || 0;
-            if (streak >= 6) streakCritBonus = (res.tier >= 2 ? 0.15 : 0.10);
+            if (streak >= 6) streakCritBonus = (res.tier >= 2 ? 0.15 : 0.10) * (res.tune || 1);
           }
 
           var isCrit = false;
+          var isCounter = false;
           if (b.forceCrit || b.ambush) {
             isCrit = true;
           } else if (p.highCaliber && rng('combat') < 0.20) {
@@ -482,11 +560,31 @@ export function stepBullets(dt, frame) {
             var eSpeed = Math.hypot(enemy.vx, enemy.vy);
             if (bSpeed > 0 && eSpeed > 0) {
               var dot = (b.vx * enemy.vx + b.vy * enemy.vy) / (bSpeed * eSpeed);
-              if (dot < -0.35) isCrit = true;
+              var isCharging = (enemy.burstTime > 0) ||
+                (enemy.burstCd !== undefined && enemy.burstCd <= 0.35 && enemy.burstCd > 0) ||
+                (enemy.telegraph > 0) ||
+                (enemy.lungeTimer > 0) ||
+                (enemy.phaseState === 'telegraph') ||
+                (eSpeed > 160);
+              if (dot < -0.35) {
+                isCrit = true;
+                if (isCharging) isCounter = true;
+              } else if (isCharging && dot < 0.1) {
+                isCrit = true;
+                isCounter = true;
+              }
             }
           }
 
           var critMult = p.highCaliber ? 2.2 : 1.75;
+          if (isCounter) {
+            critMult *= 1.35;
+            if (enemy.burstTime > 0) enemy.burstTime = 0;
+            if (enemy.vx !== undefined) enemy.vx *= 0.5;
+            if (enemy.vy !== undefined) enemy.vy *= 0.5;
+            if (enemy.burstCd !== undefined) enemy.burstCd = 2.0;
+            spawnCombatText(enemy.x, enemy.y - 16, 'COUNTER!', true);
+          }
           if (res && res.tier >= 2 && (p.consecutiveHits || 0) >= 12) {
             critMult += 0.35;
           }
@@ -495,7 +593,152 @@ export function stepBullets(dt, frame) {
             damageDealt *= 1.4;
           }
           rt.state.lastHitWasCrit = isCrit;
-          damageEnemy(enemy, damageDealt, { source: 'bullet', crit: isCrit, bullet: b, x: b.x, y: b.y });
+          if (b._isMirrorBackstab) {
+            b._isMirrorBackstab = false;
+            damageDealt *= 1.5;
+            enemy.mirrorBackHits = (enemy.mirrorBackHits || 0) + 1;
+            if (enemy.mirrorBackHits >= 3 || damageDealt >= 45) {
+              enemy.mirrorBackHits = 0;
+              enemy.shieldBrokenTimer = 3.5;
+              enemy.empTimer = Math.max(enemy.empTimer || 0, 3.5);
+              spawnCombatText(enemy.x, enemy.y - 14, 'SHIELD SHATTER!', true);
+              if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
+              else AudioFX.critHit();
+              pushFxEvent('shieldBreak', enemy.x, enemy.y, { kind: enemy.kind, color: '#38bdf8' });
+              spawnParticles(enemy.x, enemy.y, '#38bdf8', 16, 180, 3);
+            }
+          }
+          var distToP2 = dist2(b.x, b.y, p.x, p.y);
+          var isHeavy = b.isVanguard || b.isColossus || b.isBreacher;
+          var isExecution = false;
+          if (isHeavy && distToP2 < 90 * 90 && enemy.staggerTimer > 0) {
+            isExecution = true;
+            damageDealt *= 1.5;
+            spawnCombatText(enemy.x, enemy.y - 18, 'EXECUTE!', true);
+            if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
+            if (rt.state.shockRings) {
+              rt.state.shockRings.push({
+                x: enemy.x, y: enemy.y, r: 8, maxR: 80,
+                life: 0.22, maxLife: 0.22, color: '#f59e0b'
+              });
+            }
+            pushFxEvent('burst', enemy.x, enemy.y, { preset: 'emp', tint: '#f59e0b', scale: 0.6 });
+            if (rt.state.enemies) {
+              for (var nei = rt.state.enemies.length - 1; nei >= 0; nei -= 1) {
+                var nFoe = rt.state.enemies[nei];
+                if (!nFoe || nFoe === enemy || nFoe.hp <= 0 || nFoe.burrowed || nFoe.knockbackImmune) continue;
+                var nDist2 = dist2(enemy.x, enemy.y, nFoe.x, nFoe.y);
+                if (nDist2 <= 80 * 80) {
+                  var nd = Math.sqrt(nDist2) || 1;
+                  nFoe.x += ((nFoe.x - enemy.x) / nd) * 35;
+                  nFoe.y += ((nFoe.y - enemy.y) / nd) * 35;
+                  nFoe._recentKb = (nFoe._recentKb || 0) + 15;
+                  nFoe._recentKbTimer = 0.35;
+                  nFoe.staggerTimer = Math.max(nFoe.staggerTimer || 0, 0.3);
+                }
+              }
+            }
+          }
+
+          if (b.isBreacher && (p.mastery || 0) >= 3 && distToP2 <= 80 * 80) {
+            if (enemy.maxStaggerHp > 0 && enemy.staggerHp > 0) {
+              var breachCut = Math.round(enemy.maxStaggerHp * 0.35);
+              enemy.staggerHp -= breachCut;
+              if (enemy.staggerHp <= 0) {
+                enemy.staggerTimer = 1.6;
+                enemy.staggerHp = enemy.maxStaggerHp;
+                spawnCombatText(enemy.x, enemy.y - 14, 'STAGGER BREAK!', true);
+                if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+                if (rt.state) {
+                  rt.state.combo = (rt.state.combo || 0) + 2;
+                  rt.state.comboTimer = Math.max(rt.state.comboTimer || 0, 3.5);
+                }
+              }
+            }
+          }
+
+          if (b.isVanguard && (p.mastery || 0) >= 3) {
+            b._vanguardHitCount = (b._vanguardHitCount || 0) + 1;
+            if (b._vanguardHitCount === 3) {
+              pushFxEvent('burst', enemy.x, enemy.y, { preset: 'emp', tint: '#5be7ff', scale: 0.7 });
+              if (rt.state.shockRings) {
+                rt.state.shockRings.push({
+                  x: enemy.x, y: enemy.y, r: 8, maxR: 70,
+                  life: 0.20, maxLife: 0.20, color: '#5be7ff'
+                });
+              }
+              var vDmg = Math.max(15, Math.round(b.damage * 0.5));
+              if (rt.state.enemies) {
+                for (var vei = rt.state.enemies.length - 1; vei >= 0; vei -= 1) {
+                  var vFoe = rt.state.enemies[vei];
+                  if (!vFoe || vFoe === enemy || vFoe.hp <= 0) continue;
+                  if (dist2(enemy.x, enemy.y, vFoe.x, vFoe.y) <= 70 * 70) {
+                    damageEnemy(vFoe, vDmg, { source: 'vanguard_pulse', x: enemy.x, y: enemy.y });
+                    if (vFoe.hp <= 0) killEnemy(vFoe, 'vanguard_pulse');
+                  }
+                }
+              }
+            }
+          }
+
+          if (b.isEventHorizon && !b._ehDetonated && (enemy.kind === 'elite' || enemy.isBoss || enemy.parts)) {
+            b._ehDetonated = true;
+            var ehRadius = 180;
+            var ehDmg = Math.max(80, Math.round(b.damage * 0.85));
+            if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
+            if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
+            spawnCombatText(enemy.x, enemy.y - 20, 'EVENT HORIZON!', true);
+            if (rt.state.shockRings) {
+              rt.state.shockRings.push({
+                x: enemy.x, y: enemy.y, r: 10, maxR: ehRadius,
+                life: 0.35, maxLife: 0.35, color: '#9d4edd'
+              });
+            }
+            pushFxEvent('burst', enemy.x, enemy.y, { preset: 'emp', tint: '#9d4edd', scale: 1.2 });
+            spawnParticles(enemy.x, enemy.y, '#9d4edd', 24, 180, 3.5);
+            spawnParticles(enemy.x, enemy.y, '#ffffff', 12, 120, 2);
+
+            var ebList = rt.state.enemyBullets;
+            if (ebList) {
+              for (var ebi = ebList.length - 1; ebi >= 0; ebi -= 1) {
+                var ebullet = ebList[ebi];
+                if (dist2(enemy.x, enemy.y, ebullet.x, ebullet.y) <= ehRadius * ehRadius) {
+                  spawnParticles(ebullet.x, ebullet.y, '#9d4edd', 2, 40, 1.2);
+                  ebList.splice(ebi, 1);
+                }
+              }
+            }
+
+            if (rt.state.enemies) {
+              for (var ehi = rt.state.enemies.length - 1; ehi >= 0; ehi -= 1) {
+                var ehFoe = rt.state.enemies[ehi];
+                if (!ehFoe || ehFoe.hp <= 0 || ehFoe === enemy) continue;
+                if (dist2(enemy.x, enemy.y, ehFoe.x, ehFoe.y) <= ehRadius * ehRadius) {
+                  damageEnemy(ehFoe, ehDmg, { source: 'event_horizon', x: enemy.x, y: enemy.y });
+                  ehFoe.staggerTimer = Math.max(ehFoe.staggerTimer || 0, 1.2);
+                  if (ehFoe.hp <= 0) killEnemy(ehFoe, 'event_horizon');
+                }
+              }
+            }
+
+            p.shield = Math.min(30, (p.shield || 0) + 15);
+            spawnParticles(p.x, p.y, '#9d4edd', 8, 100, 2);
+          }
+
+          p.hitmarkerTime = rt.renderTime || 0;
+          p.hitmarkerType = (isExecution || (enemy.staggerHp <= 0 && enemy.staggerTimer > 0)) ? 3 : ((isCrit || isCounter) ? 2 : 1);
+
+          var isClose = distToP2 <= 120 * 120;
+          damageEnemy(enemy, damageDealt, {
+            source: isExecution ? 'execution' : 'bullet',
+            execution: isExecution,
+            crit: isCrit,
+            isCounter: isCounter,
+            isClose: isClose,
+            bullet: b,
+            x: b.x,
+            y: b.y
+          });
           if (b.isBreacher && (p.mastery || 0) >= 3) applyEnemySlow(enemy, 0.4, 0.7);
 
           if (p.thermalShock) {
@@ -532,6 +775,8 @@ export function stepBullets(dt, frame) {
             var bLen = Math.hypot(b.vx, b.vy) || 1;
             enemy.x += (b.vx / bLen) * kb;
             enemy.y += (b.vy / bLen) * kb;
+            enemy._recentKb = (enemy._recentKb || 0) + kb;
+            enemy._recentKbTimer = 0.4;
           }
 
           if (isCrit) {

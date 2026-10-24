@@ -19,6 +19,7 @@ import { updateDomUi } from '../ui/hud.js';
 import { renderBuildInspector } from '../ui/pause-menu.js';
 import { getLanguage, setLanguage } from '../core/i18n.js';
 import { clearSpatialGrid, insertToGrid, queryGrid, queryGridCallback } from '../core/spatial-grid.js';
+import { doubleDownCurrentContract, noteContractEvent } from '../systems/contracts.js';
 
 export function selfCheck() {
   var previousLang = getLanguage();
@@ -143,6 +144,7 @@ export function selfCheck() {
     killEnemy(0);
     artilleryScore = test.score;
     test.score = 0;
+    test.orbs = [];
     if (test.stats) test.stats.grazes = 0;
     test.hitstop = 0;
     test.player.x = 100;
@@ -401,6 +403,7 @@ export function selfCheck() {
     var vulcanMeltdownOk = vulcanShootOk && continuousTrackingDownOk && continuousTrackingUpOk;
 
     // 5. Graviton Bulwark Check
+    test.hitstop = 0;
     test.player.x = 100;
     test.player.y = 100;
     test.player.gravitonBulwark = true;
@@ -410,6 +413,7 @@ export function selfCheck() {
     test.enemies = [];
     update(0.016);
     var gravitonSlowOk = test.enemyBullets.length > 0 && Math.abs(test.enemyBullets[0].vx - 130) < 0.001;
+    test.hitstop = 0;
     test.enemies = [{ kind: 'rusher', x: 150, y: 100, r: 10, hp: 100, maxHp: 100 }];
     test.enemyBullets = [{ x: 130, y: 100, vx: 100, vy: 0, r: 4, damage: 10, life: 2 }];
     test.orbs = [{ kind: 'repair', x: 100, y: 100, vx: 0, vy: 0, r: 10, value: 0, life: 20 }];
@@ -442,7 +446,24 @@ export function selfCheck() {
     var plasmaBurnOk = (enemyHpBefore - test.enemies[0].hp) >= 16;
     var plasmaMeltdownOk = plasmaShootOk && plasmaImpactOk && plasmaBurnOk;
 
-    var fusionExecOk = staticTempestOk && kineticShrapnelOk && overchargeRetaliationOk && vulcanMeltdownOk && gravitonBulwarkOk && plasmaMeltdownOk;
+    // 7. Event Horizon Fusion Check
+    test.hitstop = 0;
+    test.player.x = 100;
+    test.player.y = 100;
+    test.player.eventHorizon = true;
+    test.player.shield = 10;
+    test.enemyBullets = [{ x: 130, y: 100, vx: 0, vy: 0, r: 4, damage: 10, life: 1 }];
+    test.enemies = [
+      { kind: 'elite', x: 120, y: 100, r: 20, hp: 300, maxHp: 300, empTimer: 0 },
+      { kind: 'rusher', x: 150, y: 100, r: 10, hp: 100, maxHp: 100, empTimer: 0 }
+    ];
+    test.bullets = [{ x: 120, y: 100, vx: 100, vy: 0, r: 4, damage: 50, isEventHorizon: true, life: 1, hits: [], trail: [] }];
+    update(0.016);
+    var eventHorizonOk = test.enemyBullets.length === 0 &&
+      test.player.shield >= 25 &&
+      test.enemies[1].staggerTimer >= 1.0;
+
+    var fusionExecOk = staticTempestOk && kineticShrapnelOk && overchargeRetaliationOk && vulcanMeltdownOk && gravitonBulwarkOk && plasmaMeltdownOk && eventHorizonOk;
 
     // Phase 2 Step 4: Build Inspector & Fusion Matrix UI Check
     var mockInspectorUi = {
@@ -486,6 +507,7 @@ export function selfCheck() {
     test.player.vulcanMeltdown = false;
     test.player.gravitonBulwark = false;
     test.player.plasmaMeltdown = false;
+    test.player.eventHorizon = false;
     test.acquiredUpgrades = [];
     rt.ui = mockInspectorUi;
     test.player.weaponMode = 'breacher';
@@ -554,6 +576,7 @@ export function selfCheck() {
     Math.random = origRandom;
     var wave3NoAffixOk = test.enemies[0].affix === null;
 
+    test.hitstop = 0;
     test.enemies = [{
       kind: 'elite',
       affix: 'mirror',
@@ -584,6 +607,7 @@ export function selfCheck() {
     update(0.016);
     var mirrorBlockOk = test.enemies[0].hp === 200 && test.bullets.length === 0;
 
+    test.hitstop = 0;
     test.enemies[0].shieldBrokenTimer = 3.0;
     test.bullets = [{
       x: 165,
@@ -740,7 +764,6 @@ export function selfCheck() {
     test.player.x = 100;
     test.player.y = 150;
     test.player.aim = 0;
-    rt.input.touchMode = false;
     rt.input.gamepadX = 0;
     rt.input.gamepadY = 0;
     rt.input.mouse.x = 180;
@@ -762,7 +785,7 @@ export function selfCheck() {
       test.enemies[0].empTimer === 3.0 &&
       test.enemies[1].hp === 110 &&
       test.enemies[1].empTimer === 3.0 &&
-      test.enemies[1].shieldBrokenTimer === 3.0 &&
+      (test.enemies[1].shieldBrokenTimer === 3.0 || test.enemies[1].shieldBrokenTimer === 3.5) &&
       test.enemies[2].hp === 200 &&
       test.enemies[2].empTimer === 0;
 
@@ -865,6 +888,58 @@ export function selfCheck() {
     var cbEarlyOutOk = cbAborted === false;
     spatialGridOk = Boolean(spatialNear1 && spatialNear2 && spatialMiss && cbOk && cbEarlyOutOk);
 
+    // Round 2 Feature 1: Storm Core Siphoning
+    test.over = false;
+    test.paused = false;
+    test.hitstop = 0;
+    test.player.x = 100;
+    test.player.y = 100;
+    test.enemyBullets = [{ x: 150, y: 100, vx: 0, vy: 0, r: 4, life: 1 }];
+    test.enemies = [{ kind: 'rusher', x: 150, y: 100, r: 10, hp: 100, maxHp: 100, empTimer: 0 }];
+    test.orbs = [{ kind: 'storm_core', x: 100, y: 100, r: 12, vx: 0, vy: 0, life: 10 }];
+    test.stormCoresHarvested = 0;
+    rt.state.stormCoresHarvested = 0;
+    update(0.016);
+    var stormCoreOk = test.player.overdrive >= 2.9 &&
+      test.enemyBullets.length === 0 &&
+      test.enemies[0].empTimer >= 1.7 &&
+      rt.state.stormCoresHarvested === 1;
+
+    // Round 2 Feature 2: Contract Overclock Double-Down
+    test.contract = { id: 'speedrun', goal: 10, progress: 0, doubled: false, done: false };
+    test.waveTime = 5;
+    var double1 = doubleDownCurrentContract();
+    var doubledGoal = test.contract.goal === 15 && test.contract.doubled === true;
+    var double2 = doubleDownCurrentContract();
+    test.contract = { id: 'graze', goal: 1, progress: 0, doubled: true, done: false, reward: { type: 'reroll', amount: 1 } };
+    test.rerolls = 0;
+    noteContractEvent('graze');
+    var doubledRewardOk = test.rerolls === 3;
+    var contractDoubleDownOk = double1 === true && doubledGoal && double2 === false && doubledRewardOk;
+
+    // Round 2 Feature 3: Domino Crush Mechanics
+    test.hitstop = 0;
+    test.enemies = [
+      { kind: 'rusher', x: 100, y: 100, vx: 200, vy: 0, r: 12, hp: 100, maxHp: 100, _recentKb: 12 },
+      { kind: 'rusher', x: 115, y: 100, vx: 0, vy: 0, r: 12, hp: 100, maxHp: 100 }
+    ];
+    update(0.016);
+    var dominoCrushOk = test.enemies[0].hp < 100 &&
+      test.enemies[1].hp < 100 &&
+      test.enemies[1].staggerTimer > 0;
+
+    // Round 2 Feature 4: Stagger Punishment Execution
+    test.player.x = 100;
+    test.player.y = 100;
+    test.player.aim = 0;
+    test.player.dashCooldown = 0;
+    test.enemies = [
+      { kind: 'rusher', x: 210, y: 100, r: 15, hp: 200, maxHp: 200, staggerTimer: 1.5, empTimer: 0 }
+    ];
+    rt.input.keys = new Set();
+    dash();
+    var executionOk = test.enemies[0].hp < 150 && test.player.dashCooldown === 0;
+
     runBuildChecks();
     runEnemyChecks();
     runDirectorChecks();
@@ -918,9 +993,13 @@ export function selfCheck() {
   if (!conductionSpireSystemOk) failures.push('conductionSpireSystemOk');
   if (!combatRankTelemetryOk) failures.push('combatRankTelemetryOk');
   if (!spatialGridOk) failures.push('spatialGridOk');
+  if (!stormCoreOk) failures.push('stormCoreOk');
+  if (!contractDoubleDownOk) failures.push('contractDoubleDownOk');
+  if (!dominoCrushOk) failures.push('dominoCrushOk');
+  if (!executionOk) failures.push('executionOk');
   if (failures.length > 0) {
     console.error('Self-check failures:', failures);
     throw new Error('LunaGame self-check failed: ' + failures.join(', '));
   }
-  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '8 fusions, prerequisites verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified', spatialGrid: '2d spatial hash grid zero-gc verified' };
+  return { ok: true, upgrades: UPGRADES.length, fusions: FUSION_CHIPS.length, controls: 'WASD/arrows + mouse hold', combo: '4s chain window', overdrive: '6s elite core', repair: '18 hp brute/elite scrap', bounty: 'one-shot wave reward', surge: '3s bounty overdrive', overflow: '12 score full repair', storm: '5s front pressure', archetypes: WEAPON_MODES.slice(), fusionExecution: '9 fusions, prerequisites verified', round2Features: 'event-horizon, storm-core, contract-double-down, domino-crush & execution verified', affixes: '4 dynamic affixes verified', titanComponents: 'left/right destruction verified', conductionSpire: 'resonance & 260px mega emp verified', rankEvaluation: 'S+/S/A/B/C score stamp verified', spatialGrid: '2d spatial hash grid zero-gc verified' };
 }

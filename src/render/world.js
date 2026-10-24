@@ -864,6 +864,54 @@ export function drawFieldReadability(ctx) {
     ctx.stroke();
     ctx.restore();
   }
+
+  // 6. Tactical Auto-Aim Target Brackets (Touch / Gamepad)
+  if (rt.input && rt.input.aimLock && rt.input.aimLock.enemy) {
+    var lockEnemy = rt.input.aimLock.enemy;
+    if (lockEnemy.hp > 0 && (rt.input.gamepadFiring || (rt.gamepadState && rt.gamepadState.connected) || (rt.input.aimLock.left > 0))) {
+      ctx.save();
+      var lx = lockEnemy.x;
+      var ly = lockEnemy.y;
+      var lr = (lockEnemy.r || 16) + 8;
+      var arm = Math.max(6, lr * 0.42);
+      var pulse = reduced ? 1.0 : (0.85 + 0.15 * Math.sin((rt.renderTime || 0) * 10));
+      var isBossTarget = Boolean(lockEnemy.isBoss || lockEnemy.kind === 'titan');
+      var bracketColor = isBossTarget ? 'rgba(255, 77, 46, ' + pulse.toFixed(2) + ')' : 'rgba(0, 243, 255, ' + pulse.toFixed(2) + ')';
+
+      ctx.strokeStyle = bracketColor;
+      ctx.lineWidth = 1.8;
+      ctx.lineCap = 'square';
+      ctx.beginPath();
+
+      // Top-Left
+      ctx.moveTo(lx - lr, ly - lr + arm);
+      ctx.lineTo(lx - lr, ly - lr);
+      ctx.lineTo(lx - lr + arm, ly - lr);
+
+      // Top-Right
+      ctx.moveTo(lx + lr - arm, ly - lr);
+      ctx.lineTo(lx + lr, ly - lr);
+      ctx.lineTo(lx + lr, ly - lr + arm);
+
+      // Bottom-Left
+      ctx.moveTo(lx - lr, ly + lr - arm);
+      ctx.lineTo(lx - lr, ly + lr);
+      ctx.lineTo(lx - lr + arm, ly + lr);
+
+      // Bottom-Right
+      ctx.moveTo(lx + lr - arm, ly + lr);
+      ctx.lineTo(lx + lr, ly + lr);
+      ctx.lineTo(lx + lr, ly + lr - arm);
+
+      ctx.stroke();
+
+      // Center subtle diamond pip
+      ctx.fillStyle = bracketColor;
+      ctx.fillRect(lx - 1.5, ly - 1.5, 3, 3);
+
+      ctx.restore();
+    }
+  }
 }
 
 export function drawPois(ctx, x0, y0, viewW, viewH) {

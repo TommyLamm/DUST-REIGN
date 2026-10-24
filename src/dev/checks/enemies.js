@@ -117,6 +117,11 @@ export function run() {
     var empTower = filterEnemyDamage(towerA, 10, { source: 'emp', x: 10, y: 10 });
     assert(empTower === 30, 'storm tower emp was not x3');
 
+    var bruteStagger = { kind: 'brute', hp: 200, maxHp: 200, x: 0, y: 0 };
+    filterEnemyDamage(bruteStagger, 20, { source: 'bullet', bullet: { isVanguard: true } });
+    assert(bruteStagger.maxStaggerHp === 70, 'brute max stagger hp is 35%');
+    assert(bruteStagger.staggerHp === 70 - 20 * 1.8, 'heavy bullet dealt 1.8x stagger loss');
+
     clearEnemyShields({ shieldHp: 10, shieldTimer: 3, knockbackImmune: true, isBoss: false });
     var holder = { kind: 'crawler', shieldHp: 8, shieldTimer: 2, shieldOwner: sovereign, knockbackImmune: true };
     rt.state.enemies.push(holder);

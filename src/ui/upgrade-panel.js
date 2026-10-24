@@ -1,7 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { stackCount } from '../data/upgrades.js';
-import { beginBanish, cancelBanish, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
+import { beginBanish, cancelBanish, evaluateArchetypes, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
 import { first, qa } from '../core/utils.js';
 import { isChinese, onLanguageChange, tCategory, tFusionTitle, tRarity, tUpgradeText, tUpgradeTitle } from '../core/i18n.js';
 
@@ -24,7 +24,8 @@ var WEAPON_MARK = {
   standard: 'STD',
   breacher: 'BRC',
   vanguard: 'VAN',
-  'arc-welder': 'ARC'
+  'arc-welder': 'ARC',
+  colossus: 'COL'
 };
 
 function categoryKey(category) {
@@ -115,6 +116,28 @@ function paintUpgradeButton(button, upgrade, index, reroll) {
   if (cat === 'fusion') {
     resBadge.hidden = false;
     resBadge.textContent = zh ? '⚡ 融合共鳴 · 質變晶片' : '⚡ FUSION RESONANCE SYNTHESIS';
+  } else if (upgrade.archetype) {
+    resBadge.hidden = false;
+    var archKey = upgrade.archetype;
+    var resonances = (rt.state && rt.state.player && rt.state.player.resonances) || (rt.state ? evaluateArchetypes(rt.state) : null);
+    var curStacks = (resonances && resonances[archKey]) || 0;
+    var nextStacks = curStacks + 1;
+    var targetMilestone = curStacks < 2 ? 2 : (curStacks < 4 ? 4 : (curStacks < 6 ? 6 : 6));
+    var willTierUp = (nextStacks === 2 || nextStacks === 4 || nextStacks === 6);
+
+    var archName = archKey.toUpperCase();
+    if (zh) {
+      if (archKey === 'kinetic') archName = '動能穿甲';
+      else if (archKey === 'plasma') archName = '熱能爆破';
+      else if (archKey === 'static') archName = '電磁超載';
+      else if (archKey === 'tactical') archName = '機動戰術';
+    }
+
+    var label = '[' + archName + ' ' + curStacks + '/' + targetMilestone + ']';
+    if (willTierUp) {
+      label += (zh ? ' ⚡ 共鳴晉階!' : ' ⚡ RESONANCE TIER UP!');
+    }
+    resBadge.textContent = label;
   } else {
     resBadge.hidden = true;
     resBadge.textContent = '';

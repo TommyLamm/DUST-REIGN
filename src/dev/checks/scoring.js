@@ -2,7 +2,8 @@ import { clearSeed, rng, seedRun } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { damagePlayer } from '../../systems/combat.js';
 import { dash, justDashCooldown, stepDashHeat } from '../../systems/abilities.js';
-import { addScore, calculateCombatRank } from '../../systems/scoring.js';
+import { addScore, calculateCombatRank, calculateFlawlessBonus } from '../../systems/scoring.js';
+import { MAX_COMBO } from '../../config.js';
 
 function breakdownSum(breakdown) {
   var sum = 0;
@@ -256,6 +257,14 @@ export function run() {
       throw new Error('normal dash must not stack or clear heat');
     }
     if (timerHot === 0) throw new Error('heat timer fixture was empty');
+
+    if (MAX_COMBO !== 35) throw new Error('expected MAX_COMBO to be 35');
+    var bonus1 = calculateFlawlessBonus(2, 1);
+    var bonus3 = calculateFlawlessBonus(2, 3);
+    var bonus6 = calculateFlawlessBonus(2, 6);
+    if (bonus1 !== 100 || bonus3 !== 300 || bonus6 !== 500) {
+      throw new Error('calculateFlawlessBonus streak scaling mismatch');
+    }
   } finally {
     state.over = snap.over;
     state.paused = snap.paused;

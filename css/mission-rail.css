@@ -202,16 +202,6 @@
   font-style: normal;
 }
 
-.touch-controls {
-  display: none;
-}
-
-.touch-button--cooldown {
-  opacity: 0.45;
-  filter: grayscale(0.5);
-  pointer-events: none;
-}
-
 .system-footer {
   flex-shrink: 0;
   justify-content: space-between;

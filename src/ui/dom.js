@@ -91,9 +91,6 @@ export function setupDom(options) {
   var hudEnergy = first(['#hudEnergy', '[data-energy]']);
   var meterEnergy = first(['#meterEnergy']);
   var energyFill = first(['#energyFill', '[data-energy-fill]']);
-  var touchSpecial = first(['#touchSpecial']);
-  var touchShoot = first(['#touchShoot']);
-  var touchDash = first(['#touchDash']);
   var empReady = first(['#empReady']);
   var commsStatus = first(['#commsStatus']);
   var windStatus = first(['#windStatus']);
@@ -143,9 +140,6 @@ export function setupDom(options) {
   var chassisDesc = byId('chassisDesc', pauseModal);
   var activeFusionsCount = byId('activeFusionsCount', pauseModal);
   var fusionMatrixList = byId('fusionMatrixList', pauseModal);
-  var touchJoystickZone = byId('touchJoystickZone', root);
-  var joystickBase = byId('joystickBase', touchJoystickZone);
-  var joystickThumb = byId('joystickThumb', touchJoystickZone);
   var gameFrame = first(['.game-frame', '[data-game-frame]'], root || document);
   var gameLayout = first(['.game-layout', 'main.game-layout'], root || document);
   var missionRail = first(['.mission-rail', 'aside.mission-rail'], root || document);
@@ -181,9 +175,6 @@ export function setupDom(options) {
     hudEnergy: hudEnergy,
     meterEnergy: meterEnergy,
     energyFill: energyFill,
-    touchSpecial: touchSpecial,
-    touchShoot: touchShoot,
-    touchDash: touchDash,
     empReady: empReady,
     commsStatus: commsStatus,
     windStatus: windStatus,
@@ -244,9 +235,6 @@ export function setupDom(options) {
     chassisDesc: chassisDesc,
     activeFusionsCount: activeFusionsCount,
     fusionMatrixList: fusionMatrixList,
-    touchJoystickZone: touchJoystickZone,
-    joystickBase: joystickBase,
-    joystickThumb: joystickThumb,
     createdCanvas: createdCanvas,
     createdOverlay: createdOverlay,
     width: 960,
@@ -299,24 +287,9 @@ export function resize() {
   var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || window.innerWidth || 960));
   var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || window.innerHeight || 640));
 
-  // Adaptive DPR: Mobile (pointer: coarse) or visual quality 'low' clamps to 1.0~1.25; desktop high to 1.5
-  var isCoarse = false;
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    try { isCoarse = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
-  }
   var q = 'high';
   try { q = getQuality(); } catch (e) {}
-
-  var maxDpr = 1.5;
-  if (isCoarse) {
-    maxDpr = q === 'low' ? 1.0 : 1.25;
-  } else if (q === 'low') {
-    maxDpr = 1.0;
-  } else if (q === 'medium') {
-    maxDpr = 1.25;
-  } else {
-    maxDpr = 1.5;
-  }
+  var maxDpr = q === 'low' ? 1.0 : (q === 'medium' ? 1.25 : 1.5);
 
   var rawDpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
   var dpr = Math.min(maxDpr, Math.max(1, rawDpr));

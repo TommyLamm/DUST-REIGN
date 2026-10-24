@@ -230,7 +230,7 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
   cam.viewOriginY = halfH + cam.shakeY;
 
   // Resync screen mouse to world coordinates if screen coordinates are present
-  if (input && input.mouse && input.mouse.sx !== undefined && !input.touchMode && !input.gamepadFiring) {
+  if (input && input.mouse && input.mouse.sx !== undefined && !input.gamepadFiring) {
     screenToWorld(input.mouse.sx, input.mouse.sy, cam, input.mouse);
     if (player) {
       player.aimX = input.mouse.x;

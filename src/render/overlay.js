@@ -7,6 +7,7 @@ import { PALETTE } from './palette.js';
 import { drawGlow } from './sprites.js';
 import { isChinese, tBanner } from '../core/i18n.js';
 import { worldToScreen } from '../core/camera.js';
+import { getComboWindow } from '../systems/combat.js';
 
 var bossLag = 1;
 var bossRef = null;
@@ -43,6 +44,37 @@ function fillDeathNoise(ctx) {
     ctx.fillStyle = i % 3 === 0 ? '#ff6a3d' : '#e8e0c6';
     ctx.fillRect(x, y, i % 4 === 0 ? 3 : 2, 1);
   }
+  // 4. Storm Core Indicators (青金色箭頭附 CORE 標記)
+  var orbs = rt.state.orbs;
+  if (orbs && orbs.length > 0) {
+    for (var oi = 0; oi < orbs.length; oi += 1) {
+      var scOrb = orbs[oi];
+      if (scOrb && scOrb.kind === 'storm_core') {
+        var scRes = computeEdgeIntersection(scOrb.x, scOrb.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
+        if (scRes) {
+          var scDistM = Math.round(Math.hypot(scOrb.x - p.x, scOrb.y - p.y) / 16);
+          ctx.save();
+          ctx.translate(scRes.x, scRes.y);
+          ctx.rotate(scRes.angle);
+
+          ctx.fillStyle = '#00f3ff';
+          ctx.beginPath();
+          ctx.moveTo(8, 0); ctx.lineTo(-3, -5); ctx.lineTo(-1, 0); ctx.lineTo(-3, 5); ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+          ctx.fillStyle = '#00f3ff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          var scxOffset = clamp(scRes.x - Math.cos(scRes.angle) * 14, 32, viewW - 32);
+          var scyOffset = clamp(scRes.y - Math.sin(scRes.angle) * 14, 18, viewH - 18);
+          ctx.fillText('CORE ' + scDistM + 'm', scxOffset, scyOffset);
+        }
+      }
+    }
+  }
+
   ctx.restore();
 }
 
@@ -304,7 +336,7 @@ export function drawHud(ctx) {
     ctx.fillStyle = '#75d1b0';
     ctx.fillText('CHAIN x' + rt.state.combo, 20, 124);
     ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, 145, 148, 4);
-    ctx.fillStyle = '#75d1b0'; ctx.fillRect(20, 145, 148 * rt.state.comboTimer / COMBO_WINDOW, 4);
+    ctx.fillStyle = '#75d1b0'; ctx.fillRect(20, 145, 148 * rt.state.comboTimer / getComboWindow(rt.state.combo), 4);
     ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = 'rgba(233,217,185,.75)';
     ctx.fillText('KEEP THE SIGNAL HOT', 20, 155);
@@ -331,7 +363,181 @@ export function drawHud(ctx) {
   ctx.restore();
 }
 
+function drawLowHpVignette(ctx) {
+  if (isReducedMotion() || !rt.state || !rt.state.player || rt.state.over) return;
+  var p = rt.state.player;
+  if (!p || !(p.hp > 0) || !(p.maxHp > 0) || (p.hp / p.maxHp > 0.25)) return;
+
+  var w = rt.ui ? rt.ui.width : (rt.state ? rt.state.width : 960);
+  var h = rt.ui ? rt.ui.height : (rt.state ? rt.state.height : 640);
+  var now = rt.renderTime || 0;
+  var pulse = 0.35 + 0.25 * Math.sin(now * 7.5);
+  var hpRatio = p.hp / p.maxHp;
+  var intensity = clamp((0.25 - hpRatio) / 0.25, 0, 1);
+  var alpha = clamp(pulse * (0.6 + 0.4 * intensity), 0.1, 0.75);
+
+  ctx.save();
+  var grad = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.35, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+  grad.addColorStop(0, 'rgba(255, 0, 20, 0)');
+  grad.addColorStop(0.7, 'rgba(180, 10, 15, ' + (alpha * 0.4).toFixed(3) + ')');
+  grad.addColorStop(1, 'rgba(120, 0, 10, ' + alpha.toFixed(3) + ')');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(255, 30, 40, ' + (alpha * 0.8).toFixed(3) + ')';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1.5, 1.5, w - 3, h - 3);
+
+  ctx.restore();
+}
+
+var _CURSOR_SCREEN_POS = { x: 0, y: 0 };
+
+export function drawTacticalCursorReticle(ctx) {
+  if (!ctx || !rt.state || !rt.state.player || rt.state.over || rt.state.paused) return;
+  if (!rt.input || !rt.input.mouse) return;
+  var mx = rt.input.mouse.sx;
+  var my = rt.input.mouse.sy;
+  if (typeof mx !== 'number' || typeof my !== 'number') return;
+  var p = rt.state.player;
+
+  ctx.save();
+
+  // 1. Dynamic Recoil Spread Crosshair
+  var recoil = (p && p.recoil) || 0;
+  var R = 10 + Math.min(18, recoil * 14);
+
+  ctx.strokeStyle = 'rgba(0, 243, 255, 0.85)';
+  ctx.fillStyle = '#00f3ff';
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+
+  // 4 ticks
+  ctx.beginPath();
+  // Top
+  ctx.moveTo(mx, my - R);
+  ctx.lineTo(mx, my - R - 6);
+  // Bottom
+  ctx.moveTo(mx, my + R);
+  ctx.lineTo(mx, my + R + 6);
+  // Left
+  ctx.moveTo(mx - R, my);
+  ctx.lineTo(mx - R - 6, my);
+  // Right
+  ctx.moveTo(mx + R, my);
+  ctx.lineTo(mx + R + 6, my);
+  ctx.stroke();
+
+  // Center pip
+  ctx.beginPath();
+  ctx.arc(mx, my, 1.5, 0, TAU);
+  ctx.fill();
+
+  // 2. Vanguard / Colossus 360° Charge Progress Arc
+  if (p && p.isCharging && (p.chargeNeed || 0) > 0) {
+    var prog = clamp((p.chargeTime || 0) / p.chargeNeed, 0, 1);
+    var isFull = prog >= 1;
+    var pulse = isReducedMotion() ? 1 : (0.8 + 0.2 * Math.sin((rt.renderTime || 0) * 16));
+
+    ctx.beginPath();
+    ctx.arc(mx, my, R + 4, -Math.PI / 2, -Math.PI / 2 + prog * TAU);
+    ctx.strokeStyle = isFull ? ('rgba(255, 211, 107, ' + pulse.toFixed(2) + ')') : 'rgba(0, 243, 255, 0.85)';
+    ctx.lineWidth = isFull ? 2.5 : 1.8;
+    ctx.stroke();
+
+    if (isFull) {
+      ctx.beginPath();
+      ctx.arc(mx, my, R + 6, 0, TAU);
+      ctx.strokeStyle = 'rgba(255, 211, 107, 0.4)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+  }
+
+  // 3. EMP Ready Pip (Cyan diamond right below reticle)
+  if (p && (p.energy || 0) >= 50) {
+    ctx.fillStyle = '#00f3ff';
+    ctx.beginPath();
+    ctx.moveTo(mx, my + R + 6);
+    ctx.lineTo(mx + 3.5, my + R + 9.5);
+    ctx.lineTo(mx, my + R + 13);
+    ctx.lineTo(mx - 3.5, my + R + 9.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 4. Three-Tier Hitmarker Flash (45° diagonal X)
+  var hmElapsed = (rt.renderTime || 0) - (p.hitmarkerTime || 0);
+  if (hmElapsed >= 0 && hmElapsed < 0.12) {
+    var hmA = 1 - (hmElapsed / 0.12);
+    var hmType = p.hitmarkerType || 1;
+    var hmColor = hmType === 3
+      ? ('rgba(255, 34, 68, ' + hmA.toFixed(3) + ')')
+      : (hmType === 2 ? ('rgba(255, 215, 0, ' + hmA.toFixed(3) + ')') : ('rgba(255, 255, 255, ' + hmA.toFixed(3) + ')'));
+
+    ctx.strokeStyle = hmColor;
+    ctx.lineWidth = hmType === 3 ? 2.6 : (hmType === 2 ? 2.0 : 1.5);
+    var gap = Math.max(4, R * 0.35);
+    var len = 6;
+
+    ctx.beginPath();
+    ctx.moveTo(mx - gap - len, my - gap - len);
+    ctx.lineTo(mx - gap, my - gap);
+    ctx.moveTo(mx + gap, my - gap);
+    ctx.lineTo(mx + gap + len, my - gap - len);
+    ctx.moveTo(mx - gap - len, my + gap + len);
+    ctx.lineTo(mx - gap, my + gap);
+    ctx.moveTo(mx + gap, my + gap);
+    ctx.lineTo(mx + gap + len, my + gap + len);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawBlinkTeleportTelegraphs(ctx) {
+  if (!ctx || !rt.state || !rt.state.enemies || rt.state.over) return;
+  var cam = rt.camera;
+  var enemies = rt.state.enemies;
+  for (var i = 0; i < enemies.length; i += 1) {
+    var en = enemies[i];
+    if (en && en.blinkTelegraph && en.blinkDestLocked && typeof en.blinkDestX === 'number') {
+      worldToScreen(en.blinkDestX, en.blinkDestY, cam, _CURSOR_SCREEN_POS);
+      var bx = _CURSOR_SCREEN_POS.x;
+      var by = _CURSOR_SCREEN_POS.y;
+      var pulse = isReducedMotion() ? 1 : (0.7 + 0.3 * Math.sin((rt.renderTime || 0) * 12));
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(157, 78, 221, ' + (pulse * 0.85).toFixed(2) + ')';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.arc(bx, by, 32, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(157, 78, 221, ' + (pulse * 0.25).toFixed(2) + ')';
+      ctx.beginPath();
+      ctx.arc(bx, by, 16 * pulse, 0, TAU);
+      ctx.fill();
+
+      ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+      ctx.fillStyle = '#e0aaff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('VOID RIFT // INTERCEPTABLE', bx, by - 40);
+      ctx.restore();
+    }
+  }
+}
+
 export function drawOverlay(ctx) {
+  if (!rt.state.over) {
+    drawLowHpVignette(ctx);
+    drawBlinkTeleportTelegraphs(ctx);
+    drawTacticalCursorReticle(ctx);
+  }
   if (rt.state.banner > 0 && !rt.state.over) drawWaveBanner(ctx);
   if (rt.state.paused && !rt.state.over && (!rt.state.upgradeChoices || !rt.state.upgradeChoices.length) && (!rt.ui.startScreen || rt.ui.startScreen.hidden)) {
     var hasPauseModal = typeof document !== 'undefined' && Boolean(document.getElementById('pauseModal'));
@@ -888,6 +1094,22 @@ export function drawTacticalMinimap(ctx) {
     }
   }
   ctx.fill();
+
+  // 桶 3.5: 風暴晶核 (Storm Core - 青金高亮點 / 菱形)
+  var mOrbs = rt.state.orbs;
+  if (mOrbs && mOrbs.length > 0) {
+    ctx.fillStyle = '#00f3ff';
+    ctx.beginPath();
+    for (var moi = 0; moi < mOrbs.length; moi += 1) {
+      var mOrb = mOrbs[moi];
+      if (mOrb && mOrb.kind === 'storm_core') {
+        var ox = mapX + mOrb.x * sx;
+        var oy = mapY + mOrb.y * sy;
+        ctx.rect(ox - 2, oy - 2, 4, 4);
+      }
+    }
+    ctx.fill();
+  }
 
   // 桶 4: 綠點玩家 (Player Position & Heading Notch)
   var p = rt.state.player;

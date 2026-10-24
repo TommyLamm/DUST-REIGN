@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="css/mission-rail.css" />
   <link rel="stylesheet" href="css/layout-fit.css" />
   <link rel="stylesheet" href="css/pause-menu.css" />
-  <link rel="stylesheet" href="css/touch.css" />
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/loadout.css" />
   <link rel="stylesheet" href="css/interlude.css" />
@@ -91,6 +90,32 @@
               </div>
 
               <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
+              <div id="hudResonances" class="hud-resonances" aria-label="Archetype Resonances">
+                <div class="resonance-pill" data-archetype="kinetic" data-tier="0" title="Kinetic Ballistics">
+                  <span class="res-icon">⚡</span>
+                  <span class="res-name">KIN</span>
+                  <span class="res-count">0</span>
+                  <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
+                </div>
+                <div class="resonance-pill" data-archetype="plasma" data-tier="0" title="Thermal Plasma">
+                  <span class="res-icon">🔥</span>
+                  <span class="res-name">PLA</span>
+                  <span class="res-count">0</span>
+                  <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
+                </div>
+                <div class="resonance-pill" data-archetype="static" data-tier="0" title="Electromagnetic Static">
+                  <span class="res-icon">✦</span>
+                  <span class="res-name">STA</span>
+                  <span class="res-count">0</span>
+                  <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
+                </div>
+                <div class="resonance-pill" data-archetype="tactical" data-tier="0" title="Tactical Defense">
+                  <span class="res-icon">⛨</span>
+                  <span class="res-name">TAC</span>
+                  <span class="res-count">0</span>
+                  <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
+                </div>
+              </div>
               <div id="contractTracker" hidden></div>
               <div id="tipToast" hidden></div>
 
@@ -168,7 +193,7 @@
                   <span>ENTER THE DUST</span><b aria-hidden="true">↗</b>
                 </button>
                 <div class="overlay-foot">
-                  <span class="overlay-foot-controls">TOUCH: D-PAD + FIRE (AUTO-AIM) · DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A</span>
+                  <span class="overlay-foot-controls">DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A</span>
                   <span>RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT</span>
                   <span>BUILD 0.1.2</span>
                 </div>
@@ -460,50 +485,42 @@
                         <span>ACTION</span>
                         <span>KEYBOARD / MOUSE</span>
                         <span>GAMEPAD</span>
-                        <span>TOUCHPAD</span>
                       </div>
                       <div class="controls-matrix-body">
                         <div class="controls-matrix-row">
                           <span class="matrix-action">MOVE RIG</span>
                           <span class="matrix-key">W A S D / ARROWS</span>
                           <span class="matrix-key">L-STICK / D-PAD</span>
-                          <span class="matrix-key">FLOATING JOYSTICK</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">AIM / LOOK</span>
                           <span class="matrix-key">MOUSE POINTER</span>
                           <span class="matrix-key">R-STICK (360°)</span>
-                          <span class="matrix-key">AUTO-AIM TARGET</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">FIRE WEAPON</span>
                           <span class="matrix-key">LMB (HOLD)</span>
                           <span class="matrix-key">RT / RB</span>
-                          <span class="matrix-key">FIRE BUTTON</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">EMP BLAST</span>
                           <span class="matrix-key">Q / E / RMB</span>
                           <span class="matrix-key">LB / B BUTTON</span>
-                          <span class="matrix-key">EMP BUTTON</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">THRUSTER DASH</span>
                           <span class="matrix-key">SPACEBAR / SHIFT</span>
                           <span class="matrix-key">LT / A BUTTON</span>
-                          <span class="matrix-key">DASH BUTTON</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">PAUSE / RESUME</span>
                           <span class="matrix-key">ESC / P</span>
                           <span class="matrix-key">START / MENU</span>
-                          <span class="matrix-key">TOPBAR PAUSE</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">SELECT UPGRADE</span>
                           <span class="matrix-key">KEYS 1, 2, 3</span>
                           <span class="matrix-key">X / Y / B (OR A)</span>
-                          <span class="matrix-key">TAP UPGRADE CARD</span>
                         </div>
                       </div>
                     </div>
@@ -559,32 +576,12 @@
             <div class="key-row"><span class="key">Q</span><span class="key">E</span><span
                 class="key key--mouse">RMB</span><span class="key-caption">EMP BLAST</span></div>
             <div class="key-row"><span class="key key--wide">SPACE</span><span class="key-caption">DASH</span></div>
-            <p class="controls-note">Tip: keep moving when the red dust starts to climb. Touch FIRE locks the nearest
-              signal.</p>
+            <p class="controls-note">Tip: keep moving when the red dust starts to climb.</p>
           </section>
 
           <div class="rail-signoff"><span>NO GODS</span><i aria-hidden="true">×</i><span>NO MAPS</span></div>
         </aside>
       </main>
-
-      <div id="touchControls" class="touch-controls" aria-label="Touch controls">
-        <div id="touchJoystickZone" class="touch-joystick-zone" aria-label="Movement analog stick">
-          <div id="joystickBase" class="joystick-base">
-            <div id="joystickThumb" class="joystick-thumb"></div>
-          </div>
-          <span class="joystick-guide" aria-hidden="true">MOVE</span>
-        </div>
-        <div class="touch-actions">
-          <button id="touchAux" class="touch-button touch-button--aux" type="button" data-action="aux"
-            aria-label="Tactical Auxiliary">AUX</button>
-          <button id="touchSpecial" class="touch-button touch-button--special" type="button" data-action="special"
-            aria-label="EMP Blast">EMP</button>
-          <button id="touchDash" class="touch-button touch-button--dash" type="button" data-action="dash"
-            aria-label="Dash">DASH</button>
-          <button id="touchShoot" class="touch-button touch-button--fire" type="button" data-action="shoot"
-            aria-label="Fire (auto-aim nearest)">FIRE</button>
-        </div>
-      </div>
 
       <footer class="system-footer">
         <span>© TommyLam / ALL SIGNALS UNVERIFIED</span>

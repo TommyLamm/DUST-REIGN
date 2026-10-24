@@ -1,6 +1,7 @@
 import { rt } from '../core/runtime.js';
 import { qa } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
+import { doubleDownCurrentContract } from '../systems/contracts.js';
 import { triggerTacticalAuxiliary } from '../systems/tactical.js';
 import { beginRun, restart, togglePause } from '../systems/flow.js';
 import { beginBanish, chooseUpgrade, rerollUpgrades, skipUpgrade } from '../systems/progression.js';
@@ -40,68 +41,9 @@ function enemyLive(enemy) {
   return list.indexOf(enemy) !== -1;
 }
 
-// FIRE sticky lock: hold 0.5s unless the target dies or range grows past 1.5×.
-// Boss within 380px wins when nothing is inside 120px. Aim stays on the center.
-function stepTouchAim(dt) {
-  if (!rt.input || !rt.input.touchFiring || !rt.state || !rt.state.player) return;
-  if (rt.state.paused || rt.state.over || rt.state.interlude) return;
-  var p = rt.state.player;
-  var list = rt.state.enemies || [];
-  var nearest = null;
-  var nearestD = Infinity;
-  var close = false;
-  var i;
-  for (i = 0; i < list.length; i += 1) {
-    var enemy = list[i];
-    if (!enemy || !(enemy.hp > 0)) continue;
-    var d = Math.hypot(enemy.x - p.x, enemy.y - p.y);
-    if (d < nearestD) {
-      nearest = enemy;
-      nearestD = d;
-    }
-    if (d <= 120) close = true;
-  }
-  var boss = rt.state.boss;
-  var target = nearest;
-  if (boss && boss.hp > 0 && !close) {
-    var bossD = Math.hypot(boss.x - p.x, boss.y - p.y);
-    if (bossD <= 380) target = boss;
-  }
-  var lock = rt.input.aimLock;
-  if (lock && enemyLive(lock.enemy)) {
-    var held = Math.hypot(lock.enemy.x - p.x, lock.enemy.y - p.y);
-    var cap = ((lock.dist > 1) ? lock.dist : 1) * 1.5;
-    if ((lock.left || 0) > 0 && held <= cap) {
-      target = lock.enemy;
-      lock.left -= (Number(dt) || 0);
-    } else if (target) {
-      rt.input.aimLock = {
-        enemy: target,
-        dist: Math.hypot(target.x - p.x, target.y - p.y),
-        left: 0.5
-      };
-    } else {
-      rt.input.aimLock = null;
-    }
-  } else if (target) {
-    rt.input.aimLock = {
-      enemy: target,
-      dist: Math.hypot(target.x - p.x, target.y - p.y),
-      left: 0.5
-    };
-  } else {
-    rt.input.aimLock = null;
-  }
-  if (!target) return;
-  rt.input.mouse.x = target.x;
-  rt.input.mouse.y = target.y;
-  rt.input.touchMode = false;
-}
-
 export function pollGamepad(dt) {
   updateTips();
   pollGamepadInner(dt);
-  stepTouchAim(dt);
 }
 
 function pollGamepadInner(dt) {
@@ -297,6 +239,9 @@ function pollGamepadInner(dt) {
 
   // Tactical Auxiliary slot: X (buttons[2]) or LB (buttons[4])
   if (justPressed(2) || justPressed(4)) triggerTacticalAuxiliary();
+
+  // Contract double-down: Y (buttons[3]); mirrors the keyboard [H] hotkey.
+  if (justPressed(3)) doubleDownCurrentContract();
 
   // Dash button: LT (buttons[6]) or A (buttons[0])
   if (justPressed(6) || justPressed(0)) dash();

@@ -160,7 +160,7 @@ function shotCooldown(p, value) {
   var v = value;
   if (p.afterburner && (p.afterburnerTimer || 0) > 0) v *= 0.7;
   if (p.aegisDeployed) v *= (1 / 1.45);
-  if (p.surgeUnit && p.surgeUnit.active) v /= 1.40;
+  if (p.surgeUnit && p.surgeUnit.active) v /= 1 + 0.40 * (p.surgeUnit.tune || 1);
   if (p.tacticalOverdriveTimer && p.tacticalOverdriveTimer > 0) v *= 0.8;
   return v;
 }
@@ -224,18 +224,6 @@ export function shoot() {
       aimY = lock.enemy.y;
       lockHeld = true;
     }
-  }
-  if (!lockHeld && rt.input && rt.input.touchMode && rt.state.enemies && rt.state.enemies.length) {
-    // ponytail: linear nearest-target scan; the enemy cap keeps it cheap, use a spatial hash only if mobile scale grows.
-    var nearest = rt.state.enemies[0];
-    var nearestDistance = dist2(p.x, p.y, nearest.x, nearest.y);
-    for (var ni = 1; ni < rt.state.enemies.length; ni += 1) {
-      var candidate = rt.state.enemies[ni];
-      var candidateDistance = dist2(p.x, p.y, candidate.x, candidate.y);
-      if (candidateDistance < nearestDistance) { nearest = candidate; nearestDistance = candidateDistance; }
-    }
-    aimX = nearest.x;
-    aimY = nearest.y;
   }
   var dx = aimX - p.x;
   var dy = aimY - p.y;

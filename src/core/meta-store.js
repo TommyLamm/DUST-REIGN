@@ -128,7 +128,8 @@ function defaultMeta() {
     scrap: 0,
     workshop: {
       unlockedModules: defaultUnlockedModules(),
-      loadout: { propulsion: null, armor: null, tactical: null }
+      loadout: { propulsion: null, armor: null, tactical: null },
+      tuning: {}
     },
     cosmetics: {
       selectedSkin: 'default',
@@ -211,6 +212,15 @@ export function readMeta() {
       if (typeof ws.loadout.armor === 'string') base.workshop.loadout.armor = ws.loadout.armor;
       if (typeof ws.loadout.tactical === 'string') base.workshop.loadout.tactical = ws.loadout.tactical;
     }
+    if (ws.tuning && typeof ws.tuning === 'object' && !Array.isArray(ws.tuning)) {
+      for (var tId in ws.tuning) {
+        if (Object.prototype.hasOwnProperty.call(ws.tuning, tId)) {
+          var tLvl = Math.floor(num(ws.tuning[tId], 0, 3, 0));
+          if (tLvl > 0) base.workshop.tuning[tId] = tLvl;
+        }
+      }
+    }
+
   }
   if (parsed.cosmetics && typeof parsed.cosmetics === 'object' && !Array.isArray(parsed.cosmetics)) {
     var cos = parsed.cosmetics;
@@ -262,6 +272,7 @@ export function writeMeta(meta) {
     if (meta.workshop && typeof meta.workshop === 'object') {
       if (meta.workshop.unlockedModules) next.workshop.unlockedModules = meta.workshop.unlockedModules;
       if (meta.workshop.loadout) next.workshop.loadout = meta.workshop.loadout;
+      if (meta.workshop.tuning) next.workshop.tuning = meta.workshop.tuning;
     }
     if (meta.cosmetics && typeof meta.cosmetics === 'object') {
       if (meta.cosmetics.selectedSkin) next.cosmetics.selectedSkin = meta.cosmetics.selectedSkin;
@@ -376,6 +387,7 @@ export function getWorkshopState() {
     scrap: readScrap(),
     unlockedModules: unlocked,
     loadout: loadout,
+    tuning: ws.tuning ? Object.assign({}, ws.tuning) : {},
     currentWattage: getEquippedWattage(loadout),
     maxWattage: MAX_WATTAGE
   };
@@ -449,6 +461,29 @@ export function unequipModule(slot) {
   return { ok: true, success: true };
 }
 
+export function overclockModule(moduleId) {
+  var mod = getModule(moduleId);
+  if (!mod) return { ok: false, success: false, reason: 'MODULE_NOT_FOUND' };
+  var meta = readMeta();
+  if (!meta.workshop) meta.workshop = { unlockedModules: defaultUnlockedModules(), loadout: {}, tuning: {} };
+  if (!meta.workshop.unlockedModules) meta.workshop.unlockedModules = defaultUnlockedModules();
+  if (!meta.workshop.tuning) meta.workshop.tuning = {};
+  var currentTier = (meta.workshop.unlockedModules && meta.workshop.unlockedModules[moduleId]) || 1;
+  if (currentTier < 3) return { ok: false, success: false, reason: 'TIER_NOT_MAX' };
+  var currentTuning = (meta.workshop.tuning && meta.workshop.tuning[moduleId]) || 0;
+  if (currentTuning >= 3) return { ok: false, success: false, reason: 'MAX_OVERCLOCK' };
+  var cost = 250;
+  if ((meta.scrap || 0) < cost) return { ok: false, success: false, reason: 'INSUFFICIENT_SCRAP', cost: cost };
+
+  meta.scrap -= cost;
+  meta.workshop.tuning[moduleId] = currentTuning + 1;
+  writeMeta(meta);
+  triggerCheckpointSave();
+  return { ok: true, success: true, newTuning: currentTuning + 1, tuning: currentTuning + 1, cost: cost };
+}
+
+export var tuneModule = overclockModule;
+
 export function upgradeModule(moduleId) {
   var mod = getModule(moduleId);
   if (!mod) return { ok: false, success: false, reason: 'MODULE_NOT_FOUND' };
@@ -456,7 +491,7 @@ export function upgradeModule(moduleId) {
   if (!meta.workshop) meta.workshop = { unlockedModules: {}, loadout: {} };
   if (!meta.workshop.unlockedModules) meta.workshop.unlockedModules = defaultUnlockedModules();
   var currentTier = (meta.workshop.unlockedModules && meta.workshop.unlockedModules[moduleId]) || 1;
-  if (currentTier >= 3) return { ok: false, success: false, reason: 'MAX_TIER' };
+  if (currentTier >= 3) return overclockModule(moduleId);
   var cost = getModuleCost(moduleId, currentTier);
   if ((meta.scrap || 0) < cost) return { ok: false, success: false, reason: 'INSUFFICIENT_SCRAP', cost: cost };
 
@@ -1098,7 +1133,8 @@ export function exportUnifiedSaveData() {
     },
     workshop: {
       unlockedModules: ws.unlockedModules ? Object.assign({}, ws.unlockedModules) : defaultUnlockedModules(),
-      loadout: ws.loadout ? Object.assign({}, ws.loadout) : { propulsion: null, armor: null, tactical: null }
+      loadout: ws.loadout ? Object.assign({}, ws.loadout) : { propulsion: null, armor: null, tactical: null },
+      tuning: ws.tuning ? Object.assign({}, ws.tuning) : {}
     },
     vault: {
       selectedSkin: cos.selectedSkin || 'default',
@@ -1206,6 +1242,17 @@ export function importUnifiedSaveData(cloudData) {
         }
       }
     }
+    if (cWs.tuning && typeof cWs.tuning === 'object') {
+      if (!meta.workshop.tuning) meta.workshop.tuning = {};
+      for (var tModId in cWs.tuning) {
+        if (Object.prototype.hasOwnProperty.call(cWs.tuning, tModId)) {
+          var cTune = Math.floor(num(cWs.tuning[tModId], 0, 3, 0));
+          var lTune = meta.workshop.tuning[tModId] || 0;
+          meta.workshop.tuning[tModId] = Math.max(lTune, cTune);
+        }
+      }
+    }
+
     if (cWs.loadout && typeof cWs.loadout === 'object') {
       var lLoadout = meta.workshop.loadout || {};
       var hasLocal = !!(lLoadout.propulsion || lLoadout.armor || lLoadout.tactical);

@@ -55,9 +55,7 @@ function tipNode() {
 }
 
 function inputKind() {
-  if (rt.input && (rt.input.touchMode || rt.input.touchFiring)) return 'touch';
   if (rt.gamepadState && rt.gamepadState.connected) return 'pad';
-  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return 'touch';
   return 'key';
 }
 
@@ -152,21 +150,6 @@ function syncDashHeatHud() {
   if (heat < 0) heat = 0;
   if (heat > 3) heat = 3;
   var heatLabel = String(heat | 0);
-  var dashBtn = document.getElementById('touchDash');
-  if (dashBtn) {
-    if (dashBtn.getAttribute('data-heat') !== heatLabel) dashBtn.setAttribute('data-heat', heatLabel);
-    if (!dashBtn.querySelector('.dash-heat')) {
-      var pips = document.createElement('span');
-      pips.className = 'dash-heat';
-      pips.setAttribute('aria-hidden', 'true');
-      pips.appendChild(document.createElement('i'));
-      pips.appendChild(document.createElement('i'));
-      pips.appendChild(document.createElement('i'));
-      dashBtn.appendChild(pips);
-    }
-    var label = heat > 0 ? 'Dash, heat ' + heatLabel + ' of 3' : 'Dash';
-    if (dashBtn.getAttribute('aria-label') !== label) dashBtn.setAttribute('aria-label', label);
-  }
   var hud = document.getElementById('hud');
   if (!hud) return;
   var read = document.getElementById('dashHeatReadout');

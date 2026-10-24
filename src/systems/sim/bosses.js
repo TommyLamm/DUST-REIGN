@@ -10,6 +10,7 @@ import { enemyProfile } from '../../data/enemies.js';
 import { getHeatModifiers } from '../../data/heat.js';
 import { damagePlayer } from '../combat.js';
 import { logEvent } from '../../ui/hud.js';
+import { spawnCombatText } from '../../render/fx.js';
 import { refreshSovereignShield } from './enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from './enemy-bullets.js';
 import { blastAt } from './new-enemies.js';
@@ -240,6 +241,16 @@ function stepDreadnought(e, dt, frame, empFrozen) {
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.bossSubtitle = e.bossPhase >= 3 ? 'OVERDRIVE' : e.bossPhase === 2 ? 'DOUBLE RAM' : 'CHARGE';
+  if (e.bossPhase > (e._lastPhase || 1)) {
+    e._lastPhase = e.bossPhase;
+    if (rt.state) {
+      rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.08);
+      rt.state.shake = Math.max(rt.state.shake || 0, 16);
+    }
+    if (AudioFX && typeof AudioFX.bossPhaseRoar === 'function') AudioFX.bossPhaseRoar();
+    pushFxEvent('titanPhase', e.x, e.y, { phase: e.bossPhase });
+    spawnCombatText(e.x, e.y - 28, 'PHASE ' + e.bossPhase + ' AWAKENING!', true);
+  }
 
   if (!rt.state.monolithCrags || rt.state.monolithCrags.length === 0) {
     spawnMonolithCrags(e, frame);
@@ -443,6 +454,16 @@ function stepSovereign(e, dt, frame, empFrozen) {
   var phase = sovereignPhase(ratio);
   e.bossPhase = phase;
   e.bossSubtitle = phase >= 3 ? 'EYE' : phase === 2 ? 'TWIN SPIRES' : 'GALE';
+  if (e.bossPhase > (e._lastPhase || 1)) {
+    e._lastPhase = e.bossPhase;
+    if (rt.state) {
+      rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.08);
+      rt.state.shake = Math.max(rt.state.shake || 0, 16);
+    }
+    if (AudioFX && typeof AudioFX.bossPhaseRoar === 'function') AudioFX.bossPhaseRoar();
+    pushFxEvent('titanPhase', e.x, e.y, { phase: e.bossPhase });
+    spawnCombatText(e.x, e.y - 28, 'PHASE ' + e.bossPhase + ' AWAKENING!', true);
+  }
   if (e.windAngle == null) e.windAngle = rng('combat') * TAU;
   if (e.windCd == null) e.windCd = 6;
   if (e.boltCd == null) e.boltCd = 1.6;
@@ -575,7 +596,33 @@ export function stepTitanHarpoon(e, dt, frame) {
   if (e.harpoonTelegraph > 0) {
     e.harpoonTelegraph -= dt;
     if (e.harpoonTelegraph <= 0) {
-      var pullDist = 350;
+      var isDashing = Boolean(p.dashPulse > 0 || p.dashActive > 0 || p.lastDashJust || (p.dashAmbushTimer && p.dashAmbushTimer > 0.4));
+      if (isDashing) {
+        p.slowTimer = 0;
+        e.empTimer = 2.5;
+        e.radiatorExposed = true;
+        e.radiatorExposeTimer = 3.5;
+        if (e.parts) {
+          for (var pi = 0; pi < e.parts.length; pi += 1) {
+            if (e.parts[pi].id === 'radiator' && !e.parts[pi].destroyed) {
+              e.parts[pi].exposed = true;
+            }
+          }
+        }
+        e.staggerTimer = Math.max(e.staggerTimer || 0, 2.5);
+        e.harpoonTimer = 6.0;
+        e.harpoonTelegraph = 0;
+        e.harpoonFiredTimer = 0;
+        spawnCombatText(p.x, p.y - 18, 'TUG-OF-WAR COUNTER!', true);
+        if (AudioFX && typeof AudioFX.critHit === 'function') AudioFX.critHit();
+        if (AudioFX && typeof AudioFX.shieldShatter === 'function') AudioFX.shieldShatter();
+        pushFxEvent('burst', e.x, e.y, { preset: 'emp', tint: '#ffd700', scale: 1.1 });
+        rt.state.shake = Math.max(rt.state.shake, 14);
+        logEvent('TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED');
+        rt.state.banner = 2.5;
+        rt.state.bannerText = 'TUG-OF-WAR COUNTER // RADIATOR EXPOSED 2.5S';
+      } else {
+        var pullDist = 350;
       var pullAng = Math.atan2(e.y - p.y, e.x - p.x);
       var boundW = frame.boundW || 960;
       var boundH = frame.boundH || 640;
@@ -590,7 +637,8 @@ export function stepTitanHarpoon(e, dt, frame) {
       logEvent('TITAN // HARPOON TETHER REELED');
       rt.state.banner = 2.0;
       rt.state.bannerText = 'TITAN HARPOON // TETHERED & SLOWED';
-      e.harpoonFiredTimer = 0.5;
+        e.harpoonFiredTimer = 0.5;
+      }
     }
   } else if (dist > 750) {
     e.harpoonTimer -= dt;

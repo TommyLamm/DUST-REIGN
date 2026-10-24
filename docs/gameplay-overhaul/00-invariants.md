@@ -7,12 +7,12 @@
 - 依 `AGENTS.md`：開始實作與發布前重新讀取平台 `main` 最新規格（開發標準、Schema、workflow 範本、SDK），並以平台 `main` 最新工具執行 `game:pack` / `game:validate`。
 - 零依賴、無編譯步驟、無外部 CDN、無後端。所有資源相對路徑，可在版本子目錄與跨來源 sandbox iframe 內遊玩。
 - 不跳出 iframe、不開 popup、不提交表單；音效仍需玩家手勢解鎖。
-- `devices` 維持 `desktop` + `mobile`：所有新功能都必須能用觸控在手機直向完成。
+- `devices` 自 0.13.0 起僅宣告 `desktop`（已移除觸控操作）；只有手機直向可用觸控完成玩法時才可重新宣告 `mobile`。
 - 不建立 tag、不建立 Release，除非使用者明確要求。
 
 ## 帳號成績
 
-- `game.json` 的 `leaderboard.id` 改為 `dust-reign-score-v2`；`order`、`unit`、`minScore`、`maxScore` 與舊榜相同但 ID 不同，因為計分尺度改變。
+- `game.json` 的 `leaderboard.id` 目前為 `dust-reign-score-v3`（0.13.0 起：連擊上限、無傷連勝加成與 SSS 評級改變計分尺度；舊榜 `dust-reign-score-v2`、`dust-reign-score` 不再提交）；`order`、`unit`、`minScore`、`maxScore` 與舊榜相同。
 - 開局 `Playroom.startRun()`、結束 `Playroom.finishRun({ runId, score })` 的流程與時機不變：撤離通關與死亡都算「一局結束」並提交；選擇繼續無盡時，不在撤離當下提交，而在最終死亡或放棄時提交一次。
 - 分數必須是非負安全整數。不跨帳號保存局次，不把本機最高分匯入帳號。
 - 每日挑戰與一般模式提交到同一榜單（同一套計分規則）；不另開榜單。

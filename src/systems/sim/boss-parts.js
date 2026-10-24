@@ -235,12 +235,21 @@ export function checkMultiPartBulletHit(enemy, bullet) {
   }
   closestPart.hp -= partDmg;
   syncLegacyPartHp(enemy, closestPart);
+  if (p) {
+    p.hitmarkerTime = rt.renderTime || 0;
+    p.hitmarkerType = (isExposed || bullet.isCrit || bullet.forceCrit) ? 2 : 1;
+  }
 
   if (closestPart.hp <= 0) {
     closestPart.hp = 0;
     closestPart.destroyed = true;
     if (closestPart.exposed) closestPart.exposed = false;
     syncLegacyPartDestroyed(enemy, closestPart);
+    if (AudioFX && typeof AudioFX.staggerBreak === 'function') AudioFX.staggerBreak();
+    if (p) {
+      p.hitmarkerTime = rt.renderTime || 0;
+      p.hitmarkerType = 3;
+    }
 
     // 0.08s hitstop
     if (!isReducedMotion()) {
@@ -287,12 +296,12 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     } else if (closestPart.id === 'radiator') {
       enemy.empTimer = Math.max(enemy.empTimer || 0, 4.0);
       var overloadDmg = Math.round((enemy.maxHp || enemy.hp) * 0.12);
-      damageEnemy(enemy, overloadDmg, { source: 'overload', crit: true, x: ptX, y: ptY });
+      damageEnemy(enemy, overloadDmg, { source: 'overload', crit: true, staggerBreak: true, x: ptX, y: ptY });
     }
 
     if (closestPart.id === 'behemoth_gland') {
       var glandBacklash = Math.round((enemy.maxHp || enemy.hp) * 0.10);
-      damageEnemy(enemy, glandBacklash, { source: 'backlash', crit: true, x: ptX, y: ptY });
+      damageEnemy(enemy, glandBacklash, { source: 'backlash', crit: true, staggerBreak: true, x: ptX, y: ptY });
     }
 
     if (closestPart.speedPenalty || closestPart.id === 'treads') {
@@ -306,6 +315,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     if (logMsg) logEvent(logMsg);
     var statusMsg = closestPart.statusMsg || defaultStatusMsg(closestPart);
     if (statusMsg && rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = statusMsg;
+    if (p) { p.hitmarkerTime = rt.renderTime || 0; p.hitmarkerType = 3; }
   }
 
   return true;

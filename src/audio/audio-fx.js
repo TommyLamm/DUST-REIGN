@@ -931,8 +931,157 @@ export var AudioFX = (function () {
     cleanupVoice(osc, [gain], t + 0.04);
   }
 
+  function resonanceAscend(archetype, tier) {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    var tIndex = Math.min(3, Math.max(1, tier || 1));
+    var freqs = tIndex === 1 ? [440, 554] : (tIndex === 2 ? [554, 659, 880] : [659, 880, 1108, 1320]);
+    var noteDur = tIndex === 3 ? 0.065 : 0.08;
+    for (var i = 0; i < freqs.length; i += 1) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      var noteT = t + i * noteDur;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freqs[i], noteT);
+      gain.gain.setValueAtTime(0.001, noteT);
+      gain.gain.linearRampToValueAtTime(0.24, noteT + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteT + 0.16);
+      osc.connect(gain);
+      route(gain);
+      osc.start(noteT);
+      osc.stop(noteT + 0.16);
+      cleanupVoice(osc, [gain], noteT + 0.16);
+    }
+  }
+
+  function bossPhaseRoar() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    // 1. Low-frequency mechanical roar
+    var osc = ctx.createOscillator();
+    var filter = ctx.createBiquadFilter();
+    var gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(85, t);
+    osc.frequency.exponentialRampToValueAtTime(24, t + 0.65);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(320, t);
+    filter.frequency.exponentialRampToValueAtTime(90, t + 0.65);
+    gain.gain.setValueAtTime(0.45, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+    osc.connect(filter);
+    filter.connect(gain);
+    route(gain);
+    osc.start(t);
+    osc.stop(t + 0.65);
+    cleanupVoice(osc, [filter, gain], t + 0.65);
+
+    // 2. Steam pressure release hiss
+    if (noiseBuffer) {
+      var nSrc = ctx.createBufferSource();
+      nSrc.buffer = noiseBuffer;
+      var nFilter = ctx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.setValueAtTime(2800, t + 0.08);
+      nFilter.frequency.exponentialRampToValueAtTime(650, t + 0.55);
+      var nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.28, t + 0.08);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+      nSrc.connect(nFilter);
+      nFilter.connect(nGain);
+      route(nGain);
+      nSrc.start(t + 0.08);
+      nSrc.stop(t + 0.55);
+      cleanupVoice(nSrc, [nFilter, nGain], t + 0.55);
+    }
+  }
+
+  function staggerBreak() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    // 1. Crystal punch transient
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1600, t);
+    osc.frequency.exponentialRampToValueAtTime(140, t + 0.08);
+    gain.gain.setValueAtTime(0.38, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(gain);
+    route(gain);
+    osc.start(t);
+    osc.stop(t + 0.08);
+    cleanupVoice(osc, [gain], t + 0.08);
+
+    // 2. High resonant metallic shatter ring
+    var oscM = ctx.createOscillator();
+    var gainM = ctx.createGain();
+    oscM.type = 'triangle';
+    oscM.frequency.setValueAtTime(2800, t);
+    oscM.frequency.exponentialRampToValueAtTime(950, t + 0.16);
+    gainM.gain.setValueAtTime(0.25, t);
+    gainM.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    oscM.connect(gainM);
+    route(gainM);
+    oscM.start(t);
+    oscM.stop(t + 0.16);
+    cleanupVoice(oscM, [gainM], t + 0.16);
+  }
+
+  function dryFire() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(340, t);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.035);
+    gain.gain.setValueAtTime(0.22, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+    osc.connect(gain);
+    route(gain);
+    osc.start(t);
+    osc.stop(t + 0.035);
+    cleanupVoice(osc, [gain], t + 0.035);
+
+    var osc2 = ctx.createOscillator();
+    var gain2 = ctx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(280, t + 0.018);
+    osc2.frequency.exponentialRampToValueAtTime(90, t + 0.018 + 0.025);
+    gain2.gain.setValueAtTime(0.18, t + 0.018);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.018 + 0.025);
+    osc2.connect(gain2);
+    route(gain2);
+    osc2.start(t + 0.018);
+    osc2.stop(t + 0.018 + 0.025);
+    cleanupVoice(osc2, [gain2], t + 0.018 + 0.025);
+  }
+
+  function tacticalReady() {
+    if (!canPlay()) return;
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(900, t);
+    osc.frequency.exponentialRampToValueAtTime(1750, t + 0.06);
+    gain.gain.setValueAtTime(0.26, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    osc.connect(gain);
+    route(gain);
+    osc.start(t);
+    osc.stop(t + 0.06);
+    cleanupVoice(osc, [gain], t + 0.06);
+  }
+
   return {
     cleanupVoice: cleanupVoice,
+    resonanceAscend: resonanceAscend,
+    bossPhaseRoar: bossPhaseRoar,
+    staggerBreak: staggerBreak,
+    dryFire: dryFire,
+    tacticalReady: tacticalReady,
     unlock: unlock,
     isMuted: isMuted,
     setMuted: setMuted,

@@ -8,6 +8,7 @@ import {
   cardIsBanned,
   completesFusionName,
   currentWeaponId,
+  findUpgrade,
   legacyFlagBlocks,
   rarityWeights,
   stackCount,
@@ -15,7 +16,7 @@ import {
 } from '../data/upgrades.js';
 import { resyncMastery } from './weapons.js';
 import { addScore } from './scoring.js';
-import { updateDomUi } from '../ui/hud.js';
+import { logEvent, updateDomUi } from '../ui/hud.js';
 import { presentUpgradePick, renderUpgradePanel } from '../ui/upgrade-panel.js';
 
 export var XP_START = 80;
@@ -27,6 +28,7 @@ export function nextXpThreshold(current) {
 export function syncXpCurve(state) {
   if (!state) return;
   if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && state.xpNext === 100) state.xpNext = XP_START;
+  if (state.player && !state.player.resonances) evaluateArchetypes(state, true);
 }
 
 function hasCard(state, id) {
@@ -40,7 +42,8 @@ function cardBlocked(state, card) {
   if (legacyFlagBlocks(card, p)) return true;
   var cap = card.maxStacks || 1;
   if (stackCount(state, card.id) >= cap) return true;
-  if (card.weapon && card.weapon !== currentWeaponId(state)) return true;
+  var req = card.weapon || card.weaponReq;
+  if (req && req !== currentWeaponId(state)) return true;
   return false;
 }
 
@@ -223,6 +226,83 @@ function finishPick(index) {
   if (rt.ui && rt.ui.overlay) presentUpgradePick(index);
 }
 
+export function evaluateArchetypes(state, silent) {
+  if (!state || !state.player) return { kinetic: 0, plasma: 0, static: 0, tactical: 0 };
+  var p = state.player;
+  if (!p.resonances) {
+    p.resonances = { kinetic: 0, plasma: 0, static: 0, tactical: 0 };
+  }
+  if (!p._resonanceTiers) {
+    p._resonanceTiers = { kinetic: 0, plasma: 0, static: 0, tactical: 0 };
+  }
+  var res = p.resonances;
+  res.kinetic = 0;
+  res.plasma = 0;
+  res.static = 0;
+  res.tactical = 0;
+
+  var list = state.acquiredUpgrades || [];
+  for (var i = 0; i < list.length; i += 1) {
+    var card = list[i];
+    if (!card) continue;
+    var arch = card.archetype;
+    if (!arch && typeof findUpgrade === 'function') {
+      var found = findUpgrade(card.id);
+      if (found) arch = found.archetype;
+    }
+    if (arch && res[arch] !== undefined) {
+      res[arch] += 1;
+    }
+  }
+
+  // Tier 1 (2 stacks) passive bonuses:
+  // Kinetic Tier 1: 2 層提升子彈基礎傷害 +8%
+  if (res.kinetic >= 2 && !p._resKineticT1) {
+    p._resKineticT1 = true;
+    p.damage = Math.round((p.damage || 20) * 1.08);
+  }
+  // Plasma Tier 1: 2 層提升最大生命 +15
+  if (res.plasma >= 2 && !p._resPlasmaT1) {
+    p._resPlasmaT1 = true;
+    p.maxHp = (p.maxHp || 100) + 15;
+    p.hp = Math.min(p.maxHp, (p.hp || 0) + 15);
+  }
+  // Static Tier 1: 2 層能量上限 +20
+  if (res.static >= 2 && !p._resStaticT1) {
+    p._resStaticT1 = true;
+    p.batteryMax = (p.batteryMax || 100) + 20;
+    p.maxEnergy = (p.maxEnergy || 100) + 20;
+    p.energy = Math.min(p.batteryMax, (p.energy || 0) + 20);
+  }
+  // Tactical Tier 1: 2 層移動速度 +6% 且衝刺冷卻 -10%
+  if (res.tactical >= 2 && !p._resTacticalT1) {
+    p._resTacticalT1 = true;
+    p.moveSpeedMult = (p.moveSpeedMult || 1) * 1.06;
+    p.dashCooldownMult = (p.dashCooldownMult || 1) * 0.90;
+    if (p.dashCooldownMax) p.dashCooldownMax *= 0.90;
+  }
+
+
+  // Track and trigger resonance ascension events
+  var archKeys = ['kinetic', 'plasma', 'static', 'tactical'];
+  for (var a = 0; a < archKeys.length; a += 1) {
+    var k = archKeys[a];
+    var count = res[k] || 0;
+    var tier = count >= 6 ? 3 : (count >= 4 ? 2 : (count >= 2 ? 1 : 0));
+    var prevTier = p._resonanceTiers[k] || 0;
+    if (tier > prevTier) {
+      p._resonanceTiers[k] = tier;
+      if (!silent) {
+        if (AudioFX && typeof AudioFX.resonanceAscend === 'function') {
+          AudioFX.resonanceAscend(k, tier);
+        }
+        logEvent('RESONANCE ASCENSION // ' + k.toUpperCase() + ' TIER ' + tier);
+      }
+    }
+  }
+  return res;
+}
+
 export function chooseUpgrade(index) {
   if (!rt.state || !rt.state.paused || !rt.state.upgradeChoices[index]) return;
   if (rt.state.banishPicking) {
@@ -237,6 +317,7 @@ export function chooseUpgrade(index) {
     rt.state.stats.fusionsUnlocked = (rt.state.stats.fusionsUnlocked || 0) + 1;
   }
   if (choice.weapon || choice.grantsMastery) resyncMastery(rt.state.player, rt.state);
+  evaluateArchetypes(rt.state);
   rt.state.upgradeChoices = [];
   rt.state.banishPicking = false;
   spawnParticles(rt.state.player.x, rt.state.player.y, '#f5c76e', 14, 170, 3);

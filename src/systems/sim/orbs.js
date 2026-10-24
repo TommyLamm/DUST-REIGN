@@ -65,6 +65,7 @@ export function stepOrbs(dt, frame) {
   for (var oi = rt.state.orbs.length - 1; oi >= 0; oi -= 1) {
     var orb = rt.state.orbs[oi];
     var crate = isCrate(orb);
+    var isStormCore = (orb.kind === 'storm_core');
     var odx = p.x - orb.x;
     var ody = p.y - orb.y;
     var od = Math.hypot(odx, ody) || 1;
@@ -72,7 +73,7 @@ export function stepOrbs(dt, frame) {
     if (orb.kind === 'repair' && typeof p.repairPickupRadiusMult === 'number') {
       reach *= p.repairPickupRadiusMult;
     }
-    if (!crate && od < reach) {
+    if (!crate && !isStormCore && od < reach) {
       var pull = (1 - od / reach) * 520;
       orb.vx += (odx / od) * pull * dt;
       orb.vy += (ody / od) * pull * dt;
@@ -82,12 +83,62 @@ export function stepOrbs(dt, frame) {
     orb.x += orb.vx * dt;
     orb.y += orb.vy * dt;
     orb.life -= dt;
-    if (od < p.r + orb.r + 5) {
+    var pickupRadius = isStormCore ? (p.r + orb.r + 14) : (p.r + orb.r + 5);
+    if (od < pickupRadius) {
       if (!crate && p.teslaCoil && rt.state.enemies.length > 0) {
         triggerTeslaCoil(orb);
       }
       if (crate) {
         applyCrate(orb, p);
+      } else if (isStormCore) {
+        var act = (rt.state && rt.state.act) || 1;
+        addScore(800 * act, 'storm');
+        p.overdrive = Math.max(p.overdrive || 0, 3.0);
+        AudioFX.pickup('overdrive');
+        spawnParticles(orb.x, orb.y, '#00f3ff', 16, 200, 3.5);
+
+        var waveR = 220;
+        if (rt.state.shockRings) {
+          rt.state.shockRings.push({
+            x: p.x,
+            y: p.y,
+            r: 12,
+            maxR: waveR,
+            life: 0.35,
+            maxLife: 0.35,
+            color: '#00f3ff'
+          });
+        }
+        if (rt.state.enemyBullets) {
+          for (var bi = rt.state.enemyBullets.length - 1; bi >= 0; bi -= 1) {
+            var eb = rt.state.enemyBullets[bi];
+            if (dist2(p.x, p.y, eb.x, eb.y) <= waveR * waveR) {
+              spawnParticles(eb.x, eb.y, '#00f3ff', 4, 80, 2);
+              fastUnorderedRemove(rt.state.enemyBullets, bi);
+            }
+          }
+        }
+        if (rt.state.enemies) {
+          for (var ei = 0; ei < rt.state.enemies.length; ei += 1) {
+            var foe = rt.state.enemies[ei];
+            if (foe.hp > 0 && dist2(p.x, p.y, foe.x, foe.y) <= (waveR + (foe.r || 10)) * (waveR + (foe.r || 10))) {
+              foe.empTimer = Math.max(foe.empTimer || 0, 1.8);
+              spawnParticles(foe.x, foe.y, '#00f3ff', 5, 90, 2);
+            }
+          }
+        }
+        rt.state.shake = Math.max(rt.state.shake || 0, 6);
+        logEvent('STORM CORE SIPHONED // OVERDRIVE 3s + EMP SHOCKWAVE');
+
+        rt.state.stormCoresHarvested = (rt.state.stormCoresHarvested || 0) + 1;
+        if (rt.state.stormCoresHarvested === 3) {
+          addScore(2000 * act, 'storm');
+          logEvent('STORM HARVEST GRAND SLAM // +2000 SCORE');
+          if (AudioFX && typeof AudioFX.levelUp === 'function') AudioFX.levelUp();
+          spawnParticles(p.x, p.y, '#ffd700', 25, 240, 4);
+          rt.state.banner = Math.max(rt.state.banner || 0, 2.5);
+          rt.state.bannerText = 'STORM HARVEST GRAND SLAM // +' + (2000 * act) + ' SCORE';
+        }
       } else if (orb.kind === 'overdrive') {
         var dur = OVERDRIVE_DURATION + (p.overdriveDurationBonus || 0);
         p.overdrive = dur;

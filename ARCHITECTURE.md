@@ -34,7 +34,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
 | `src/core/meta-store.js`、`src/core/cloud-save.js` | 局外存檔、v2 最高分、每日成績、提示紀錄、闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口，以及全進度 Unified Save 與雲端存檔智慧合併。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
-| `src/input/` | 鍵盤、滑鼠、觸控事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
+| `src/input/` | 鍵盤、滑鼠事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
 | `src/systems/` | 開局與結算（`flow.js`）、計分與評級（`scoring.js`）、波次導演（`director.js`）、幕間與撤離（`interlude.js`）、PSRA 環形生成（`spawning.js`）、武器策略註冊表（`weapon-registry.js`，多態武器策略 `onTick`／`onFire`／`renderGun`）、技能、戰鬥、升級，以及局外規則（`meta.js`）。 |
 | `src/systems/sim/poi.js`、`src/systems/sim/poi-registry.js` | 6 大戰術 POI（提煉塔 Silo、軌道空投倉 Orbital Pod、改裝工作站 Field Rig、母巢 Xeno Nest、電磁尖塔 EMP Spire、裝甲地堡 Bunker Cache）之生命週期、防守互動與全場戰術增益，由通用 POI 註冊表（`POI_REGISTRY`）模組化封裝 `step`、`draw` 與 `getLight` 契約。 |
 | `src/systems/modes/` | 遊戲模式生命週期配接器（`mode-adapter.js`：`GameModeAdapter` 介面規範 `onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）、闖關戰役任務邏輯（`campaign.js`）與極限作戰黑風暴動態縮圈（`hardcore.js`）。 |
@@ -71,7 +71,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 - 玩家扣血走 `damagePlayer`，敵人扣血走 `damageEnemy`，移除敵人走 `killEnemy`。加分走 `addScore`。模擬亂數走 `rng(stream)`。`localStorage` 的局外資料、v2 最高分、闖關星級與極限作戰徽章只經 `src/core/meta-store.js`；音訊與無障礙偏好仍由各自模組讀寫。帳號成績僅在 standard 或 daily 模式由 `src/platform/playroom.js` 提交，闖關與極限模式不提交以保護主榜公平。
 - 遊戲模式生命週期架構：`src/systems/modes/mode-adapter.js` 透過 `GameModeAdapter` 統一規範 `standard`、`daily`、`campaign`、`hardcore` 模式生命週期（`onEnter`、`step`、`checkVictory`、`onBossDefeated`、`onExit`）。開局與重開（`beginRun`／`restart`）自動注入 `state.mode` 與 `state.stageConfig`，模擬更新由 `stepMode(dt, frame)` 分派，勝利判定與渲染查詢（如 `isStormFront`）徹底解耦，僅由模式配接器於模擬步進與事件觸發時評估。
 - 聲明式星級條件與關卡鏈：`src/data/campaign-stages.js` 定義全 15 關結構化 `starRules`（支援波次、通關時長、血量比率、承傷上限、炸藥桶擊殺、熔岩無傷、精準衝刺、尖塔連鎖、禁用 EMP、連擊與護航信標等條件，以及複合 `all`/`any` 規則），由 `src/systems/director.js` 的 `evaluateStageStars` 以資料驅動聲明式評估，並向下相容文字描述 `starCriteria`；關卡推進鏈（`STAGE_CHAIN`）與區域解鎖門檻星數由 `src/core/meta-store.js` 動態讀取 `CAMPAIGN_STAGES` 與 `CAMPAIGN_SECTORS`，消除硬編碼關卡鏈與前綴比對。
-- 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，由戰術裝備註冊表（`tactical.js`）統一管理部署與行為，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`，觸控 `#touchAux`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
+- 戰術輔助槽位以 `p.tacticalSlot` 與 `rt.state.tacticalEntities` 運作，由戰術裝備註冊表（`tactical.js`）統一管理部署與行為，綁定獨立鍵位 `[E]`／`[F]`（手把 `[X]`／`[LB]`），冷卻由 `#hudTacticalCdMask` SVG 遮罩即時同步。
 - 晶片融合系統收錄 8 組專屬雙卡融合矩陣（`FUSION_CHIPS`），選卡面板以金黃串流光暈（`.is-fusion-chip`）突顯並保證升級第一槽位優先遞送。
 - 首領身份是 `isBoss`。首領拆解部位（以 `parts` 陣列定義，如 Titan 之左迫擊砲 `left_cannon`、右蜂巢召喚艙 `right_pod`、後散熱鰭片 `radiator`、下履帶裝甲 `treads`）以旋轉局部坐標計算碰撞，支援鰭片閉合減傷（85%）與過熱曝露弱點（250% 暴擊）、部位破壞 0.08s hitstop 及履帶破壞 -40% 減速。動態首領血條（`drawBossHealthBar`）依 `parts` 陣列自適應渲染部位藥丸徽章。擊殺分讀敵人的 `score`；首領本體的分數由導演的首領結算記入，不在擊殺分再計一次。
 - 廢料改裝工坊（Scrapyard Workshop）以 6⚡ 負載上限與 3 大改裝插槽運作，模組雙面刃數值在開局前注入玩家屬性；安裝改裝模組進行競速時自動標記為 Mod 模式，與純粹無改裝幽靈競速榜分流隔離。
@@ -130,7 +130,7 @@ index.html → src/main.js → init()
 | 配裝、改裝工坊、金庫、懸賞、熱度、每日與成就 | `src/systems/meta.js`、`src/data/modules.js`、`src/data/bounties.js`、`src/core/meta-store.js`、`src/ui/loadout-panel.js`、`src/ui/workshop-panel.js`、`src/ui/vault-panel.js`、`src/ui/bounties-panel.js`、`src/ui/codex-panel.js` |
 | 幽靈殘影競速與分段計時 | `src/systems/ghost.js`、`src/render/ghost.js`、`src/ui/hud.js` |
 | 武器、射擊、彈道與擦彈 | `src/systems/weapons.js`、`src/systems/sim/bullets.js`、`src/systems/sim/enemy-bullets.js` |
-| 戰術輔助槽位與裝備實體 | `src/systems/tactical.js`、`src/ui/hud.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`css/hud.css`、`css/touch.css` |
+| 戰術輔助槽位與裝備實體 | `src/systems/tactical.js`、`src/ui/hud.js`、`src/input/keyboard-pointer.js`、`src/input/gamepad.js`、`css/hud.css` |
 | 衝刺、EMP、傷害、擊殺與掉落生成 | `src/systems/abilities.js`、`src/systems/combat.js` |
 | 環境危險與掉落物拾取 | `src/systems/sim/hazards.js`、`src/systems/sim/orbs.js` |
 | 升級、融合與構築檢視 | `src/data/upgrades.js`、`src/systems/progression.js`、`src/systems/card-effects.js`、`src/ui/upgrade-panel.js`、`src/ui/pause-menu.js` |
@@ -140,7 +140,7 @@ index.html → src/main.js → init()
 | 實體造型、彈體與戰利品 | `src/render/` 的 `player.js`、`enemies.js`、`world.js`、`projectiles.js`、`entity-style.js` |
 | 戰鬥視覺特效與覆蓋層 | `src/render/` 的 `fx.js`、`fx-rand.js`、`sprites.js`、`overlay.js`，以及 `src/core/fx-events.js`；模擬粒子與焦痕見 `src/core/pools.js`、`src/systems/sim/effects.js` |
 | 畫質分級 | `src/core/settings.js`、`src/render/quality.js`、`src/ui/pause-menu.js`、`src/input/keyboard-pointer.js`、`src/ui/dom.js` |
-| 頁面、HUD 與 iframe／觸控版面 | `index.html`、`src/ui/dom.js`、`src/ui/hud.js`、`css/animations.css`、`css/layout-fit.css`、`css/touch.css`、`css/responsive.css`、`css/loadout.css`、`css/codex.css`、`css/interlude.css`、`css/contracts.css` |
+| 頁面、HUD 與 iframe 版面 | `index.html`、`src/ui/dom.js`、`src/ui/hud.js`、`css/animations.css`、`css/layout-fit.css`、`css/responsive.css`、`css/loadout.css`、`css/codex.css`、`css/interlude.css`、`css/contracts.css` |
 | 音訊、觸覺、減動效與高對比 | `src/audio/audio-fx.js`、`src/core/settings.js`、`src/ui/pause-menu.js`、`css/high-contrast.css`、`css/animations.css` 及對應 render 模組 |
 | 介面語言與多語言本地化 | `src/core/i18n.js`、`src/ui/dom.js`、`src/ui/pause-menu.js`、`src/input/keyboard-pointer.js`、`index.html` |
 | 帳號成績與平台交付 | `src/platform/playroom.js`、`game.json`、`scripts/stage-release.mjs`、`.github/workflows/release.yml` |

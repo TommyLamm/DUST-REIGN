@@ -12,6 +12,7 @@ import { noteContractEvent } from '../contracts.js';
 import { addScore } from '../scoring.js';
 import { logEvent } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
+import { spawnVisualBolt } from '../../render/projectiles.js';
 
 var EB_CAP = 260;
 
@@ -110,6 +111,8 @@ export function stepEnemyBullets(dt, frame) {
     var hitPlayer = false;
     var ebDist = Math.sqrt(ebDist2);
     var hitRadius = p.r + eb.r;
+    var isSCombo = rt.state && (rt.state.combo || 0) >= 23;
+    var grazeReach = hitRadius + 18 * (typeof p.grazeRadiusMult === 'number' ? p.grazeRadiusMult : 1) + (isSCombo ? 4 : 0);
     if (p.aegisDeployed && ebDist <= (hitRadius + 18)) {
       var ebAngle = Math.atan2(eb.y - p.y, eb.x - p.x);
       var angleDiff = Math.abs(Math.atan2(Math.sin(ebAngle - (p.aim || 0)), Math.cos(ebAngle - (p.aim || 0))));
@@ -152,10 +155,10 @@ export function stepEnemyBullets(dt, frame) {
           if (p.reactiveArmor || p.overchargeRetaliation) triggerReactiveArmor(eb.x, eb.y);
         }
       }
-    } else if (!eb.noGraze && eb.type !== 'acid' && ebDist <= (hitRadius + 18 * (typeof p.grazeRadiusMult === 'number' ? p.grazeRadiusMult : 1)) && !eb.grazed) {
+    } else if (!eb.noGraze && eb.type !== 'acid' && ebDist <= grazeReach && !eb.grazed) {
       eb.grazed = true;
       if (rt.state.stats) rt.state.stats.grazes += 1;
-      addScore(15, 'graze');
+      addScore(isSCombo ? 30 : 15, 'graze');
       noteContractEvent('graze', { x: eb.x, y: eb.y });
       if (p.grazeKineticCharge) {
         p.kineticCharges = Math.min(10, (p.kineticCharges || 0) + 1);
@@ -164,6 +167,15 @@ export function stepEnemyBullets(dt, frame) {
       p.energy = Math.min(grazeCap, (p.energy || 0) + 8.0);
       rt.state.grazeCombo = (rt.state.grazeCombo || 0) + 1;
       rt.state.grazeTimer = 2.5;
+      if (rt.state && (rt.state.combo || 0) > 0) {
+        rt.state.comboTimer = Math.min(4.0, (rt.state.comboTimer || 0) + 0.6);
+      }
+      var pEbDist = Math.hypot(eb.x - p.x, eb.y - p.y) || 1;
+      var edgeX = p.x + ((eb.x - p.x) / pEbDist) * (p.r || 16);
+      var edgeY = p.y + ((eb.y - p.y) / pEbDist) * (p.r || 16);
+      if (typeof spawnVisualBolt === 'function') {
+        spawnVisualBolt(edgeX, edgeY, eb.x, eb.y, 0.12, '#ffd700');
+      }
       if (rt.state.grazeCombo >= 5) {
         rt.state.grazeCombo = 0;
         p.overdrive = Math.max(p.overdrive, 1.2);

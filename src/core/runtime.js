@@ -14,7 +14,6 @@ export var rt = {
   input: {
     keys: new Set(),
     mouse: { x: 480, y: 320, down: false },
-    touchMode: false,
     gamepadX: 0,
     gamepadY: 0
   },
