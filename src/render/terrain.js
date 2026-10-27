@@ -9,11 +9,19 @@ var COS_W = Math.cos(WIND);
 var SIN_W = Math.sin(WIND);
 var TILE_SIZE = 1024;
 
-var slotA = { canvas: null, ctx: null, pattern: null, key: '', sector: '' };
-var slotB = { canvas: null, ctx: null, pattern: null, key: '', sector: '' };
+var slotA = { canvas: null, ctx: null, pattern: null, key: '', sector: '', scale: 1 };
+var slotB = { canvas: null, ctx: null, pattern: null, key: '', sector: '', scale: 1 };
+
+// Tiles are baked at device resolution (capped at 2x) so cracks and grid lines stay sharp on high-DPI screens.
+function tileScale() {
+  var dpr = (rt.ui && rt.ui.dpr) || 1;
+  if (dpr < 1) dpr = 1;
+  if (dpr > 2) dpr = 2;
+  return dpr;
+}
 
 function cacheKey(sector, detail) {
-  return sector + '|' + TILE_SIZE + 'x' + TILE_SIZE + '|' + (detail ? '1' : '0');
+  return sector + '|' + TILE_SIZE + 'x' + TILE_SIZE + '@' + tileScale() + '|' + (detail ? '1' : '0');
 }
 
 function rng(seed) {
@@ -238,6 +246,17 @@ export function paintProps(ctx, colors, detail) {
     }
   }
   ctx.restore();
+}
+
+// Centred radial shade: opposite tile edges get identical values, so the repeat has no seam.
+function paintTileShade(ctx, w, h, centerCss, edgeCss) {
+  var r = Math.hypot(w, h) * 0.5;
+  var shade = ctx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, r);
+  shade.addColorStop(0, centerCss);
+  shade.addColorStop(0.55, 'rgba(0,0,0,0)');
+  shade.addColorStop(1, edgeCss);
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, w, h);
 }
 
 export function paintGrid(ctx, w, h) {
@@ -499,12 +518,7 @@ export var BIOME_RENDERERS = {
         paintNoise(ctx, tile, w, h, 168, 0.06, 'soft-light', 40, 16);
       }
       paintDunes(ctx, w, h, colors, detail);
-      var shade = ctx.createLinearGradient(0, 0, w, h);
-      shade.addColorStop(0, 'rgba(255,220,170,0.03)');
-      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-      shade.addColorStop(1, 'rgba(0,0,0,0.22)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
+      paintTileShade(ctx, w, h, 'rgba(255,220,170,0.03)', 'rgba(0,0,0,0.088)');
       paintCracks(ctx, w, h, colors, detail, sector);
       paintProps(ctx, colors, detail);
       paintGrid(ctx, w, h);
@@ -524,12 +538,7 @@ export var BIOME_RENDERERS = {
       }
       paintPlates(ctx, w, h, colors, detail);
       paintDunes(ctx, w, h, colors, detail);
-      var shade = ctx.createLinearGradient(0, 0, w, h);
-      shade.addColorStop(0, 'rgba(235,120,60,0.04)');
-      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-      shade.addColorStop(1, 'rgba(0,0,0,0.26)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
+      paintTileShade(ctx, w, h, 'rgba(235,120,60,0.04)', 'rgba(0,0,0,0.104)');
       paintCracks(ctx, w, h, colors, detail, sector);
       paintProps(ctx, colors, detail);
       paintGrid(ctx, w, h);
@@ -549,12 +558,7 @@ export var BIOME_RENDERERS = {
       }
       paintPlates(ctx, w, h, colors, detail);
       paintDunes(ctx, w, h, colors, detail);
-      var shade = ctx.createLinearGradient(0, 0, w, h);
-      shade.addColorStop(0, 'rgba(100,160,255,0.03)');
-      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-      shade.addColorStop(1, 'rgba(0,0,0,0.30)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
+      paintTileShade(ctx, w, h, 'rgba(100,160,255,0.03)', 'rgba(0,0,0,0.12)');
       paintCracks(ctx, w, h, colors, detail, sector);
       paintProps(ctx, colors, detail);
       paintGrid(ctx, w, h);
@@ -577,12 +581,7 @@ export var BIOME_RENDERERS = {
       paintCrystalGlints(ctx, w, h, colors, detail);
       paintProps(ctx, colors, detail);
 
-      var shade = ctx.createLinearGradient(0, 0, w, h);
-      shade.addColorStop(0, 'rgba(56,189,248,0.04)');
-      shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-      shade.addColorStop(1, 'rgba(192,132,252,0.06)');
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, 0, w, h);
+      paintTileShade(ctx, w, h, 'rgba(56,189,248,0.04)', 'rgba(192,132,252,0.06)');
       paintGrid(ctx, w, h);
     }
   }
@@ -608,15 +607,31 @@ function bakeSlot(slot, sector, detail, key) {
     slot.ctx = slot.canvas.getContext('2d', { alpha: false });
   }
   if (!slot.ctx) return;
-  if (slot.canvas.width !== TILE_SIZE || slot.canvas.height !== TILE_SIZE) {
-    slot.canvas.width = TILE_SIZE;
-    slot.canvas.height = TILE_SIZE;
+  var scale = tileScale();
+  var px = Math.round(TILE_SIZE * scale);
+  if (slot.canvas.width !== px || slot.canvas.height !== px) {
+    slot.canvas.width = px;
+    slot.canvas.height = px;
   }
-  slot.ctx.setTransform(1, 0, 0, 1, 0, 0);
+  var t0 = bakeClock();
+  slot.ctx.setTransform(scale, 0, 0, scale, 0, 0);
   paintGround(slot.ctx, TILE_SIZE, TILE_SIZE, sector, detail);
+  lastBakeMs = bakeClock() - t0;
   slot.key = key;
   slot.sector = sector;
+  slot.scale = scale;
   slot.pattern = null;
+}
+
+var lastBakeMs = 0;
+
+function bakeClock() {
+  return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+}
+
+/** Last terrain tile bake time in ms (dev diagnostics only). */
+export function lastTerrainBakeMs() {
+  return lastBakeMs;
 }
 
 function ensure(sector, detail, protect) {
@@ -644,12 +659,14 @@ function drawSlotPattern(ctx, slot, alpha, x0, y0, viewW, viewH) {
   var prev = ctx.globalAlpha;
   ctx.globalAlpha = prev * alpha;
 
+  var inv = 1 / (slot.scale || 1);
   var mat;
   if (typeof DOMMatrix !== 'undefined') {
     mat = new DOMMatrix();
     mat.translateSelf(-x0, -y0);
+    if (inv !== 1) mat.scaleSelf(inv, inv);
   } else {
-    mat = { a: 1, b: 0, c: 0, d: 1, e: -x0, f: -y0 };
+    mat = { a: inv, b: 0, c: 0, d: inv, e: -x0, f: -y0 };
   }
   terrainPattern.setTransform(mat);
   ctx.fillStyle = terrainPattern;

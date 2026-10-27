@@ -11,6 +11,14 @@
 - 頂欄 `DUST//REIGN` 標題加上週期性的輕微 glitch（RGB 錯位 2 幀）；`COMMS` / `WIND` 數值以打字機方式更新。
 - 戰場容器 `.canvas-stage` 加上 `data-sector="dusk|rust|night"` 與 `data-storm` 屬性，讓 CSS 外框與 canvas 色調一致（由 `src/ui/hud.js` 的 `updateDomUi` 設定，只在值改變時寫入 DOM）。
 
+## v0.15.0 四角 HUD 與戰鬥外框
+
+- `.hud` 為 3 欄 × 4 列的網格（左／中／右；頂列、空白戰場、兩個底列），`.hud-top`、`.hud-bottom` 設為 `display: contents`，DOM 與所有 id 不變。
+- 左上 `.metric--level` 與 `#hudResonances`（`data-count="0"` 的流派隱藏）；上中 `.metric--wave` 與 `#hudWaveProgress` 細條；右上 `.metric--score`，右側預留 154px 給畫布小地圖。
+- 左下船體與電池上下堆疊；右下 `#hudTacticalBlock`，其上方是 `#hudChain`；底緣 `.resource-block--xp` 為 3px 細條；下中 `#hudStatus`，其上方是提示 toast；`#dashHeatReadout` 在船體條上方。
+- `#contractTracker` 固定在小地圖下方（top 122px）。首領血條的 `barY` 依 `.metric--wave` 的實際底緣計算（`overlay.js waveHudInset`）。
+- LIVE 狀態下 `.game-root`／`.game-frame` 的 `data-run-state="LIVE"` 會收起外距、標題大字、`.arena-header`、頁腳與 `.scanline`，只留細工具列；STANDBY／GAMEOVER 還原。
+
 ## 戰鬥 HUD（`css/hud.css`、`src/ui/hud.js`）
 
 - 數值變化動畫：分數以短暫滾動計數上升，加分時跳出 `+N` 小字；波次切換時數字翻牌。

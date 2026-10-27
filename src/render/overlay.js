@@ -12,6 +12,8 @@ import { getComboWindow } from '../systems/combat.js';
 var bossLag = 1;
 var bossRef = null;
 var deathGhost = 0;
+var hudInset = 0;
+var hudInsetKey = '';
 
 
 function hashNoise(i, salt) {
@@ -147,6 +149,18 @@ function drawPartBadge(ctx, x, y, w, h, label, destroyed, exposed) {
   ctx.restore();
 }
 
+// Bottom edge of the DOM wave pill in canvas CSS px; measured once per canvas size.
+function waveHudInset() {
+  var key = rt.ui.width + 'x' + rt.ui.height;
+  if (hudInsetKey === key && hudInset > 0) return hudInset;
+  var metric = rt.ui.wave && rt.ui.wave.closest ? rt.ui.wave.closest('.metric') : null;
+  var canvas = rt.ui.canvas;
+  if (!metric || !canvas || !metric.getBoundingClientRect || !canvas.getBoundingClientRect) return 0;
+  hudInset = Math.max(0, metric.getBoundingClientRect().bottom - canvas.getBoundingClientRect().top);
+  hudInsetKey = key;
+  return hudInset;
+}
+
 export function drawBossHealthBar(ctx, boss) {
   if (!ctx || !boss || !(boss.hp > 0)) return;
   if (bossRef !== boss) {
@@ -172,7 +186,8 @@ export function drawBossHealthBar(ctx, boss) {
   var barW = Math.min(360, rt.ui.width * 0.65);
   var barH = 12;
   var barX = (rt.ui.width - barW) / 2;
-  var barY = 20;
+  // Sit below the page HUD's top-center wave pill when it exists.
+  var barY = rt.ui.wave ? Math.max(20, waveHudInset() + 22) : 20;
   var boxExtraH = hasParts ? 20 : 0;
   var enraged = Boolean(boss.phase2Triggered);
   var stroke = enraged ? PALETTE.emissive.hostile : PALETTE.emissive.gold;
@@ -352,9 +367,12 @@ export function drawHud(ctx) {
     ctx.fillStyle = 'rgba(233,217,185,.75)';
     ctx.fillText('DAMAGE +50% / COOLDOWN -38%', 20, 207);
   }
-  ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(rt.ui.width - 145, 58, 125, 4);
-  ctx.fillStyle = '#d49a55'; ctx.fillRect(rt.ui.width - 145, 58, 125 * clamp(rt.state.waveTime / WAVE_LENGTH, 0, 1), 4);
+  // The page HUD shows wave progress under the wave pill; only fallback hosts get the canvas bar.
+  if (!rt.ui.wave) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(rt.ui.width - 145, 58, 125, 4);
+    ctx.fillStyle = '#d49a55'; ctx.fillRect(rt.ui.width - 145, 58, 125 * clamp(rt.state.waveTime / WAVE_LENGTH, 0, 1), 4);
+  }
 
   var boss = rt.state.boss;
   if (boss && boss.hp > 0) drawBossHealthBar(ctx, boss);
@@ -1130,12 +1148,12 @@ export function drawTacticalMinimap(ctx) {
     ctx.stroke();
   }
 
-  // Header Label
-  ctx.font = '700 8px ui-monospace, SFMono-Regular, Consolas, monospace';
+  // Header label sits above the frame so the viewport box never crosses it.
+  ctx.font = '700 8px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
   ctx.fillStyle = 'rgba(212, 175, 55, 0.75)';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText('TACTICAL // MAP', mapX + 5, mapY + 4);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(isChinese() ? '戰術 // 地圖' : 'TACTICAL // MAP', mapX + mapW, mapY - 3);
 
   ctx.restore();
 }

@@ -40,11 +40,6 @@
 }
 .topbar-meta { gap: clamp(8px, 2vw, 28px); }
 .brand-lockup, .brand-lockup > div { min-width: 0; }
-.hud-top { grid-template-columns: 1fr 1.4fr 0.8fr; width: min(590px, 100%); }
-.metric { min-width: 0; }
-.hud-bottom { grid-template-columns: minmax(110px, 1.2fr) minmax(110px, 1.1fr) minmax(90px, 0.9fr); width: min(720px, 100%); }
-.resource-label { gap: 4px; font-size: 9px; }
-.resource-label strong { white-space: nowrap; }
 .result-grid > div { min-width: 0; padding: 10px 8px; }
 .result-grid strong { font-size: clamp(12px, 3cqw, 21px); overflow-wrap: anywhere; }
 .result-grid span { font-size: 8px; }

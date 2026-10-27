@@ -10,7 +10,7 @@
 | 工單 | 文件 | 目標版本 | 並行 |
 | :--- | :--- | :--- | :--- |
 | P2 後期效能回歸防線與實體移除安全化 | [p2-performance-regression.md](p2-performance-regression.md) | 0.14.1 | 可與 P3 並行 |
-| P3 系統過載的引導與可讀性 | [p3-onboarding-readability.md](p3-onboarding-readability.md) | 0.15.0 | 可與 P2 並行 |
+| P3 系統過載的引導與可讀性 | [p3-onboarding-readability.md](p3-onboarding-readability.md) | 0.16.0（0.15.0 已用於畫質與 HUD 改版） | 可與 P2 並行 |
 | P4 版本文件同步 | [p4-docs-sync.md](p4-docs-sync.md) | 不升版 | 建議在 P2、P3 之後 |
 
 P1（平衡與計分校準）已在 v0.14.0 完成，結論見 `docs/gameplay-overhaul/10-balance-sheet.md`。下方 01–05 與 wp-01–wp-05 是 v0.0.x 時代的歷史設計，參照已移除的單檔 `game.js`；P4 會整理本索引。

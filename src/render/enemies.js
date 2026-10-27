@@ -2536,8 +2536,11 @@ export function drawEnemy(ctx, e) {
 var tagWidths = Object.create(null);
 var tagSprites = Object.create(null);
 
+// Tags are cached at device resolution; `logicalW` / `logicalH` keep the on-screen size fixed.
 function tagSprite(text, color) {
-  var key = text + '|' + color;
+  var s = (rt.ui && rt.ui.dpr) || 1;
+  if (s < 1) s = 1;
+  var key = text + '|' + color + '|' + s;
   var hit = tagSprites[key];
   if (hit) return hit;
   if (typeof document === 'undefined') return null;
@@ -2547,8 +2550,11 @@ function tagSprite(text, color) {
   g.font = '700 9px monospace';
   var w = Math.ceil(g.measureText(text).width + 10);
   if (w < 12) w = 12;
-  canvas.width = w;
-  canvas.height = 16;
+  canvas.width = Math.ceil(w * s);
+  canvas.height = Math.ceil(16 * s);
+  canvas.logicalW = w;
+  canvas.logicalH = 16;
+  g.scale(s, s);
   g.font = '700 9px monospace';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
@@ -2589,7 +2595,9 @@ function drawTag(ctx, x, y, text, color) {
     ctx.fillText(text, x, y);
     return;
   }
-  ctx.drawImage(sprite, x - sprite.width * 0.5, y - sprite.height * 0.5);
+  var sw = sprite.logicalW || sprite.width;
+  var sh = sprite.logicalH || sprite.height;
+  ctx.drawImage(sprite, x - sw * 0.5, y - sh * 0.5, sw, sh);
 }
 
 function drawCommandLinks(ctx) {

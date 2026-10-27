@@ -783,9 +783,13 @@ export function tContractDetail(id) {
 
 export function tDoubleDownHint(isDoubled) {
   if (currentLang === 'zh') {
-    return isDoubled ? '⚡ 超頻加注 (3x 獎勵)' : '[H] 超頻加注';
+    return isDoubled ? '⚡ 超頻加注 (3x 獎勵)' : '[H] 超頻加注 · 獎勵 x3';
   }
-  return isDoubled ? '⚡ OVERCLOCKED (3x)' : '[H] DOUBLE-DOWN';
+  return isDoubled ? '⚡ OVERCLOCKED (3x)' : '[H] DOUBLE-DOWN · REWARD x3';
+}
+export function tDoubleDownRisk() {
+  if (currentLang === 'zh') return '目標 +50%、獎勵 x3；失敗扣 25% 生命';
+  return 'Goal +50%, reward x3; failing costs 25% hull';
 }
 export function tRewardLabel(reward) {
   if (!reward) return '';

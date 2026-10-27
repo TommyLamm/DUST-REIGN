@@ -130,18 +130,20 @@ function drawMoteLayer(ctx, depth, storm, hc, atmo) {
     alpha *= 0.72 + storm * 0.28;
     if (hc) alpha *= 0.22;
     if (depth) {
-      ctx.globalAlpha = alpha * 0.45;
+      // Near motes: a small soft halo instead of large grey bokeh discs.
+      ctx.globalAlpha = alpha * 0.27;
       ctx.beginPath();
-      ctx.arc(m.x, m.y, m.size * 2.05, 0, TAU);
+      ctx.arc(m.x, m.y, m.size * 1.2, 0, TAU);
       ctx.fill();
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = alpha * 0.6;
       ctx.beginPath();
-      ctx.arc(m.x, m.y, m.size * 0.48, 0, TAU);
+      ctx.arc(m.x, m.y, m.size * 0.42, 0, TAU);
       ctx.fill();
     } else {
-      var sw = m.size;
-      ctx.globalAlpha = alpha;
-      ctx.fillRect(m.x - sw * 0.5, m.y - sw * 0.5, sw, sw);
+      ctx.globalAlpha = alpha * 0.8;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.size * 0.45, 0, TAU);
+      ctx.fill();
     }
   }
   ctx.restore();
@@ -240,12 +242,13 @@ function drawGrain(ctx, w, h) {
     grainTile = tile;
   }
   if (!grainPattern) return;
-  var t = rt.renderTime || 0;
-  var ox = Math.floor(t * 173) % 128;
-  var oy = Math.floor(t * 97) % 128;
+  // A faint, slow-stepping grain: it breaks up gradient banding without reading as screen noise.
+  var step = Math.floor((rt.renderTime || 0) * 4);
+  var ox = (step * 37) % 128;
+  var oy = (step * 61) % 128;
   if (ox < 0) ox += 128;
   if (oy < 0) oy += 128;
-  var alpha = 0.04 + ((t * 7) % 1) * 0.02;
+  var alpha = 0.015;
   ctx.save();
   ctx.globalCompositeOperation = 'overlay';
   ctx.globalAlpha = alpha;

@@ -13,7 +13,7 @@ import { updateInterludePanel } from './interlude-panel.js';
 import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
 import { updateTips } from './tips.js';
-import { fitGameOverOverlay, syncCombatLayout } from './dom.js';
+import { fitGameOverOverlay, resize, syncCombatLayout } from './dom.js';
 import { isChinese, onLanguageChange, tLog, tRankTitle } from '../core/i18n.js';
 
 var shownScore = null;
@@ -216,6 +216,7 @@ export function syncResonances() {
     var pill = root.querySelector('.resonance-pill[data-archetype="' + arch + '"]');
     if (pill) {
       if (pill.dataset.tier !== String(tier)) pill.dataset.tier = String(tier);
+      if (pill.dataset.count !== String(count)) pill.dataset.count = String(count);
       var countEl = pill.querySelector('.res-count');
       if (countEl && countEl.textContent !== String(count)) {
         countEl.textContent = String(count);
@@ -356,12 +357,18 @@ function syncSector() {
   if (hud && hud.classList) hud.classList.toggle('is-storm', storm === '1');
   var waveMetric = rt.ui.wave && rt.ui.wave.closest ? rt.ui.wave.closest('.metric') : null;
   if (waveMetric && waveMetric.classList) waveMetric.classList.toggle('is-storm', storm === '1');
+  syncQualityTier(stage);
+}
+
+// The canvas DPR cap depends on the tier, so a tier change re-runs resize().
+function syncQualityTier(stage) {
   var quality = 'auto';
   try { quality = getQuality(); } catch (e) { quality = 'auto'; }
-  if (quality !== lastQuality) {
-    lastQuality = quality;
-    stage.setAttribute('data-quality', quality);
-  }
+  if (quality === lastQuality) return;
+  var hadTier = lastQuality !== '';
+  lastQuality = quality;
+  stage.setAttribute('data-quality', quality);
+  if (hadTier) resize();
 }
 
 function syncPauseBlur() {
@@ -568,12 +575,7 @@ export function tickHudPresentation() {
   stepTypewriters(rt.renderDt || 0);
   var stage = rt.ui.canvasStage || byId('canvasStage');
   if (!stage || !stage.setAttribute) return;
-  var quality = 'auto';
-  try { quality = getQuality(); } catch (e) { quality = 'auto'; }
-  if (quality !== lastQuality) {
-    lastQuality = quality;
-    stage.setAttribute('data-quality', quality);
-  }
+  syncQualityTier(stage);
 }
 
 export function logEvent(message) {
@@ -596,6 +598,21 @@ function actRoman(act) {
   var n = act | 0;
   if (n > 0 && n < names.length) return names[n];
   return String(n || 1);
+}
+
+// Thin bar under the wave pill; quantized to 0.5% so the style is not rewritten every frame.
+function syncWaveProgress() {
+  var bar = rt.ui.waveProgress;
+  if (bar === undefined) {
+    bar = typeof document !== 'undefined' ? document.getElementById('hudWaveProgress') : null;
+    rt.ui.waveProgress = bar;
+  }
+  if (!bar || !bar.style) return;
+  var pct = (Math.round(clamp(rt.state.waveTime / WAVE_LENGTH, 0, 1) * 200) / 2) + '%';
+  if (bar._lastWidth !== pct) {
+    bar._lastWidth = pct;
+    bar.style.width = pct;
+  }
 }
 
 export function updateDomUi() {
@@ -652,6 +669,7 @@ export function updateDomUi() {
     var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
     setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
   }
+  syncWaveProgress();
   syncHealth();
   if (rt.ui.healthFill && rt.ui.healthFill.parentElement) {
     var hpStr = String(Math.ceil(rt.state.player.hp));
@@ -726,23 +744,10 @@ export function updateDomUi() {
     }
   }
 
-  // Contract [H] Double-Down Hotkey & Style Sync
+  // Contract double-down style sync; the localized prompt for the 12s window is owned by contracts-hud.js.
   if (typeof document !== 'undefined' && rt.state && rt.state.contract) {
     var cCard = document.querySelector('#contractTracker .contract-card');
-    if (cCard) {
-      cCard.classList.toggle('is-doubled', Boolean(rt.state.contract.doubled));
-      if (!rt.state.contract.done && !rt.state.contract.doubled) {
-        if (!cCard.querySelector('.contract-hotkey-hint')) {
-          var hint = document.createElement('span');
-          hint.className = 'contract-hotkey-hint';
-          hint.textContent = '[H] DOUBLE DOWN (1.5x / 2x REWARD)';
-          cCard.appendChild(hint);
-        }
-      } else {
-        var existingHint = cCard.querySelector('.contract-hotkey-hint');
-        if (existingHint) existingHint.remove();
-      }
-    }
+    if (cCard) cCard.classList.toggle('is-doubled', Boolean(rt.state.contract.doubled));
   }
   updateTips();
   updateLoadoutPanel();

@@ -1,11 +1,12 @@
+/* Below the canvas minimap (16px inset, 96px tall) on the right edge. */
 #contractTracker {
   position: absolute;
-  top: 74px;
-  right: 12px;
+  top: 122px;
+  right: 16px;
   z-index: 3;
   display: grid;
   gap: 6px;
-  width: min(220px, 46%);
+  width: min(220px, 34%);
   pointer-events: none;
 }
 
@@ -13,7 +14,7 @@
 .contract-card {
   padding: 6px 8px;
   color: var(--bone);
-  background: rgba(16, 17, 14, 0.82);
+  background: rgba(10, 11, 9, 0.66);
   border: 1px solid var(--line-strong);
   border-left: 3px solid var(--amber);
 }
@@ -112,14 +113,34 @@
   text-shadow: 0 0 8px rgba(255, 204, 68, 0.45);
 }
 
-.contract-hotkey-hint {
+/* Double-down prompt rendered by src/ui/contracts-hud.js during the 12s window. */
+.contract-doubledown-btn,
+.contract-doubled-badge {
   display: inline-block;
   margin-top: 4px;
-  font: 700 9px var(--mono);
+  padding: 1px 6px;
   color: #ffaa33;
+  font: 700 9px var(--mono);
   letter-spacing: 0.08em;
-  padding: 1px 5px;
   background: rgba(255, 170, 51, 0.16);
   border: 1px solid rgba(255, 170, 51, 0.45);
   border-radius: 2px;
+}
+
+.contract-doubled-badge {
+  color: #ffcc44;
+  border-color: rgba(255, 68, 68, 0.6);
+  background: rgba(255, 51, 68, 0.16);
+}
+
+/* The HUD layer ignores the pointer; only this prompt takes clicks. */
+.contract-doubledown-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.contract-doubledown-btn:hover {
+  border-color: #ffaa33;
+  background: rgba(255, 170, 51, 0.3);
 }

@@ -128,6 +128,7 @@ function destroy() {
     rt.ui.gameFrame.classList.remove('is-in-combat');
     rt.ui.gameFrame.removeAttribute('data-run-state');
   }
+  if (rt.ui && rt.ui.root && rt.ui.root.removeAttribute) rt.ui.root.removeAttribute('data-run-state');
   rt.ui = null;
   rt.state = null;
   rt.camera = null;

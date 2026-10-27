@@ -1,5 +1,5 @@
 import { rt } from '../core/runtime.js';
-import { isChinese, tContractLabel, tDoubleDownHint, tMutatorBlurb, tMutatorName, tRewardLabel } from '../core/i18n.js';
+import { isChinese, tContractLabel, tDoubleDownHint, tDoubleDownRisk, tMutatorBlurb, tMutatorName, tRewardLabel } from '../core/i18n.js';
 import { doubleDownCurrentContract } from '../systems/contracts.js';
 
 var lastSig = '';
@@ -88,8 +88,13 @@ export function updateContractsHud() {
     if (contract.done) {
       card.appendChild(el('span', 'contract-check', zh ? '已達成' : 'SEALED'));
     } else if (canDouble) {
-      var ddBtn = el('button', 'contract-doubledown-btn', zh ? '[H] 超頻加注' : '[H] DOUBLE-DOWN');
+      var ddBtn = el('button', 'contract-doubledown-btn', tDoubleDownHint(false));
       ddBtn.type = 'button';
+      ddBtn.tabIndex = -1;
+      ddBtn.title = tDoubleDownRisk();
+      ddBtn.setAttribute('aria-label', tDoubleDownHint(false) + ' — ' + tDoubleDownRisk());
+      // Keep keyboard focus on the canvas so Space (dash) never re-presses the button.
+      ddBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
       ddBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -99,7 +104,7 @@ export function updateContractsHud() {
       });
       card.appendChild(ddBtn);
     } else if (isDoubled) {
-      card.appendChild(el('span', 'contract-doubled-badge', zh ? '⚡ 超頻加注 (3x)' : '⚡ OVERCLOCKED (3x)'));
+      card.appendChild(el('span', 'contract-doubled-badge', tDoubleDownHint(true)));
     }
     root.appendChild(card);
   }

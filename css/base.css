@@ -87,7 +87,7 @@ canvas:focus-visible {
 
 .game-root::before {
   inset: 0;
-  opacity: 0.17;
+  opacity: 0.05;
   background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgba(232, 224, 198, 0.09) 3px 4px);
   mix-blend-mode: screen;
 }
@@ -348,4 +348,64 @@ h1 {
   box-shadow: 0 0 0 2px rgba(150, 186, 160, 0.12), 0 0 8px rgba(150, 186, 160, 0.65);
 }
 
+/* v0.15.0: while a run is LIVE the shell collapses to a slim toolbar so the arena
+   gets nearly the whole frame; STANDBY and GAMEOVER restore the full chrome.
+   data-run-state is written by syncCombatLayout() in src/ui/dom.js. */
+.game-root[data-run-state="LIVE"] {
+  padding: 0;
+}
 
+.game-root[data-run-state="LIVE"]::after {
+  display: none;
+}
+
+.game-frame[data-run-state="LIVE"] {
+  border: 0;
+  box-shadow: none;
+}
+
+.game-frame[data-run-state="LIVE"]::before,
+.game-frame[data-run-state="LIVE"]::after {
+  display: none;
+}
+
+.game-frame[data-run-state="LIVE"] .topbar {
+  min-height: 34px;
+  gap: 12px;
+  padding: 3px 12px;
+}
+
+.game-frame[data-run-state="LIVE"] .brand-lockup {
+  gap: 0;
+}
+
+.game-frame[data-run-state="LIVE"] .eyebrow,
+.game-frame[data-run-state="LIVE"] .brand-rail,
+.game-frame[data-run-state="LIVE"] .signal-readout,
+.game-frame[data-run-state="LIVE"] .arena-header,
+.game-frame[data-run-state="LIVE"] .arena-footer,
+.game-frame[data-run-state="LIVE"] .system-footer,
+.game-frame[data-run-state="LIVE"] .arena-vignette,
+.game-frame[data-run-state="LIVE"] .reticle {
+  display: none;
+}
+
+.game-frame[data-run-state="LIVE"] h1 {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.game-frame[data-run-state="LIVE"] .topbar-meta {
+  gap: 6px;
+}
+
+.game-frame[data-run-state="LIVE"] .pause-button {
+  min-width: 28px;
+  min-height: 26px;
+  padding: 3px 10px;
+  font-size: 10px;
+}
+
+.game-frame[data-run-state="LIVE"] .canvas-stage {
+  box-shadow: none;
+}

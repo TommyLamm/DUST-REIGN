@@ -275,6 +275,13 @@ export function syncCombatLayout() {
     }
   }
 
+  // The outer shell (page padding, title bar, footers) collapses while LIVE; see css/base.css.
+  var root = rt.ui.root;
+  if (root && root.getAttribute && root.getAttribute('data-run-state') !== nextState) {
+    root.setAttribute('data-run-state', nextState);
+    changed = true;
+  }
+
   if (changed && rt.ui.canvas) {
     resize();
   }
@@ -289,7 +296,7 @@ export function resize() {
 
   var q = 'high';
   try { q = getQuality(); } catch (e) {}
-  var maxDpr = q === 'low' ? 1.0 : (q === 'medium' ? 1.25 : 1.5);
+  var maxDpr = q === 'low' ? 1.0 : (q === 'medium' ? 1.5 : 2.0);
 
   var rawDpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
   var dpr = Math.min(maxDpr, Math.max(1, rawDpr));
@@ -309,6 +316,8 @@ export function resize() {
   rt.ui.canvas.width = Math.round(width * dpr);
   rt.ui.canvas.height = Math.round(height * dpr);
   if (rt.ui.ctx && rt.ui.ctx.setTransform) rt.ui.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Resizing the backing store resets context state; scaled sprites and the lightmap need high-quality filtering.
+  if (rt.ui.ctx) rt.ui.ctx.imageSmoothingQuality = 'high';
   if (changed || !rt.terrain.length) rebuildTerrain();
   if (!rt.state) return;
   if (!rt.camera) {
