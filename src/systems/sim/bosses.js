@@ -277,7 +277,8 @@ function stepDreadnought(e, dt, frame, empFrozen) {
   var box = boxOf(frame);
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
-  e.bossSubtitle = e.bossPhase >= 3 ? 'OVERDRIVE' : e.bossPhase === 2 ? 'DOUBLE RAM' : 'CHARGE';
+  if (e.mode === 'stun' || (e.armorBreakTimer || 0) > 0) e.bossSubtitle = 'ARMOR BREAK';
+  else e.bossSubtitle = e.bossPhase >= 3 ? 'OVERDRIVE' : e.bossPhase === 2 ? 'DOUBLE RAM' : 'CHARGE';
   if (e.bossPhase > (e._lastPhase || 1)) {
     e._lastPhase = e.bossPhase;
     if (rt.state) {
