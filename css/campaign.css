@@ -524,9 +524,18 @@ html.reduced-motion .stage-card:hover:not(.is-locked) {
   touch-action: manipulation;
 }
 
+.op-pill:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 .op-pill:hover:not(.is-locked) {
   border-color: var(--rust);
   color: #ff9170;
+}
+
+html.reduced-motion .op-pill {
+  transition: none;
 }
 
 .op-pill.is-active {

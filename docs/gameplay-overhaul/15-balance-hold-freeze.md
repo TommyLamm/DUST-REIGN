@@ -49,6 +49,8 @@ Tips and i18n only — no HP/DR/scrap/absorb/stun/cd/spawn:
 - Hardcore EN twins (#254)
 - Clock-fail GO kicker when long Dread warned (#246)
 - Telegraph / hazard **visual** contrast only (#260–#261): stroke/alpha/color — never timing/duration/cd/spawn/HP/DR
+- Menu / i18n / tip / floater micro-copy (#263–#269); light focus / reduced-motion a11y (#269–#270)
+- Status/log/banner static paths already funnel through tStatus/tLog/tBanner; remaining gaps are thin
 
 ## Dual-verify rule (if numbers ever change)
 

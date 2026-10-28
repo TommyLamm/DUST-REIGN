@@ -578,6 +578,18 @@ html.reduced-motion .loadout-codex {
   transition: all 0.15s ease;
 }
 
+.module-action-btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+html.reduced-motion .module-action-btn,
+html.reduced-motion .workshop-socket-card,
+html.reduced-motion .module-card,
+html.reduced-motion .cosmetic-card {
+  transition: none;
+}
+
 .module-action-btn.is-equip {
   background: rgba(0, 243, 255, 0.15);
   border: 1px solid rgba(0, 243, 255, 0.45);
