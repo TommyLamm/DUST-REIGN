@@ -536,11 +536,14 @@ registerEnemyStrategy('dreadnought', {
     if (broken) {
       amount *= 0.95; // mild break soft — charge DR untouched
     } else if (info && info.source === 'bullet') {
-      // Unbroken plating ×0.85 (not idle-mult/charge DR/stun/hull).
-      // Post-Titan coupling: XP dampen + plating lifted p50 45.8→57.6 (near 60).
-      // ACCEPT near-band ~55–60 while Titan holds 40–70; further plating had diminishing returns.
+      // Unbroken plating ×0.85 — ACCEPT near-band ~55–60 with Titan 40–70.
       amount *= 0.85;
     }
+    // Kite fatigue: clear15 fails are time-cap after 230–460s Dread kills (waves=14).
+    // Vuln only past p50 window — cuts extreme tails without chasing hull/stun.
+    var ft = e.fightT || 0;
+    if (ft >= 300) amount *= 1.30;
+    else if (ft >= 180) amount *= 1.15;
     return amount;
   },
   onDeath: function (ev) {
