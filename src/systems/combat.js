@@ -293,13 +293,19 @@ function isDurableBoss(e) {
 // Stock fire stays inside the window; Rapid Fire + Vulcan no longer erases a phase.
 function softenBossHit(e, amount, info) {
   if (!isDurableBoss(e) || !(amount > 0)) return amount;
-  if (info && (info.source === 'core' || info.source === 'barrel')) return amount;
+  // Barrel/core used to bypass the bleed window entirely, letting a stun + barrel
+  // volley delete Dread in ~8s while front-only softcapped fights crawled past 3 min.
+  // Keep a mild explosive bonus (60% of excess) instead of a full bypass.
+  var explosive = info && (info.source === 'core' || info.source === 'barrel');
+  var broken = (e.armorBreakTimer || 0) > 0 || e.mode === 'stun' || (e.empTimer || 0) > 0;
+  var cap = broken ? BOSS_BLEED_FULL * 1.7 : BOSS_BLEED_FULL;
+  var overflow = broken ? 0.55 : (explosive ? 0.6 : BOSS_BLEED_OVERFLOW);
   var now = rt.state.waveTime || 0;
   if (typeof e.bossBleedAt !== 'number' || now < e.bossBleedAt || now - e.bossBleedAt > BOSS_BLEED_WINDOW) {
     e.bossBleedAt = now;
     e.bossBleed = 0;
   }
-  var room = BOSS_BLEED_FULL - (e.bossBleed || 0);
+  var room = cap - (e.bossBleed || 0);
   var full = 0;
   var rest = amount;
   if (room > 0) {
@@ -307,7 +313,7 @@ function softenBossHit(e, amount, info) {
     rest -= full;
   }
   e.bossBleed = (e.bossBleed || 0) + full;
-  return full + rest * BOSS_BLEED_OVERFLOW;
+  return full + rest * overflow;
 }
 
 export function damageEnemy(e, amount, info) {
