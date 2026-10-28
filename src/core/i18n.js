@@ -1029,6 +1029,10 @@ export function tStatus(text) {
     return text.replace('BOUNTY CLEAR +', '懸賞完成 +').replace('SCORE // SURGE', '分數 // 湧浪');
   }
   if (text.indexOf('TITAN ARMOR BREACH') === 0) return '泰坦裝甲破防 -350 HP // 系統過熱眩暈 3.0s';
+  if (text.indexOf('AEGIS PROTOCOL ACTIVATED') === 0) return '神盾協議啟動 // 緊急護盾已展開';
+  if (text.indexOf('AEGIS PROTOCOL //') === 0) return '神盾協議 // 致命一擊已擋下';
+  if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！');
+  if (text.indexOf('SCRAP BULKHEAD //') === 0) return text.replace('SCRAP BULKHEAD //', '廢料隔艙 // ');
   if (text.indexOf('TITAN ENRAGED') === 0) return '泰坦暴怒 // 彈幕齊射協議';
   if (text.indexOf('STORM BREAKER') === 0) return '風暴破除者 // 湧浪解鎖';
   if (text.indexOf('TITAN LEFT CANNON DESTROYED') === 0) return '泰坦左主砲被摧毀 // 雙聯砲離線 [眩暈 1.8s]';
