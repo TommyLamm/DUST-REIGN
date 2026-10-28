@@ -86,6 +86,28 @@ function canScan() {
   return true;
 }
 
+function enemyOfKind(kind) {
+  var list = rt.state && rt.state.enemies;
+  if (!list) return false;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    if (list[i] && list[i].kind === kind && list[i].hp > 0) return true;
+  }
+  return false;
+}
+
+function acidHazardNear() {
+  var pools = rt.state && rt.state.acidPools;
+  if (pools && pools.length) return true;
+  var bullets = rt.state && rt.state.enemyBullets;
+  if (!bullets) return false;
+  var i;
+  for (i = 0; i < bullets.length; i += 1) {
+    if (bullets[i] && bullets[i].type === 'acid') return true;
+  }
+  return false;
+}
+
 function enemyWithin(px) {
   var p = rt.state.player;
   var list = rt.state.enemies || [];
@@ -141,6 +163,7 @@ function scanTriggers() {
   if ((rt.state.player.energy || 0) >= 50) offer('emp');
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
   if (rt.state.contract) offer('contract');
+  if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   var ci;
