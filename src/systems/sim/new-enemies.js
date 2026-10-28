@@ -207,7 +207,7 @@ function stepAcidPools(dt, frame) {
     pool.tick = (pool.tick || 0) + dt;
     if (pool.tick >= 0.5) {
       pool.tick -= 0.5;
-      var hit = damagePlayer(4, 'acid');
+      var hit = damagePlayer(2, 'acid');
       if (hit > 0) {
         p.invulnerable = 0.12;
         AudioFX.hurt();
@@ -337,7 +337,7 @@ function spitAcid(e, frame) {
   var box = bounds(frame);
   var tx = clamp(p.x + (p.vx || 0) * 0.6, 40, box.w - 40);
   var ty = clamp(p.y + (p.vy || 0) * 0.6, 40, box.h - 40);
-  var dmg = Math.round(16 * dmgScale());
+  var dmg = Math.round(10 * dmgScale());
   pushEnemyBullet({
     type: 'acid',
     noGraze: true,
@@ -369,9 +369,9 @@ function emergeBurrower(e, frame, fireSpikes) {
   e.surfaceT = 3;
   e.warnT = 0;
   if (!fireSpikes) return;
-  var hitR = 24 + (p ? p.r : 0);
+  var hitR = 20 + (p ? p.r : 0);
   if (p && Math.hypot(p.x - e.x, p.y - e.y) <= hitR) {
-    var dmg = Math.round(6 * dmgScale());
+    var dmg = Math.round(4 * dmgScale());
     var hit = damagePlayer(dmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
     if (hit > 0) {
       p.invulnerable = 0.35;
@@ -394,7 +394,7 @@ function emergeBurrower(e, frame, fireSpikes) {
       vy: Math.sin(a) * shot.speed,
       r: 3.2,
       damage: shot.damage,
-      life: 0.85,
+      life: 0.70,
       color: '#e6d2a8',
       glowColor: '#f0e2c4'
     });
