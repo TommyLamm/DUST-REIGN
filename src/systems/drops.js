@@ -73,6 +73,11 @@ function wantsRepair(e, elite) {
   }
   if (elite || e.kind === 'brute') return true;
   if (e.kind === 'artillery') return rng('loot') < 0.15;
+  // Boss arenas need more sustain so Sovereign kill samples are reachable.
+  if (rt.state && rt.state.boss && rt.state.boss.hp > 0) {
+    if (e.kind === 'warden' || e.kind === 'spitter') return rng('loot') < 0.35;
+    return rng('loot') < 0.12;
+  }
   return false;
 }
 
