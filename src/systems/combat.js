@@ -73,6 +73,7 @@ var CONTACT_KIND_ZH = {
 export function formatDamageSourceLabel(source, zh) {
   var s = normalizeDamageSource(source);
   if (zh) {
+    if (s === 'contact:dreadnought') return '無畏衝撞';
     if (s.indexOf('contact:') === 0) {
       var kind = s.slice(8);
       return '接觸 · ' + (CONTACT_KIND_ZH[kind] || kind);
