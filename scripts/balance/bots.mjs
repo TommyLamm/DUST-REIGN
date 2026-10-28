@@ -646,6 +646,8 @@ export function actBot(game, botName) {
   if (botName === 'skilled') {
     var shieldBoss = null;
     var tower = null;
+    var elite = null;
+    var bossLive = state.boss && state.boss.hp > 0;
     var list = state.enemies || [];
     var ei;
     for (ei = 0; ei < list.length; ei += 1) {
@@ -656,8 +658,13 @@ export function actBot(game, botName) {
         var td = hypot(p.x - foe.x, p.y - foe.y);
         if (!tower || td < tower.dist) tower = { x: foe.x, y: foe.y, dist: td, ref: foe };
       }
+      if (bossLive && (foe.kind === 'elite' || foe.kind === 'artillery' || foe.kind === 'warden')) {
+        var ed = hypot(p.x - foe.x, p.y - foe.y);
+        if (ed < 520 && (!elite || ed < elite.dist)) elite = { x: foe.x, y: foe.y, dist: ed, ref: foe };
+      }
     }
     if (shieldBoss && tower) aim = tower;
+    else if (elite) aim = elite;
   }
   var aimX = aim ? aim.x : p.x + 100;
   var aimY = aim ? aim.y : p.y;
