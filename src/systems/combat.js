@@ -71,7 +71,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
   if (rt.state.stageConfig && rt.state.stageConfig.fixedDmgPercent) {
     requested = Math.round(p.maxHp * rt.state.stageConfig.fixedDmgPercent);
   } else if (rt.state.mode === 'hardcore') {
-    requested = Math.round(p.maxHp * 0.50);
+    requested = Math.round(p.maxHp * 0.32);
   }
 
   if (source === 'collision' && p.shieldCollisionDamageReduction && (p.shield || 0) > 0) {
@@ -165,8 +165,9 @@ export function damagePlayer(amount, source, threatX, threatY) {
   rt.state.damageTakenInStage = (rt.state.damageTakenInStage || 0) + applied;
 
   if (rt.state.mode === 'hardcore' || (rt.state.stageConfig && (rt.state.stageConfig.shortInvuln || rt.state.stageConfig.fixedDmgPercent))) {
-    p.invulnerable = 0.08;
-    p._capNextInvuln = 0.08;
+    // Hardcore still uses short i-frames vs campaign, but 0.08s was a multi-hit oneshot.
+    p.invulnerable = 0.4;
+    p._capNextInvuln = 0.4;
   }
 
   var info = { amount: applied, requested: requested, source: source || '', saved: saved };
@@ -512,7 +513,7 @@ export function explodeBarrel(barrel, index, isKicked) {
     p.x = clamp(p.x + (pkdx / pkd) * 20, p.r, boundW - p.r);
     p.y = clamp(p.y + (pkdy / pkd) * 20, p.r, boundH - p.r);
     // Player-facing barrel damage is half of the old 10, and one chain can only
-    // hurt once inside the guard window (covers hardcore 0.08s invuln caps).
+    // hurt once inside the guard window (covers hardcore short invuln caps).
     var chainGuarded = (rt.state._barrelChainGuard || 0) > 0;
     if (p.invulnerable <= 0 && !chainGuarded) {
       var barrelHit = damagePlayer(5, 'barrel');
