@@ -76,7 +76,7 @@ export function refreshWorkshopPanel(container) {
     noticeText = zh ? '🔒 極限作戰警告: 改裝模組已全面強制下線 (硬體鎖定)' : '🔒 HARDCORE NOTICE: Chassis modules are strictly OFFLINE (Hardware Lock)';
     noticeClass += ' is-hardcore';
   } else if (mode === 'standard') {
-    noticeText = zh ? '⚙ 標準出擊: 安裝模組出擊將標記為 [MOD] 改裝評級 (獨立排行榜)' : '⚙ STANDARD MODE: Equipping modules tags run as [MOD] (Unranked Leaderboard)';
+    noticeText = zh ? '⚙ 標準出擊：安裝模組出擊將標記為【改裝】評級（獨立排行榜）' : '⚙ STANDARD MODE: Equipping modules tags run as [MOD] (Unranked Leaderboard)';
     noticeClass += ' is-modded';
   } else {
     noticeText = zh ? '★ 戰役闖關: 改裝模組全面運作，無限制發揮戰術潛能' : '★ CAMPAIGN MODE: Chassis modules fully operational';
@@ -260,7 +260,7 @@ export function refreshWorkshopPanel(container) {
         upgradeBtn.setAttribute('aria-label', upgradeBtn.title);
       }
     } else {
-      upgradeBtn.textContent = zh ? '超頻已滿階 (MAX)' : 'MAX OVERCLOCKED';
+      upgradeBtn.textContent = zh ? '超頻已滿階' : 'MAX OVERCLOCKED';
       upgradeBtn.disabled = true;
       upgradeBtn.classList.add('is-max');
       upgradeBtn.title = zh ? '此模組已達超頻上限' : 'Module already at max overclock';

@@ -224,7 +224,7 @@ export function updateGameOverUi(state) {
     metaReward.appendChild(scrapP);
   }
   if (state.isModded) {
-    var modP = el('div', 'meta-mod-badge', zh ? '[MOD] 改裝裝備運行 (非官方榜單)' : '[MOD] MODDED RUN (UNRANKED)');
+    var modP = el('div', 'meta-mod-badge', zh ? '【改裝】改裝裝備運行（非官方榜單）' : '[MOD] MODDED RUN (UNRANKED)');
     metaReward.appendChild(modP);
   }
 }
