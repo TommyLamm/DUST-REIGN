@@ -283,6 +283,9 @@ export function stepEnemies(dt, frame) {
     if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
       var contactDmg = e.damage;
       if (playerEdge.pressed) contactDmg = Math.max(1, Math.round(e.damage * 0.55));
+      if (rt.state.boss && rt.state.boss.hp > 0 && (e.kind === 'elite' || e.kind === 'brute')) {
+        contactDmg = Math.max(1, Math.round(contactDmg * 0.7));
+      }
       var firstTitan = false;
       if (e.kind === 'titan') {
         var beaten = rt.state.bossesDefeated || [];
