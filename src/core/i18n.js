@@ -1401,6 +1401,7 @@ export function tTip(id, kind) {
     if (id === 'artillery-lob') return 'ARTILLERY LOBS MARKED SHELLS · STEP OUT OF THE RED RING BEFORE IMPACT';
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     if (id === 'scurrier') return 'SCURRIER ARMING · KILL OR FLEE BEFORE THE POP — DO NOT DASH INTO THE BLAST';
+    if (id === 'rusher-charge') return 'ORANGE CHARGE LANE = RUSHER BURST · SIDE-STEP OFF THE LINE BEFORE IT FIRES';
     if (id === 'elite-weave') return 'ELITE ROUNDS TRACK HARD · STRAFE AND PRIORITIZE THEM BEFORE THE PACK';
     if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
     if (id === 'molten') return 'ORANGE POOLS ARE MOLTEN SLAG · DREAD LEAVES THEM ON CHARGE — STEP OUT';
@@ -1439,6 +1440,7 @@ export function tTip(id, kind) {
   if (id === 'artillery-lob') return '火砲者拋射有標記的砲彈 · 撞擊前離開紅圈';
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   if (id === 'scurrier') return '疾走幼體正在引爆 · 擊殺或逃離，別衝進爆炸';
+  if (id === 'rusher-charge') return '橘色衝刺走廊＝疾衝者蓄力 · 開火前側移離開那條線';
   if (id === 'elite-weave') return '菁英彈道難躲 · 側移並優先清掉菁英再打群';
   if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
   if (id === 'molten') return '橘色熔渣池是無畏衝刺殘留 · 快離開以免持續灼傷';
