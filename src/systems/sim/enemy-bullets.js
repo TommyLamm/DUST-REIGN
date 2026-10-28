@@ -160,8 +160,9 @@ export function stepEnemyBullets(dt, frame) {
         // Live boss arenas throttle elite spawns; residual pre-boss elites still
         // a top wipe cause — chip softer while a boss hull is up.
         // Wave 15+ hardcap: residual bullet:elite still wiped runs after spawn gates.
-        if (bulletSrc === 'bullet:elite' && ((rt.state.wave | 0) >= 15)) {
-          bulletDmg = 1;
+        var sovGate = (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || ((rt.state.wave | 0) >= 15);
+        if (bulletSrc === 'bullet:elite' && sovGate) {
+          bulletDmg = 0;
         } else if (rt.state.boss && rt.state.boss.hp > 0 && bulletSrc === 'bullet:elite') {
           bulletDmg = Math.max(1, Math.round(bulletDmg * 0.28));
         }

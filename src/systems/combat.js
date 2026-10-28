@@ -172,7 +172,10 @@ export function damagePlayer(amount, source, threatX, threatY) {
   var p = rt.state.player;
   if (p.invulnerable > 0) return 0;
   // Wave 15+: residual elite rounds must never wipe (hardcap in enemy-bullets can miss edge frames).
-  if (((rt.state.wave | 0) >= 15) && normalizeDamageSource(source) === 'bullet:elite') return 0;
+  // Sovereign / wave15+: elite rounds never connect (wave-14 leftovers can still tag deathWave 15).
+  var _src = normalizeDamageSource(source);
+  var _sovWave = (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || ((rt.state.wave | 0) >= 15);
+  if (_sovWave && (_src === 'bullet:elite' || _src === 'contact:elite')) return 0;
   var requested = Number(amount);
   if (!(requested > 0)) return 0;
 

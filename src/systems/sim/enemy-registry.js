@@ -530,11 +530,14 @@ registerEnemyStrategy('dreadnought', {
     // stays the skill read. Barrels/EMP keep their own curves.
     // Charge/telegraph DR: dump-DPS during commit was feeding the fast cluster.
     if (e.mode === 'charge' || e.mode === 'telegraph') {
-      amount *= 0.70; // was 0.55 — eased so slow tails do not stall past 180s
+      amount *= 0.55; // charge/tele dump DR (anti-fast)
     }
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
       amount *= 1.00;
+    } else if (e.mode === 'idle' || !e.mode) {
+      // Idle-only intact bump: shortens slow kite tails without feeding charge-dump fast cluster.
+      amount *= 1.08;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       amount *= 1.00;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
