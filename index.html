@@ -28,7 +28,7 @@
 <body>
   <div class="game-root">
     <div class="game-frame">
-      <header class="topbar" aria-label="Game header">
+      <header class="topbar" aria-label="遊戲頂欄">
         <div class="brand-lockup">
           <span class="brand-rail" aria-hidden="true"></span>
           <div>
@@ -36,7 +36,7 @@
             <h1>DUST<span>//</span>REIGN</h1>
           </div>
         </div>
-        <div class="topbar-meta" aria-label="Signal status">
+        <div class="topbar-meta" aria-label="通訊狀態">
           <div class="signal-readout">
             <span class="meta-label">通訊</span>
             <strong id="commsStatus">開放</strong>
@@ -56,14 +56,14 @@
       </header>
 
       <main class="game-layout">
-        <section class="arena-card" aria-label="Wasteland arena">
+        <section class="arena-card" aria-label="廢土戰場">
           <div class="arena-header">
             <span>第 09 區段 <b aria-hidden="true">//</b> 乾線邊境</span>
             <span class="arena-state"><i aria-hidden="true"></i><span id="runState">待命</span></span>
           </div>
 
           <div id="canvasStage" class="canvas-stage" data-sector="dusk" data-storm="0" data-quality="auto">
-            <canvas id="gameCanvas" width="1280" height="720" tabindex="0" aria-label="Wasteland combat arena"></canvas>
+            <canvas id="gameCanvas" width="1280" height="720" tabindex="0" aria-label="廢土戰鬥區"></canvas>
 
             <div class="arena-vignette" aria-hidden="true"></div>
             <div class="scanline" aria-hidden="true"></div>
@@ -91,7 +91,7 @@
               </div>
 
               <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
-              <div id="hudResonances" class="hud-resonances" aria-label="Archetype Resonances">
+              <div id="hudResonances" class="hud-resonances" aria-label="流派共鳴">
                 <div class="resonance-pill" data-archetype="kinetic" data-tier="0" data-count="0" title="Kinetic Ballistics">
                   <span class="res-icon">⚡</span>
                   <span class="res-name">動能</span>
@@ -126,7 +126,7 @@
                     <span>機體裝甲</span>
                     <strong><span id="hudHealth" data-health="">100</span><em>%</em></strong>
                   </div>
-                  <div id="healthBar" class="meter meter--health" role="progressbar" aria-label="Hull integrity"
+                  <div id="healthBar" class="meter meter--health" role="progressbar" aria-label="機體裝甲"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
                     <span id="healthLag" class="meter-lag" style="width: 100%"></span>
                     <span id="healthFill" style="width: 100%"></span>
@@ -137,7 +137,7 @@
                     <span>廢料核心</span>
                     <strong><span id="hudXp" data-xp="">0 / 55</span></strong>
                   </div>
-                  <div id="xpBar" class="meter meter--xp" role="progressbar" aria-label="Scrap memory" aria-valuemin="0"
+                  <div id="xpBar" class="meter meter--xp" role="progressbar" aria-label="廢料核心" aria-valuemin="0"
                     aria-valuemax="55" aria-valuenow="0">
                     <span id="xpFill" style="width: 0%"></span>
                   </div>
@@ -148,7 +148,7 @@
                     <strong><span id="hudEnergy" data-energy="">50</span><em>%</em></strong>
                     <span id="empReady" class="emp-ready" hidden>EMP 就緒</span>
                   </div>
-                  <div id="meterEnergy" class="meter meter--energy" role="progressbar" aria-label="Battery energy"
+                  <div id="meterEnergy" class="meter meter--energy" role="progressbar" aria-label="電池能量"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
                     <span id="energyFill" style="width: 50%"></span>
                   </div>
@@ -278,7 +278,7 @@
                   <div class="overlay-stamp">戰役作戰 <span>//</span> 區段網格</div>
                   <h2 id="campaignModalTitle">區段 <span>戰役</span></h2>
                   <p class="overlay-kicker">選擇目標並部署進入廢土</p>
-                  <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="Close stage select">✕</button>
+                  <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="關閉關卡選擇">✕</button>
                 </div>
                 <div class="campaign-summary-bar">
                   <div class="campaign-star-count">總星數: <strong id="campaignTotalStars">0</strong> / 45</div>
@@ -412,7 +412,7 @@
                       <div class="setting-row" id="settingLanguageRow">
                         <div class="setting-meta">
                           <span class="setting-label" id="settingLanguageLabel">介面語言</span>
-                          <small class="setting-desc" id="settingLanguageDesc">INTERFACE LANGUAGE / 介面語言</small>
+                          <small class="setting-desc" id="settingLanguageDesc">切換英文與繁體中文顯示</small>
                         </div>
                         <div class="setting-controls">
                           <button type="button" id="toggleLanguage" class="pause-setting-btn">ENG / 繁中</button>
@@ -574,13 +574,13 @@
           </div>
         </section>
 
-        <aside class="mission-rail" aria-label="Run details and controls">
+        <aside class="mission-rail" aria-label="出擊詳情與操作">
           <section class="rail-card rail-card--objective">
             <div class="rail-heading"><span>戰場筆記 01</span><span class="rail-code">[甲]</span></div>
             <p class="rail-title">活下去。<br /><span>掀起風暴。</span></p>
             <p id="objectiveText" class="rail-copy">在沙暴吞沒訊號前清除每一波敵軍。波次 3 後將有菁英訊號入侵。</p>
             <div class="objective-rule"><span id="objectiveProgress" style="width: 12%"></span></div>
-            <div class="objective-meta"><span>威脅指數</span><strong id="threatIndex">LOW</strong></div>
+            <div class="objective-meta"><span>威脅指數</span><strong id="threatIndex">低</strong></div>
             <div class="objective-meta"><span>沙暴時鐘</span><strong id="waveTimer" class="wave-timer">NEXT FRONT
                 30s</strong></div>
           </section>
