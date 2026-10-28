@@ -385,7 +385,7 @@ registerEnemyStrategy('titan', {
       e.treadLavaTimer = 0.45;
       if (!rt.state.artilleryTargets) rt.state.artilleryTargets = [];
       rt.state.artilleryTargets.push({
-        x: e.x, y: e.y, r: 28, timer: 6.0, maxTimer: 6.0,
+        x: e.x, y: e.y, r: 28, timer: 4.0, maxTimer: 4.0,
         wave: rt.state.wave || 1, state: 'molten', damageTickTimer: 0
       });
     }

@@ -300,7 +300,7 @@ export function stepEnemies(dt, frame) {
         if (firstTitan) contactDmg = Math.max(1, Math.min(Math.round(contactDmg * 0.55), 14));
       }
       // Wave 14+ / sovereign: never apply elite contact (damagePlayer deny alone still leaked attribution).
-      var eliteMute = (e.kind === 'elite') && (((rt.state.wave | 0) >= 14) || (rt.state.recipe && rt.state.recipe.boss === 'sovereign'));
+      var eliteMute = (e.kind === 'elite') && (((rt.state.wave | 0) >= 14) || (rt.state.recipe && (rt.state.recipe.boss === 'sovereign' || rt.state.recipe.boss === 'dreadnought')));
       if (eliteMute) {
         e.touchCooldown = 0.85;
         continue;

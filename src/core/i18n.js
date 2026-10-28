@@ -1113,6 +1113,7 @@ export function tTip(id, kind) {
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'HOLD THE STORM EYE · STEP OUT ONLY BETWEEN PULSES';
     if (id === 'dread-break') return 'BAIT CHARGE INTO THE CRAG FOR ARMOR BREAK · NO MID-RAM BREAK · DUMP DURING THE STUN WINDOW';
+    if (id === 'dread-fatigue') return 'LONG DREAD FIGHT · FORCE A CRAG BREAK — KITING FOREVER LOSES THE CLOCK';
     if (id === 'storm-weave') return 'WEAVE ELITE + SPIRAL ROUNDS · BULLETS END MORE RUNS THAN THE EYE';
     if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
     return '';
@@ -1140,6 +1141,7 @@ export function tTip(id, kind) {
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '守住風暴之眼 · 只在脈衝間隙短暫離開';
   if (id === 'dread-break') return '把衝撞引向岩障破甲 · 雙衝中段不破甲 · 在硬直窗傾瀉';
+  if (id === 'dread-fatigue') return '無畏戰拖太久 · 快逼岩障破甲 — 風箏到死會來不及清第 15 波';
   if (id === 'storm-weave') return '穿梭菁英彈與螺旋彈 · 敵彈比風暴之眼更能終結一局';
   if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
   return '';
