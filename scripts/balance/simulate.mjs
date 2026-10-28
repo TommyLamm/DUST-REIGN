@@ -574,7 +574,10 @@ function simulate(game, opts) {
       }
       if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
     }
-    if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = tagged || blamed || 'unknown';
+    if ((state.over || hpAfter <= 0) && !tracker.lethal) {
+      // Prefer game-authored deathCause / lastDamageSource — never invent from FX alone.
+      tracker.lethal = state.deathCause || tagged || blamed || 'unknown';
+    }
     syncEnemies(tracker, state, simTime, true);
     noteContract(tracker, state);
     noteWave(tracker, state, simTime);
@@ -592,18 +595,11 @@ function simulate(game, opts) {
   noteLevel(tracker, state, simTime);
   var waveReached = state.wave || 1;
   if (outcome === 'wave-cap' && opts.waves > 0) waveReached = opts.waves;
+  // Do NOT blame the run's top cumulative damage source (often early-wave elite).
+  // That mislabeled wave-15 deaths as bullet:elite when lastDamageSource was empty.
   if (outcome === 'death' && (!tracker.lethal || tracker.lethal === 'unknown')) {
-    var topSource = '';
-    var topHp = 0;
-    var dmgKeys = Object.keys(tracker.damage || {});
-    for (var di = 0; di < dmgKeys.length; di += 1) {
-      var row = tracker.damage[dmgKeys[di]];
-      if (row && row.hp > topHp && dmgKeys[di] !== 'unknown') {
-        topHp = row.hp;
-        topSource = dmgKeys[di];
-      }
-    }
-    if (topSource) tracker.lethal = topSource;
+    if (state.deathCause) tracker.lethal = state.deathCause;
+    else if (state.lastDamageSource) tracker.lethal = state.lastDamageSource;
   }
   var deathCause = outcome === 'death' ? (tracker.lethal || 'unknown') : outcome;
   if (outcome === 'extract') deathCause = 'extract';
