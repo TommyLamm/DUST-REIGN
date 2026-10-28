@@ -1106,7 +1106,7 @@ export function tTip(id, kind) {
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'HOLD THE STORM EYE · STEP OUT ONLY BETWEEN PULSES';
-    if (id === 'dread-break') return 'BAIT CHARGE INTO THE CRAG · SHORT BREAK · THEN KEEP REAR FIRE';
+    if (id === 'dread-break') return 'BAIT INTO THE CRAG · DOUBLE-RAM HAS A MID BREAK · THEN REAR FIRE';
     if (id === 'storm-weave') return 'WEAVE ELITE + SPIRAL ROUNDS · BULLETS END MORE RUNS THAN THE EYE';
     if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
     return '';
@@ -1132,7 +1132,7 @@ export function tTip(id, kind) {
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '守住風暴之眼 · 只在脈衝間隙短暫離開';
-  if (id === 'dread-break') return '把衝撞引向岩障 · 破甲窗短 · 之後持續繞背輸出';
+  if (id === 'dread-break') return '把衝撞引向岩障 · 雙衝中間有短破甲 · 之後繞背輸出';
   if (id === 'storm-weave') return '穿梭菁英彈與螺旋彈 · 敵彈比風暴之眼更能終結一局';
   if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
   return '';
