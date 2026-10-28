@@ -118,7 +118,7 @@
                 </div>
               </div>
               <div id="contractTracker" hidden></div>
-              <div id="tipToast" hidden></div>
+              <div id="tipToast" hidden aria-hidden="true" role="status" aria-live="polite"></div>
 
               <div class="hud-bottom">
                 <div class="resource-block resource-block--health">
@@ -522,6 +522,9 @@
                           <span class="matrix-action">PAUSE / RESUME</span>
                           <span class="matrix-key">ESC / P</span>
                           <span class="matrix-key">START / MENU</span>
+                        </div>
+                        <div class="controls-matrix-subhead" id="controlsUpgradeSubhead">
+                          <span>DURING UPGRADE PICK</span>
                         </div>
                         <div class="controls-matrix-row">
                           <span class="matrix-action">SELECT UPGRADE</span>

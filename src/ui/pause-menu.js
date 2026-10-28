@@ -382,15 +382,16 @@ function renderRunSummary(p) {
   var zh = isChinese();
   var heat = getHeatModifiers(rt.state.heat || 0);
   var contract = rt.state.contract;
-  var contractText = '—';
+  var noneLabel = zh ? '無' : 'NONE';
+  var contractText = noneLabel;
   if (contract) {
     contractText = zh ? (tContractName(contract.id) || runLabel(contract)) : runLabel(contract);
     if (typeof contract.progress === 'number' && typeof contract.goal === 'number') {
       contractText += ' ' + contract.progress + '/' + contract.goal;
     }
   }
-  var routeVal = rt.state.route ? (zh ? tRouteName(rt.state.route.id) : runLabel(rt.state.route)) : '—';
-  var mutatorVal = rt.state.mutator ? (zh ? tMutatorName(rt.state.mutator.id) : runLabel(rt.state.mutator)) : '—';
+  var routeVal = rt.state.route ? (zh ? tRouteName(rt.state.route.id) : runLabel(rt.state.route)) : noneLabel;
+  var mutatorVal = rt.state.mutator ? (zh ? tMutatorName(rt.state.mutator.id) : runLabel(rt.state.mutator)) : noneLabel;
   var weaponVal = (zh ? tWeaponName(p.weaponMode || 'standard') : (p.weaponMode || 'standard').toUpperCase()) + ' · M' + (p.mastery || 0);
   var rows = [
     [zh ? '幕次' : 'ACT', String(rt.state.act || 1) + ' · ' + String(rt.state.sector || 'dusk').toUpperCase()],

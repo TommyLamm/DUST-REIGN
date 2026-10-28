@@ -46,7 +46,10 @@ export function onTipsReset() {
   active = null;
   nextAt = 0;
   var toast = tipNode();
-  if (toast) toast.hidden = true;
+  if (toast) {
+    toast.hidden = true;
+    toast.setAttribute('aria-hidden', 'true');
+  }
 }
 
 function tipNode() {
@@ -362,6 +365,7 @@ function showTip(toast, id) {
   }
   toast.textContent = tipText(id);
   toast.hidden = false;
+  toast.setAttribute('aria-hidden', 'false');
 }
 
 function syncDashHeatHud() {
@@ -392,7 +396,9 @@ function syncDashHeatHud() {
   var nameEl = read.querySelector('.dash-heat-label');
   if (nameEl) nameEl.textContent = isChinese() ? '衝刺過熱' : 'DASH HEAT';
   if (read.getAttribute('data-heat') !== heatLabel) read.setAttribute('data-heat', heatLabel);
-  read.hidden = !(heat > 0);
+  var showHeat = heat > 0;
+  read.hidden = !showHeat;
+  read.setAttribute('aria-hidden', showHeat ? 'false' : 'true');
 }
 
 function showUnlocks(toast, unlocks) {
@@ -403,6 +409,7 @@ function showUnlocks(toast, unlocks) {
   toast.setAttribute('role', 'status');
   toast.textContent = (isChinese() ? '已解鎖 // ' : 'UNLOCKED // ') + labels.join(' · ');
   toast.hidden = false;
+  toast.setAttribute('aria-hidden', 'false');
 }
 
 export function updateTips() {
@@ -420,18 +427,27 @@ export function updateTips() {
   if (!readTipsEnabled()) {
     if (!(active && active.id === 'unlock' && nowMs() < active.until)) {
       active = null;
-      if (toast) toast.hidden = true;
+      if (toast) {
+      toast.hidden = true;
+      toast.setAttribute('aria-hidden', 'true');
+    }
     }
     return;
   }
   if (!canScan()) {
     active = null;
-    if (toast) toast.hidden = true;
+    if (toast) {
+      toast.hidden = true;
+      toast.setAttribute('aria-hidden', 'true');
+    }
     return;
   }
   if (active && t >= active.until) {
     active = null;
-    if (toast) toast.hidden = true;
+    if (toast) {
+      toast.hidden = true;
+      toast.setAttribute('aria-hidden', 'true');
+    }
     nextAt = t + GAP_MS;
   }
   while (!active && queue.length && t >= nextAt) {
