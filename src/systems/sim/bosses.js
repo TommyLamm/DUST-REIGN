@@ -698,15 +698,15 @@ export function stepBossArena(dt, frame) {
     var outside = Math.hypot(p.x - boss.eyeX, p.y - boss.eyeY) > boss.eyeRadius + p.r;
     if (outside) {
       var outAng = Math.atan2(p.y - boss.eyeY, p.x - boss.eyeX);
-      p.x = clamp(p.x + Math.cos(outAng) * 65 * dt, p.r, (frame.boundW || 960) - p.r);
-      p.y = clamp(p.y + Math.sin(outAng) * 65 * dt, p.r, (frame.boundH || 640) - p.r);
+      p.x = clamp(p.x + Math.cos(outAng) * 48 * dt, p.r, (frame.boundW || 960) - p.r);
+      p.y = clamp(p.y + Math.sin(outAng) * 48 * dt, p.r, (frame.boundH || 640) - p.r);
 
       boss.eyeTick = (boss.eyeTick || 0) + dt;
-      if (boss.eyeTick >= 0.5) {
-        boss.eyeTick -= 0.5;
+      if (boss.eyeTick >= 0.7) {
+        boss.eyeTick -= 0.7;
         var eyeHit = 0;
         if (p.invulnerable <= 0) {
-          eyeHit = damagePlayer(scaledShot(8, 0, true).damage, 'storm-eye');
+          eyeHit = damagePlayer(scaledShot(6, 0, true).damage, 'storm-eye');
         }
         if (eyeHit > 0) {
           p.invulnerable = 0.12;

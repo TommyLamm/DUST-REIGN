@@ -97,6 +97,13 @@ function burrowerWarnNear() {
   return false;
 }
 
+function sovereignEyeThreat() {
+  var boss = rt.state && rt.state.boss;
+  var p = rt.state && rt.state.player;
+  if (!boss || boss.kind !== 'sovereign' || !(boss.eyeRadius > 0) || !p) return false;
+  return Math.hypot(p.x - (boss.eyeX || boss.x), p.y - (boss.eyeY || boss.y)) > boss.eyeRadius + p.r;
+}
+
 function meteorHazardNear() {
   var list = rt.state && rt.state.meteors;
   return !!(list && list.length);
@@ -195,6 +202,7 @@ function scanTriggers() {
   if (rt.state.interlude && rt.state.interlude.step === 'extract') offer('extract');
   else if (rt.state.interlude) offer('route');
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
+  if (sovereignEyeThreat()) offer('storm-eye');
 }
 
 function showTip(toast, id) {
