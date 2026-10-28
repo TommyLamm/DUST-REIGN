@@ -63,7 +63,13 @@ function fillCards(parent, options, selected, onPick) {
       if (rule) card.appendChild(el('p', 'interlude-rule', rule));
       if (detail && !rule) card.appendChild(el('p', 'interlude-rule', detail));
       if (reward) card.appendChild(el('em', 'interlude-reward', reward));
-      if (option.sector) card.appendChild(el('i', 'interlude-sector interlude-sector--' + option.sector, option.sector.toUpperCase()));
+      if (option.sector) {
+        var sec = String(option.sector).toLowerCase();
+        var secLabel = zh
+          ? (sec === 'night' ? '夜境' : sec === 'rust' ? '鏽域' : sec === 'dusk' ? '暮沙' : sec.toUpperCase())
+          : (sec === 'night' ? 'NIGHT' : sec === 'rust' ? 'RUST' : sec === 'dusk' ? 'DUSK' : sec.toUpperCase());
+        card.appendChild(el('i', 'interlude-sector interlude-sector--' + sec, secLabel));
+      }
       card.addEventListener('click', function () { onPick(index); });
       grid.appendChild(card);
     })(i, options[i]);
