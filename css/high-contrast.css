@@ -213,3 +213,81 @@
   outline: 2px solid #ffffff !important;
   outline-offset: 2px !important;
 }
+
+
+.game-root.is-high-contrast .key {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ffffff !important;
+  border-bottom-color: #ff4422 !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .key-caption,
+.game-root.is-high-contrast .objective-meta,
+.game-root.is-high-contrast .metric-label,
+.game-root.is-high-contrast .resource-label,
+.game-root.is-high-contrast .dash-heat-label {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .objective-meta strong {
+  color: #ffcc33 !important;
+}
+
+.game-root.is-high-contrast .hud-alert {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ff4422 !important;
+}
+
+.game-root.is-high-contrast .dash-heat-readout {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+}
+
+.game-root.is-high-contrast .dash-heat i {
+  background: #555555 !important;
+}
+
+.game-root.is-high-contrast .dash-heat-readout[data-heat="1"] .dash-heat i:nth-child(1),
+.game-root.is-high-contrast .dash-heat-readout[data-heat="2"] .dash-heat i:nth-child(-n+2),
+.game-root.is-high-contrast .dash-heat-readout[data-heat="3"] .dash-heat i {
+  background: #ffcc33 !important;
+}
+
+.game-root.is-high-contrast .wave-progress {
+  background: #333333 !important;
+  box-shadow: none !important;
+}
+
+.game-root.is-high-contrast .victory-star-slot {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+}
+
+.game-root.is-high-contrast .victory-star-num,
+.game-root.is-high-contrast .victory-star-status,
+.game-root.is-high-contrast .victory-star-desc {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .victory-star-slot.is-lit .victory-star-glyph {
+  color: #ffff00 !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .contract-reset-badge {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ff4422 !important;
+}
+
+.game-root.is-high-contrast .bounties-empty,
+.game-root.is-high-contrast .milestone-lock-reason {
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}

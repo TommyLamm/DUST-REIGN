@@ -401,6 +401,12 @@ function syncDashHeatHud() {
   var showHeat = heat > 0;
   read.hidden = !showHeat;
   read.setAttribute('aria-hidden', showHeat ? 'false' : 'true');
+  if (showHeat) {
+    read.setAttribute('role', 'status');
+    read.setAttribute('aria-label', (isChinese() ? '衝刺過熱' : 'DASH HEAT') + ' ' + heatLabel + '/3');
+  } else {
+    read.removeAttribute('aria-label');
+  }
 }
 
 function showUnlocks(toast, unlocks) {
