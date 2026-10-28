@@ -1062,6 +1062,9 @@ export function tStatus(text) {
   if (text.indexOf('STORM BREAKER') === 0) return '風暴破除者 // 湧浪解鎖';
   if (text.indexOf('TITAN LEFT CANNON DESTROYED') === 0) return '泰坦左主砲被摧毀 // 雙聯砲離線 [眩暈 1.8s]';
   if (text.indexOf('TITAN RIGHT POD DESTROYED') === 0) return '泰坦右發射槽被摧毀 // 護衛停用 [眩暈 1.8s]';
+  if (text.indexOf('BEHEMOTH HORN SHATTERED') === 0) return '巨獸之角碎裂 // 正面減傷失效 [硬直 2.2s]';
+  if (text.indexOf('BEHEMOTH GLAND RUPTURED') === 0) return '巨獸腺体破裂 // 酸液迫擊已封閉';
+  if (text.indexOf('BEHEMOTH TAIL SEVERED') === 0) return '巨獸斷尾 // 機動殘廢 [-25% 速度]';
   if (text.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 消解彈幕';
   if (text.indexOf('GRAZE SURGE') === 0) return '擦彈湧浪 // 微型超頻就緒';
   if (text.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
@@ -1193,12 +1196,16 @@ export function tBanner(text) {
   if (text === 'ARMOR BREAK') return '破甲輸出';
   if (text === 'CHARGE') return '衝撞';
   if (text === 'DOUBLE RAM') return '雙重衝撞';
+  if (text.indexOf('DOUBLE RAM //') === 0) return '雙重衝撞 // 中段不破甲';
   if (text === 'OVERDRIVE' && text.length < 12) return '過載';
   if (text.indexOf('CHARGE TELEGRAPH') === 0) return '衝撞預兆 // 引向岩障破甲';
   if (text.indexOf('CHARGE SPENT') === 0) return '衝撞力竭 // 破甲輸出窗';
   if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 · 四面可打';
   if (text.indexOf('TUG-OF-WAR COUNTER') === 0) return '拔河反制 // 散熱器暴露 2.5S';
   if (text.indexOf('TITAN HARPOON') === 0) return '泰坦魚叉 // 已繫繩並緩速';
+  if (text.indexOf('BEHEMOTH HORN SHATTERED') === 0) return '巨獸之角碎裂 // 正面減傷失效 [硬直 2.2s]';
+  if (text.indexOf('BEHEMOTH GLAND RUPTURED') === 0) return '巨獸腺体破裂 // 酸液迫擊已封閉';
+  if (text.indexOf('BEHEMOTH TAIL SEVERED') === 0) return '巨獸斷尾 // 機動殘廢 [-25% 速度]';
   if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';
   if (text.indexOf('WOLF PACK SURGE') === 0) return '狼群湧浪 // 向心壓迫';
 
