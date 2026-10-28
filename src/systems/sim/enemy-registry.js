@@ -517,7 +517,7 @@ registerEnemyStrategy('dreadnought', {
     // stays the skill read. Barrels/EMP keep their own curves.
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
-      amount *= 1.08;
+      amount *= 1.02;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       amount *= 1.14;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
