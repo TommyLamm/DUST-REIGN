@@ -196,8 +196,16 @@ registerEnemyStrategy('elite', {
     return null;
   },
   step: function (e, dt, frame, empFrozen, isCulled) {
-    // Absolute: no living elites on wave 15+ (spawn/cull leaks still wiped bots).
-    if (((rt.state.wave | 0) >= 15)) { e.hp = 0; e.alive = false; return; }
+    // Absolute: splice elites off the field on wave 15+ (hp=0 left ghosts / mis-attrs).
+    if (((rt.state.wave | 0) >= 15)) {
+      var list = rt.state.enemies;
+      if (list && list.length) {
+        for (var xi = list.length - 1; xi >= 0; xi -= 1) {
+          if (list[xi] === e) { list.splice(xi, 1); break; }
+        }
+      }
+      return { speed: 0 };
+    }
 
     var p = frame.p;
     var boundW = frame.boundW;
