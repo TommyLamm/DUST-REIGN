@@ -658,7 +658,7 @@ export function updateDomUi() {
   }
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
-  setText(rt.ui.wave, zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
+  setText(rt.ui.wave, zh ? ((rt.state.overtime ? '加時 · ' : '') + '第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ((rt.state.overtime ? 'OVERTIME · ' : '') + 'ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
   pulse(rt.ui.wave, 'wave', rt.state.wave);
   syncScore();
   setText(rt.ui.best, String(rt.state.bestScore).padStart(6, '0'));
@@ -692,7 +692,7 @@ export function updateDomUi() {
   if (rt.ui.waveTimer) {
     var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
     var storm = isStormFront();
-    var prefix = zh ? (storm ? '暴風逼近 ' : '下一波次 ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ');
+    var prefix = zh ? (rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 ')) : (rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT '));
     setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
   }
   syncWaveProgress();
