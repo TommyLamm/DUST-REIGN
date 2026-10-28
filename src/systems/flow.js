@@ -165,6 +165,8 @@ export function togglePause() {
         resetAbandonConfirm();
       } else {
         resetAbandonConfirm();
+        clearResidualCombatInput();
+        if (rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
       }
     }
   }
