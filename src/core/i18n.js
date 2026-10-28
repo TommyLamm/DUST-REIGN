@@ -1624,6 +1624,28 @@ export function syncStaticHtml(lang) {
   }
   setTextById('empReady', zh ? 'EMP 就緒' : 'EMP READY');
 
+  // Landmark / control aria labels
+  function setAttrBySel(sel, attr, val) {
+    var node = document.querySelector(sel);
+    if (node) node.setAttribute(attr, val);
+  }
+  setAttrBySel('.topbar', 'aria-label', zh ? '遊戲頂欄' : 'Game header');
+  setAttrBySel('.topbar-meta', 'aria-label', zh ? '通訊狀態' : 'Signal status');
+  setAttrBySel('.arena-card', 'aria-label', zh ? '廢土戰場' : 'Wasteland arena');
+  setAttrBySel('#gameCanvas', 'aria-label', zh ? '廢土戰鬥區' : 'Wasteland combat arena');
+  setAttrBySel('#hudResonances', 'aria-label', zh ? '流派共鳴' : 'Archetype Resonances');
+  setAttrBySel('#healthBar', 'aria-label', zh ? '機體裝甲' : 'Hull integrity');
+  setAttrBySel('#xpBar', 'aria-label', zh ? '廢料核心' : 'Scrap memory');
+  setAttrBySel('#meterEnergy', 'aria-label', zh ? '電池能量' : 'Battery energy');
+  var audioBtn = document.getElementById('audioBtn');
+  if (audioBtn && !audioBtn.getAttribute('data-aria-owned')) {
+    // pause-menu owns live mute state; only seed if still default English
+    if (/Toggle Audio/i.test(audioBtn.getAttribute('aria-label') || '')) {
+      audioBtn.setAttribute('aria-label', zh ? '切換音效' : 'Toggle audio');
+    }
+  }
+
+
   // Start Screen
   var startScreen = document.getElementById('startScreen');
   if (startScreen) {

@@ -1,4 +1,4 @@
-import { isChinese } from '../core/i18n.js';
+import { isChinese, tCampaignStageStar } from '../core/i18n.js';
 import { formatDamageSourceLabel } from '../systems/combat.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
 import { CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
