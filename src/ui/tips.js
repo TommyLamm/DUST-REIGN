@@ -92,6 +92,7 @@ function tipText(id) {
   if (id === 'mine-arming') copyId = 'mine';
   else if (id === 'scurrier-arming') copyId = 'scurrier';
   else if (id === 'burrower-warn') copyId = 'burrower';
+  else if (id === 'barrel-fuse') copyId = 'barrel-fuse';
   return tTip(copyId, inputKind());
 }
 
@@ -321,6 +322,22 @@ function choiceCompletesFusion(choice) {
   return false;
 }
 
+function barrelFuseNear() {
+  var list = rt.state && rt.state.barrels;
+  var p = rt.state && rt.state.player;
+  if (!list || !p) return false;
+  var lim = 220 * 220;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var b = list[i];
+    if (!b || !(b.chainFuse > 0)) continue;
+    var dx = b.x - p.x;
+    var dy = b.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function scanTriggers() {
   if (!readTipsEnabled()) return;
   if (!canScan() || !rt.state.player) return;
@@ -332,7 +349,8 @@ function scanTriggers() {
   if (rt.state.stats && (rt.state.stats.justDashes || 0) > 0) offer('just-dash');
   // Teach graze when shots are near — do not wait for a successful graze first.
   if (enemyBulletWithin(140) || ((rt.state.waveTime || 0) >= 6 && (rt.state.enemyBullets || []).length > 0)) offer('graze');
-  if (rt.state.barrels && rt.state.barrels.length > 0) offer('barrel');
+  if (barrelFuseNear()) offerUrgent('barrel-fuse');
+  else if (rt.state.barrels && rt.state.barrels.length > 0) offer('barrel');
   if ((rt.state.player.energy || 0) >= 50) offer('emp');
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
   if (rt.state.boss && rt.state.boss.kind === 'titan' && rt.state.boss.hp > 0) offer('titan-parts');
