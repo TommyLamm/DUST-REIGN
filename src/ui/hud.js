@@ -166,7 +166,9 @@ function syncCooldowns() {
     }
     var cdText = byId('hudTacticalCdText');
     if (cdText) {
-      cdText.textContent = tac.cooldown > 0 ? (tac.cooldown > 9.9 ? Math.ceil(tac.cooldown) + 's' : tac.cooldown.toFixed(1) + 's') : 'RDY';
+      cdText.textContent = tac.cooldown > 0
+        ? (tac.cooldown > 9.9 ? Math.ceil(tac.cooldown) + 's' : tac.cooldown.toFixed(1) + 's')
+        : (isChinese() ? '就緒' : 'RDY');
       cdText.style.color = tac.cooldown > 0 ? '#ff7733' : '#5be7ff';
     }
     var iconEl = byId('hudTacticalIcon');

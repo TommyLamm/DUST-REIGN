@@ -370,3 +370,11 @@
 .game-root.is-high-contrast .loadout-heat-lock-tag {
   color: #ffcc33 !important;
 }
+
+
+.game-root.is-high-contrast .passives-empty,
+.game-root.is-high-contrast .run-summary-empty {
+  background: #000000 !important;
+  border: 2px dashed #ffffff !important;
+  color: #ffffff !important;
+}
