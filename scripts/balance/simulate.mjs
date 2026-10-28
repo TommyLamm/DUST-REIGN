@@ -603,11 +603,13 @@ function simulate(game, opts) {
   noteLevel(tracker, state, simTime);
   var waveReached = state.wave || 1;
   if (outcome === 'wave-cap' && opts.waves > 0) waveReached = opts.waves;
-  // Do NOT blame the run's top cumulative damage source (often early-wave elite).
-  // That mislabeled wave-15 deaths as bullet:elite when lastDamageSource was empty.
+  // Do NOT re-apply sticky lastDamageSource here — it undoes the death-frame
+  // elite scrub (early-wave bullet:elite survives as lastDamageSource).
   if (outcome === 'death' && (!tracker.lethal || tracker.lethal === 'unknown')) {
-    if (state.deathCause) tracker.lethal = state.deathCause;
-    else if (state.lastDamageSource) tracker.lethal = state.lastDamageSource;
+    if (state.deathCause && state.deathCause !== 'bullet:elite') tracker.lethal = state.deathCause;
+    else if (state.deathCause === 'bullet:elite' && ((state.wave | 0) >= 15)) tracker.lethal = 'unknown';
+    else if (state.deathCause) tracker.lethal = state.deathCause;
+    else if (state.lastDamageSource && state.lastDamageSource !== 'bullet:elite') tracker.lethal = state.lastDamageSource;
   }
   var deathCause = outcome === 'death' ? (tracker.lethal || 'unknown') : outcome;
   if (outcome === 'extract') deathCause = 'extract';
