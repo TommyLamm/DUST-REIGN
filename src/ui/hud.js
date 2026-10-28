@@ -343,10 +343,31 @@ function syncComms() {
   else if (isStormFront()) commsText = zh ? '雜訊' : 'STATIC';
   var sector = 'dusk';
   try { sector = sectorForWave(rt.state.wave); } catch (e) { sector = 'dusk'; }
-  var windText = sector === 'night' ? 'N 11' : sector === 'rust' ? 'SW 27' : 'NW 18';
-  if (isStormFront()) windText = zh ? '陣風 44' : 'GUST 44';
+  var sectorLabel = zh
+    ? (sector === 'night' ? '夜境' : sector === 'rust' ? '鏽域' : '暮沙')
+    : (sector === 'night' ? 'NIGHT' : sector === 'rust' ? 'RUST' : 'DUSK');
+  var dirText = sector === 'night' ? (zh ? '北風 11' : 'N 11') : sector === 'rust' ? (zh ? '西南 27' : 'SW 27') : (zh ? '西北 18' : 'NW 18');
+  var windText = sectorLabel + ' · ' + dirText;
+  if (isStormFront()) windText = sectorLabel + ' · ' + (zh ? '陣風 44' : 'GUST 44');
   setTypeText(comms, commsText);
   setTypeText(wind, windText);
+  if (wind) wind.setAttribute('aria-label', (zh ? '風向' : 'Wind') + ' — ' + windText);
+  syncArenaSectorLabel(sector, zh);
+}
+
+function syncArenaSectorLabel(sector, zh) {
+  if (typeof document === 'undefined') return;
+  var arenaHeader = document.querySelector('.arena-header span:first-child');
+  if (!arenaHeader) return;
+  var name = zh
+    ? (sector === 'night' ? '黑玻璃' : sector === 'rust' ? '鐵鏽盆地' : '乾線邊境')
+    : (sector === 'night' ? 'BLACK GLASS' : sector === 'rust' ? 'RUST BASIN' : 'THE DRYLINE');
+  var code = zh ? '第 09 區段' : 'SECTOR 09';
+  var html = code + ' <b aria-hidden="true">//</b> ' + name;
+  if (arenaHeader._lastSectorHtml !== html) {
+    arenaHeader._lastSectorHtml = html;
+    arenaHeader.innerHTML = html;
+  }
 }
 
 function syncSector() {

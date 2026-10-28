@@ -1705,11 +1705,11 @@ export function syncStaticHtml(lang) {
   var settingLangDesc = document.getElementById('settingLanguageDesc');
   if (settingLangDesc) settingLangDesc.textContent = zh ? '切換英文與繁體中文顯示' : 'INTERFACE LANGUAGE / 介面語言';
 
-  // Arena Header
+  // Arena Header — leave live sector name to hud.syncComms; only clear cache
   var arenaHeader = document.querySelector('.arena-header');
   if (arenaHeader) {
     var span1 = arenaHeader.querySelector('span:first-child');
-    if (span1) span1.innerHTML = zh ? '第 09 區段 <b aria-hidden="true">//</b> 乾線邊境' : 'SECTOR 09 <b aria-hidden="true">//</b> THE DRYLINE';
+    if (span1) span1._lastSectorHtml = '';
   }
 
   // HUD Top Metric Labels
@@ -1948,15 +1948,24 @@ export function syncStaticHtml(lang) {
 
     var resumeSpan = pauseModal.querySelector('#pauseResumeBtn span');
     if (resumeSpan) resumeSpan.textContent = zh ? '繼續戰鬥' : 'RESUME COMBAT';
+    var resumeBtn = document.getElementById('pauseResumeBtn');
+    if (resumeBtn) resumeBtn.setAttribute('aria-label', zh ? '繼續戰鬥' : 'Resume combat');
     var abandonSpan = pauseModal.querySelector('#pauseAbandonBtn span');
     if (abandonSpan) abandonSpan.textContent = zh ? '放棄出擊' : 'ABANDON RUN';
+    var abandonBtn = document.getElementById('pauseAbandonBtn');
+    if (abandonBtn) abandonBtn.setAttribute('aria-label', zh ? '放棄本次出擊（需再次確認）' : 'Abandon this run (requires confirm)');
+    var tabsAria = pauseModal.querySelector('.pause-tabs');
+    if (tabsAria) tabsAria.setAttribute('aria-label', zh ? '暫停選單分類' : 'Pause menu categories');
   }
 
   // Mission Rail
   var rail = document.querySelector('.mission-rail');
   if (rail) {
+    rail.setAttribute('aria-label', zh ? '出擊詳情與操作' : 'Run details and controls');
     var rHead1 = rail.querySelector('.rail-card--objective .rail-heading span:first-child');
     if (rHead1) rHead1.textContent = zh ? '戰場筆記 01' : 'FIELD NOTE 01';
+    var rCode1 = rail.querySelector('.rail-card--objective .rail-code');
+    if (rCode1) rCode1.textContent = zh ? '[甲]' : '[A]';
     var rTitle = rail.querySelector('.rail-title');
     if (rTitle) rTitle.innerHTML = zh ? '活下去。<br /><span>掀起風暴。</span>' : 'STAY ALIVE.<br /><span>GET LOUD.</span>';
     var rObj = document.getElementById('objectiveText');
@@ -1991,6 +2000,16 @@ export function syncStaticHtml(lang) {
       : 'Tip: keep moving when the red dust starts to climb.';
     var signoff = rail.querySelector('.rail-signoff');
     if (signoff) signoff.innerHTML = zh ? '<span>無神明</span><i aria-hidden="true">×</i><span>無地圖</span>' : '<span>NO GODS</span><i aria-hidden="true">×</i><span>NO MAPS</span>';
+
+    var logSpans = rail.querySelectorAll('#runLog li span');
+    if (logSpans && logSpans.length >= 3) {
+      var seed0 = logSpans[0].textContent || '';
+      if (/Signal found under the salt|鹽層下找到訊號/.test(seed0)) {
+        logSpans[0].textContent = zh ? '鹽層下找到訊號。' : 'Signal found under the salt.';
+        logSpans[1].textContent = zh ? '有東西聽見了引擎聲。' : 'Something heard the engine.';
+        logSpans[2].textContent = zh ? '保持槍管溫熱。' : 'Keep the barrel warm.';
+      }
+    }
   }
 
   // Arena Footer & System Footer

@@ -23,6 +23,7 @@ export function resetAbandonConfirm() {
   if (btn) {
     btn.innerHTML = (isChinese() ? '<span>放棄出擊</span>' : '<span>ABANDON RUN</span>') + '<b aria-hidden="true">⚠</b>';
     btn.classList.remove('is-confirming');
+    btn.setAttribute('aria-label', isChinese() ? '放棄本次出擊（需再次確認）' : 'Abandon this run (requires confirm)');
   }
 }
 
@@ -41,6 +42,7 @@ export function handleAbandonClick() {
     if (btn) {
       btn.innerHTML = (isChinese() ? '<span>確認放棄出擊？</span>' : '<span>CONFIRM ABANDON?</span>') + '<b aria-hidden="true">⚠</b>';
       btn.classList.add('is-confirming');
+      btn.setAttribute('aria-label', isChinese() ? '再次點擊以確認放棄出擊' : 'Click again to confirm abandon');
     }
   }
 }
