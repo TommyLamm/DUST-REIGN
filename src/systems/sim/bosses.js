@@ -779,11 +779,12 @@ export function stepBossArena(dt, frame) {
       p.y = clamp(p.y + Math.sin(outAng) * 48 * dt, p.r, (frame.boundH || 640) - p.r);
 
       boss.eyeTick = (boss.eyeTick || 0) + dt;
-      if (boss.eyeTick >= 0.7) {
-        boss.eyeTick -= 0.7;
+      // Soft cadence/damage: post-#147 still saw boss:storm-eye kills on wave 15.
+      if (boss.eyeTick >= 1.0) {
+        boss.eyeTick -= 1.0;
         var eyeHit = 0;
         if (p.invulnerable <= 0) {
-          eyeHit = damagePlayer(scaledShot(6, 0, true).damage, 'storm-eye');
+          eyeHit = damagePlayer(scaledShot(4, 0, true).damage, 'storm-eye');
         }
         if (eyeHit > 0) {
           p.invulnerable = 0.12;
