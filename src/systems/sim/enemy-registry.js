@@ -535,8 +535,8 @@ registerEnemyStrategy('dreadnought', {
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
       amount *= 1.00;
-    } else if (e.mode === 'idle' || !e.mode) {
-      // Idle-only intact bump: shortens slow kite tails without feeding charge-dump fast cluster.
+    } else if ((e.mode === 'idle' || !e.mode) && info && info.source === 'bullet') {
+      // Idle bullet-only intact bump: shortens slow kite tails; barrels/EMP keep own curves.
       amount *= 1.08;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       amount *= 1.00;
