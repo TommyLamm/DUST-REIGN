@@ -71,7 +71,7 @@ export function designScales(wave) {
   var interval = Math.max(0.32, 1.08 - (a - 1) * 0.18 - (w - 1) * 0.05);
   var cap = Math.min(95, 9 + (a - 1) * 22 + (w - 1) * 5);
   var elite = 0;
-  if (p.wave >= 3) elite = Math.min(0.16, 0.04 + (a - 1) * 0.04 + (w - 1) * 0.01);
+  if (p.wave >= 3) elite = Math.min(0.12, 0.04 + (a - 1) * 0.04 + (w - 1) * 0.01);
   if (p.overheat > 0) {
     hp *= Math.pow(1.12, p.overheat);
     dmg *= Math.pow(1.06, p.overheat);
@@ -348,7 +348,7 @@ function applyMutatorMods(recipe, mut) {
     recipe.killScoreMult = 1.1;
     renormalize(recipe.weights);
   } else if (mut.id === 'elite-convoy') {
-    recipe.eliteChance = round2(recipe.eliteChance * 2.5);
+    recipe.eliteChance = round2(recipe.eliteChance * 1.7);
     recipe.cap = Math.max(4, Math.round(recipe.cap * 0.7));
     recipe.crateChance = 0.4;
   } else if (mut.id === 'overcharged') {
@@ -430,8 +430,8 @@ export function planWave(wave, state) {
     rusherCut: cuts.rusherCut,
     bruteCut: cuts.bruteCut,
     affixMinWave: 4,
-    volatileMinWave: 8,
-    splitterMinWave: 13,
+    volatileMinWave: 10,
+    splitterMinWave: 15,
     hpScale: hpScale,
     dmgScale: dmgScale,
     bulletScale: scales.bullet,

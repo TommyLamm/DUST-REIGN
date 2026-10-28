@@ -13,7 +13,7 @@
 | id | 名稱 | 效果 | 補償 |
 | --- | --- | --- | --- |
 | `swarm` | SWARM TIDE | 生成間隔 ×0.6；敵人 HP ×0.7；爬蟲與 Scurrier 權重 ×2 | 擊殺分數 ×1.1 |
-| `elite-convoy` | ELITE CONVOY | 精英機率 ×2.5；敵人上限 ×0.7 | 精英掉補給箱機率 15% → 40% |
+| `elite-convoy` | ELITE CONVOY | 精英機率 ×1.7；敵人上限 ×0.7 | 精英掉補給箱機率 15% → 40% |
 | `scrap-rain` | SCRAP RAIN | 每 3 秒有 1 個隕落點（0.8 秒陰影預警，r 34）：命中 12 傷，落地留下 4 顆 scrap | — |
 | `barrage` | ARTILLERY BARRAGE | 每 5 秒場外砲擊：玩家附近 3 個預警圈（1.2 秒、r 46），沿用既有熔岩規則 | 每波結束 +200 分 |
 | `dust-devils` | DUST DEVILS | 2 個沙捲在場上遊走（r 60），弱拉力 40 px/s 影響玩家與敵人，穿過的玩家子彈偏轉 15° | — |
