@@ -258,8 +258,8 @@ function beginCharge(e) {
   e.mode = 'charge';
   e.chargeCarry = 0;
   e.chargeDist = 0;
-  // Soft arena charges end in ~1.5s; big-world diagonals used to run 5–8s with no armor-break.
-  e.chargeMaxDist = e.bossPhase >= 3 ? 1000 : 860;
+  // Cap big-world charge travel so armor-break duty cycle stays dense (was 860/1000).
+  e.chargeMaxDist = e.bossPhase >= 3 ? 820 : 700;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
