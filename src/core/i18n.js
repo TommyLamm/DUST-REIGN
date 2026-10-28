@@ -657,54 +657,54 @@ var HARDCORE_OPS_I18N = {
     name: { zh: '鋼鐵斷頭台', en: 'IRON GUILLOTINE' },
     title: { zh: '【剃刀之舞】', en: '[RAZOR WALTZ]' },
     badgeTitle: { zh: '[血染雙刃合金標記]', en: '[BLOOD-EDGED ALLOY MARK]' },
-    briefing: { zh: 'HP 鎖定 35；戰場常駐 2 台無敵重砲轟炸；Scurrier 死亡必自爆。同屏 55 隻迫擊砲+自爆+酸液天敵群。', en: 'HP capped at 35; two invuln heavy guns always bombard; scurriers always pop on death. Cap 55 mortar/pop/acid counters.' },
-    tacticalHint: { zh: '利用 Dash 撞殺不觸發自爆底層代碼，滑步貼臉破防。', en: 'Dash-bump kills skip the pop path — slide in close to break defense.' },
-    bossName: { zh: "Titan「鐵砧」", en: "Titan “Anvil”" },
+    briefing: { zh: '生命鎖定 35；戰場常駐 2 台無敵重砲轟炸；疾走幼體死亡必自爆。同屏 55 隻迫擊砲+自爆+酸液天敵群。', en: 'HP capped at 35; two invuln heavy guns always bombard; scurriers always pop on death. Cap 55 mortar/pop/acid counters.' },
+    tacticalHint: { zh: '利用衝刺撞殺不觸發自爆底層代碼，滑步貼臉破防。', en: 'Dash-bump kills skip the pop path — slide in close to break defense.' },
+    bossName: { zh: "泰坦「鐵砧」", en: "Titan “Anvil”" },
     bossModifier: { zh: "兩側加農砲全圖覆蓋，近身釋放 360° 反衝擊震波", en: "Side cannons blanket the arena; close range triggers a 360° counter-shockwave" }
   },
   op_02: {
     name: { zh: '折光禁區', en: 'REFRACTION ZONE' },
     title: { zh: '【破鏡者】', en: '[MIRROR BREAKER]' },
     badgeTitle: { zh: '[折光稜鏡破碎之眼]', en: '[SHATTERED PRISM EYE]' },
-    briefing: { zh: '40% 精英帶 mirror 反射盾（反彈 100% 殺傷）；空槍反噬扣 6 HP；HP 鎖定 45。同屏 60 隻散開怪潮。', en: '40% elites carry mirror shields (100% reflect); dry-fire backlash −6 HP; HP cap 45. Cap 60 spread pack.' },
-    tacticalHint: { zh: 'EMP 破盾聚怪，創造直線貫穿視窗；切勿盲目對鏡面射擊。', en: 'EMP to break mirrors, clump, then pierce — never dump into the face shield.' },
-    bossName: { zh: "Dreadnought「晶壁要塞」", en: "Dreadnought “Crystal Bastion”" },
-    bossModifier: { zh: "正側面全反射稜鏡，唯正後方散熱閥為弱點；需 EMP 斷盾後貫穿", en: "Front/side prism reflectors; only the rear vent is weak — EMP the shield, then pierce" }
+    briefing: { zh: '40% 精英帶鏡面反射盾（反彈 100% 殺傷）；空槍反噬扣 6 生命；生命鎖定 45。同屏 60 隻散開怪潮。', en: '40% elites carry mirror shields (100% reflect); dry-fire backlash −6 HP; HP cap 45. Cap 60 spread pack.' },
+    tacticalHint: { zh: '電磁脈衝破盾聚怪，創造直線貫穿視窗；切勿盲目對鏡面射擊。', en: 'EMP to break mirrors, clump, then pierce — never dump into the face shield.' },
+    bossName: { zh: "無畏巨艦「晶壁要塞」", en: "Dreadnought “Crystal Bastion”" },
+    bossModifier: { zh: "正側面全反射稜鏡，唯正後方散熱閥為弱點；需電磁脈衝斷盾後貫穿", en: "Front/side prism reflectors; only the rear vent is weak — EMP the shield, then pierce" }
   },
   op_03: {
     name: { zh: '超導熔毀', en: 'SUPERCONDUCT MELT' },
     title: { zh: '【雷霆制約者】', en: '[THUNDER BINDER]' },
     badgeTitle: { zh: '[高壓紫電球形禁錮鎖]', en: '[VIOLET ARC CAGE LOCK]' },
-    briefing: { zh: 'Brute 獲 70% 電弧抗性且免疫麻痺；Warden 護盾吸收電弧；HP 鎖定 50；維修廢料為 0。同屏 55 隻。', en: 'Brutes resist arc 70% and ignore stun; warden bubbles eat arcs; HP cap 50; zero repair scrap. Cap 55.' },
-    tacticalHint: { zh: '切角繞後死鎖 Warden，引爆環境炸藥造成真實傷害。', en: 'Flank wardens first; use barrels for true damage.' },
-    bossName: { zh: "Sovereign「法拉第之怒」", en: "Sovereign “Faraday’s Wrath”" },
+    briefing: { zh: '蠻卒獲 70% 電弧抗性且免疫麻痺；守衛者護盾吸收電弧；生命鎖定 50；維修廢料為 0。同屏 55 隻。', en: 'Brutes resist arc 70% and ignore stun; warden bubbles eat arcs; HP cap 50; zero repair scrap. Cap 55.' },
+    tacticalHint: { zh: '切角繞後死鎖守衛者，引爆環境炸藥造成真實傷害。', en: 'Flank wardens first; use barrels for true damage.' },
+    bossName: { zh: "風暴主宰「法拉第之怒」", en: "Sovereign “Faraday’s Wrath”" },
     bossModifier: { zh: "4 座風暴塔連成電磁死刑場，射擊本體引發反向落雷；需切角逐一熔斷尖塔", en: "Four storm spires form an EMP kill-field; shooting the body rebound-strikes — cut corners and melt towers" }
   },
   op_04: {
     name: { zh: '暴雨殘彈', en: 'HAIL OF SPENT SHELLS' },
     title: { zh: '【狂瀾獨挽】', en: '[LONE HOLD AGAINST THE SURGE]' },
     badgeTitle: { zh: '[黑色雙聯彈殼交錯之印]', en: '[CROSSED BLACK SHELL SIGIL]' },
-    briefing: { zh: '同屏實體強制鎖定 65 隻；連續開火超過 1.8s 散布擴大 250%（強迫點射）；HP 鎖定 40。', en: 'Hard cap 65 on-screen; continuous fire >1.8s blooms spread +250% (tap-fire only). HP cap 40.' },
-    tacticalHint: { zh: '嚴格 3 連發控槍點射，走長蛇陣拉扯並結合 Just Dash 衝擊波。', en: 'Strict 3-tap bursts, snake-kite, and Just Dash shockwaves.' },
-    bossName: { zh: "Titan「百臂巨神」", en: "Titan “Hundred-Arm Colossus”" },
+    briefing: { zh: '同屏實體強制鎖定 65 隻；連續開火超過 1.8 秒散布擴大 250%（強迫點射）；生命鎖定 40。', en: 'Hard cap 65 on-screen; continuous fire >1.8s blooms spread +250% (tap-fire only). HP cap 40.' },
+    tacticalHint: { zh: '嚴格 3 連發控槍點射，走長蛇陣拉扯並結合精準衝刺衝擊波。', en: 'Strict 3-tap bursts, snake-kite, and Just Dash shockwaves.' },
+    bossName: { zh: "泰坦「百臂巨神」", en: "Titan “Hundred-Arm Colossus”" },
     bossModifier: { zh: "4 門旋轉火神機槍，全圖交叉環形密集彈幕", en: "Four rotating gatling mounts weave crossing ring barrages across the map" }
   },
   op_05: {
     name: { zh: '奇點深淵', en: 'SINGULARITY ABYSS' },
     title: { zh: '【奇點獵手】', en: '[SINGULARITY HUNTER]' },
     badgeTitle: { zh: '[深空坍縮黑洞紫金徽印]', en: '[VOID COLLAPSE SEAL]' },
-    briefing: { zh: '戰場徘徊 2 個移動引力奇點（扭曲彈道）；可視半徑縮小至 280px；HP 鎖定 30（兩擊必殺）。固定 blink + volatile 瞬移自爆暗殺隊。', en: 'Two wandering gravity wells bend shots; vision 280px; HP cap 30 (two-hit). Blink + volatile assassin packs.' },
+    briefing: { zh: '戰場徘徊 2 個移動引力奇點（扭曲彈道）；可視半徑縮小至 280px；生命鎖定 30（兩擊必殺）。固定瞬移+不穩定自爆暗殺隊。', en: 'Two wandering gravity wells bend shots; vision 280px; HP cap 30 (two-hit). Blink + volatile assassin packs.' },
     tacticalHint: { zh: '精準預判奇點引力引導彈道，優先狙殺瞬移暗殺者。', en: 'Aim through wells; delete blink assassins first.' },
-    bossName: { zh: "Dreadnought「暗質主宰」", en: "Dreadnought “Dark-Matter Sovereign”" },
+    bossName: { zh: "無畏巨艦「暗質主宰」", en: "Dreadnought “Dark-Matter Sovereign”" },
     bossModifier: { zh: "發射黑洞坍縮力場彈，強吸力阻斷拉扯", en: "Fires black-hole collapse shells with hard pull that stalls kiting" }
   },
   op_06: {
     name: { zh: '諸神黃昏風暴', en: 'RAGNAROK STORM' },
     title: { zh: '【沙海霸主】', en: '[WASTELAND SOVEREIGN]' },
     badgeTitle: { zh: '[終焉風暴皇冠黃金神聖徽章]', en: '[ENDSTORM CROWN BADGE]' },
-    briefing: { zh: '永久 8 級黑風暴（風速 110px/s，散彈射程縮減 35%）；單次受擊扣 50% HP；零掉落。全天敵混編（同屏 65 隻，精英 35%）。', en: 'Permanent rank-8 black storm (wind 110px/s, pellet range −35%); any hit −50% HP; zero drops. Mixed counters (cap 65, 35% elite).' },
-    tacticalHint: { zh: '順應強風走位，利用重裝推進與 EMP 創造破局契機。', en: 'Ride the wind; use bulwark shove + EMP to open windows.' },
-    bossName: { zh: "Sovereign「終焉風皇」", en: "Sovereign “Endstorm Emperor”" },
+    briefing: { zh: '永久 8 級黑風暴（風速 110px/s，散彈射程縮減 35%）；單次受擊扣 50% 生命；零掉落。全天敵混編（同屏 65 隻，精英 35%）。', en: 'Permanent rank-8 black storm (wind 110px/s, pellet range −35%); any hit −50% HP; zero drops. Mixed counters (cap 65, 35% elite).' },
+    tacticalHint: { zh: '順應強風走位，利用重裝推進與電磁脈衝創造破局契機。', en: 'Ride the wind; use bulwark shove + EMP to open windows.' },
+    bossName: { zh: "風暴主宰「終焉風皇」", en: "Sovereign “Endstorm Emperor”" },
     bossModifier: { zh: "4 座風暴塔連線，旋轉風刃與全屏密集天火，極致走位考驗", en: "Four linked storm towers: spinning wind blades and full-screen skyfire — peak positioning test" }
   }
 };
@@ -832,6 +832,11 @@ var ACHIEVEMENTS_I18N = {
     title: { zh: '每日行者', en: 'DAILY' },
     detail: { zh: '完成一次每日挑戰。', en: 'Finish a daily challenge.' },
     reward: { zh: '', en: '' }
+  },
+  badge_apex_reigner: {
+    title: { zh: '荒原霸主', en: 'APEX REIGNER' },
+    detail: { zh: '戰役星庫累積 45★ 滿星大圓滿。', en: 'Earn all 45 campaign vault stars.' },
+    reward: { zh: '解鎖巔峰塗裝與軌跡', en: 'Unlocks apex paint and trail' }
   }
 };
 
@@ -1326,6 +1331,7 @@ export function tLog(msg) {
   if (msg === 'STORM BREAKER // SURGE UNLOCKED') return '風暴破除者 // 湧浪解鎖';
   if (msg.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
   if (msg.indexOf('WARNING // STORM SOVEREIGN') === 0) return '警告 // 風暴主宰降臨';
+  if (msg.indexOf('WARNING // TITAN HARPOON') === 0) return '警告 // 泰坦魚叉鎖定';
   if (msg.indexOf('WARNING // TITAN') === 0) return '警告 // 偵測到泰坦';
   for (var mk in MUTATORS_I18N) {
     if (Object.prototype.hasOwnProperty.call(MUTATORS_I18N, mk)) {
@@ -1446,6 +1452,7 @@ export function tStatus(text) {
   if (text.indexOf('GRAZE SURGE') === 0) return '擦彈湧浪 // 微型超頻就緒';
   if (text.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
   if (text.indexOf('WARNING // STORM SOVEREIGN') === 0) return '警告 // 風暴主宰降臨';
+  if (text.indexOf('WARNING // TITAN HARPOON') === 0) return '警告 // 泰坦魚叉鎖定';
   if (text.indexOf('WARNING // TITAN') === 0) return '警告 // 偵測到泰坦';
   if (text.indexOf('CLOCK RISK //') === 0) return '時鐘風險 // 首領卡住波次時鐘 — 破甲否則錯過第 15 波';
 
@@ -1685,10 +1692,11 @@ export function tBanner(text) {
   if (text.indexOf('STORM HARVEST GRAND SLAM') === 0) return text.replace('STORM HARVEST GRAND SLAM', '風暴採集大滿貫').replace('SCORE', '分數');
   if (text === 'STORM BREAKER // SURGE UNLOCKED') return '風暴破除者 // 湧浪解鎖';
   if (text.indexOf('TITAN APPROACHING') !== -1) {
-    return text.replace('TITAN APPROACHING', '泰坦逼近').replace('SECTOR', '區段');
+    return text.replace('WARNING //', '警告 //').replace('TITAN APPROACHING', '泰坦逼近').replace('SECTOR', '區段');
   }
   if (text.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
   if (text.indexOf('WARNING // STORM SOVEREIGN') === 0) return '警告 // 風暴主宰降臨';
+  if (text.indexOf('WARNING // TITAN HARPOON') === 0) return '警告 // 泰坦魚叉鎖定';
   if (text.indexOf('WARNING // TITAN') === 0) return '警告 // 偵測到泰坦';
 
   for (var rk in ROUTES_I18N) {
@@ -1732,7 +1740,6 @@ export function tBanner(text) {
   if (text.indexOf('BEHEMOTH HORN SHATTERED') === 0) return '巨獸之角碎裂 // 正面減傷失效 [硬直 2.2s]';
   if (text.indexOf('BEHEMOTH GLAND RUPTURED') === 0) return '巨獸腺体破裂 // 酸液迫擊已封閉';
   if (text.indexOf('BEHEMOTH TAIL SEVERED') === 0) return '巨獸斷尾 // 機動殘廢 [-25% 速度]';
-  if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';
   if (text.indexOf('WOLF PACK SURGE') === 0) return '狼群湧浪 // 向心壓迫';
 
   if (text.indexOf('SILO OVERCHARGE DEFENSE') === 0) return '發射井超載防禦：危地封鎖 20 秒！';
