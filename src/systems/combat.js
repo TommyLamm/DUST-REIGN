@@ -511,10 +511,15 @@ export function explodeBarrel(barrel, index, isKicked) {
     var pkd = Math.hypot(pkdx, pkdy) || 1;
     p.x = clamp(p.x + (pkdx / pkd) * 20, p.r, boundW - p.r);
     p.y = clamp(p.y + (pkdy / pkd) * 20, p.r, boundH - p.r);
-    if (p.invulnerable <= 0) {
-      var barrelHit = damagePlayer(10, 'barrel');
+    // Player-facing barrel damage is half of the old 10, and one chain can only
+    // hurt once inside the guard window (covers hardcore 0.08s invuln caps).
+    var chainGuarded = (rt.state._barrelChainGuard || 0) > 0;
+    if (p.invulnerable <= 0 && !chainGuarded) {
+      var barrelHit = damagePlayer(5, 'barrel');
       if (barrelHit > 0) {
-        p.invulnerable = 0.4;
+        rt.state._barrelChainGuard = 1.0;
+        p._capNextInvuln = undefined;
+        p.invulnerable = Math.max(p.invulnerable || 0, 0.55);
         AudioFX.hurt();
         triggerHaptic([35]);
         rt.state.shake = Math.max(rt.state.shake, 7);

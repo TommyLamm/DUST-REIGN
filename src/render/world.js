@@ -505,8 +505,27 @@ export function drawBarrels(ctx) {
   var sx;
   for (i = 0; i < rt.state.barrels.length; i += 1) {
     var barrel = rt.state.barrels[i];
-    var flashing = tickFlash(barrel);
+    var fuseLeft = barrel.chainFuse || 0;
+    var fusing = fuseLeft > 0;
+    var flashing = tickFlash(barrel) || fusing;
     var r = barrel.r;
+    if (fusing) {
+      // Pre-detonation telegraph: expanding danger ring on the dark ground.
+      var fuseT = 1 - Math.min(1, fuseLeft / 0.42);
+      var warnR = r + 18 + fuseT * 70;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 120, 48, ' + (0.35 + fuseT * 0.45) + ')';
+      ctx.lineWidth = 2 + fuseT * 2;
+      ctx.beginPath();
+      ctx.arc(barrel.x, barrel.y, warnR, 0, TAU);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 70, 30, ' + (0.08 + fuseT * 0.12) + ')';
+      ctx.beginPath();
+      ctx.arc(barrel.x, barrel.y, warnR, 0, TAU);
+      ctx.fill();
+      if (!keyGlowsOnly()) drawGlow(ctx, barrel.x, barrel.y, 28 + fuseT * 40, '#ff6633', 0.45 + fuseT * 0.35);
+      ctx.restore();
+    }
     ctx.save();
     ctx.translate(barrel.x, barrel.y);
     if (barrel.state === 'flying') {

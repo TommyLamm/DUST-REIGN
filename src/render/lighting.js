@@ -132,6 +132,7 @@ function collect(w, h, ox, oy) {
       var barrel = list[i];
       if (!barrel) continue;
       if (barrel.state === 'flying') addLight(barrel.x, barrel.y, 96, PALETTE.emissive.hostile, 0.7, px, py, w, h, ox, oy);
+      else if ((barrel.chainFuse || 0) > 0) addLight(barrel.x, barrel.y, 110, PALETTE.emissive.hostile, 0.85, px, py, w, h, ox, oy);
       else addLight(barrel.x, barrel.y, 52, PALETTE.hud.amber, 0.34, px, py, w, h, ox, oy);
     }
   }
