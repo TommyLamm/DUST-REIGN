@@ -104,7 +104,7 @@ export function run() {
     dread.empTimer = 1;
     dread.deathQueued = false;
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
-    assert(Math.abs(stunnedBarrel - 26.352) < 0.001, 'stunned dreadnought barrel was not x1.22*1.08');
+    assert(Math.abs(stunnedBarrel - 24.4) < 0.001, 'stunned dreadnought barrel was not x1.22');
     var styleBefore = rt.state.scoreBreakdown ? (rt.state.scoreBreakdown.style || 0) : 0;
     var stunKill = { kind: 'dreadnought', hp: 22, maxHp: 1600, x: 0, y: 0, aim: 0, empTimer: 1.2, mode: 'stun' };
     var lethalRear = filterEnemyDamage(stunKill, 20, { source: 'bullet', x: -40, y: 0 });
