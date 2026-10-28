@@ -1,6 +1,6 @@
 import { rt } from '../core/runtime.js';
 import { backInterlude, chooseInterlude, confirmExtract, confirmPushDeeper, nudgeInterlude, tickInterlude } from '../systems/interlude.js';
-import { isChinese, onLanguageChange, tRouteName, tRouteReward, tRouteRule, tUpgradeText, tUpgradeTitle, tWeaponLine, tWeaponName } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tArmoryOptionDetail, tArmoryOptionName, tRouteName, tRouteReward, tRouteRule, tUpgradeText, tUpgradeTitle, tWeaponLine, tWeaponName } from '../core/i18n.js';
 
 var bound = false;
 var lastSig = '';
@@ -50,9 +50,9 @@ function fillCards(parent, options, selected, onPick) {
       var detail = option.detail;
       var reward = option.reward;
       if (zh && option.id) {
-        name = tRouteName(option.id) || tUpgradeTitle(option) || tWeaponName(option.id) || name;
+        name = tArmoryOptionName(option.id) || tRouteName(option.id) || tUpgradeTitle(option) || tWeaponName(option.id) || name;
         rule = tRouteRule(option.id) || tUpgradeText(option) || rule;
-        detail = tUpgradeText(option) || tWeaponLine(option.id) || detail;
+        detail = tArmoryOptionDetail(option.id) || tUpgradeText(option) || tWeaponLine(option.id) || detail;
         reward = tRouteReward(option.id) || reward;
       }
       var card = el('button', 'interlude-card' + (index === selected ? ' is-selected' : '') + (option.sector ? ' is-' + option.sector : ''));
@@ -90,6 +90,13 @@ function renderInterlude(panel, il) {
   } else if (il.step === 'title') {
     kicker = zh ? '下一區段' : 'NEXT SECTOR';
     heading = il.title || (zh ? '下一幕' : 'NEXT ACT');
+    // Prefer live locale if title was stamped in the other language.
+    if (il.title && il.title.indexOf('ACT I') === 0) heading = zh ? '第一幕 — 乾線邊境' : il.title;
+    else if (il.title && il.title.indexOf('ACT II') === 0) heading = zh ? '第二幕 — 鐵鏽盆地' : il.title;
+    else if (il.title && il.title.indexOf('ACT III') === 0) heading = zh ? '第三幕 — 黑玻璃' : il.title;
+    else if (il.title && il.title.indexOf('ACT ') === 0 && il.title.indexOf('OVERTIME') !== -1) {
+      heading = zh ? il.title.replace(/^ACTs+(d+)s*—s*OVERTIME$/, '第 $1 幕 — 加時') : il.title;
+    } else if (zh && il.title && il.title.indexOf('第一幕') === 0) heading = il.title;
     hint = '';
   }
   shell.appendChild(el('p', 'interlude-kicker', kicker));

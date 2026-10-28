@@ -1,4 +1,5 @@
 import { WEAPON_MODES } from '../config.js';
+import { tActTitle } from '../core/i18n.js';
 import { rt } from '../core/runtime.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { routeById } from '../data/routes.js';
@@ -65,8 +66,7 @@ export function assignRoute(state, id, announce) {
 function nextActTitle(wave) {
   var next = (wave | 0) + 1;
   var act = next <= 5 ? 1 : next <= 10 ? 2 : next <= 15 ? 3 : Math.floor((next - 1) / 5) + 1;
-  if (ACT_TITLES[act]) return ACT_TITLES[act];
-  return 'ACT ' + act + ' — OVERTIME';
+  return tActTitle(act, ACT_TITLES[act] || null);
 }
 
 function armoryOptions() {
