@@ -45,6 +45,8 @@ export function normalizeDamageSource(source) {
   if (s === 'poi-overload' || s === 'overload') return 'poi:overload';
   if (s === 'smuggler') return 'meta:smuggler';
   if (s.indexOf('contact:') === 0) return s;
+  if (s.indexOf('boss:') === 0) return s;
+  if (s.indexOf('bullet:') === 0) return s;
   return s;
 }
 
@@ -89,6 +91,12 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'contract:backlash') return '合約反噬';
     if (s === 'poi:overload') return '據點過載';
     if (s === 'meta:smuggler') return '走私交易';
+    if (s === 'boss:flak') return '首領散彈';
+    if (s === 'boss:spiral') return '首領螺旋彈';
+    if (s === 'boss:shot' || s === 'boss:basic') return '首領彈幕';
+    if (s === 'bullet:elite') return '菁英彈';
+    if (s === 'bullet:burrower' || s === 'bullet:spike') return '鑽地蟲尖刺';
+    if (s.indexOf('bullet:') === 0) return '敵彈 · ' + s.slice(7);
     if (s === 'unknown') return '不明傷害';
     return s;
   }
@@ -107,6 +115,12 @@ export function formatDamageSourceLabel(source, zh) {
   if (s === 'contract:backlash') return 'CONTRACT BACKLASH';
   if (s === 'poi:overload') return 'POI OVERLOAD';
   if (s === 'meta:smuggler') return 'SMUGGLER DEAL';
+  if (s === 'boss:flak') return 'BOSS FLAK';
+  if (s === 'boss:spiral') return 'BOSS SPIRAL';
+  if (s === 'boss:shot' || s === 'boss:basic') return 'BOSS SHOT';
+  if (s === 'bullet:elite') return 'ELITE ROUND';
+  if (s === 'bullet:burrower' || s === 'bullet:spike') return 'BURROWER SPIKE';
+  if (s.indexOf('bullet:') === 0) return 'HOSTILE · ' + s.slice(7).toUpperCase();
   if (s === 'unknown') return 'UNKNOWN';
   return s;
 }

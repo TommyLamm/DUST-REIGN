@@ -296,6 +296,7 @@ registerEnemyStrategy('elite', {
           var eliteShot = scaledShot(14, 115, true);
           pushEnemyBullet({
             type: 'basic',
+            ownerKind: e.kind || 'elite',
             x: e.x + Math.cos(sa) * (e.r + 4),
             y: e.y + Math.sin(sa) * (e.r + 4),
             vx: Math.cos(sa) * eliteShot.speed,
