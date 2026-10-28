@@ -143,6 +143,11 @@
   outline: none;
 }
 
+.setting-slider:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
 .setting-slider::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;

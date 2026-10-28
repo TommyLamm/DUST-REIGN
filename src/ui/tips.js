@@ -2,7 +2,7 @@ import { rt } from '../core/runtime.js';
 import { readTipsEnabled, readTipsSeen, writeTipsSeen } from '../core/meta-store.js';
 import { syncDashHeatClock } from '../systems/abilities.js';
 import { takeRunUnlocks } from '../systems/meta.js';
-import { isChinese, onLanguageChange, tMutatorBlurb, tMutatorName, tStatus, tTip } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tMutatorBlurb, tMutatorName, tStatus, tTip, tUnlockLabel } from '../core/i18n.js';
 
 var TIP_MS = 4000;
 var GAP_MS = 20000;
@@ -333,6 +333,7 @@ function scanTriggers() {
   if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
+  if (choices.length > 0) offer('first-upgrade');
   var ci;
   for (ci = 0; ci < choices.length; ci += 1) {
     if (choiceCompletesFusion(choices[ci])) {
@@ -405,10 +406,16 @@ function syncDashHeatHud() {
 function showUnlocks(toast, unlocks) {
   var labels = [];
   var i;
-  for (i = 0; i < unlocks.length; i += 1) labels.push(unlocks[i].label || unlocks[i].id || (isChinese() ? '解鎖' : 'UNLOCK'));
+  for (i = 0; i < unlocks.length; i += 1) {
+    var u = unlocks[i];
+    labels.push(tUnlockLabel(u) || u.label || u.id || (isChinese() ? '解鎖' : 'UNLOCK'));
+  }
   toast.setAttribute('aria-live', 'polite');
   toast.setAttribute('role', 'status');
-  toast.textContent = (isChinese() ? '已解鎖 // ' : 'UNLOCKED // ') + labels.join(' · ');
+  var joined = labels.join(' · ');
+  toast.textContent = isChinese()
+    ? joined
+    : (joined.indexOf('UNLOCKED') === 0 ? joined : ('UNLOCKED // ' + joined));
   toast.hidden = false;
   toast.setAttribute('aria-hidden', 'false');
 }
