@@ -87,7 +87,7 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'boss:lightning') return '首領雷擊';
     if (s === 'boss:storm-eye') return '風暴之眼';
     if (s === 'friendly:core') return '不穩定核心';
-    if (s === 'friendly:barrel') return '炸藥桶';
+    if (s === 'friendly:barrel') return '友軍桶爆';
     if (s === 'hardcore:corrosion') return '硬核腐蝕';
     if (s === 'contract:backlash') return '合約反噬';
     if (s === 'poi:overload') return '據點過載';
@@ -114,7 +114,7 @@ export function formatDamageSourceLabel(source, zh) {
   if (s === 'boss:lightning') return 'LIGHTNING';
   if (s === 'boss:storm-eye') return 'STORM EYE';
   if (s === 'friendly:core') return 'VOLATILE CORE';
-  if (s === 'friendly:barrel') return 'BARREL';
+  if (s === 'friendly:barrel') return 'FRIENDLY BARREL';
   if (s === 'hardcore:corrosion') return 'CORROSION';
   if (s === 'contract:backlash') return 'CONTRACT BACKLASH';
   if (s === 'poi:overload') return 'POI OVERLOAD';
