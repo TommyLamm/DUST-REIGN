@@ -364,6 +364,8 @@ export function ensureScriptedBoss() {
 }
 
 function createTitan(boundW) {
+    // Hard deny: never ship an elite entity on Sovereign waves (splitter/backdoors).
+  if (kind === 'elite' && recipe && recipe.boss === 'sovereign') kind = 'crawler';
   var stats = enemyProfile('titan', rt.state.wave, currentRecipe());
   var titanHp = stats.hp;
   var leftPartHp = Math.round(titanHp * 0.22);
