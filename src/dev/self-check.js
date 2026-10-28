@@ -471,38 +471,52 @@ export function selfCheck() {
     var fusionExecOk = staticTempestOk && kineticShrapnelOk && overchargeRetaliationOk && vulcanMeltdownOk && gravitonBulwarkOk && plasmaMeltdownOk && eventHorizonOk;
 
     // Phase 2 Step 4: Build Inspector & Fusion Matrix UI Check
+    function mockEl(seed) {
+      var attrs = {};
+      var node = {
+        textContent: '',
+        innerHTML: '',
+        title: '',
+        disabled: false,
+        hidden: false,
+        getAttribute: function (k) { return Object.prototype.hasOwnProperty.call(attrs, k) ? attrs[k] : null; },
+        setAttribute: function (k, v) { attrs[k] = String(v); },
+        removeAttribute: function (k) { delete attrs[k]; }
+      };
+      if (seed) Object.keys(seed).forEach(function (k) { node[k] = seed[k]; });
+      return node;
+    }
     var mockInspectorUi = {
       chassisSelector: {
         buttons: [],
         querySelectorAll: function () { return this.buttons; }
       },
-      chassisDesc: { textContent: '' },
-      statFireRate: { textContent: '' },
-      statDamage: { textContent: '' },
-      statCrit: { textContent: '' },
-      statBallistics: { textContent: '' },
-      statSpeed: { textContent: '' },
-      statMagnet: { textContent: '' },
-      buildPassiveTags: { innerHTML: '' },
-      installedChipsCount: { textContent: '' },
-      installedChipsList: { innerHTML: '' },
-      activeFusionsCount: { textContent: '' },
-      fusionMatrixList: { innerHTML: '' }
+      chassisDesc: mockEl(),
+      statFireRate: mockEl(),
+      statDamage: mockEl(),
+      statCrit: mockEl(),
+      statBallistics: mockEl(),
+      statSpeed: mockEl(),
+      statMagnet: mockEl(),
+      buildPassiveTags: mockEl(),
+      installedChipsCount: mockEl(),
+      installedChipsList: mockEl(),
+      activeFusionsCount: mockEl(),
+      fusionMatrixList: mockEl()
     };
     WEAPON_MODES.forEach(function (m) {
       var classes = [];
-      mockInspectorUi.chassisSelector.buttons.push({
-        getAttribute: function (k) { return k === 'data-mode' ? m : null; },
-        setAttribute: function () {},
-        classList: {
-          toggle: function (cls, val) {
-            var idx = classes.indexOf(cls);
-            if (val && idx === -1) classes.push(cls);
-            else if (!val && idx !== -1) classes.splice(idx, 1);
-          },
-          contains: function (cls) { return classes.indexOf(cls) !== -1; }
-        }
-      });
+      var btn = mockEl();
+      btn.getAttribute = function (k) { return k === 'data-mode' ? m : null; };
+      btn.classList = {
+        toggle: function (cls, val) {
+          var idx = classes.indexOf(cls);
+          if (val && idx === -1) classes.push(cls);
+          else if (!val && idx !== -1) classes.splice(idx, 1);
+        },
+        contains: function (cls) { return classes.indexOf(cls) !== -1; }
+      };
+      mockInspectorUi.chassisSelector.buttons.push(btn);
     });
 
     test.player.apocalypseThor = false;
@@ -520,7 +534,7 @@ export function selfCheck() {
     test.player.damage = 26;
     test.player.overdrive = 0;
     renderBuildInspector();
-    var breacherUiOk = mockInspectorUi.statFireRate.textContent === '3.0 RPS (x5)' &&
+    var breacherUiOk = mockInspectorUi.statFireRate.textContent === '3.0 RPS (×5)' &&
       mockInspectorUi.chassisDesc.textContent.indexOf('BREACHER') !== -1 &&
       mockInspectorUi.activeFusionsCount.textContent === '0' &&
       mockInspectorUi.fusionMatrixList.innerHTML.indexOf('is-locked') !== -1;
