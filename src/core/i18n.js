@@ -1621,6 +1621,9 @@ export function tBanner(text) {
 
 
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
+  if (text === 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING') return '加時戰區 // 陣亡僅半獎 · 繼續推進';
+  if (text.indexOf('BEHEMOTH ENRAGED') === 0) return '巨獸暴怒 // 核心超頻';
   if (text === 'ARMOR BREAK') return '破甲輸出';
   if (text === 'CHARGE') return '衝撞';
   if (text === 'DOUBLE RAM') return '雙重衝撞';
