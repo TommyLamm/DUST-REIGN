@@ -543,12 +543,16 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         near.sort(function (a, b) {
           return dist2(e.x, e.y, a.x, a.y) - dist2(e.x, e.y, b.x, b.y);
         });
-        var give = Math.min(3, near.length);
+        // Debut waves: teach bubble-break before full pack shields.
+        var earlyWarden = ((rt.state.wave | 0) <= 12) && !(rt.state.boss && rt.state.boss.hp > 0);
+        var give = Math.min(earlyWarden ? 2 : 3, near.length);
+        var shieldFrac = earlyWarden ? 0.28 : 0.4;
+        var shieldLife = earlyWarden ? 3.8 : 5;
         var gi;
         for (gi = 0; gi < give; gi += 1) {
           var target = near[gi];
-          target.shieldHp = Math.max(target.shieldHp || 0, (target.maxHp || target.hp) * 0.4);
-          target.shieldTimer = 5;
+          target.shieldHp = Math.max(target.shieldHp || 0, (target.maxHp || target.hp) * shieldFrac);
+          target.shieldTimer = shieldLife;
           target.shieldOwner = e;
           target.knockbackImmune = true;
         }
