@@ -147,6 +147,17 @@ function sovereignEyeThreat() {
   return Math.hypot(p.x - (boss.eyeX || boss.x), p.y - (boss.eyeY || boss.y)) > boss.eyeRadius + p.r;
 }
 
+function sovereignShieldedThreat() {
+  var boss = rt.state && rt.state.boss;
+  if (!boss || boss.kind !== 'sovereign' || !(boss.hp > 0)) return false;
+  return !!boss.shielded;
+}
+
+function stormTowerNear() {
+  if (enemyNearKind('stormTower', 380)) return true;
+  return enemyOfKind('stormTower');
+}
+
 
 function moltenHazardNear() {
   var list = rt.state && rt.state.artilleryTargets;
@@ -296,6 +307,7 @@ function scanTriggers() {
   if (((rt.state.wave || 1) >= 16 || rt.state.overtime) && enemyNearKind('bulwark', 240)) offer('bulwark-face');
   if (((rt.state.wave || 1) >= 19 || (rt.state.boss && rt.state.boss.kind === 'behemoth')) && (enemyNearKind('behemoth', 420) || (rt.state.boss && rt.state.boss.kind === 'behemoth' && rt.state.boss.hp > 0))) offer('behemoth-parts');
   if (sovereignEyeThreat()) offer('storm-eye');
+  if (sovereignShieldedThreat() || stormTowerNear()) offer('storm-tower');
   if (dreadArmorBreakThreat()) offer('dread-break');
   if (dreadLongFightThreat()) offer('dread-fatigue');
   if (dreadExtremeClockThreat()) {

@@ -1119,6 +1119,7 @@ export function tTip(id, kind) {
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'HOLD THE STORM EYE · STEP OUT ONLY BETWEEN PULSES';
+    if (id === 'storm-tower') return 'STORM TOWERS FEED THE SOVEREIGN SHIELD · KILL TOWERS FIRST — EMP / SPIRE HIT THEM HARD';
     if (id === 'dread-break') return 'BAIT CHARGE INTO THE CRAG FOR ARMOR BREAK · NO MID-RAM BREAK · DUMP DURING THE STUN WINDOW';
     if (id === 'dread-fatigue') return 'LONG DREAD FIGHT · FORCE A CRAG BREAK — KITING FOREVER LOSES THE CLOCK';
     if (id === 'dread-clock') return 'WAVE CLOCK PAUSES WHILE THE DREAD LIVES · EXTREME KITE = TIME-CAP BEFORE WAVE 15 — FORCE A CRAG BREAK';
@@ -1154,6 +1155,7 @@ export function tTip(id, kind) {
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '守住風暴之眼 · 只在脈衝間隙短暫離開';
+  if (id === 'storm-tower') return '風暴尖塔餵養主宰護盾 · 先拆尖塔 — EMP／傳導尖塔對其超效';
   if (id === 'dread-break') return '把衝撞引向岩障破甲 · 雙衝中段不破甲 · 在硬直窗傾瀉';
   if (id === 'dread-fatigue') return '無畏戰拖太久 · 快逼岩障破甲 — 風箏到死會來不及清第 15 波';
   if (id === 'dread-clock') return '無畏存活時波次時鐘暫停 · 極端風箏會在第 15 波前超時 — 快逼岩障破甲';
