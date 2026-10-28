@@ -538,7 +538,7 @@ registerEnemyStrategy('dreadnought', {
     } else if (info && info.source === 'bullet') {
       // Unbroken plating (not idle-mult, not charge DR): recover Dread p50 after Titan XP coupling.
       // Break windows stay the dump; charge/tele keep falsified 0.70.
-      amount *= 0.90;
+      amount *= 0.85;
     }
     return amount;
   },
