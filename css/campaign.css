@@ -578,6 +578,7 @@ html.reduced-motion .op-pill {
   letter-spacing: 0.05em;
 }
 
+/* badge lock contrast */
 .hardcore-badge-tag {
   font-size: 10px;
   padding: 3px 8px;
@@ -618,11 +619,12 @@ html.reduced-motion .op-pill {
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background: rgba(40, 15, 12, 0.7);
-  border: 1px solid var(--rust);
+  background: rgba(32, 10, 8, 0.88);
+  border: 1px solid rgba(237, 104, 66, 0.65);
   font-size: 10px;
-  color: #ff9170;
-  font-weight: 600;
+  color: #ffb29a;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
 }
 
 .handicap-tag i {
@@ -636,11 +638,13 @@ html.reduced-motion .op-pill {
   flex-direction: column;
   gap: 4px;
   padding: 8px 10px;
-  background: rgba(16, 17, 14, 0.7);
-  border-left: 2px solid var(--rust);
+  background: rgba(8, 9, 7, 0.82);
+  border: 1px solid rgba(232, 224, 198, 0.22);
+  border-left: 3px solid var(--rust);
   font-size: 11px;
-  color: var(--dust);
+  color: rgba(232, 224, 198, 0.88);
   line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
 
 .hardcore-intel-block strong {
