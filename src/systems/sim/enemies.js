@@ -340,6 +340,15 @@ export function stepEnemies(dt, frame) {
         rt.state.deathCause = sticky || nonElite || 'unknown';
       }
     }
+    if (((rt.state.wave | 0) >= 14) && (rt.state.deathCause === 'bullet:elite' || rt.state.deathCause === 'contact:elite')) {
+      var scrubNon = rt.state.lastNonEliteDamageSource || '';
+      var scrubRecent = rt.state.recentDamageSources || [];
+      var scrubFrom = '';
+      for (var sri = scrubRecent.length - 1; sri >= 0; sri -= 1) {
+        if (scrubRecent[sri] && scrubRecent[sri] !== 'bullet:elite' && scrubRecent[sri] !== 'contact:elite') { scrubFrom = scrubRecent[sri]; break; }
+      }
+      rt.state.deathCause = scrubNon || scrubFrom || 'unknown';
+    }
     triggerGameOver();
   }
 }
