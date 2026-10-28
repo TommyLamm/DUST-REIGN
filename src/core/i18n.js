@@ -464,6 +464,42 @@ var ROUTES_I18N = {
 };
 
 
+
+var CAMPAIGN_MILESTONES_I18N = {
+  emergency_overdrive: { zh: '戰術晶片【急救超頻】', en: 'TACTICAL CHIP [EMERGENCY OVERDRIVE]' },
+  paint_dusk_camo: { zh: '機體塗裝【暮沙迷彩】', en: 'CHASSIS PAINT [DUSK CAMO]' },
+  resonant_emp: { zh: '戰術晶片【共振磁暴】', en: 'TACTICAL CHIP [RESONANT EMP]' },
+  paint_rust_heavy: { zh: '機體塗裝【鐵鏽重工】', en: 'CHASSIS PAINT [RUST HEAVY]' },
+  heavy_pierce: { zh: '戰術晶片【重裝穿甲】', en: 'TACTICAL CHIP [HEAVY PIERCE]' },
+  paint_storm_emp: { zh: '機體塗裝【暴風電磁】', en: 'CHASSIS PAINT [STORM EMP]' },
+  paint_aurora_sovereign: { zh: '傳奇塗裝【極光神君】與稱號【巔峰征服者】', en: 'LEGENDARY PAINT [AURORA SOVEREIGN] + TITLE [APEX CONQUEROR]' },
+  abyss_resonator: { zh: '戰術晶片【晶化共振核】', en: 'TACTICAL CHIP [ABYSS RESONATOR]' },
+  paint_crystal_prismatic: { zh: '傳奇塗裝【稜鏡晶芒】與稱號【深淵支配者】', en: 'LEGENDARY PAINT [PRISMATIC CRYSTAL] + TITLE [ABYSS DOMINATOR]' }
+};
+
+var CAMPAIGN_SECTORS_I18N = {
+  1: {
+    name: { zh: '暮沙荒原', en: 'DUSK WASTES' },
+    desc: { zh: '無垠暮色沙海，巡遊清道夫與衝鋒蟲群出沒。', en: 'Endless dusk sand seas — scavenger patrols and rusher packs.' }
+  },
+  2: {
+    name: { zh: '鐵鏽熔坑', en: 'RUST CRATER' },
+    desc: { zh: '熔岩熾熱廢土，高溫地磚、遠程曲射砲與腐蝕酸液橫行。', en: 'Molten scraplands — hot tiles, lobbing guns, and acid.' }
+  },
+  3: {
+    name: { zh: '狂暴雷霆', en: 'STORM FRONT' },
+    desc: { zh: '黑夜強風暴前線，迷霧收窄、硬光護盾與電磁尖塔肆虐。', en: 'Night storm front — fog squeeze, hardlight, and spires.' }
+  },
+  4: {
+    name: { zh: '晶化深淵', en: 'CRYSTAL ABYSS' },
+    desc: { zh: '幽邃地脈晶化裂谷，高頻共振水晶、折射屏障與自律防衛機構橫行。', en: 'Crystal ley-rifts — resonators, refraction barriers, auto-defenses.' }
+  },
+  5: {
+    name: { zh: '極限試煉', en: 'EX TRIALS' },
+    desc: { zh: '超越極限的絕望深淵，唯有精通全武裝之老兵方能踏足。', en: 'Beyond the edge — veterans only, full-kit mastery required.' }
+  }
+};
+
 var CAMPAIGN_STAGES_I18N = {
   stage_1_1: {
     name: { zh: '荒漠清道夫', en: 'WASTELAND SWEEPER' },
@@ -1038,6 +1074,25 @@ export function tRouteReward(id) {
   return '';
 }
 
+
+
+export function tCampaignMilestoneName(id, fallback) {
+  var item = CAMPAIGN_MILESTONES_I18N[id];
+  if (item) return currentLang === 'zh' ? item.zh : item.en;
+  return fallback || id || '';
+}
+
+export function tCampaignSectorName(id, fallback) {
+  var item = CAMPAIGN_SECTORS_I18N[id];
+  if (item && item.name) return currentLang === 'zh' ? item.name.zh : item.name.en;
+  return fallback || '';
+}
+
+export function tCampaignSectorDesc(id, fallback) {
+  var item = CAMPAIGN_SECTORS_I18N[id];
+  if (item && item.desc) return currentLang === 'zh' ? item.desc.zh : item.desc.en;
+  return fallback || '';
+}
 
 export function tCampaignStageName(id, fallback) {
   var item = CAMPAIGN_STAGES_I18N[id];

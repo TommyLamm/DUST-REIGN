@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange, tCampaignStageName, tCampaignStageDesc, tCampaignStageStar, tCampaignThreat } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tCampaignMilestoneName, tCampaignSectorName, tCampaignSectorDesc, tCampaignStageName, tCampaignStageDesc, tCampaignStageStar, tCampaignThreat } from '../core/i18n.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
 import { CAMPAIGN_MILESTONES, CAMPAIGN_SECTORS, CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 import { rt } from '../core/runtime.js';
@@ -44,7 +44,7 @@ function getNextMilestone(totalStars, zh) {
   for (var i = 0; i < CAMPAIGN_MILESTONES.length; i += 1) {
     var m = CAMPAIGN_MILESTONES[i];
     if (totalStars < m.stars) {
-      return (zh ? '下一目標: ' : 'NEXT REWARD: ') + m.stars + '★ ' + m.name;
+      return (zh ? '下一目標: ' : 'NEXT REWARD: ') + m.stars + '★ ' + tCampaignMilestoneName(m.id, m.name);
     }
   }
   return zh ? '已解鎖全部戰役里程碑！' : 'ALL MILESTONES UNLOCKED!';
@@ -139,7 +139,9 @@ export function renderModal() {
         tab.setAttribute('aria-selected', isSecActive ? 'true' : 'false');
         tab.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
 
-        var titleSpan = el('span', '', zh ? sector.name.split(' (')[0] : sector.code + ' ' + (sector.biome ? sector.biome.toUpperCase() : ''));
+        var titleSpan = el('span', '', tCampaignSectorName(sector.id, zh ? sector.name.split(' (')[0] : sector.code));
+        tab.setAttribute('title', tCampaignSectorDesc(sector.id, sector.desc || ''));
+        tab.setAttribute('aria-label', tCampaignSectorName(sector.id, sector.code) + ' — ' + tCampaignSectorDesc(sector.id, sector.desc || ''));
         var reqSmall = el('small', '', isLocked ? (sector.reqStars + '★ ' + (zh ? '解鎖' : 'REQ')) : (zh ? '已開放' : 'SECURED'));
         tab.appendChild(titleSpan);
         tab.appendChild(reqSmall);
@@ -156,6 +158,22 @@ export function renderModal() {
         sectorTabsElement.appendChild(tab);
       })(CAMPAIGN_SECTORS[s]);
     }
+  }
+
+  // Sector description for active sector
+  var sectorDescEl = document.getElementById('campaignSectorDesc');
+  if (!sectorDescEl && stageGridElement && stageGridElement.parentNode) {
+    sectorDescEl = el('p', 'campaign-sector-desc');
+    sectorDescEl.id = 'campaignSectorDesc';
+    stageGridElement.parentNode.insertBefore(sectorDescEl, stageGridElement);
+  }
+  if (sectorDescEl) {
+    var activeSec = null;
+    for (var si = 0; si < CAMPAIGN_SECTORS.length; si += 1) {
+      if (CAMPAIGN_SECTORS[si].id === activeSector) { activeSec = CAMPAIGN_SECTORS[si]; break; }
+    }
+    sectorDescEl.textContent = activeSec ? tCampaignSectorDesc(activeSec.id, activeSec.desc || '') : '';
+    sectorDescEl.hidden = !activeSec;
   }
 
   // 3. Render stage cards for active sector
