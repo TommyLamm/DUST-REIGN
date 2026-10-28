@@ -87,7 +87,12 @@ function mutatorText() {
 
 function tipText(id) {
   if (id === 'mutator') return mutatorText();
-  return tTip(id, inputKind());
+  // Arming/warn ids keep their own seen-flag so presence tips do not burn the lethal window.
+  var copyId = id;
+  if (id === 'mine-arming') copyId = 'mine';
+  else if (id === 'scurrier-arming') copyId = 'scurrier';
+  else if (id === 'burrower-warn') copyId = 'burrower';
+  return tTip(copyId, inputKind());
 }
 
 function canScan() {
@@ -333,14 +338,14 @@ function scanTriggers() {
   if (rt.state.contract) offer('contract');
   if (acidHazardNear() || ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter'))) offer('acid');
   if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyNearKind('warden', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
-  if ((rt.state.wave || 1) >= 12 && burrowerWarnNear()) offerUrgent('burrower');
+  if ((rt.state.wave || 1) >= 12 && burrowerWarnNear()) offerUrgent('burrower-warn');
   else if ((rt.state.wave || 1) >= 12 && enemyOfKind('burrower')) offer('burrower');
-  if ((rt.state.wave || 1) >= 7 && scurrierArmingNear()) offerUrgent('scurrier');
+  if ((rt.state.wave || 1) >= 7 && scurrierArmingNear()) offerUrgent('scurrier-arming');
   else if ((rt.state.wave || 1) >= 7 && enemyOfKind('scurrier')) offer('scurrier');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 10 && rusherChargeNear()) offerUrgent('rusher-charge');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 8 && bruteNear()) offer('brute');
   if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
-  if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offerUrgent('mine');
+  if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offerUrgent('mine-arming');
   else if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offerUrgent('molten');
