@@ -1526,14 +1526,14 @@ export function tTip(id, kind) {
   if (id === 'just-dash') return '精準衝刺 · 緊貼威脅擦身而過可重置冷卻並必定暴擊';
   if (id === 'graze') return '貼近敵彈擦身而過即可擦彈 · 得分並回能 · 累積 5 次觸發超頻';
   if (id === 'barrel') return '射擊炸藥桶或衝刺將其踢入敵群';
-  if (id === 'emp') return 'Q 或右鍵 EMP 可消彈擊暈 · E/F 部署戰術副裝備';
+  if (id === 'emp') return 'Q 或右鍵電磁脈衝可消彈擊暈 · E/F 部署戰術副裝備';
   if (id === 'core-boss') return '核心引爆可對首領造成 350 點重創';
   if (id === 'titan-parts') return '泰坦部位 · 左主砲／右發射槽破毀有硬直窗 — 魚叉拉扯是輸出窗';
   if (id === 'contract') return '合約為選填任務 · 完成後立即發放獎勵';
   if (id === 'fusion') return '完成晶片融合 · 核心晶片將永久融入機體';
   if (id === 'route') return '挑選行進路線 · 並為下個章節挑選軍械庫升級';
   if (id === 'contrast') return '敵彈看不清？暫停選單 → 對比度: 高 · 可加強敵方與彈體可讀性';
-  if (id === 'language') return '需要切換 繁中／ENG？暫停 → 系統設定 → 語言 · 介面與 tip 同步切換';
+  if (id === 'language') return '需要切換 繁中／英文？暫停 → 系統設定 → 語言 · 介面與提示同步切換';
   if (id === 'first-upgrade') return '挑選 1 張卡片 · 數字鍵 1–3 · R 重骰 · B 放逐 · X 跳過（回血＋分數）';
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
@@ -1549,7 +1549,7 @@ export function tTip(id, kind) {
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '守住風暴之眼 · 只在脈衝間隙短暫離開';
-  if (id === 'storm-tower') return '風暴尖塔餵養主宰護盾 · 先拆尖塔 — EMP／傳導尖塔對其超效';
+  if (id === 'storm-tower') return '風暴尖塔餵養主宰護盾 · 先拆尖塔 — 電磁脈衝／傳導尖塔對其超效';
   if (id === 'dread-break') return '把衝撞引向岩障破甲 · 雙衝中段不破甲 · 在硬直窗傾瀉';
   if (id === 'dread-fatigue') return '無畏戰拖太久 · 快逼岩障破甲 — 風箏到死會來不及清第 15 波';
   if (id === 'dread-clock') return '無畏存活時波次時鐘暫停 · 極端風箏會在第 15 波前超時 — 快逼岩障破甲';
