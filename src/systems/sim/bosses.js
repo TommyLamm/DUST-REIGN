@@ -382,7 +382,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.empTimer = Math.max(e.empTimer || 0, e.stunT > 0 ? e.stunT : 0);
     if (e.stunT <= 0) {
       e.mode = 'idle';
-      e.attackCd = 3.3;
+      e.attackCd = 2.6;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
