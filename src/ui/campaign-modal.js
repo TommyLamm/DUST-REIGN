@@ -135,6 +135,7 @@ export function renderModal() {
   if (confirmBtnElement) {
     var confSpan = confirmBtnElement.querySelector('span');
     if (confSpan) confSpan.textContent = zh ? '確認並返回' : 'CONFIRM & RETURN';
+    confirmBtnElement.setAttribute('aria-label', zh ? '確認並返回出擊配置' : 'Confirm and return to loadout');
   }
 
   // 1. Update summary bar
@@ -233,7 +234,9 @@ export function renderModal() {
 
       // Head: Code & Type
       var head = el('div', 'stage-card-head');
-      var codeSpan = el('span', 'stage-code', stg.code);
+      var codeSpan = el('span', 'stage-code', zh && stg.code
+        ? String(stg.code).replace(/^STAGE\s*/i, '關卡 ')
+        : stg.code);
       var typeBadge = el('span', 'stage-type-badge', getStageTypeLabel(stg.type, zh));
       head.appendChild(codeSpan);
       head.appendChild(typeBadge);

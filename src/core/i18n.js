@@ -1545,9 +1545,59 @@ export function tCombatFloater(text) {
   if (text.indexOf('STATIC OVERCLOCK') === 0) return text.replace('STATIC OVERCLOCK', '靜電超頻');
   if (text.indexOf('THERMAL FRACTURE') === 0) return text.replace('THERMAL FRACTURE', '熱能裂傷');
   if (text.indexOf('EXECUTE ') === 0) return text.replace('EXECUTE ', '處決 ');
+  if (text === 'EXECUTE!') return '處決！';
   if (text.indexOf('THERMAL EXPLODE') === 0) return text.replace('THERMAL EXPLODE', '熱能爆裂');
   if (text === 'OVERDRIVE ORB') return '超頻寶珠';
   if (text.indexOf('+CRIT ') === 0) return text.replace('+CRIT ', '+暴擊 ');
+  if (text.indexOf('CRIT ') === 0) {
+    return text
+      .replace('CRIT ', '暴擊 ')
+      .replace('FINS', '鰭片')
+      .replace('HORN', '角')
+      .replace('GLAND', '腺')
+      .replace('TAIL', '尾')
+      .replace('MORTAR', '迫擊砲')
+      .replace('POD', '發射槽')
+      .replace('TREADS', '履帶')
+      .replace('RADIATOR', '散熱器');
+  }
+  if (text.indexOf('(RESIST)') !== -1) {
+    return text
+      .replace('(RESIST)', '(抗性)')
+      .replace('FINS', '鰭片')
+      .replace('HORN', '角')
+      .replace('GLAND', '腺')
+      .replace('TAIL', '尾')
+      .replace('MORTAR', '迫擊砲')
+      .replace('POD', '發射槽')
+      .replace('TREADS', '履帶')
+      .replace('RADIATOR', '散熱器');
+  }
+  if (/^(FINS|HORN|GLAND|TAIL|MORTAR|POD|TREADS|RADIATOR)\s*-/.test(text)) {
+    return text
+      .replace(/^FINS/, '鰭片')
+      .replace(/^HORN/, '角')
+      .replace(/^GLAND/, '腺')
+      .replace(/^TAIL/, '尾')
+      .replace(/^MORTAR/, '迫擊砲')
+      .replace(/^POD/, '發射槽')
+      .replace(/^TREADS/, '履帶')
+      .replace(/^RADIATOR/, '散熱器');
+  }
+  if (text.indexOf('PHASE ') === 0 && text.indexOf('AWAKENING') !== -1) {
+    return text.replace('PHASE ', '階段 ').replace('AWAKENING!', '覺醒！');
+  }
+  if (text === 'TUG-OF-WAR COUNTER!') return '拔河反制！';
+  if (text === 'COUNTER!') return '反擊！';
+  if (text === 'SHIELD SHATTER!') return '護盾碎裂！';
+  if (text === 'STAGGER BREAK!') return '硬直擊破！';
+  if (text === 'EVENT HORIZON!') return '事件視界！';
+  if (text.indexOf('PRISMATIC ') === 0) return text.replace('PRISMATIC ', '稜鏡 ');
+  if (text === 'CRUSH!') return '碾壓！';
+  if (text === 'WALL SLAM!') return '撞牆！';
+  if (text === 'AEGIS REFLECT 2X') return '神盾反射 2X';
+  if (text === 'WAR-CRY INTERRUPT!') return '戰吼中斷！';
+  if (text === 'BLINK INTERCEPTED!') return '瞬移攔截！';
   if (text.indexOf('BOSS +') === 0) return text.replace('BOSS +', '首領 +');
   if (text.indexOf('BOUNTY +') === 0) return text.replace('BOUNTY +', '懸賞 +');
   if (text.indexOf('STYLE +') === 0) return text.replace('STYLE +', '風格 +');
@@ -1740,6 +1790,15 @@ export function syncStaticHtml(lang) {
     metricLabels[2].textContent = zh ? '機體等級' : 'RIG LVL';
   }
   setTextById('hudWaveLabel', zh ? '拾荒時刻' : 'SCAVENGER HOUR');
+  var killsSeed = document.getElementById('hudKills');
+  if (killsSeed) {
+    var killsTxt = (killsSeed.textContent || '').trim();
+    // Seed / re-seed idle "0 HOSTILES" / "0 敵機" before hud live writes
+    if (/^\d+\s*HOSTILES$/i.test(killsTxt) || /^\d+\s*敵機$/.test(killsTxt)) {
+      var kn = (killsTxt.match(/^\d+/) || ['0'])[0];
+      killsSeed.textContent = zh ? (kn + ' 敵機') : (kn + ' HOSTILES');
+    }
+  }
   var resNames = document.querySelectorAll('#hudResonances .res-name');
   if (resNames && resNames.length >= 4) {
     resNames[0].textContent = zh ? '動能' : 'KIN';

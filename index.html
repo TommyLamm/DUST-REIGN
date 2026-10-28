@@ -75,18 +75,18 @@
                 <div class="metric metric--wave">
                   <span class="metric-label">WAVE</span>
                   <strong id="hudWave" data-wave="">01</strong>
-                  <small id="hudWaveLabel">SCAVENGER HOUR</small>
+                  <small id="hudWaveLabel">拾荒時刻</small>
                   <span class="wave-progress" aria-hidden="true"><i id="hudWaveProgress"></i></span>
                 </div>
                 <div class="metric metric--score">
                   <span class="metric-label">SCORE</span>
                   <strong id="hudScore" data-score="">000000</strong>
-                  <small id="hudKills">0 HOSTILES</small>
+                  <small id="hudKills">0 敵機</small>
                 </div>
                 <div class="metric metric--level">
                   <span class="metric-label">RIG LVL</span>
                   <strong id="hudLevel" data-level="">01</strong>
-                  <small>KEEP MOVING</small>
+                  <small>保持移動</small>
                 </div>
               </div>
 
@@ -281,8 +281,8 @@
                   <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="Close stage select">✕</button>
                 </div>
                 <div class="campaign-summary-bar">
-                  <div class="campaign-star-count">TOTAL STARS: <strong id="campaignTotalStars">0</strong> / 45</div>
-                  <div class="campaign-milestone-hint" id="campaignMilestoneHint">NEXT REWARD: <strong>5★ 戰術晶片【急救超頻】</strong></div>
+                  <div class="campaign-star-count">總星數: <strong id="campaignTotalStars">0</strong> / 45</div>
+                  <div class="campaign-milestone-hint" id="campaignMilestoneHint">下一目標: <strong>5★ 戰術晶片【急救超頻】</strong></div>
                 </div>
                 <nav id="sectorTabs" class="sector-tabs" role="tablist" aria-label="區段導覽">
                   <button class="sector-tab is-active" data-sector="1" type="button" role="tab" aria-selected="true">
@@ -301,13 +301,13 @@
                     <span>SEC EX 極限試煉</span><small>需 42★</small>
                   </button>
                 </nav>
-                <div id="stageGrid" class="stage-grid" role="region" aria-label="Stage Cards">
+                <div id="stageGrid" class="stage-grid" role="region" aria-label="關卡卡片">
                   <!-- Dynamically populated by campaign-modal.js -->
                 </div>
                 <div class="campaign-modal-foot">
-                  <span class="campaign-foot-hint">D-PAD / ARROWS NAVIGATE · ENTER SELECT · ESC CLOSE</span>
-                  <button id="campaignConfirmBtn" class="action-button action-button--primary" type="button">
-                    <span>CONFIRM &amp; RETURN</span><b aria-hidden="true">↵</b>
+                  <span class="campaign-foot-hint">十字鍵／方向鍵瀏覽 · ENTER 選擇 · ESC 關閉</span>
+                  <button id="campaignConfirmBtn" class="action-button action-button--primary" type="button" aria-label="確認並返回出擊配置">
+                    <span>確認並返回</span><b aria-hidden="true">↵</b>
                   </button>
                 </div>
               </div>
