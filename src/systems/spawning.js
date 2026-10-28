@@ -425,7 +425,7 @@ function createTitan(boundW) {
         hp: leftPartHp,
         maxHp: leftPartHp,
         destroyed: false,
-        coreAbsorption: 0.6,
+        coreAbsorption: 0.72,
         rewardKind: 'repair'
       },
       {
@@ -439,8 +439,8 @@ function createTitan(boundW) {
         hp: rightPartHp,
         maxHp: rightPartHp,
         destroyed: false,
-        coreAbsorption: 0.6,
-        rewardKind: 'overdrive'
+        coreAbsorption: 0.72,
+        rewardKind: 'repair'
       },
       {
         id: 'radiator',
