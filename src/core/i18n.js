@@ -1737,9 +1737,9 @@ export function syncStaticHtml(lang) {
     var settingDescs = pauseModal.querySelectorAll('#panelSystem .setting-desc');
     if (settingLabels && settingLabels.length >= 7) {
       settingLabels[0].textContent = zh ? '主音訊音量' : 'MASTER AUDIO VOLUME';
-      settingDescs[0].textContent = zh ? '合成器與音效輸出增益' : 'SYNTHESIZER & SOUND FX OUTPUT GAIN';
+      settingDescs[0].textContent = zh ? '戰鬥／危險預警提示音、開火與介面音效' : 'COMBAT / HAZARD CUES, WEAPON FIRE & UI BEEPS';
       settingLabels[1].textContent = zh ? '音訊狀態' : 'AUDIO STATUS';
-      settingDescs[1].textContent = zh ? '靜音所有程序音效' : 'MUTE ALL PROCEDURAL SOUND WAVES';
+      settingDescs[1].textContent = zh ? '靜音戰鬥、危險預警提示音與介面音' : 'MUTE COMBAT, HAZARD TELEGRAPH CUES & UI';
       settingLabels[2].textContent = zh ? '觸覺回饋' : 'HAPTIC FEEDBACK';
       settingDescs[2].textContent = zh ? '衝刺、受擊與爆炸時震動' : 'DEVICE VIBRATION ON DASH, HITS & DETONATIONS';
       settingLabels[3].textContent = zh ? '減少動態效果' : 'REDUCED MOTION';

@@ -671,19 +671,19 @@ export function drawArtilleryTelegraphs(ctx) {
     var flashColor = isFlashWhite ? '#ffffff' : '#ff0033';
     ctx.save();
 
-    // 1. 外圈深黑阻光底圈（4.8px 黑底）
+    // 1. 外圈深黑阻光底圈（5.4px 黑底）— contrast only
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
     ctx.strokeStyle = DARK_HALO_BULLET;
-    ctx.lineWidth = (urgent ? 5.4 : 4.8) + (view.contrast ? 1.6 : 0);
+    ctx.lineWidth = (urgent ? 6.0 : 5.4) + (view.contrast ? 1.6 : 0);
     ctx.stroke();
 
-    // 2. 外圈黑白/紅白反相斑馬警戒圈（2.6px 白/紅斑馬虛線 [7, 6]）
+    // 2. 外圈黑白/紅白反相斑馬警戒圈（3.0px 白/紅斑馬虛線 [7, 6]）
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
     ctx.setLineDash(ZEBRA_DASH);
-    ctx.strokeStyle = urgent ? flashColor : 'rgba(255, 60, 80, 0.95)';
-    ctx.lineWidth = (urgent ? 3.0 : 2.6) + (view.contrast ? 1.2 : 0);
+    ctx.strokeStyle = urgent ? flashColor : 'rgba(255, 70, 90, 0.98)';
+    ctx.lineWidth = (urgent ? 3.4 : 3.0) + (view.contrast ? 1.2 : 0);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -746,8 +746,8 @@ function drawAcidPools(ctx) {
     // 1. Heavy dark caustic grounding outline (contrast against rust/dusk/night grounds)
     ctx.beginPath();
     ctx.arc(pool.x, pool.y, r, 0, TAU);
-    ctx.strokeStyle = 'rgba(8, 14, 6, ' + (0.85 * fade).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 4.2 : 3.0;
+    ctx.strokeStyle = 'rgba(8, 14, 6, ' + (0.92 * fade).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 5.0 : 3.8;
     ctx.stroke();
 
     // 2. Base caustic toxic muck fill
@@ -804,8 +804,8 @@ function drawAcidPools(ctx) {
     // 6. High-contrast sharp toxic perimeter stroke
     ctx.beginPath();
     ctx.arc(pool.x, pool.y, r, 0, TAU);
-    ctx.strokeStyle = 'rgba(214, 255, 106, ' + (0.92 * fade).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 2.4 : 1.6;
+    ctx.strokeStyle = 'rgba(230, 255, 130, ' + (0.96 * fade).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 2.8 : 2.1;
     ctx.stroke();
 
     ctx.restore();
@@ -832,8 +832,8 @@ export function drawMoltenZones(ctx) {
     // Contrast dark backing rim for lava edge
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(16, 6, 4, ' + (fade * 0.85).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 4.2 : 3.2;
+    ctx.strokeStyle = 'rgba(16, 6, 4, ' + (fade * 0.92).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 5.0 : 4.0;
     ctx.stroke();
 
     ctx.fillStyle = 'rgba(150,42,16,' + (fade * 0.4).toFixed(3) + ')';
@@ -866,8 +866,8 @@ export function drawMoltenZones(ctx) {
     }
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(255,160,70,' + (fade * 0.9).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 2.6 : 1.6;
+    ctx.strokeStyle = 'rgba(255,180,90,' + (fade * 0.96).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 3.0 : 2.2;
     ctx.stroke();
     ctx.restore();
   }

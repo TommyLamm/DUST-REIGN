@@ -746,17 +746,31 @@ export function drawFieldReadability(ctx) {
     var m = list[i];
     var maxT = m.maxTimer || 0.8;
     var remain = maxT > 0 ? clamp(m.timer / maxT, 0, 1) : 0;
+    var urgent = remain <= 0.25;
     ctx.save();
+    // Dark contrast halo (visual only — timers unchanged)
     ctx.beginPath();
     ctx.arc(m.x, m.y, m.r || 34, 0, TAU);
-    ctx.strokeStyle = contrast ? '#ffffff' : 'rgba(255, 176, 90, 0.95)';
-    ctx.lineWidth = contrast ? 2.6 : 1.7;
-    ctx.setLineDash(reduced ? [] : [4, 3]);
+    ctx.strokeStyle = 'rgba(6, 6, 8, 0.9)';
+    ctx.lineWidth = (contrast ? 5.2 : 4.2) + (urgent ? 0.6 : 0);
+    ctx.stroke();
+    // Bright zebra / solid warning ring
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.r || 34, 0, TAU);
+    ctx.strokeStyle = contrast ? '#ffffff' : (urgent ? 'rgba(255, 220, 160, 0.98)' : 'rgba(255, 176, 90, 0.98)');
+    ctx.lineWidth = contrast ? 3.2 : 2.4;
+    ctx.setLineDash(reduced ? [] : [6, 4]);
     ctx.stroke();
     ctx.setLineDash([]);
+    // Countdown fill (alpha capped for readability without obscuring)
     ctx.beginPath();
     ctx.arc(m.x, m.y, Math.max(4, (m.r || 34) * (1 - remain)), 0, TAU);
-    ctx.fillStyle = contrast ? 'rgba(255,255,255,0.28)' : 'rgba(223, 64, 40, 0.28)';
+    ctx.fillStyle = contrast ? 'rgba(255,255,255,0.32)' : 'rgba(223, 64, 40, 0.34)';
+    ctx.fill();
+    // Bullseye core
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, 3.2, 0, TAU);
+    ctx.fillStyle = contrast ? '#ffffff' : '#fff6e0';
     ctx.fill();
     ctx.restore();
   }
@@ -785,16 +799,29 @@ export function drawFieldReadability(ctx) {
       ctx.arc(crag.x, crag.y, crag.r || 32, 0, TAU);
       ctx.fillStyle = '#2a2421';
       ctx.fill();
-      ctx.strokeStyle = '#e69535';
-      ctx.lineWidth = 2.5;
+      // Dark rim + bright amber rim for break-target readability
+      ctx.beginPath();
+      ctx.arc(crag.x, crag.y, crag.r || 32, 0, TAU);
+      ctx.strokeStyle = 'rgba(6, 6, 8, 0.92)';
+      ctx.lineWidth = 4.6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(crag.x, crag.y, crag.r || 32, 0, TAU);
+      ctx.strokeStyle = '#ffb24a';
+      ctx.lineWidth = 2.8;
       ctx.stroke();
 
       var cragPct = clamp(crag.hp / (crag.maxHp || 100), 0, 1);
       if (cragPct < 1.0) {
         ctx.beginPath();
-        ctx.arc(crag.x, crag.y, (crag.r || 32) + 4, -Math.PI / 2, -Math.PI / 2 + cragPct * TAU);
+        ctx.arc(crag.x, crag.y, (crag.r || 32) + 5, -Math.PI / 2, -Math.PI / 2 + cragPct * TAU);
+        ctx.strokeStyle = 'rgba(6, 6, 8, 0.9)';
+        ctx.lineWidth = 4.2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(crag.x, crag.y, (crag.r || 32) + 5, -Math.PI / 2, -Math.PI / 2 + cragPct * TAU);
         ctx.strokeStyle = '#00f3ff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.4;
         ctx.stroke();
       }
       ctx.restore();
@@ -811,8 +838,14 @@ export function drawFieldReadability(ctx) {
         ctx.beginPath();
         ctx.moveTo(foe.x, foe.y);
         ctx.lineTo(rt.state.player.x, rt.state.player.y);
-        ctx.strokeStyle = 'rgba(255, 60, 40, 0.85)';
-        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = 'rgba(6, 4, 4, 0.9)';
+        ctx.lineWidth = 5.2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(foe.x, foe.y);
+        ctx.lineTo(rt.state.player.x, rt.state.player.y);
+        ctx.strokeStyle = 'rgba(255, 70, 50, 0.95)';
+        ctx.lineWidth = 2.6;
         ctx.setLineDash([8, 6]);
         ctx.stroke();
         ctx.restore();
