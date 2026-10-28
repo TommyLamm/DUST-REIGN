@@ -11,7 +11,7 @@ import { onEnemyEmp } from './sim/enemy-defense.js';
 import { noteContractEvent } from './contracts.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
-import { logEvent } from '../ui/hud.js';
+import { logEvent, setStatusText } from '../ui/hud.js';
 
 var DASH_HEAT_MAX = 3;
 var DASH_HEAT_WINDOW = 3;
@@ -294,7 +294,7 @@ function landDash(p, m) {
       rt.state.hitstop = Math.max(rt.state.hitstop || 0, 0.22);
     }
     logEvent('PERFECT DASH // CHRONO DILATION');
-    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'PERFECT DASH // CHRONO DILATION (CD REFUND)';
+    setStatusText('PERFECT DASH // CHRONO DILATION (CD REFUND)');
     if (rt.state.shockRings) {
       rt.state.shockRings.push({ x: startX, y: startY, r: 8, maxR: 70, life: 0.28, maxLife: 0.28, color: '#f7d48a' });
       rt.state.shockRings.push({ x: p.x, y: p.y, r: 8, maxR: 70, life: 0.28, maxLife: 0.28, color: '#f7d48a' });
@@ -326,7 +326,7 @@ function landDash(p, m) {
           }
           rt.state.shake = Math.max(rt.state.shake || 0, 14);
           logEvent('PHASE INTERCEPT! // VOID RIFT SHATTERED');
-          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'PHASE INTERCEPT! // VOID RIFT SHATTERED (-25% HP)';
+          setStatusText('PHASE INTERCEPT! // VOID RIFT SHATTERED (-25% HP)');
           spawnParticles(bx, by, '#9d4edd', 24, 240, 4);
           spawnParticles(bx, by, '#00f3ff', 16, 180, 3);
           if (rt.state.shockRings) {
@@ -363,7 +363,7 @@ function landDash(p, m) {
       }
       if (AudioFX && typeof AudioFX.staggerBreak === 'function') AudioFX.staggerBreak();
       logEvent('EXECUTION! // STAGGER PUNISH');
-      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'EXECUTION! // STAGGER PUNISH (DASH RESET)';
+      setStatusText('EXECUTION! // STAGGER PUNISH (DASH RESET)');
       spawnParticles(enemy.x, enemy.y, '#ff2244', 20, 220, 3.8);
       if (rt.state.shockRings) {
         rt.state.shockRings.push({ x: enemy.x, y: enemy.y, r: 8, maxR: 65, life: 0.25, maxLife: 0.25, color: '#ff2244' });
@@ -401,7 +401,7 @@ function landDash(p, m) {
         AudioFX.critHit();
         spawnParticles(barrel.x, barrel.y, '#ff8833', 14, 180, 3);
         spawnParticles(barrel.x, barrel.y, '#ffd27d', 8, 140, 2);
-        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'BARREL LAUNCHED // IMPACT IMMINENT';
+        setStatusText('BARREL LAUNCHED // IMPACT IMMINENT');
         logEvent('BARREL KICK-LAUNCHED');
       }
     }
@@ -576,7 +576,7 @@ export function triggerEmp() {
         spawnParticles(tent.x, tent.y, '#ff4d2e', 32, 260, 4.5);
         spawnParticles(tent.x, tent.y, '#ffd27d', 20, 200, 3);
         logEvent('DECOY SUPERNOVA! // PLASMA CASCADE');
-        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'DECOY SUPERNOVA! // PLASMA CASCADE';
+        setStatusText('DECOY SUPERNOVA! // PLASMA CASCADE');
 
         for (var dnei = rt.state.enemies.length - 1; dnei >= 0; dnei -= 1) {
           var dne = rt.state.enemies[dnei];
@@ -602,7 +602,7 @@ export function triggerEmp() {
 
   logEvent('EMP BLAST // SECTOR DISRUPTED');
   if (rt.ui && rt.ui.statusText && !decoySupernovaTriggered) {
-    rt.ui.statusText.textContent = 'EMP BLAST DISCHARGED // SECTOR DISRUPTED';
+    setStatusText('EMP BLAST DISCHARGED // SECTOR DISRUPTED');
   }
 
   if (rt.state.spires && rt.state.spires.length > 0) {
@@ -687,7 +687,7 @@ export function triggerSpireResonance(spire) {
   if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
 
   logEvent('CONDUCTION SPIRE // MEGA EMP DETONATED 280PX');
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'CONDUCTION SPIRE RESONANCE // MEGA EMP 280PX [STUN 3.0s]';
+  setStatusText('CONDUCTION SPIRE RESONANCE // MEGA EMP 280PX [STUN 3.0s]');
   pushFxEvent('spire', spire.x, spire.y, { r: megaR });
 }
 

@@ -14,7 +14,7 @@ import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
 import { updateTips } from './tips.js';
 import { fitGameOverOverlay, resize, syncCombatLayout } from './dom.js';
-import { isChinese, onLanguageChange, tLog, tRankTitle } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tLog, tRankTitle, tStatus } from '../core/i18n.js';
 
 var shownScore = null;
 var scoreState = null;
@@ -580,6 +580,11 @@ export function tickHudPresentation() {
   var stage = rt.ui.canvasStage || byId('canvasStage');
   if (!stage || !stage.setAttribute) return;
   syncQualityTier(stage);
+}
+
+export function setStatusText(message) {
+  if (!rt.ui || !rt.ui.statusText) return;
+  rt.ui.statusText.textContent = tStatus(message);
 }
 
 export function logEvent(message) {

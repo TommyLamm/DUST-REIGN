@@ -1,4 +1,5 @@
 import { rt } from '../core/runtime.js';
+import { setStatusText } from '../ui/hud.js';
 import { clamp, dist2 } from '../core/utils.js';
 import { rng } from '../core/rng.js';
 import { AudioFX } from '../audio/audio-fx.js';
@@ -244,7 +245,7 @@ export function stepTactical(dt, frame) {
       if (rt.ui && rt.ui.statusText) {
         var readyGear = getTacticalGear(tac.id);
         var readyGearName = (readyGear && readyGear.enName) || 'TACTICAL GEAR';
-        rt.ui.statusText.textContent = readyGearName + ' // READY';
+        setStatusText(readyGearName + ' // READY');
       }
     }
   }
@@ -272,7 +273,7 @@ export function stepTactical(dt, frame) {
         var extraR = Math.min(45, Math.round(absorbed * 0.5));
         var blastR = ent.r + extraR;
         if (absorbed > 30) {
-          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SUPERNOVA COLLAPSE! +' + absorbed + ' BONUS DMG';
+          setStatusText('SUPERNOVA COLLAPSE! +' + absorbed + ' BONUS DMG');
         }
         if (rt.state.shockRings) {
           rt.state.shockRings.push({

@@ -18,7 +18,7 @@ import { filterEnemyDamage } from './sim/enemy-defense.js';
 import { isStormFront, triggerGameOver } from './flow.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
-import { logEvent } from '../ui/hud.js';
+import { logEvent, setStatusText } from '../ui/hud.js';
 
 function playerHitOpts(source) {
   if (source === 'molten') return { light: 1, source: source };
@@ -124,7 +124,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
     triggerHaptic([60, 80, 100]);
     rt.state.shake = Math.max(rt.state.shake, 16);
     logEvent('AEGIS PROTOCOL // FATAL BLOW PREVENTED');
-    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'AEGIS PROTOCOL ACTIVATED // EMERGENCY SHIELD ENGAGED';
+    setStatusText('AEGIS PROTOCOL ACTIVATED // EMERGENCY SHIELD ENGAGED');
     spawnParticles(p.x, p.y, '#00f3ff', 30, 220, 4);
   } else {
     p.hp -= remaining;
@@ -303,7 +303,7 @@ export function killEnemy(enemyOrIndex, cause) {
     rt.state.shake = Math.max(rt.state.shake, 16);
     rt.state.banner = 4.0;
     rt.state.bannerText = 'TITAN NEUTRALIZED // SECTOR SECURED';
-    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN NEUTRALIZED // SECTOR SECURED';
+    setStatusText('TITAN NEUTRALIZED // SECTOR SECURED');
     logEvent('TITAN NEUTRALIZED // SECTOR SECURED');
     AudioFX.blast();
     triggerHaptic([30, 40, 50, 60, 80]);
@@ -333,7 +333,7 @@ export function killEnemy(enemyOrIndex, cause) {
       var surgeDuration = Math.max(rt.state.player.overdrive, BOUNTY_SURGE_DURATION);
       rt.state.player.overdrive = surgeDuration;
       rt.state.banner = Math.max(rt.state.banner, 2.1);
-      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'BOUNTY CLEAR +' + rt.state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's';
+      setStatusText('BOUNTY CLEAR +' + rt.state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's');
       logEvent('BOUNTY SECURED // SURGE ONLINE');
       spawnParticles(e.x, e.y, '#f0cf88', 12, 180, 3);
       pushFxEvent('bounty', e.x, e.y, null);
@@ -355,7 +355,7 @@ export function killEnemy(enemyOrIndex, cause) {
     triggerHaptic([50, 60, 80]);
     rt.state.shake = Math.max(rt.state.shake, 18);
     logEvent('VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED');
-    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'VIP TARGET NEUTRALIZED // EMP DETONATION';
+    setStatusText('VIP TARGET NEUTRALIZED // EMP DETONATION');
     if (rt.state.enemies) {
       for (var fIdx = rt.state.enemies.length - 1; fIdx >= 0; fIdx -= 1) {
         var foe = rt.state.enemies[fIdx];
@@ -428,7 +428,7 @@ export function explodeCore(core, index) {
         triggerHaptic([50, 40, 60, 80]);
         rt.state.shake = Math.max(rt.state.shake, 18);
         logEvent('TITAN ARMOR BREACH // CORE STRIKE -350 HP');
-        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN ARMOR BREACH -350 HP // SYSTEM OVERHEAT STUN 3.0s';
+        setStatusText('TITAN ARMOR BREACH -350 HP // SYSTEM OVERHEAT STUN 3.0s');
         spawnParticles(enemy.x, enemy.y, '#ff4d2e', 30, 240, 4);
       } else {
         damageEnemy(enemy, 90, { source: 'core', x: core.x, y: core.y });

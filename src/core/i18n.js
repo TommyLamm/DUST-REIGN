@@ -978,6 +978,31 @@ export function tLog(msg) {
       }
     }
   }
+
+  if (msg === 'PHASE BEARING // DASH COOLDOWN RESET') return '相位軸承 // 衝刺冷卻重置';
+  if (msg === 'PHASE INTERCEPT! // VOID RIFT SHATTERED') return '相位攔截！ // 虛空裂隙粉碎';
+  if (msg === 'EXECUTION! // STAGGER PUNISH') return '處決！ // 硬直懲罰';
+  if (msg === 'DECOY SUPERNOVA! // PLASMA CASCADE') return '誘餌超新星！ // 電漿連鎖';
+  if (msg === 'OVERCLOCK SURGE // MAXIMUM FIRE RATE') return '超頻湧浪 // 最大射速';
+  if (msg === 'AEGIS PROTOCOL // FATAL BLOW PREVENTED') return '神盾協議 // 致命一擊已攔截';
+  if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型 EMP 引爆';
+  if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return 'VIP 已擊殺 // EMP 震波觸發';
+  if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED') return '岩障粉碎 // 無畏艦硬直';
+  if (msg === 'TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED') return '泰坦 // 拔河反制！散熱器暴露';
+  if (msg === 'TITAN // HARPOON TETHER REELED') return '泰坦 // 魚叉繫繩收回';
+  if (msg === 'WARNING // SEISMIC HARPOON LOCK') return '警告 // 震盪魚叉鎖定';
+  if (msg === 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION') return '狼群湧浪 // 向心壓迫';
+  if (msg === 'MOMENTUM SURGE // A-TIER COMBO ONLINE') return '動能湧浪 // A 級連擊上線';
+  if (msg === 'PLAYROOM // CLOUD SAVE SYNCED') return 'PLAYROOM // 雲端存檔已同步';
+  if (msg === 'PLAYROOM // SAVE FORMAT INCOMPATIBLE') return 'PLAYROOM // 存檔格式不相容';
+  if (msg.indexOf('PLAYROOM // REVISION CONFLICT') === 0) return 'PLAYROOM // 版本衝突 → 自動合併';
+  if (msg === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (msg === 'BEHEMOTH ENRAGED // CORE OVERDRIVE') return '巨獸暴怒 // 核心超頻';
+  if (msg === 'BOSS PHASE TRANSITION // OVERDRIVE ENGAGED') return '首領階段轉換 // 超頻啟動';
+  if (msg.indexOf('BULWARK SHIELD SHATTERED') === 0) return '壁壘護盾粉碎 // 麻痺 [4.0s]';
+  if (msg.indexOf('GRAVITON BULWARK') === 0) return '重力壁壘 // 重力超載爆轟';
+  if (msg.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 彈幕消解';
+
   return msg;
 }
 
@@ -1012,6 +1037,17 @@ export function tStatus(text) {
   if (text.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
   if (text.indexOf('WARNING // STORM SOVEREIGN') === 0) return '警告 // 風暴主宰降臨';
   if (text.indexOf('WARNING // TITAN') === 0) return '警告 // 偵測到泰坦';
+
+  if (text.indexOf('PHASE INTERCEPT') === 0) return '相位攔截！ // 虛空裂隙粉碎 (-25% HP)';
+  if (text.indexOf('EXECUTION!') === 0) return '處決！ // 硬直懲罰 (衝刺重置)';
+  if (text.indexOf('DECOY SUPERNOVA') === 0) return '誘餌超新星！ // 電漿連鎖';
+  if (text.indexOf('AEGIS PROTOCOL') === 0) return '神盾協議啟動 // 緊急護盾接合';
+  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已擊殺 // EMP 引爆';
+  if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (text.indexOf('BEHEMOTH ENRAGED') === 0) return '巨獸暴怒 // 核心超頻';
+  if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！').replace('BONUS DMG', '額外傷害');
+  if (text.indexOf('READY') !== -1 && text.indexOf(' // READY') !== -1) return text.replace(' // READY', ' // 就緒');
+  if (text.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 彈幕消解';
   return text;
 }
 
@@ -1097,6 +1133,14 @@ export function tBanner(text) {
       }
     }
   }
+
+
+  if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 無畏艦硬直 (3.2s)';
+  if (text.indexOf('TUG-OF-WAR COUNTER') === 0) return '拔河反制 // 散熱器暴露 2.5S';
+  if (text.indexOf('TITAN HARPOON') === 0) return '泰坦魚叉 // 已繫繩並緩速';
+  if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';
+  if (text.indexOf('WOLF PACK SURGE') === 0) return '狼群湧浪 // 向心壓迫';
 
   return tLog(text);
 }
