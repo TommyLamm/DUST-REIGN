@@ -53,6 +53,16 @@
   transition: all 0.15s ease;
 }
 
+.pause-tab:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.pause-setting-btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 .pause-tab:hover {
   color: var(--bone);
   background: rgba(36, 39, 31, 0.85);
