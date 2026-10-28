@@ -511,20 +511,19 @@ registerEnemyStrategy('dreadnought', {
   step: function (e, dt, frame, empFrozen, isCulled) {
     return stepBoss(e, dt, frame, empFrozen);
   },
-  filterDamage: function (e, amount, info) {
-    // Armor-break / stun windows used to stack rear×2 + barrel×2 (up to ×4),
-    // while front-only DPS during the same fight crawled — huge kill-time swing.
-    // Make the break window position-independent; keep a mild rear bonus only when intact.
+    filterDamage: function (e, amount, info) {
+    // Break window owned here (defense skips dread global x1.4). Intact bullet
+    // hits get a mild baseline so no-break kites do not crawl past 150s; rear
+    // stays the skill read. Barrels/EMP keep their own curves.
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
-      // Breach window is position-independent; barrels no longer get an extra mult
-      // (barrel chains during armor-break were a top driver of <30s deletes).
       amount *= 1.18;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
+      amount *= 1.10;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
       if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) {
-        amount *= 1.32;
+        amount *= 1.28; // stacked ~1.41 with baseline
       }
     }
     return amount;
