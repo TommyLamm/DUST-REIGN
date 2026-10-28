@@ -259,7 +259,7 @@ export function run() {
     guard.barrels = [{ x: 100, y: 100, r: 14, hp: 20, maxHp: 20, state: 'idle' }];
     explodeBarrel(guard.barrels[0], 0, false);
     var hpAfterFirst = guard.player.hp;
-    if (!(hpAfterFirst < 100) || !(guard._barrelChainGuard > 0)) throw new Error('barrel player hit did not arm chain guard');
+    if (hpAfterFirst !== 100 || !(guard._barrelChainGuard > 0)) throw new Error('barrel should arm chain guard without player HP loss');
     guard.barrels = [{ x: 100, y: 100, r: 14, hp: 20, maxHp: 20, state: 'idle' }];
     guard.player.invulnerable = 0;
     explodeBarrel(guard.barrels[0], 0, true);
