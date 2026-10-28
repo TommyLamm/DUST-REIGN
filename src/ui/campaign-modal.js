@@ -192,6 +192,8 @@ export function renderModal() {
       // Stage Name
       var nameH3 = el('h3', 'stage-name', tCampaignStageName(stg.id, stg.name));
       card.appendChild(nameH3);
+      var descP = el('p', 'stage-desc', tCampaignStageDesc(stg.id, stg.desc || ''));
+      card.appendChild(descP);
 
       // Stars Row
       var starsRow = el('div', 'stage-stars-row');
