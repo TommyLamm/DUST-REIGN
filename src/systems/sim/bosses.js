@@ -497,7 +497,7 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(3, 95, true);
+  var shot = scaledShot(2, 95, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
@@ -626,7 +626,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
     if (phase === 1) {
       e.spiralCd -= dt;
       if (e.spiralCd <= 0) {
-        e.spiralCd = 8.0;
+        e.spiralCd = 9.0;
         fireSpiral(e);
       }
     }
