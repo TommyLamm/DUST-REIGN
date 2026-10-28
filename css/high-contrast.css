@@ -176,3 +176,29 @@
   text-shadow: none;
   box-shadow: 0 0 0 1px #000, 0 2px 12px rgba(0, 0, 0, 0.8);
 }
+
+
+.game-root.is-high-contrast .controls-matrix,
+.game-root.is-high-contrast .controls-matrix-head,
+.game-root.is-high-contrast .controls-matrix-row {
+  border-color: #ffffff;
+}
+
+.game-root.is-high-contrast .controls-matrix-subhead {
+  color: #ffffff;
+  background: #000000;
+  border-bottom: 2px solid #ffcc33;
+}
+
+.game-root.is-high-contrast .matrix-action {
+  color: #ffcc33;
+}
+
+.game-root.is-high-contrast .matrix-key {
+  color: #ffffff;
+}
+
+.game-root.is-high-contrast .chips-empty {
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
