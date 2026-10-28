@@ -217,18 +217,24 @@ export function spawnMonolithCrags(e, frame) {
 function ensureChargeLaneCrag(e, p, frame) {
   if (!rt.state || !e || !p) return;
   if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
+  var list = rt.state.monolithCrags;
+  // Every-telegraph lane bait made armor-break nearly constant (p50 ~23–28s).
+  // Only plant when the ring is sparse so players still get a readable bait, not a free stun.
+  var alive = 0;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    if (list[i] && list[i].active) alive += 1;
+  }
+  if (alive >= 2) return;
   var box = boxOf(frame);
   var ang = Math.atan2(p.y - e.y, p.x - e.x);
   var cragR = 45;
-  var dist = 420;
+  var dist = 560;
   var px = clamp(e.x + Math.cos(ang) * dist, cragR + 25, box.w - cragR - 25);
   var py = clamp(e.y + Math.sin(ang) * dist, cragR + 25, box.h - cragR - 25);
-  // Skip if a crag already sits near the lane.
-  var list = rt.state.monolithCrags;
-  var i;
   for (i = 0; i < list.length; i += 1) {
     var c = list[i];
-    if (c && c.active && Math.hypot(c.x - px, c.y - py) < 120) return;
+    if (c && c.active && Math.hypot(c.x - px, c.y - py) < 140) return;
   }
   list.push({
     id: 'crag_lane_' + Math.floor(rt.state.waveTime || 0),
