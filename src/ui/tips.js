@@ -2,7 +2,7 @@ import { rt } from '../core/runtime.js';
 import { readTipsEnabled, readTipsSeen, writeTipsSeen } from '../core/meta-store.js';
 import { syncDashHeatClock } from '../systems/abilities.js';
 import { takeRunUnlocks } from '../systems/meta.js';
-import { isChinese, onLanguageChange, tMutatorBlurb, tMutatorName, tTip } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tMutatorBlurb, tMutatorName, tStatus, tTip } from '../core/i18n.js';
 
 var TIP_MS = 4000;
 var GAP_MS = 20000;
@@ -123,6 +123,21 @@ function dreadLongFightThreat() {
   var boss = rt.state && rt.state.boss;
   if (!boss || boss.kind !== 'dreadnought' || !(boss.hp > 0)) return false;
   return (boss.fightT || 0) >= 90;
+}
+
+function dreadExtremeClockThreat() {
+  var boss = rt.state && rt.state.boss;
+  if (!boss || boss.kind !== 'dreadnought' || !(boss.hp > 0)) return false;
+  return (boss.fightT || 0) >= 180;
+}
+
+function warnDreadClockOnce() {
+  if (!rt.state || rt.state.dreadClockWarned) return;
+  rt.state.dreadClockWarned = true;
+  var msg = 'CLOCK RISK // BOSS HOLDS THE WAVE CLOCK — BREAK ARMOR OR MISS WAVE 15';
+  rt.state.banner = Math.max(rt.state.banner || 0, 2.8);
+  rt.state.bannerText = msg;
+  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = tStatus(msg);
 }
 
 function sovereignEyeThreat() {
@@ -282,6 +297,10 @@ function scanTriggers() {
   if (sovereignEyeThreat()) offer('storm-eye');
   if (dreadArmorBreakThreat()) offer('dread-break');
   if (dreadLongFightThreat()) offer('dread-fatigue');
+  if (dreadExtremeClockThreat()) {
+    offer('dread-clock');
+    warnDreadClockOnce();
+  }
   if (bossAddClearThreat()) offer('boss-clear');
   if (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0 && (rt.state.enemyBullets || []).length >= 6) offer('storm-weave');
 }
