@@ -151,7 +151,13 @@ export function stepEnemyBullets(dt, frame) {
           if (eb.type === 'flak' || eb.ownerKind === 'dreadnought') bulletSrc = 'boss:dreadnought';
           else bulletSrc = 'boss:' + (eb.type || eb.ownerKind || 'shot');
         } else if (eb.ownerKind) bulletSrc = 'bullet:' + eb.ownerKind;
-        var bulletHit = damagePlayer(eb.damage, bulletSrc, eb.x, eb.y);
+        var bulletDmg = eb.damage;
+        // Live boss arenas already throttle elite spawns; their rounds were still
+        // a top wipe cause — chip softer while a boss hull is up.
+        if (rt.state.boss && rt.state.boss.hp > 0 && bulletSrc === 'bullet:elite') {
+          bulletDmg = Math.max(1, Math.round(bulletDmg * 0.72));
+        }
+        var bulletHit = damagePlayer(bulletDmg, bulletSrc, eb.x, eb.y);
         if (bulletHit > 0) {
           p.invulnerable = 0.5;
           AudioFX.hurt();
