@@ -315,8 +315,8 @@ function softenBossHit(e, amount, info) {
   // Keep a mild explosive bonus (60% of excess) instead of a full bypass.
   var explosive = info && (info.source === 'core' || info.source === 'barrel');
   var broken = (e.armorBreakTimer || 0) > 0 || e.mode === 'stun' || (e.empTimer || 0) > 0;
-  var cap = broken ? BOSS_BLEED_FULL * 1.7 : BOSS_BLEED_FULL;
-  var overflow = broken ? 0.55 : (explosive ? 0.6 : BOSS_BLEED_OVERFLOW);
+  var cap = broken ? BOSS_BLEED_FULL * 1.35 : BOSS_BLEED_FULL;
+  var overflow = broken ? 0.4 : (explosive ? 0.6 : BOSS_BLEED_OVERFLOW);
   var now = rt.state.waveTime || 0;
   if (typeof e.bossBleedAt !== 'number' || now < e.bossBleedAt || now - e.bossBleedAt > BOSS_BLEED_WINDOW) {
     e.bossBleedAt = now;
