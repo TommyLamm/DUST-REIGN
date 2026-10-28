@@ -178,6 +178,14 @@ function refresh() {
         detail.textContent = zh ? tRigBlurb(rig.id) : rig.blurb;
       }
     }
+    var rigName = zh ? tRigName(rig.id) : rig.name;
+    if (locked || lockedHardcore || (lockedDaily && selected)) {
+      rigButtons[i].setAttribute('aria-label', rigName + ' — ' + (detail ? detail.textContent : (zh ? '未解鎖' : 'LOCKED')));
+      rigButtons[i].title = detail ? detail.textContent : '';
+    } else {
+      rigButtons[i].setAttribute('aria-label', rigName);
+      rigButtons[i].removeAttribute('title');
+    }
   }
 
   // Weapon Buttons Refresh

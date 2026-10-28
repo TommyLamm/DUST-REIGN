@@ -437,10 +437,25 @@ html.reduced-motion .loadout-codex {
 }
 
 .socket-empty-text {
+  display: block;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(232, 224, 198, 0.72);
   font-style: italic;
-  padding: 6px 0;
+  padding: 6px 0 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.socket-empty-hint {
+  display: block;
+  font: 700 9px var(--mono);
+  letter-spacing: 0.08em;
+  color: rgba(232, 224, 198, 0.62);
+  padding-bottom: 4px;
+}
+
+.workshop-socket-card.is-empty {
+  border-style: dashed;
+  background: rgba(8, 9, 7, 0.55);
 }
 
 .workshop-detach-btn {

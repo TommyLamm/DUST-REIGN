@@ -164,6 +164,12 @@
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
 }
 
+.key.key--wide,
+.key.key--mouse {
+  min-width: 42px;
+  letter-spacing: 0.04em;
+}
+
 .key--wide {
   min-width: 76px;
 }
