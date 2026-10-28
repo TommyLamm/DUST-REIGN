@@ -551,7 +551,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
   }
   if (phase >= 2 && e.towersBorn) {
     var shielded = refreshSovereignShield(e);
-    if (e.wasShielded && !shielded && e.reshieldTimer == null && !e.resummoned) e.reshieldTimer = 20;
+    if (e.wasShielded && !shielded && e.reshieldTimer == null && !e.resummoned) e.reshieldTimer = 14; // was 20 — faster spire resummon → more shield uptime, no hull thrash
     e.wasShielded = shielded;
     if (e.reshieldTimer != null) {
       e.reshieldTimer -= dt;
