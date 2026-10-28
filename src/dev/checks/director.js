@@ -13,6 +13,7 @@ import { triggerGameOver } from '../../systems/flow.js';
 import { assignRoute, chooseInterlude, chooseRepair, confirmExtract, confirmPushDeeper, grantDeferredExtract } from '../../systems/interlude.js';
 import { stepHazards } from '../../systems/sim/hazards.js';
 import { stepOrbs } from '../../systems/sim/orbs.js';
+import { wolfPackWindowsFor } from '../../systems/sim/timers-wave.js';
 
 function near(actual, expected) {
   return Math.abs(actual - expected) < 0.001;
@@ -292,6 +293,30 @@ export function run() {
     if (getSectorReqStars(1) !== 0 || getSectorReqStars(2) !== 8 || getSectorReqStars(3) !== 18 || getSectorReqStars(4) !== 32) {
       throw new Error('dynamic sector req stars failed');
     }
+
+
+    // Wolf Pack surge pacing: early low-heat opener is single-pulse;
+    // late pulse (if any) ends ≥4s before storm; Heat≥4 cancels late pulse.
+    function assertWindows(label, windows, expected) {
+      if (windows.length !== expected.length) {
+        throw new Error(label + ' window count ' + windows.length + ' !== ' + expected.length);
+      }
+      var wi;
+      for (wi = 0; wi < expected.length; wi += 1) {
+        if (!near(windows[wi].start, expected[wi].start) || !near(windows[wi].end, expected[wi].end)) {
+          throw new Error(label + ' window ' + wi + ' drifted: ' + JSON.stringify(windows[wi]));
+        }
+      }
+    }
+    var earlyOnly = [{ start: 10, end: 13.5 }];
+    var heat0Late = [{ start: 10, end: 13.5 }, { start: 17.5, end: 21 }];
+    assertWindows('wave1 heat0', wolfPackWindowsFor(1, 0, 5), earlyOnly);
+    assertWindows('wave2 heat1', wolfPackWindowsFor(2, 1, 5), earlyOnly);
+    assertWindows('wave3 heat0', wolfPackWindowsFor(3, 0, 5), heat0Late);
+    assertWindows('wave8 heat3', wolfPackWindowsFor(8, 3, 5), heat0Late);
+    assertWindows('wave8 heat4', wolfPackWindowsFor(8, 4, 8), earlyOnly);
+    var lateGap = heat0Late[1];
+    if (lateGap.end > 25 - 4 + 0.001) throw new Error('late surge overlaps storm gap');
 
     var stage11 = getCampaignStage('stage_1_1');
     if (!stage11 || !stage11.starRules) throw new Error('stage_1_1 missing declarative starRules');

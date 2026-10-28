@@ -163,7 +163,7 @@ $$\vec{F}_{sep} = \sum_{j \in \text{Neighbors}, j \ne i} \frac{\vec{r}_i - \vec{
 
 ### 3. 戰術狼群集結脈衝 (Pack Convergence Pulse)
 
-為打破枯燥的常規拉扯，波次進行到 **12s** 與 **24s** 時，波次導演觸發持續 3.5 秒的「**狼群合圍號角（WOLF PACK SURGE）**」：
+為打破枯燥的常規拉扯，波次導演在約 **10s** 觸發持續 3.5 秒的「**狼群合圍號角（WOLF PACK SURGE）**」。後期波次（Wave≥3 且 Heat≤3）可再於風暴前緣前 ≥4s 觸發第二次；Heat≥4 或早期低 Heat 開場（Wave 1–2）僅保留單次：
 1. **音訊與視覺先導**：低頻沙鳴（Siren Stinger），場景地表揚起向心性塵暴粒子。
 2. **全軍向心絞殺向量（Centripetal Compression）**：所有非遠程怪物（Crawler/Rusher/Brute）臨時將目標錨點鎖定在「以玩家為中心、半徑 80px 的等分環（Angular Slots）」上：
    $$\text{SlotAngle}_k = \frac{2\pi \cdot k}{N_{swarm}} + \theta_{offset}$$
