@@ -501,9 +501,9 @@ function fireSpiral(e) {
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
-  // 7-spoke spiral (was 16→12→10→9) — post-#168 still spiral×4 deaths.
-  for (i = 0; i < 7; i += 1) {
-    var a = spin + (i / 7) * TAU;
+  // 5-spoke spiral — post-#178 spiral×4 again.
+  for (i = 0; i < 5; i += 1) {
+    var a = spin + (i / 5) * TAU;
     pushEnemyBullet({
       type: 'spiral',
       fromBoss: true,
@@ -514,7 +514,7 @@ function fireSpiral(e) {
       vy: Math.sin(a) * shot.speed,
       r: 3.8,
       damage: shot.damage,
-      life: 2.8,
+      life: 2.4,
       glow: true,
       color: '#9ec0ea',
       glowColor: '#d5e8ff'
@@ -626,7 +626,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
     if (phase === 1) {
       e.spiralCd -= dt;
       if (e.spiralCd <= 0) {
-        e.spiralCd = 9.0;
+        e.spiralCd = 10.0;
         fireSpiral(e);
       }
     }
