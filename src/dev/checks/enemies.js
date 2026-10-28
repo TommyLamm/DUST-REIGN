@@ -6,6 +6,7 @@ import { filterEnemyDamage, clearEnemyShields, takeDeathEvents } from '../../sys
 import { pushEnemyBullet, scaledShot } from '../../systems/sim/enemy-bullets.js';
 import { resolveDeathEvents } from '../../systems/sim/new-enemies.js';
 import { enemyChaseSpeedMult, stepEnemies } from '../../systems/sim/enemies.js';
+import { stepEnemySpawner } from '../../systems/sim/timers-wave.js';
 
 function assert(cond, message) {
   if (!cond) throw new Error(message);
@@ -293,4 +294,61 @@ export function run() {
   if (Math.abs(enemyChaseSpeedMult(600, false, false) - 1.08 * 1.35) > 0.001) throw new Error('far-range chase mult drifted');
   if (Math.abs(enemyChaseSpeedMult(600, true, false) - 1.08 * 2.2) > 0.001) throw new Error('hyper chase must replace far-range, not stack');
   if (Math.abs(enemyChaseSpeedMult(200, false, true) - 1.08 * 1.15) > 0.001) throw new Error('wolf chase mult drifted');
+
+  // Large-world recycle refund must delay and drip, not dump all tokens in one frame.
+  seedRun(42);
+  var recycleSaved = {
+    width: rt.state.width,
+    enemies: rt.state.enemies,
+    recycledTokens: rt.state.recycledTokens,
+    recycleRefundTimer: rt.state.recycleRefundTimer,
+    recycleSpentThisWave: rt.state.recycleSpentThisWave,
+    _recycleArmed: rt.state._recycleArmed,
+    recipe: rt.state.recipe,
+    spawnTimer: rt.state.spawnTimer,
+    wave: rt.state.wave,
+    player: { x: rt.state.player.x, y: rt.state.player.y }
+  };
+  try {
+    rt.state.width = 3520;
+    rt.state.height = 2640;
+    rt.state.enemies = [];
+    rt.state.recipe = { cap: 40, spawnInterval: 9 };
+    rt.state.spawnTimer = 9;
+    rt.state.wave = 5;
+    rt.state.recycledTokens = 5;
+    rt.state.recycleRefundTimer = 0;
+    rt.state.recycleSpentThisWave = 0;
+    rt.state._recycleArmed = false;
+    rt.state.player.x = 1760;
+    rt.state.player.y = 1320;
+    stepEnemySpawner(0.05, {});
+    assert((rt.state.recycledTokens || 0) === 5, 'large-world recycle must arm delay before spending');
+    assert((rt.state.enemies || []).length === 0, 'large-world recycle must not spawn on arm frame');
+    assert((rt.state.recycleRefundTimer || 0) >= 1.5, 'large-world recycle delay should be ~2s');
+    var guard = 0;
+    while ((rt.state.recycledTokens || 0) === 5 && guard < 80) {
+      stepEnemySpawner(0.05, {});
+      guard += 1;
+    }
+    assert((rt.state.enemies || []).length === 1, 'large-world recycle should drip one spawn after delay');
+    assert((rt.state.recycledTokens || 0) === 4, 'large-world recycle should keep remaining tokens banked');
+    assert(guard >= 30, 'large-world recycle delay should take multiple frames');
+    var midEnemies = (rt.state.enemies || []).length;
+    stepEnemySpawner(0.05, {});
+    assert((rt.state.enemies || []).length === midEnemies, 'large-world recycle must wait drip interval before next refund');
+  } finally {
+    rt.state.width = recycleSaved.width;
+    rt.state.enemies = recycleSaved.enemies;
+    rt.state.recycledTokens = recycleSaved.recycledTokens;
+    rt.state.recycleRefundTimer = recycleSaved.recycleRefundTimer;
+    rt.state.recycleSpentThisWave = recycleSaved.recycleSpentThisWave;
+    rt.state._recycleArmed = recycleSaved._recycleArmed;
+    rt.state.recipe = recycleSaved.recipe;
+    rt.state.spawnTimer = recycleSaved.spawnTimer;
+    rt.state.wave = recycleSaved.wave;
+    rt.state.player.x = recycleSaved.player.x;
+    rt.state.player.y = recycleSaved.player.y;
+    clearSeed();
+  }
 }

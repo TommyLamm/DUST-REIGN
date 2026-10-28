@@ -114,7 +114,7 @@ function sampleRingSpawnPoint(player, camera, worldW, worldH) {
 1. **普通雜兵（Crawler / Rusher / Scurrier）— 瞬時無感回收（Silent Despawn & Token Refund）**：
    - 判定條件：怪物處於 $R_{outer} > 1.85 \times \text{Viewport}$ 且持續時間 $t_{cull} > 3.0\text{s}$。
    - 處置動作：直接將該怪物從實體陣列 `rt.state.enemies` 透過 `fastUnorderedRemove` 移除（**不計玩家擊殺、不給經驗、不掉落**）。
-   - **生成額度無損補償**：被回收的怪轉化為 `rt.state.recycledTokens += 1`，立即在下一幀於前方 $R_{mid}$ 重新刷出，保證玩家前進時「戰鬥怪潮永遠充沛」！
+   - **生成額度無損補償**：被回收的怪轉化為 `rt.state.recycledTokens += 1`（大世界銀行上限 8）。大世界（寬 ≥ 2400）延遲約 2.0s 後才在前方 $R_{mid}$ 逐隻退款（間隔約 0.85s），且每波退款上限約 `cap×0.35`，避免離屏回收瞬間把壓力堆回玩家面前。
 2. **高威脅/菁英怪（Elite / Warden / Titan 部件）— 地底疾行追擊（Burrow Glide Hyper-Catchup）**：
    - 菁英怪絕不輕易銷毀回收！
    - 當距離玩家 $> 1.85 \times \text{Viewport}$ 超過 2.5 秒時，菁英怪獲得 `e.hyperCatchup = true`：
