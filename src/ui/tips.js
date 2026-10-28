@@ -194,6 +194,7 @@ function scanTriggers() {
   }
   if (rt.state.interlude && rt.state.interlude.step === 'extract') offer('extract');
   else if (rt.state.interlude) offer('route');
+  if (rt.state.overtime && !rt.state.extracted) offer('overtime');
 }
 
 function showTip(toast, id) {

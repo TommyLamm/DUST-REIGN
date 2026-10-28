@@ -1021,6 +1021,7 @@ export function tStatus(text) {
   if (text === 'SELECT A RIG — PRESS START') return '選擇機體 — 按 ENTER 出擊';
   if (text === 'SELECT A RIG — PRESS ENTER TO DEPLOY') return '選擇機體 — 按 ENTER 出擊';
   if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
+  if (text === 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING') return '加時戰區 // 陣亡僅半獎 · 繼續推進';
   if (text.indexOf('APOCALYPSE THOR') === 0) return '天啟雷神 // 軌道離子打擊 180 傷害';
   if (text.indexOf('WEAPON CHASSIS //') === 0) return text.replace('WEAPON CHASSIS //', '武器機底 // ');
   if (text.indexOf('RESONANCE ASCENSION //') === 0) return text.replace('RESONANCE ASCENSION //', '共鳴升華 // ');
@@ -1065,6 +1066,7 @@ export function tStatus(text) {
   if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已擊殺 // EMP 引爆';
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
   if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
+  if (text === 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING') return '加時戰區 // 陣亡僅半獎 · 繼續推進';
   if (text.indexOf('BEHEMOTH ENRAGED') === 0) return '巨獸暴怒 // 核心超頻';
   if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！').replace('BONUS DMG', '額外傷害');
   if (text.indexOf('READY') !== -1 && text.indexOf(' // READY') !== -1) return text.replace(' // READY', ' // 就緒');
@@ -1093,6 +1095,7 @@ export function tTip(id, kind) {
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
+    if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1114,6 +1117,7 @@ export function tTip(id, kind) {
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
+  if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   return '';
 }
 

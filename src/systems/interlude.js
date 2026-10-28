@@ -293,6 +293,9 @@ export function confirmPushDeeper() {
   state.extractDeferredAmount = bonus;
   state.extractPaid = false;
   state.interlude = null;
+  state.banner = Math.max(state.banner || 0, 2.4);
+  state.bannerText = 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING';
+  setStatusText('OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING');
   commitWaveAdvance(true);
 }
 
