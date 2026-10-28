@@ -340,3 +340,31 @@
 .game-root.is-high-contrast .banished-mark {
   color: #ffcc33 !important;
 }
+
+
+.game-root.is-high-contrast .result-grid > div {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+}
+
+.game-root.is-high-contrast .result-grid span,
+.game-root.is-high-contrast .result-grid strong {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .result-grid strong {
+  color: #ffcc33 !important;
+}
+
+.game-root.is-high-contrast .banished-empty strong,
+.game-root.is-high-contrast .banished-empty p,
+.game-root.is-high-contrast .build-banished-list .build-col-title,
+.game-root.is-high-contrast .banished-chip strong {
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .loadout-heat-lock-tag {
+  color: #ffcc33 !important;
+}
