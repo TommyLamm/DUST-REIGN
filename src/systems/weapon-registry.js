@@ -772,7 +772,7 @@ registerWeaponStrategy({
 
     if (isCharged) {
       // 蓄滿釋放穿透 99 的重型軌道電漿束
-      var cDmg = Math.round(p.damage * 6.0 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+      var cDmg = Math.round(p.damage * 4.2 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
       var cSpeed = 1550 * (p.bulletSpeedMult || 1);
       var cR = 8.5 + (isPlasma ? 3 : 0);
       var cTrail = isPlasma ? 'rgba(255, 77, 46, 0.65)' : (isVulcan ? 'rgba(255, 69, 0, 0.55)' : 'rgba(0, 243, 255, 0.65)');
