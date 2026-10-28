@@ -506,17 +506,29 @@ export function spawnCombatText(x, y, text, isCrit) {
   ensurePools();
   var slot = allocNumber();
   var n = numbers[slot];
+  var reduced = isReducedMotion();
   n.active = true;
   n.owner = null;
   n.ownerId = 0;
   n.x = x;
   n.y = y;
-  n.vy = -36;
-  n.life = 0.85;
-  n.maxLife = 0.85;
+  n.vy = reduced ? 0 : -36;
+  n.life = reduced ? 0.5 : 0.85;
+  n.maxLife = n.life;
   n.value = 0;
   n.crit = Boolean(isCrit);
   n.text = text;
+}
+
+/** Optional world-space score popup. Skips tiny ticks; reduced-motion keeps text static. */
+export function spawnScoreFloater(x, y, amount, source) {
+  var n = Number(amount);
+  if (!(n >= 15)) return;
+  var label = '+' + n;
+  if (source === 'boss') label = 'BOSS +' + n;
+  else if (source === 'bounty') label = 'BOUNTY +' + n;
+  else if (source === 'style') label = 'STYLE +' + n;
+  spawnCombatText(x, y, label, n >= 200 || source === 'boss');
 }
 
 function markCritNumber(n) {
