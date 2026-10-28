@@ -662,7 +662,7 @@ export function explodeBarrel(barrel, index, isKicked) {
     // hurt once inside the guard window (covers hardcore short invuln caps).
     var chainGuarded = (rt.state._barrelChainGuard || 0) > 0;
     if (p.invulnerable <= 0 && !chainGuarded) {
-      var barrelHit = damagePlayer(1, 'barrel');
+      var barrelHit = 0; // post-#188 still barrel×3 at dmg1 — disable player friendly-fire
       if (barrelHit > 0) {
         rt.state._barrelChainGuard = 1.0;
         p._capNextInvuln = undefined;
