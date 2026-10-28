@@ -211,6 +211,9 @@ export function spawnMonolithCrags(e, frame) {
 function beginCharge(e) {
   e.mode = 'charge';
   e.chargeCarry = 0;
+  e.chargeDist = 0;
+  // Soft arena charges end in ~1.5s; big-world diagonals used to run 5–8s with no armor-break.
+  e.chargeMaxDist = e.bossPhase >= 3 ? 900 : 780;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
@@ -303,12 +306,19 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       }
     }
 
+    e.chargeDist = (e.chargeDist || 0) + step;
     var m = e.r + 2;
     var hitWall = e.x <= m || e.y <= m || e.x >= box.w - m || e.y >= box.h - m;
     e.x = clamp(e.x, m, box.w - m);
     e.y = clamp(e.y, m, box.h - m);
     e.damage = e.chargeDamage;
-    if (hitWall) endCharge(e, frame);
+    if (hitWall || e.chargeDist >= (e.chargeMaxDist || 780)) {
+      if (!hitWall && rt.state) {
+        rt.state.banner = Math.max(rt.state.banner || 0, 1.4);
+        rt.state.bannerText = 'CHARGE SPENT // ARMOR BREAK WINDOW';
+      }
+      endCharge(e, frame);
+    }
     return { handled: true, vx: Math.cos(e.aim) * e.chargeSpeed, vy: Math.sin(e.aim) * e.chargeSpeed };
   }
 
@@ -325,7 +335,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.empTimer = Math.max(e.empTimer || 0, e.stunT > 0 ? e.stunT : 0);
     if (e.stunT <= 0) {
       e.mode = 'idle';
-      e.attackCd = 4;
+      e.attackCd = 2.6;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
