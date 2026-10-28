@@ -1720,6 +1720,20 @@ export function syncStaticHtml(lang) {
     metricLabels[2].textContent = zh ? '機體等級' : 'RIG LVL';
   }
   setTextById('hudWaveLabel', zh ? '拾荒時刻' : 'SCAVENGER HOUR');
+  var resNames = document.querySelectorAll('#hudResonances .res-name');
+  if (resNames && resNames.length >= 4) {
+    resNames[0].textContent = zh ? '動能' : 'KIN';
+    resNames[1].textContent = zh ? '電漿' : 'PLA';
+    resNames[2].textContent = zh ? '靜電' : 'STA';
+    resNames[3].textContent = zh ? '戰術' : 'TAC';
+  }
+  var resPills = document.querySelectorAll('#hudResonances .resonance-pill');
+  if (resPills && resPills.length >= 4) {
+    resPills[0].title = zh ? '動能穿甲共鳴' : 'Kinetic Ballistics';
+    resPills[1].title = zh ? '熱能電漿共鳴' : 'Thermal Plasma';
+    resPills[2].title = zh ? '電磁靜電共鳴' : 'Electromagnetic Static';
+    resPills[3].title = zh ? '機動戰術共鳴' : 'Tactical Defense';
+  }
   var lvlSmall = document.querySelector('.metric--level small');
   if (lvlSmall) lvlSmall.textContent = zh ? '保持移動' : 'KEEP MOVING';
 
