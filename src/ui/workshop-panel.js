@@ -10,6 +10,13 @@ function el(tag, className, text) {
   return node;
 }
 
+function branchLabel(branch, zh) {
+  if (branch === 'propulsion') return zh ? '動力' : 'PROPULSION';
+  if (branch === 'armor') return zh ? '裝甲' : 'ARMOR';
+  if (branch === 'tactical') return zh ? '戰術' : 'TACTICAL';
+  return String(branch || '').toUpperCase();
+}
+
 export function createWorkshopPanel() {
   var container = el('div', 'workshop-panel-container');
   container.id = 'tabPanelWorkshop';
@@ -138,14 +145,14 @@ export function refreshWorkshopPanel(container) {
     topRow.appendChild(codeName);
 
     var tags = el('div', 'module-tags');
-    tags.appendChild(el('span', 'module-branch-badge', mod.branch.toUpperCase()));
+    tags.appendChild(el('span', 'module-branch-badge', branchLabel(mod.branch, zh)));
     tags.appendChild(el('span', 'module-wattage-badge', '⚡ ' + mod.wattage + 'W'));
     topRow.appendChild(tags);
     card.appendChild(topRow);
 
     // Tier indicator
     var tierBar = el('div', 'module-tier-bar');
-    var tierLabelText = 'TIER ' + currentTier + ' / 3' + (tuningLevel > 0 ? ' [OC Lv.' + tuningLevel + ']' : '');
+    var tierLabelText = (zh ? ('階級 ' + currentTier + ' / 3') : ('TIER ' + currentTier + ' / 3')) + (tuningLevel > 0 ? (zh ? (' [超頻 Lv.' + tuningLevel + ']') : (' [OC Lv.' + tuningLevel + ']')) : '');
     tierBar.appendChild(el('span', 'module-tier-label', tierLabelText));
     card.appendChild(tierBar);
 
