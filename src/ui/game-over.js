@@ -160,17 +160,21 @@ export function updateGameOverUi(state) {
       var nextStageId = findNextStageId(state.stageConfig ? state.stageConfig.id : getCampaignStore().selectedStage);
       if (nextSectorBtn) {
         var nextSpan = nextSectorBtn.querySelector('span');
-        if (nextSpan) {
-          nextSpan.textContent = nextStageId ? (zh ? '下一區域出擊' : 'NEXT SECTOR') : (zh ? '戰役全數通關 ⊞' : 'CAMPAIGN COMPLETE ⊞');
-        }
+        var nextLabel = nextStageId ? (zh ? '下一區域出擊' : 'NEXT SECTOR') : (zh ? '戰役全數通關 ⊞' : 'CAMPAIGN COMPLETE ⊞');
+        if (nextSpan) nextSpan.textContent = nextLabel;
+        nextSectorBtn.setAttribute('aria-label', nextLabel);
       }
       if (replayBtn) {
         var replaySpan = replayBtn.querySelector('span');
-        if (replaySpan) replaySpan.textContent = zh ? '原關重試' : 'REPLAY';
+        var replayLabel = zh ? '原關重試' : 'REPLAY';
+        if (replaySpan) replaySpan.textContent = replayLabel;
+        replayBtn.setAttribute('aria-label', zh ? '重試本關戰役' : 'Replay this stage');
       }
       if (stageSelectBtn) {
         var selectSpan = stageSelectBtn.querySelector('span');
-        if (selectSpan) selectSpan.textContent = zh ? '關卡選擇' : 'STAGE SELECT';
+        var selectLabel = zh ? '關卡選擇' : 'STAGE SELECT';
+        if (selectSpan) selectSpan.textContent = selectLabel;
+        stageSelectBtn.setAttribute('aria-label', zh ? '開啟關卡選擇' : 'Open stage select');
       }
     }
   } else {
