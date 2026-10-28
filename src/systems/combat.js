@@ -174,9 +174,9 @@ export function damagePlayer(amount, source, threatX, threatY) {
   // Wave 15+: residual elite rounds must never wipe (hardcap in enemy-bullets can miss edge frames).
   // Sovereign / wave15+: elite rounds never connect (wave-14 leftovers can still tag deathWave 15).
   var _src = normalizeDamageSource(source);
-  var _sovWave = (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || ((rt.state.wave | 0) >= 15);
-  if (_sovWave && (_src === 'bullet:elite' || _src === 'contact:elite' || /elite/i.test(String(source || '')))) {
-    // Scrub sticky elite tag so a later unexplained death is not blamed on early-wave elites.
+  // Wave 14+ gate catches residual elites before sovereign recipe is applied.
+  var _eliteMute = ((rt.state.wave | 0) >= 14) || (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || (rt.state.boss && rt.state.boss.kind === 'sovereign');
+  if (_eliteMute && (_src === 'bullet:elite' || _src === 'contact:elite' || /elite/i.test(String(source || '')))) {
     if (rt.state.lastDamageSource === 'bullet:elite' || rt.state.lastDamageSource === 'contact:elite') {
       rt.state.lastDamageSource = '';
     }
@@ -662,7 +662,7 @@ export function explodeBarrel(barrel, index, isKicked) {
     // hurt once inside the guard window (covers hardcore short invuln caps).
     var chainGuarded = (rt.state._barrelChainGuard || 0) > 0;
     if (p.invulnerable <= 0 && !chainGuarded) {
-      var barrelHit = damagePlayer(2, 'barrel');
+      var barrelHit = damagePlayer(1, 'barrel');
       if (barrelHit > 0) {
         rt.state._barrelChainGuard = 1.0;
         p._capNextInvuln = undefined;

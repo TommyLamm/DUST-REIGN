@@ -580,9 +580,9 @@ function simulate(game, opts) {
       var lethal = state.deathCause || '';
       if (!lethal && lost > 0) lethal = tagged || blamed || 'unknown';
       if (!lethal) lethal = 'unknown';
-      if (((state.wave | 0) >= 15) && lethal === 'bullet:elite') {
-        lethal = (lost > 0 && tagged && tagged !== 'bullet:elite') ? tagged
-          : (blamed && blamed !== 'bullet:elite' ? blamed : (state.lastNonEliteDamageSource || 'unknown'));
+      if (((state.wave | 0) >= 14) && (lethal === 'bullet:elite' || lethal === 'contact:elite')) {
+        lethal = (lost > 0 && tagged && tagged !== 'bullet:elite' && tagged !== 'contact:elite') ? tagged
+          : (blamed && blamed !== 'bullet:elite' && blamed !== 'contact:elite' ? blamed : (state.lastNonEliteDamageSource || 'unknown'));
       }
       tracker.lethal = lethal;
     }
@@ -607,7 +607,7 @@ function simulate(game, opts) {
   // elite scrub (early-wave bullet:elite survives as lastDamageSource).
   if (outcome === 'death' && (!tracker.lethal || tracker.lethal === 'unknown')) {
     if (state.deathCause && state.deathCause !== 'bullet:elite') tracker.lethal = state.deathCause;
-    else if (state.deathCause === 'bullet:elite' && ((state.wave | 0) >= 15)) tracker.lethal = state.lastNonEliteDamageSource || 'unknown';
+    else if ((state.deathCause === 'bullet:elite' || state.deathCause === 'contact:elite') && ((state.wave | 0) >= 14)) tracker.lethal = state.lastNonEliteDamageSource || 'unknown';
     else if (state.deathCause) tracker.lethal = state.deathCause;
     else if (state.lastDamageSource && state.lastDamageSource !== 'bullet:elite') tracker.lethal = state.lastDamageSource;
   }
