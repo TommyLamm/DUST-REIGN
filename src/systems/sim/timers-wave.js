@@ -341,8 +341,10 @@ export function stepEnemySpawner(dt, frame) {
   }
 
   if (rt.state.spawnTimer <= 0 && rt.state.enemies.length < enemyCap) {
+    rt.state.lastSpawnSlots = 1;
     spawning.spawnEnemy();
     var baseInterval = recipe && typeof recipe.spawnInterval === 'number' ? recipe.spawnInterval : Math.max(0.24, 1.08 - rt.state.wave * 0.045);
-    rt.state.spawnTimer = baseInterval * (0.78 + rng('spawn') * 0.38) * (frontActive() ? STORM_SPAWN_FACTOR : 1);
+    var slots = Math.max(1, rt.state.lastSpawnSlots || 1);
+    rt.state.spawnTimer = baseInterval * slots * (0.78 + rng('spawn') * 0.38) * (frontActive() ? STORM_SPAWN_FACTOR : 1);
   }
 }

@@ -481,7 +481,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.arming = false;
         e.hp = 0;
         e.deathCause = 'other';
-        blastAt(e.x, e.y, 70, Math.round(22 * dmgScale()), 65, '#e07a3d');
+        blastAt(e.x, e.y, 70, Math.round(18 * dmgScale()), 65, '#e07a3d');
         return setStepScratch(dx, dy, dist, 0);
       }
       return setStepScratch(dx, dy, dist, 0);
