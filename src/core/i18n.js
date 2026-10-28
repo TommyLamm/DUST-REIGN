@@ -1074,6 +1074,7 @@ export function tTip(id, kind) {
     if (id === 'contrast') return 'HARD TO SEE SHOTS? PAUSE → CONTRAST: HIGH · BRIGHTENS HOSTILES';
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
+    if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1092,6 +1093,7 @@ export function tTip(id, kind) {
   if (id === 'contrast') return '敵彈看不清？暫停選單 → 對比度: 高 · 可加強敵方與彈體可讀性';
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
+  if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   return '';
 }
 
