@@ -17,7 +17,7 @@ export var MUTATORS = {
     id: 'scrap-rain',
     name: 'SCRAP RAIN',
     blurb: 'The sky drops hot salvage.',
-    detail: 'Every 3s a meteor warns for 0.8s (r 34), hits for 12, and leaves 4 scrap.'
+    detail: 'Every 3s a meteor warns for 1.15s (r 34), hits for 12, and leaves 4 scrap.'
   },
   barrage: {
     id: 'barrage',

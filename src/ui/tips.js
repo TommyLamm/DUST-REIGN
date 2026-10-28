@@ -182,7 +182,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 10 && enemyOfKind('mine')) offer('mine');
-  if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'meteor-shower' || rt.state.mutator.id === 'meteors'))) offer('meteor');
+  if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   var ci;
