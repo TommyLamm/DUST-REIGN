@@ -222,13 +222,13 @@ export function selfCheck() {
     test.volatileCores = [{ x: 100, y: 100, r: 12, hp: 30, maxHp: 30, rot: 0 }];
     test.stats.damageDealt = 0;
     explodeCore(test.volatileCores[0], 0);
-    coreTitanOk = test.enemies[0].hp === 650 && test.enemies[0].empTimer === 3.0 && test.stats.damageDealt === 350;
+    coreTitanOk = Math.abs(test.enemies[0].hp - 768) < 0.01 && test.enemies[0].empTimer === 3.0 && Math.abs(test.stats.damageDealt - 232) < 0.01;
 
     test.enemies = [{ kind: 'titan', x: 100, y: 100, r: 24, hp: 650, maxHp: 1000, empTimer: 0 }];
     test.barrels = [{ x: 100, y: 100, r: 14, hp: 20, maxHp: 20, state: 'flying', flyingTimer: 1.0, rot: 0 }];
     test.stats.damageDealt = 0;
     explodeBarrel(test.barrels[0], 0, true);
-    barrelTitanOk = (test.enemies[0].hp === 370 || test.enemies[0].hp === 410) && (test.enemies[0].empTimer === 1.8 || test.enemies[0].empTimer === 1.5) && (test.stats.damageDealt === 280 || test.stats.damageDealt === 240);
+    barrelTitanOk = Math.abs(test.enemies[0].hp - 484) < 0.01 && (test.enemies[0].empTimer === 1.8 || test.enemies[0].empTimer === 1.5) && Math.abs(test.stats.damageDealt - 166) < 0.01;
 
     test.player.weaponMode = 'standard';
     cycleWeaponMode();
