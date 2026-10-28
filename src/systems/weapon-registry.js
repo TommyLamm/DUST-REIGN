@@ -260,7 +260,7 @@ registerWeaponStrategy({
 
     var spreadScale = weaponModActive(rt.state, 'flechette-pack') ? 0.9 : 1;
     var offsets = breacherSpread(breacherPelletCount(p), spreadScale);
-    var breacherDmg = Math.max(1, Math.round(p.damage * 0.42 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
+    var breacherDmg = Math.max(1, Math.round(p.damage * 0.48 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
     var bSpeed = p.bulletSpeed * (p.bulletSpeedMult || 1);
     var bR = 3.5 + (isPlasma ? 3 : 0);
     var bTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(255, 170, 80, 0.32)');
@@ -294,7 +294,7 @@ registerWeaponStrategy({
     }
 
     if (rt.state.stats) rt.state.stats.shotsFired += offsets.length;
-    p.cooldown = shotCooldown(p, p.fireRate * 2.4 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+    p.cooldown = shotCooldown(p, p.fireRate * 2.2 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
     var recoilPush = (p.recoilMult || 1);
     p.x -= Math.cos(p.aim) * 4.5 * recoilPush;
