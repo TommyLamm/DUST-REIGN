@@ -254,18 +254,28 @@ export function spawnEnemy() {
     kind = legacyRoll < recipe.rusherCut ? 'rusher' : legacyRoll > recipe.bruteCut ? 'brute' : 'crawler';
   }
   var spawned = placeEnemy(kind, x, y, recipe, affix, affix2);
-  if (kind === 'scurrier') {
+  var bodies = spawned ? 1 : 0;
+  // Scurrier packs used to drop 3 bodies per weight roll (~3x field share).
+  // Pair pack + spawn-slot billing keeps the swarm fantasy without flooding the cap.
+  if (kind === 'scurrier' && spawned) {
     var cap = recipeCap(recipe);
     var scurAngle = Math.atan2(y - p.y, x - p.x);
     var tangent = scurAngle + Math.PI / 2;
+    var side = rng('spawn') < 0.5 ? 1 : -1;
     var margin = 32;
     if (rt.state.enemies.length < cap) {
-      placeEnemy(kind, clamp(x + Math.cos(tangent) * 22, margin, boundW - margin), clamp(y + Math.sin(tangent) * 22, margin, boundH - margin), recipe, null, null);
-    }
-    if (rt.state.enemies.length < cap) {
-      placeEnemy(kind, clamp(x - Math.cos(tangent) * 22, margin, boundW - margin), clamp(y - Math.sin(tangent) * 22, margin, boundH - margin), recipe, null, null);
+      placeEnemy(
+        kind,
+        clamp(x + Math.cos(tangent) * 22 * side, margin, boundW - margin),
+        clamp(y + Math.sin(tangent) * 22 * side, margin, boundH - margin),
+        recipe,
+        null,
+        null
+      );
+      bodies += 1;
     }
   }
+  if (rt.state) rt.state.lastSpawnSlots = Math.max(1, bodies);
   return spawned;
 }
 

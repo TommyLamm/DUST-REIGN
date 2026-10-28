@@ -180,7 +180,8 @@ export function run() {
     };
     rt.state.enemies = [];
     spawnEnemy();
-    assert(rt.state.enemies.length === 3 && rt.state.enemies[0].kind === 'scurrier', 'scurrier pack was not 3');
+    assert(rt.state.enemies.length === 2 && rt.state.enemies[0].kind === 'scurrier', 'scurrier pack was not 2');
+    assert((rt.state.lastSpawnSlots || 0) === 2, 'scurrier pack did not bill 2 spawn slots');
 
     rt.state.wave = 8;
     rt.state.recipe.eliteChance = 1;

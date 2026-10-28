@@ -156,7 +156,7 @@ $$\vec{F}_{sep} = \sum_{j \in \text{Neighbors}, j \ne i} \frac{\vec{r}_i - \vec{
 | **Crawler** (爬行者) | **陣線填塞與消耗肉盾**<br>(Swarm Anchor) | $\vec{T} = \vec{P} + \vec{R}_{jitter}(20\text{px})$ | 正面直撲，受排斥力自然鋪開，形成基礎包圍面。 |
 | **Brute** (蠻牛裝甲) | **正面破陣與動量衝撞**<br>(Frontal Line Breaker) | $\vec{T} = \vec{P}$ | 直奔玩家當前座標。免疫輕型擊退，作為移動掩體吸收子彈，逼迫玩家走位。 |
 | **Rusher** (疾行突刺者) | **側翼雙鉗阻截**<br>(Pincer Flank Cut-Off) | $\vec{T} = \vec{P} + \vec{V}_p \cdot 0.8\text{s} + \text{Sign} \cdot \vec{V}_p^\perp \cdot 130\text{px}$ | 生成時分配極性 $\text{Sign} \in \{+1, -1\}$（左翼/右翼）。繞行至玩家斜後方，CD 結束時呈 $90^\circ$ 橫向突刺，切斷滑行退路！ |
-| **Scurrier** (自爆跳蚤) | **扇形突擊與連鎖破防**<br>(Swarm Cluster Bomb) | $\vec{T} = \vec{P} + \text{FanOffset}(\text{index}, 45^\circ)$ | 3 隻一組。呈扇形張開撲擊，在距玩家 75px 處急停自爆。考驗玩家擊殺自爆怪引爆敵陣的連鎖技巧。 |
+| **Scurrier** (自爆跳蚤) | **扇形突擊與連鎖破防**<br>(Swarm Cluster Bomb) | $\vec{T} = \vec{P} + \text{FanOffset}(\text{index}, 45^\circ)$ | 2 隻一組（權重一抽扣 2 個生成時槽）。呈扇形撲擊，在距玩家 75px 處急停自爆。 |
 | **Spitter** (酸液噴射者) | **視口邊緣火力壓制**<br>(Perimeter Siege Artillery) | 保持距離 $d \in [240, 320\text{px}]$；若太近以 $0.85\times$ 倒退 | 絕不深入內環。於螢幕邊緣架炮，向玩家逃生路徑投擲大範圍酸池（減速 25% + 傷害），封鎖活動空間。 |
 | **Warden** (護盾督軍) | **後方指揮與陣型強化**<br>(Rear Vanguard Buffer) | 保持在最近 2 隻 Brute/Crawler 後方 $120\text{px}$，距玩家 $\ge 280\text{px}$ | 徘徊於二線。每 4s 為前鋒套上金黃護盾（40% 最大 HP，免疫擊退），使正面突破難度成倍上升。 |
 | **Burrower** (沙海潛伏者) | **縱深穿插與落點奇襲**<br>(Subterranean Interceptor) | 鑽地朝 $\vec{P} + \vec{V}_p \cdot 1.2\text{s}$ 潜行，破土攔截 | 潛伏地下無視子彈，精準預判玩家奔馳方向破土衝擊，放射尖刺彈，迫使玩家中斷長距離單向衝刺。 |
@@ -308,7 +308,7 @@ $$V_{world\_enemy} = V_{base} \times (1 + \alpha_{large\_world}) \times M_{aggro
 
 - 各兵種生成點數成本（Spawn Cost）：
   - `Crawler`: 1 點
-  - `Scurrier`: 1 點（3隻群體 = 3點）
+  - `Scurrier`: 2 點（2隻群體 = 2 生成時槽）
   - `Rusher`: 2.5 點
   - `Spitter`: 3.5 點
   - `Brute`: 5 點

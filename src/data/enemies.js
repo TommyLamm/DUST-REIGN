@@ -20,7 +20,7 @@ var BASE = {
   brute: { hp: 141, speed: 33, damage: 27, r: 23, score: 90, xp: 34, repair: 1, firstWave: 1, color: '#bd573f' },
   artillery: { hp: 97, speed: 29, damage: 19, r: 16, score: 60, xp: 24, repair: 0.15, firstWave: 2, color: '#d69e2e' },
   spitter: { hp: 38, speed: 60, damage: 10, r: 13, score: 45, xp: 16, repair: 0.05, firstWave: 6, color: '#b6d34a' },
-  scurrier: { hp: 18, speed: 150, damage: 22, r: 9, score: 30, xp: 8, repair: 0, firstWave: 7, color: '#e07a3d' },
+  scurrier: { hp: 18, speed: 150, damage: 18, r: 9, score: 30, xp: 8, repair: 0, firstWave: 7, color: '#e07a3d' },
   warden: { hp: 70, speed: 55, damage: 8, r: 15, score: 110, xp: 30, repair: 0.2, firstWave: 11, color: '#7eb6d6' },
   burrower: { hp: 95, speed: 40, damage: 18, r: 17, score: 120, xp: 32, repair: 0.25, firstWave: 12, color: '#c4a574' },
   elite: { hp: 214, speed: 45, damage: 21, r: 19, score: 180, xp: 40, repair: 1, firstWave: 3, color: '#75d1b0' },
