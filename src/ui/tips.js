@@ -93,6 +93,7 @@ function tipText(id) {
   else if (id === 'scurrier-arming') copyId = 'scurrier';
   else if (id === 'burrower-warn') copyId = 'burrower';
   else if (id === 'barrel-fuse') copyId = 'barrel-fuse';
+  else if (id === 'acid-pool') copyId = 'acid';
   return tTip(copyId, inputKind());
 }
 
@@ -355,7 +356,8 @@ function scanTriggers() {
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
   if (rt.state.boss && rt.state.boss.kind === 'titan' && rt.state.boss.hp > 0) offer('titan-parts');
   if (rt.state.contract) offer('contract');
-  if (acidHazardNear() || ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter'))) offer('acid');
+  if (acidHazardNear()) offerUrgent('acid-pool');
+  else if ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter')) offer('acid');
   if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyNearKind('warden', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
   if ((rt.state.wave || 1) >= 12 && burrowerWarnNear()) offerUrgent('burrower-warn');
   else if ((rt.state.wave || 1) >= 12 && enemyOfKind('burrower')) offer('burrower');
