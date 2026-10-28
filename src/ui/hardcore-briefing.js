@@ -82,6 +82,13 @@ export function renderHardcoreBriefing(container, onSelect) {
       if (!isUnlocked) pill.classList.add('is-locked');
 
       pill.textContent = item.code + (isUnlocked ? '' : ' 🔒');
+      if (!isUnlocked) {
+        var lockReason = zh ? '需先通關前一作戰' : 'Clear the previous operation first';
+        pill.title = lockReason;
+        pill.setAttribute('aria-label', item.code + ' — ' + lockReason);
+      } else {
+        pill.setAttribute('aria-label', item.code + (record.cleared ? (zh ? ' · 已攻克' : ' · cleared') : ''));
+      }
 
       on(pill, 'click', function (e) {
         e.preventDefault();

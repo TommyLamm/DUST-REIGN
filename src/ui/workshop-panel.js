@@ -202,6 +202,8 @@ export function refreshWorkshopPanel(container) {
       } else {
         equipBtn.textContent = zh ? '負載過重 (>6⚡)' : 'OVERLOAD (>6⚡)';
         equipBtn.disabled = true;
+        equipBtn.title = zh ? '底盤負載不足，請先卸下其他模組' : 'Chassis wattage full — detach another module first';
+        equipBtn.setAttribute('aria-label', equipBtn.title);
       }
     }
     actionsRow.appendChild(equipBtn);
@@ -223,6 +225,8 @@ export function refreshWorkshopPanel(container) {
       } else {
         upgradeBtn.disabled = true;
         upgradeBtn.classList.add('is-disabled');
+        upgradeBtn.title = zh ? ('精煉廢料不足 — 需要 ' + cost + '⚙') : ('Not enough refined scrap — need ' + cost + '⚙');
+        upgradeBtn.setAttribute('aria-label', upgradeBtn.title);
       }
     } else if (tuningLevel < 3) {
       var ocCost = 250;
@@ -238,11 +242,15 @@ export function refreshWorkshopPanel(container) {
       } else {
         upgradeBtn.disabled = true;
         upgradeBtn.classList.add('is-disabled');
+        upgradeBtn.title = zh ? ('精煉廢料不足 — 需要 ' + ocCost + '⚙') : ('Not enough refined scrap — need ' + ocCost + '⚙');
+        upgradeBtn.setAttribute('aria-label', upgradeBtn.title);
       }
     } else {
       upgradeBtn.textContent = zh ? '超頻已滿階 (MAX)' : 'MAX OVERCLOCKED';
       upgradeBtn.disabled = true;
       upgradeBtn.classList.add('is-max');
+      upgradeBtn.title = zh ? '此模組已達超頻上限' : 'Module already at max overclock';
+      upgradeBtn.setAttribute('aria-label', upgradeBtn.title);
     }
     actionsRow.appendChild(upgradeBtn);
 

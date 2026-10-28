@@ -127,7 +127,9 @@ export function updateGameOverUi(state) {
 
     if (stampElement) {
       stampElement.className = 'overlay-stamp overlay-stamp--success victory-banner';
-      stampElement.innerHTML = 'SECTOR SECURED <span>//</span> MISSION COMPLETE';
+      stampElement.innerHTML = zh
+        ? '區段安全 <span>//</span> 任務完成'
+        : 'SECTOR SECURED <span>//</span> MISSION COMPLETE';
     }
     if (kickerElement) {
       kickerElement.textContent = zh ? '區域威脅已肅清 · 戰術指標全數平定' : 'ALL SECTOR OBJECTIVES SECURED // DRIFT TERMINATED';
@@ -168,7 +170,9 @@ export function updateGameOverUi(state) {
 
     if (stampElement) {
       stampElement.className = 'overlay-stamp overlay-stamp--danger';
-      stampElement.innerHTML = 'SIGNAL LOST <span>//</span> RUN ENDED';
+      stampElement.innerHTML = zh
+        ? '訊號中斷 <span>//</span> 出擊結束'
+        : 'SIGNAL LOST <span>//</span> RUN ENDED';
     }
     if (kickerElement) {
       var cause = formatDamageSourceLabel(state.deathCause || state.lastDamageSource, zh);

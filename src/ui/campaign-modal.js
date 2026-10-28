@@ -113,6 +113,30 @@ export function renderModal() {
   var zh = isChinese();
   var totalStars = (store.stats && typeof store.stats.totalStars === 'number') ? store.stats.totalStars : 0;
 
+  // 0. Chrome locale (stamp / title / kicker / aria / foot)
+  var stamp = modalElement.querySelector('.campaign-modal-header .overlay-stamp');
+  if (stamp) stamp.innerHTML = zh ? '戰役作戰 <span>//</span> 區段網格' : 'CAMPAIGN OPERATIONS <span>//</span> SECTOR GRID';
+  var title = document.getElementById('campaignModalTitle');
+  if (title) title.innerHTML = zh ? '區段 <span>戰役</span>' : 'SECTOR <span>CAMPAIGN</span>';
+  var kicker = modalElement.querySelector('.campaign-modal-header .overlay-kicker');
+  if (kicker) kicker.textContent = zh ? '選擇目標並部署進入廢土' : 'SELECT OBJECTIVE & DEPLOY INTO THE WASTES';
+  if (closeBtnElement) closeBtnElement.setAttribute('aria-label', zh ? '關閉關卡選擇' : 'Close stage select');
+  var starCountLabel = modalElement.querySelector('.campaign-star-count');
+  if (starCountLabel) {
+    starCountLabel.innerHTML = (zh ? '總星數: ' : 'TOTAL STARS: ') + '<strong id="campaignTotalStars">' + totalStars + '</strong> / 45';
+    totalStarsElement = document.getElementById('campaignTotalStars');
+  }
+  var sectorNav = document.getElementById('sectorTabs');
+  if (sectorNav) sectorNav.setAttribute('aria-label', zh ? '區段導覽' : 'Sector Navigation');
+  var stageRegion = document.getElementById('stageGrid');
+  if (stageRegion) stageRegion.setAttribute('aria-label', zh ? '關卡卡片' : 'Stage Cards');
+  var footHint = modalElement.querySelector('.campaign-foot-hint');
+  if (footHint) footHint.textContent = zh ? '十字鍵／方向鍵瀏覽 · ENTER 選擇 · ESC 關閉' : 'D-PAD / ARROWS NAVIGATE · ENTER SELECT · ESC CLOSE';
+  if (confirmBtnElement) {
+    var confSpan = confirmBtnElement.querySelector('span');
+    if (confSpan) confSpan.textContent = zh ? '確認並返回' : 'CONFIRM & RETURN';
+  }
+
   // 1. Update summary bar
   if (totalStarsElement) {
     totalStarsElement.textContent = String(totalStars);
@@ -140,8 +164,12 @@ export function renderModal() {
         tab.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
 
         var titleSpan = el('span', '', tCampaignSectorName(sector.id, zh ? sector.name.split(' (')[0] : sector.code));
-        tab.setAttribute('title', tCampaignSectorDesc(sector.id, sector.desc || ''));
-        tab.setAttribute('aria-label', tCampaignSectorName(sector.id, sector.code) + ' — ' + tCampaignSectorDesc(sector.id, sector.desc || ''));
+        var sectorTip = tCampaignSectorDesc(sector.id, sector.desc || '');
+        if (isLocked) {
+          sectorTip = (zh ? ('需累計 ' + sector.reqStars + '★ 解鎖此區段') : ('Need ' + sector.reqStars + '★ to unlock this sector'));
+        }
+        tab.setAttribute('title', sectorTip);
+        tab.setAttribute('aria-label', tCampaignSectorName(sector.id, sector.code) + ' — ' + sectorTip);
         var reqSmall = el('small', '', isLocked ? (sector.reqStars + '★ ' + (zh ? '解鎖' : 'REQ')) : (zh ? '已開放' : 'SECURED'));
         tab.appendChild(titleSpan);
         tab.appendChild(reqSmall);
@@ -251,6 +279,15 @@ export function renderModal() {
       foot.appendChild(records);
       foot.appendChild(threatSpan);
       card.appendChild(foot);
+
+      if (!unlocked) {
+        var lockTip = zh ? '前置關卡未達成' : 'Previous stage not cleared';
+        card.title = lockTip;
+        card.setAttribute('aria-disabled', 'true');
+        card.setAttribute('aria-label', tCampaignStageName(stg.id, stg.name) + ' — ' + lockTip);
+      } else {
+        card.setAttribute('aria-label', tCampaignStageName(stg.id, stg.name));
+      }
 
       // Click event
       on(card, 'click', function (e) {
