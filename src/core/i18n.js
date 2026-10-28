@@ -1395,6 +1395,7 @@ export function tTip(id, kind) {
     if (id === 'fusion') return 'COMPLETES A FUSION · THAT CHIP JOINS THE RIG';
     if (id === 'route') return 'PICK A ROUTE · THEN AN ARMORY UPGRADE FOR THE NEXT ACT';
     if (id === 'contrast') return 'HARD TO SEE SHOTS? PAUSE → CONTRAST: HIGH · BRIGHTENS HOSTILES';
+    if (id === 'language') return 'NEED 繁中 / ENG? PAUSE → SYSTEM → LANGUAGE · SWITCHES MENUS & TIPS';
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'warden-bubble') return 'WARDEN BUBBLES ALLIES · BREAK THE SHIELD OR KITE PAST — DO NOT DUMP INTO THE BUBBLE';
@@ -1435,6 +1436,7 @@ export function tTip(id, kind) {
   if (id === 'fusion') return '完成晶片融合 · 核心晶片將永久融入機體';
   if (id === 'route') return '挑選行進路線 · 並為下個章節挑選軍械庫升級';
   if (id === 'contrast') return '敵彈看不清？暫停選單 → 對比度: 高 · 可加強敵方與彈體可讀性';
+  if (id === 'language') return '需要切換 繁中／ENG？暫停 → 系統設定 → 語言 · 介面與 tip 同步切換';
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'warden-bubble') return '守衛者為友軍上盾 · 先破盾或繞過 — 別把火力砸進護盾';

@@ -180,7 +180,12 @@ function paint() {
   var codexTitle = document.getElementById('codexTitle');
   if (codexTitle) codexTitle.textContent = zh ? '檔案庫' : 'CODEX';
   var closeBtn = document.getElementById('codexCloseBtn');
-  if (closeBtn) closeBtn.textContent = zh ? '關閉' : 'CLOSE';
+  if (closeBtn) {
+    closeBtn.textContent = zh ? '關閉' : 'CLOSE';
+    closeBtn.setAttribute('aria-label', zh ? '關閉檔案庫' : 'Close codex');
+  }
+  var tablist = document.querySelector('#codexPanel .codex-tabs');
+  if (tablist) tablist.setAttribute('aria-label', zh ? '檔案庫分頁' : 'Codex sections');
   if (sig === painted) return;
   painted = sig;
   body = document.getElementById('codexBody');

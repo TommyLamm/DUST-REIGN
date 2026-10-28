@@ -79,7 +79,7 @@ function renderInterlude(panel, il) {
   var shell = el('div', 'interlude-shell');
   var kicker = zh ? '幕間整備' : 'INTERLUDE';
   var heading = zh ? '選擇前進道路' : 'CHOOSE A ROAD';
-  var hint = zh ? '1–4 或點擊 · 方向鍵移動 · ENTER 確認' : '1–3 OR CLICK · ARROWS TO MOVE · ENTER TO CONFIRM';
+  var hint = zh ? '1–3 或點擊 · 方向鍵移動 · ENTER 確認' : '1–3 OR CLICK · ARROWS TO MOVE · ENTER TO CONFIRM';
   if (il.step === 'armory') {
     kicker = zh ? '軍械庫' : 'ARMORY';
     heading = zh ? '檢修機體' : 'SERVICE THE RIG';
