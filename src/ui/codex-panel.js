@@ -280,16 +280,17 @@ export function initCodexPanel() {
   panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', 'codexTitle');
   panel.classList.add('codex-panel');
+  var zhSeed = isChinese();
   inner = el('div', 'codex-inner');
   head = el('div', 'codex-head');
-  head.appendChild(el('p', 'codex-kicker', 'ARCHIVE'));
-  head.appendChild(el('h2', 'codex-title', 'CODEX'));
+  head.appendChild(el('p', 'codex-kicker', zhSeed ? '資料庫' : 'ARCHIVE'));
+  head.appendChild(el('h2', 'codex-title', zhSeed ? '檔案庫' : 'CODEX'));
   var title = head.querySelector('.codex-title');
   title.id = 'codexTitle';
-  closeBtn = el('button', 'codex-close', 'CLOSE');
+  closeBtn = el('button', 'codex-close', zhSeed ? '關閉' : 'CLOSE');
   closeBtn.type = 'button';
   closeBtn.id = 'codexCloseBtn';
-  closeBtn.setAttribute('aria-label', 'Close codex');
+  closeBtn.setAttribute('aria-label', zhSeed ? '關閉檔案庫' : 'Close codex');
   on(closeBtn, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -298,10 +299,16 @@ export function initCodexPanel() {
   head.appendChild(closeBtn);
   tabs = el('div', 'codex-tabs');
   tabs.setAttribute('role', 'tablist');
-  tabs.setAttribute('aria-label', 'Codex sections');
+  tabs.setAttribute('aria-label', zhSeed ? '檔案庫分頁' : 'Codex sections');
+  var SEED_TAB_NAMES = {
+    achievements: zhSeed ? '成就' : 'ACHIEVEMENTS',
+    enemies: zhSeed ? '敵影' : 'ENEMIES',
+    fusions: zhSeed ? '融合' : 'FUSIONS',
+    stats: zhSeed ? '數據' : 'STATS'
+  };
   for (i = 0; i < TABS.length; i += 1) {
     (function (id, index) {
-      var name = id.toUpperCase();
+      var name = SEED_TAB_NAMES[id] || id.toUpperCase();
       var button = el('button', 'codex-tab', name);
       button.type = 'button';
       button.setAttribute('role', 'tab');
