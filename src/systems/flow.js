@@ -252,8 +252,8 @@ export function triggerGameOver(options) {
     if (!rt.state.deathCause) {
       var sticky = rt.state.lastDamageSource || '';
       var nonElite = rt.state.lastNonEliteDamageSource || '';
-      var wave15 = ((rt.state.wave | 0) >= 15);
-      if (wave15 && (sticky === 'bullet:elite' || sticky === 'contact:elite')) {
+      var muteElite = ((rt.state.wave | 0) >= 14);
+      if (muteElite && (sticky === 'bullet:elite' || sticky === 'contact:elite')) {
         rt.state.deathCause = nonElite || 'unknown';
       } else {
         rt.state.deathCause = sticky || nonElite || 'unknown';
