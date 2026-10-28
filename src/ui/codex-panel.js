@@ -117,7 +117,7 @@ function paintEnemies(body, meta) {
     detail = entry.boss ? (zh ? '首領' : 'BOSS') : (zh ? '敵機' : 'HOSTILE');
     if (PROFILED[entry.id]) {
       profile = enemyProfile(entry.id, 1);
-      detail += ' · HP ' + Math.round(profile.hp) + ' · R ' + profile.r;
+      detail += zh ? (' · 生命 ' + Math.round(profile.hp) + ' · 半徑 ' + profile.r) : (' · HP ' + Math.round(profile.hp) + ' · R ' + profile.r);
     }
     var blurb = tEnemyBlurb(entry.id);
     body.appendChild(card(zh ? tEnemyName(entry.id) : entry.name, detail, blurb));

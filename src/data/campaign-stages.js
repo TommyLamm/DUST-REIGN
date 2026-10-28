@@ -80,7 +80,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊破 3 波敵潮',
       star2: '60 秒內通關',
-      star3: '剩餘 HP ≥ 80% 且完成 1 次桶殺'
+      star3: '剩餘生命 ≥ 80% 且完成 1 次桶殺'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 3 },
@@ -112,7 +112,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '收集 100 廢料',
       star2: '50 秒內提前達成',
-      star3: '剩餘 HP ≥ 75% 且承受傷害 ≤ 25'
+      star3: '剩餘生命 ≥ 75% 且承受傷害 ≤ 25'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -144,7 +144,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊殺 2 隻精英蠻兵',
       star2: '60 秒內通關',
-      star3: '剩餘 HP ≥ 70%'
+      star3: '剩餘生命 ≥ 70%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -171,7 +171,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊敗泰坦首領',
       star2: '90 秒內擊破',
-      star3: '達成 3 次 Just Dash 且剩餘 HP ≥ 80%'
+      star3: '達成 3 次 精準衝刺 且剩餘生命 ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -205,7 +205,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊破 4 波敵潮',
       star2: '全程未踩入熔岩池',
-      star3: '剩餘 HP ≥ 70%'
+      star3: '剩餘生命 ≥ 70%'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 4 },
@@ -232,7 +232,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '摧毀裝甲護送車',
       star2: '36 秒內擊毀',
-      star3: '剩餘 HP ≥ 75%'
+      star3: '剩餘生命 ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -286,7 +286,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊沉無畏巨艦',
       star2: '100 秒內完成擊殺',
-      star3: '剩餘 HP ≥ 70%'
+      star3: '剩餘生命 ≥ 70%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -315,7 +315,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '肅清 3 波暴風敵潮',
       star2: '75 秒內通關',
-      star3: '達成 10+ Chain Combo'
+      star3: '達成 10+ 連擊連鎖'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 3 },
@@ -342,7 +342,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '收集 150 廢料',
       star2: '觸發至少 3 次尖塔共振',
-      star3: '未消耗過 EMP 且 HP ≥ 70%'
+      star3: '未消耗過電磁脈衝且剩餘生命 ≥ 70%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -374,7 +374,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊殺 3 隻潛地巨蟲',
       star2: '75 秒內通關',
-      star3: '剩餘 HP ≥ 80%'
+      star3: '剩餘生命 ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -401,7 +401,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊敗風暴主宰',
       star2: '110 秒內擊破神君',
-      star3: '剩餘 HP ≥ 75%'
+      star3: '剩餘生命 ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -430,7 +430,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '肅清 5 波極限混編敵潮',
       star2: '100 秒內通關',
-      star3: '剩餘 HP ≥ 80% 且達成 15+ Chain'
+      star3: '剩餘生命 ≥ 80% 且達成 15+ 連擊'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 5 },
@@ -462,7 +462,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '極限信號塔防守 100 秒',
       star2: '信號塔剩餘耐久 ≥ 80%',
-      star3: '在防守圈內累計停留 ≥ 60 秒且 HP ≥ 75%'
+      star3: '在防守圈內累計停留 ≥ 60 秒且剩餘生命 ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -494,7 +494,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊潰終極暴風神君',
       star2: '120 秒內完成擊殺',
-      star3: '達成 5 次 Just Dash 且剩餘 HP ≥ 80%'
+      star3: '達成 5 次 精準衝刺 且剩餘生命 ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -528,7 +528,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊破 4 波晶化敵潮',
       star2: '65 秒內通關',
-      star3: '剩餘 HP ≥ 80% 且達成 12+ 連擊'
+      star3: '剩餘生命 ≥ 80% 且達成 12+ 連擊'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 4 },
@@ -592,7 +592,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '堅守核心直至計時結束且未過載熔毀',
       star2: '核心超載峰值 ≤ 65% 或 70 秒內完成冷卻',
-      star3: '剩餘 HP ≥ 80% 且達成 4 次極限閃避'
+      star3: '剩餘生命 ≥ 80% 且達成 4 次極限閃避'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -629,7 +629,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '斬首 3 隻晶化變異巨獸',
       star2: '80 秒內完成斬首',
-      star3: '剩餘 HP ≥ 75% 且承受傷害 ≤ 40'
+      star3: '剩餘生命 ≥ 75% 且承受傷害 ≤ 40'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -662,7 +662,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊潰深淵巨獸首領',
       star2: '110 秒內完成擊殺',
-      star3: '達成 5 次極限閃避且剩餘 HP ≥ 75%'
+      star3: '達成 5 次極限閃避且剩餘生命 ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
