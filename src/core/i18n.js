@@ -1277,8 +1277,8 @@ export function tLog(msg) {
   if (msg === 'PERFECT DASH // CHRONO DILATION') return '精準衝刺 // 時間膨脹';
   if (msg === 'BARREL KICK-LAUNCHED') return '炸藥桶已踢出';
   if (msg === 'STATIC TEMPEST // 6-WAY CHAIN DISCHARGE') return '靜電風暴 // 6向連鎖放電';
-  if (msg === 'EMP BLAST // SECTOR DISRUPTED') return 'EMP 衝擊 // 區段訊號干擾';
-  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級 EMP 280PX 引爆';
+  if (msg === 'EMP BLAST // SECTOR DISRUPTED') return '電磁脈衝衝擊 // 區段訊號干擾';
+  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級電磁脈衝 280PX 引爆';
   if (msg === 'OVERCHARGE RETALIATION // RETALIATORY SPIKE FIRED') return '超載反擊 // 復仇尖刺發射';
   if (msg === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';
   if (msg === 'BOUNTY SECURED // SURGE ONLINE') return '懸賞已完成 // 湧浪超頻上線';
@@ -1381,8 +1381,8 @@ export function tLog(msg) {
   if (msg === 'DECOY SUPERNOVA! // PLASMA CASCADE') return '誘餌超新星！ // 電漿連鎖';
   if (msg === 'OVERCLOCK SURGE // MAXIMUM FIRE RATE') return '超頻湧浪 // 最大射速';
   if (msg === 'AEGIS PROTOCOL // FATAL BLOW PREVENTED') return '神盾協議 // 致命一擊已攔截';
-  if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型 EMP 引爆';
-  if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return 'VIP 已擊殺 // EMP 震波觸發';
+  if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型電磁脈衝引爆';
+  if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return '要人已擊殺 // 電磁脈衝震波觸發';
   if (msg.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 · 四面可打';
   if (msg.indexOf('DOUBLE RAM //') === 0) return '雙重衝撞 // 中段不破甲';
   if (msg === 'DOUBLE RAM // NO MID BREACH') return '雙重衝撞 // 中段不破甲';
@@ -1428,18 +1428,18 @@ export function tStatus(text) {
   if (text.indexOf('GRAVITON BULWARK') === 0) return '引力壁壘 // 重力過載爆發';
   if (text.indexOf('GRAVITON BURST') === 0) return '引力爆發 // 敵彈消散';
   if (text.indexOf('BULWARK SHIELD SHATTERED') === 0) return '堡壘護盾粉碎 // 癱瘓 [4.0s]';
-  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已清除 // EMP 引爆';
+  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return '要人目標已清除 // 電磁脈衝引爆';
   if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！');
   if (text.indexOf('SCRAP BULKHEAD //') === 0) return text.replace('SCRAP BULKHEAD //', '廢料隔艙 // ');
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
-  if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP 280PX [眩暈 3.0s]';
+  if (text.indexOf('EMP BLAST DISCHARGED') === 0) return '電磁脈衝衝擊釋放 // 區段訊號干擾';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280PX [眩暈 3.0s]';
   if (text.indexOf('AEGIS PROTOCOL ACTIVATED') === 0) return '神盾協議啟動 // 緊急護盾已展開';
 
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
-  if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP 280PX [眩暈 3.0s]';
+  if (text.indexOf('EMP BLAST DISCHARGED') === 0) return '電磁脈衝衝擊釋放 // 區段訊號干擾';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280PX [眩暈 3.0s]';
   if (text.indexOf('TITAN NEUTRALIZED') === 0) return '泰坦已被擊毀 // 區段安全';
   if (text.indexOf('BOUNTY CLEAR') === 0) {
     return text.replace('BOUNTY CLEAR +', '懸賞完成 +').replace('SCORE // SURGE', '分數 // 湧浪');
@@ -1468,7 +1468,7 @@ export function tStatus(text) {
   if (text.indexOf('EXECUTION!') === 0) return '處決！ // 硬直懲罰 (衝刺重置)';
   if (text.indexOf('DECOY SUPERNOVA') === 0) return '誘餌超新星！ // 電漿連鎖';
   if (text.indexOf('AEGIS PROTOCOL') === 0) return '神盾協議啟動 // 緊急護盾接合';
-  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已擊殺 // EMP 引爆';
+  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return '要人目標已擊殺 // 電磁脈衝引爆';
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
   if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
   if (text === 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING') return '加時戰區 // 陣亡僅半獎 · 繼續推進';
@@ -1755,7 +1755,7 @@ export function tBanner(text) {
   if (text.indexOf('ORBITAL POD OPENED') === 0) return '軌道艙開啟：全面超頻 & 電池過充！';
   if (text.indexOf('FIELD RIG OVERCLOCK') === 0) return '野戰機體超頻：射速 +35% & 強化底盤！';
   if (text.indexOf('XENO NEST DESTROYED') === 0) return '異種巢穴摧毀：衝擊波已引爆！';
-  if (text.indexOf('EMP SPIRE OVERLOAD') === 0) return 'EMP 尖塔過載：全域癱瘓 3.5 秒 & 護盾粉碎！';
+  if (text.indexOf('EMP SPIRE OVERLOAD') === 0) return '電磁脈衝尖塔過載：全域癱瘓 3.5 秒＆護盾粉碎！';
   if (text.indexOf('BUNKER BREACHED') === 0) return '掩體突破：緊急全修 & 30 發穿甲暴擊彈！';
   if (text.indexOf('RESONANCE PYLON DISCHARGED') === 0) return '共鳴塔放電：480px 衝擊波、+2 穿透 & 超頻！';
   if (text.indexOf('CRYSTAL SIPHON MELTDOWN') === 0) return '晶體虹吸熔毀：過熱臨界！抽出 60 廢料！';
