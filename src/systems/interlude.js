@@ -166,6 +166,7 @@ function applySmuggler(state) {
   if (!p) return;
   var loss = Math.round((p.hp || 100) * 0.25);
   p.hp = Math.max(15, (p.hp || 100) - loss);
+  state.lastDamageSource = 'meta:smuggler';
   grantArmoryMastery(state);
   state.rerolls = (state.rerolls || 0) + 2;
   state.banishes = (state.banishes || 0) + 1;

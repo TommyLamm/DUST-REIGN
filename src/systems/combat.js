@@ -41,6 +41,9 @@ export function normalizeDamageSource(source) {
   if (s === 'lightning') return 'boss:lightning';
   if (s === 'storm-eye') return 'boss:storm-eye';
   if (s === 'corrosion') return 'hardcore:corrosion';
+  if (s === 'backlash' || s === 'contract-backlash') return 'contract:backlash';
+  if (s === 'poi-overload' || s === 'overload') return 'poi:overload';
+  if (s === 'smuggler') return 'meta:smuggler';
   if (s.indexOf('contact:') === 0) return s;
   return s;
 }
@@ -83,6 +86,9 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'friendly:core') return '不穩定核心';
     if (s === 'friendly:barrel') return '炸藥桶';
     if (s === 'hardcore:corrosion') return '硬核腐蝕';
+    if (s === 'contract:backlash') return '合約反噬';
+    if (s === 'poi:overload') return '據點過載';
+    if (s === 'meta:smuggler') return '走私交易';
     if (s === 'unknown') return '不明傷害';
     return s;
   }
@@ -98,6 +104,9 @@ export function formatDamageSourceLabel(source, zh) {
   if (s === 'friendly:core') return 'VOLATILE CORE';
   if (s === 'friendly:barrel') return 'BARREL';
   if (s === 'hardcore:corrosion') return 'CORROSION';
+  if (s === 'contract:backlash') return 'CONTRACT BACKLASH';
+  if (s === 'poi:overload') return 'POI OVERLOAD';
+  if (s === 'meta:smuggler') return 'SMUGGLER DEAL';
   if (s === 'unknown') return 'UNKNOWN';
   return s;
 }
