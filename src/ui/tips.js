@@ -119,6 +119,12 @@ function dreadArmorBreakThreat() {
   return !!(crags && crags.length);
 }
 
+function dreadLongFightThreat() {
+  var boss = rt.state && rt.state.boss;
+  if (!boss || boss.kind !== 'dreadnought' || !(boss.hp > 0)) return false;
+  return (boss.fightT || 0) >= 90;
+}
+
 function sovereignEyeThreat() {
   var boss = rt.state && rt.state.boss;
   var p = rt.state && rt.state.player;
@@ -243,6 +249,7 @@ function scanTriggers() {
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
   if (sovereignEyeThreat()) offer('storm-eye');
   if (dreadArmorBreakThreat()) offer('dread-break');
+  if (dreadLongFightThreat()) offer('dread-fatigue');
   if (bossAddClearThreat()) offer('boss-clear');
   if (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0 && (rt.state.enemyBullets || []).length >= 6) offer('storm-weave');
 }
