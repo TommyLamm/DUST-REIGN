@@ -247,7 +247,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyOfKind('elite') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offer('molten');
-  if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
+  if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   var ci;

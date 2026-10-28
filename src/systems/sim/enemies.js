@@ -282,7 +282,11 @@ export function stepEnemies(dt, frame) {
     }
     if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
       var contactDmg = e.damage;
-      if (e.kind === 'burrower') contactDmg = Math.max(1, Math.round(contactDmg * 0.25));
+      if (e.kind === 'burrower') {
+        contactDmg = Math.max(1, Math.round(contactDmg * 0.25));
+        // First burrower waves: slightly longer i-frames after teach hit.
+        if (((rt.state.wave | 0) <= 13) && !(rt.state.boss && rt.state.boss.hp > 0)) e._burrowTeach = true;
+      }
       if (playerEdge.pressed) contactDmg = Math.max(1, Math.round(e.damage * 0.55));
       if (rt.state.boss && rt.state.boss.hp > 0 && (e.kind === 'elite' || e.kind === 'brute')) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.7));
@@ -315,7 +319,7 @@ export function stepEnemies(dt, frame) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.55));
       }
       var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
-      e.touchCooldown = firstTitan ? 1.15 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier) ? 1.05 : (e.kind === 'dreadnought' ? 1.05 : 0.85));
+      e.touchCooldown = firstTitan ? 1.15 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier || e._burrowTeach) ? 1.05 : (e.kind === 'dreadnought' ? 1.05 : 0.85));
       if (touched > 0) {
         p.invulnerable = playerEdge.pressed ? 1.05 : (e.kind === 'dreadnought' ? 1.0 : 0.7);
         if (playerEdge.pressed) {
