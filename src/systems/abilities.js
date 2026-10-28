@@ -106,7 +106,7 @@ export function dashRechargeCooldown(player) {
 }
 
 export function dash() {
-  if (!rt.state || rt.state.over || rt.state.paused) return;
+  if (!rt.state || rt.state.over || rt.state.paused || rt.state.interlude) return;
   var p = rt.state.player;
   var maxCharges = (typeof p.dashChargesMax === 'number' && p.dashChargesMax > 0) ? p.dashChargesMax : 1;
   if (typeof p.dashCharges !== 'number') p.dashCharges = maxCharges;
@@ -460,7 +460,7 @@ function landDash(p, m) {
 }
 
 export function triggerEmp() {
-  if (!rt.state || rt.state.over || rt.state.paused) return;
+  if (!rt.state || rt.state.over || rt.state.paused || rt.state.interlude) return;
   var p = rt.state.player;
   var cost = (typeof p.empCost === 'number') ? p.empCost : 50;
   var drop = rt.input && rt.input.empDrop;
