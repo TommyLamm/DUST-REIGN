@@ -170,9 +170,16 @@ export function updateGameOverUi(state) {
     }
     if (kickerElement) {
       var cause = formatDamageSourceLabel(state.deathCause || state.lastDamageSource, zh);
-      kickerElement.textContent = zh
-        ? ('死因 // ' + cause + ' · 荒原終將索取一切')
-        : ('KILLED BY // ' + cause + ' · THE DRYLINE ALWAYS COLLECTS');
+      var longDreadClock = !!state.dreadClockWarned && (state.wave | 0) < 15;
+      if (longDreadClock) {
+        kickerElement.textContent = zh
+          ? ('時鐘中斷 // 無畏戰拖太久 — 波次時鐘在首領存活時暫停，風箏到死會錯過第 15 波')
+          : ('CLOCK FAIL // LONG DREAD KITE — WAVE CLOCK PAUSES ON BOSS; EXTREME KITE MISSES WAVE 15');
+      } else {
+        kickerElement.textContent = zh
+          ? ('死因 // ' + cause + ' · 荒原終將索取一切')
+          : ('KILLED BY // ' + cause + ' · THE DRYLINE ALWAYS COLLECTS');
+      }
     }
     if (titleElement) {
       titleElement.innerHTML = zh ? '塵埃之境<br /><span>吞噬萬物</span>' : 'THE DUST<br /><span>TAKES ALL.</span>';

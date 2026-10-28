@@ -1075,6 +1075,7 @@ export function tStatus(text) {
   if (text.indexOf('WARNING // DREADNOUGHT') === 0) return '警告 // 無畏巨艦逼近';
   if (text.indexOf('WARNING // STORM SOVEREIGN') === 0) return '警告 // 風暴主宰降臨';
   if (text.indexOf('WARNING // TITAN') === 0) return '警告 // 偵測到泰坦';
+  if (text.indexOf('CLOCK RISK //') === 0) return '時鐘風險 // 首領卡住波次時鐘 — 破甲否則錯過第 15 波';
 
   if (text.indexOf('PHASE INTERCEPT') === 0) return '相位攔截！ // 虛空裂隙粉碎 (-25% HP)';
   if (text.indexOf('EXECUTION!') === 0) return '處決！ // 硬直懲罰 (衝刺重置)';
@@ -1120,6 +1121,7 @@ export function tTip(id, kind) {
     if (id === 'storm-eye') return 'HOLD THE STORM EYE · STEP OUT ONLY BETWEEN PULSES';
     if (id === 'dread-break') return 'BAIT CHARGE INTO THE CRAG FOR ARMOR BREAK · NO MID-RAM BREAK · DUMP DURING THE STUN WINDOW';
     if (id === 'dread-fatigue') return 'LONG DREAD FIGHT · FORCE A CRAG BREAK — KITING FOREVER LOSES THE CLOCK';
+    if (id === 'dread-clock') return 'WAVE CLOCK PAUSES WHILE THE DREAD LIVES · EXTREME KITE = TIME-CAP BEFORE WAVE 15 — FORCE A CRAG BREAK';
     if (id === 'storm-weave') return 'WEAVE ELITE + SPIRAL ROUNDS · BULLETS END MORE RUNS THAN THE EYE';
     if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
     if (id === 'prowler-lunge') return 'PROWLER TELEGRAPHS THEN LUNGES · SIDE-STEP THE FLASH — STALK PHASE TAKES REDUCED DAMAGE';
@@ -1153,6 +1155,7 @@ export function tTip(id, kind) {
   if (id === 'storm-eye') return '守住風暴之眼 · 只在脈衝間隙短暫離開';
   if (id === 'dread-break') return '把衝撞引向岩障破甲 · 雙衝中段不破甲 · 在硬直窗傾瀉';
   if (id === 'dread-fatigue') return '無畏戰拖太久 · 快逼岩障破甲 — 風箏到死會來不及清第 15 波';
+  if (id === 'dread-clock') return '無畏存活時波次時鐘暫停 · 極端風箏會在第 15 波前超時 — 快逼岩障破甲';
   if (id === 'storm-weave') return '穿梭菁英彈與螺旋彈 · 敵彈比風暴之眼更能終結一局';
   if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
   if (id === 'prowler-lunge') return '潛行者先預警再突進 · 閃過閃光 — 潛行態減傷，別硬打';
@@ -1162,6 +1165,7 @@ export function tTip(id, kind) {
 
 export function tBanner(text) {
   if (currentLang !== 'zh' || !text) return text;
+  if (text.indexOf('CLOCK RISK //') === 0) return '時鐘風險 // 首領卡住波次時鐘 — 破甲否則錯過第 15 波';
   if (text.indexOf('WAVE') === 0) {
     return text.replace('WAVE', '第') + ' 波';
   }
