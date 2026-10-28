@@ -9,7 +9,7 @@ import { dashRechargeCooldown } from '../abilities.js';
 import { onWaveEnd, onWaveStart } from '../director.js';
 import { addScore } from '../scoring.js';
 import * as spawning from '../spawning.js';
-import { logEvent } from '../../ui/hud.js';
+import { logEvent, setStatusText } from '../../ui/hud.js';
 
 function stormSeconds() {
   var n = rt.state && rt.state.stormSeconds;
@@ -319,7 +319,7 @@ export function stepWaveClock(dt, frame) {
         rt.state.player.overdrive = Math.max(rt.state.player.overdrive, 3.5);
         rt.state.banner = 2.8;
         rt.state.bannerText = 'STORM BREAKER // SURGE UNLOCKED';
-        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'STORM BREAKER // SURGE UNLOCKED';
+        setStatusText('STORM BREAKER // SURGE UNLOCKED');
         logEvent('STORM BREAKER // SURGE UNLOCKED');
         AudioFX.pickup('overdrive');
         spawnParticles(p.x, p.y, '#75d1b0', 25, 240, 4);

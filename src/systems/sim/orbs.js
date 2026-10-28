@@ -10,7 +10,7 @@ import { resolveConvoyHits } from '../mutators.js';
 import { addXp } from '../progression.js';
 import { addScore } from '../scoring.js';
 import { noteMetaEvent } from '../meta.js';
-import { logEvent } from '../../ui/hud.js';
+import { logEvent, setStatusText } from '../../ui/hud.js';
 
 function isCrate(orb) {
   return !!orb && (orb.kind === 'crate' || orb.type === 'crate');
@@ -154,11 +154,11 @@ export function stepOrbs(dt, frame) {
         noteMetaEvent('repair-pickup', { healed: healed });
         AudioFX.pickup('repair');
         if (healed > 0) {
-          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'REPAIR SCRAP +' + Math.round(healed) + ' HULL';
+          setStatusText('REPAIR SCRAP +' + Math.round(healed) + ' HULL');
           logEvent('REPAIR SCRAP +' + Math.round(healed) + ' HULL');
         } else {
           addScore(REPAIR_OVERFLOW_SCORE, 'repair');
-          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE';
+          setStatusText('REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE');
           logEvent('REPAIR SCRAP FULL +' + REPAIR_OVERFLOW_SCORE + ' SCORE');
         }
         spawnParticles(orb.x, orb.y, '#ed6842', 12, 145, 3);
@@ -200,7 +200,7 @@ export function stepOrbs(dt, frame) {
           rt.state.shake = Math.max(rt.state.shake, 7);
           if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
           logEvent('GRAVITON BULWARK // GRAVITATIONAL OVERLOAD BURST');
-          if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'GRAVITON BURST // BULLETS DISSIPATED';
+          setStatusText('GRAVITON BURST // BULLETS DISSIPATED');
         }
       } else {
         var scrapXp = orb.value;

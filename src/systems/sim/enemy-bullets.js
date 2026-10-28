@@ -10,7 +10,7 @@ import { triggerReactiveArmor } from '../abilities.js';
 import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { noteContractEvent } from '../contracts.js';
 import { addScore } from '../scoring.js';
-import { logEvent } from '../../ui/hud.js';
+import { logEvent, setStatusText } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
 import { spawnVisualBolt } from '../../render/projectiles.js';
 
@@ -181,7 +181,7 @@ export function stepEnemyBullets(dt, frame) {
         p.overdrive = Math.max(p.overdrive, 1.2);
         AudioFX.pickup('overdrive');
         logEvent('GRAZE SURGE // MICRO-OVERCLOCK READY');
-        if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'GRAZE SURGE // MICRO-OVERCLOCK READY';
+        setStatusText('GRAZE SURGE // MICRO-OVERCLOCK READY');
         spawnParticles(p.x, p.y, '#f0cf88', 12, 160, 2.5);
       }
       for (var gi = 0; gi < 4; gi += 1) {

@@ -5,7 +5,7 @@ import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
 import { clamp, dist2 } from '../core/utils.js';
 import { currentWeaponId, weaponModActive } from '../data/upgrades.js';
-import { logEvent } from '../ui/hud.js';
+import { logEvent, setStatusText } from '../ui/hud.js';
 import { getWeaponStrategy, listWeaponStrategies, registerWeaponStrategy } from './weapon-registry.js';
 
 export { getWeaponStrategy, listWeaponStrategies, registerWeaponStrategy };
@@ -188,7 +188,7 @@ export function cycleWeaponMode(targetMode) {
   }
   if (AudioFX && typeof AudioFX.click === 'function') AudioFX.click();
   logEvent('WEAPON CHASSIS // ' + p.weaponMode.toUpperCase());
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'WEAPON CHASSIS // ' + p.weaponMode.toUpperCase();
+  setStatusText('WEAPON CHASSIS // ' + p.weaponMode.toUpperCase());
 }
 
 export function getChassisMass(rigId) {

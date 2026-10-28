@@ -10,7 +10,7 @@ import { enemyProfile } from '../../data/enemies.js';
 import { explodeBarrel } from '../combat.js';
 import { fireArtillery } from '../spawning.js';
 import { dropBossShard } from '../drops.js';
-import { logEvent } from '../../ui/hud.js';
+import { logEvent, setStatusText } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
 import { stepBoss, stepTitanHarpoon } from './bosses.js';
 import { initBehemothParts, getPartWorldPos, updateEnemyPartCache } from './boss-parts.js';
@@ -413,7 +413,7 @@ registerEnemyStrategy('titan', {
       e.phase2Triggered = true;
       rt.state.banner = 3.5;
       rt.state.bannerText = 'TITAN ENRAGED // BARRAGE PROTOCOL';
-      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'TITAN ENRAGED // BARRAGE PROTOCOL';
+      setStatusText('TITAN ENRAGED // BARRAGE PROTOCOL');
       logEvent('TITAN ENRAGED // BARRAGE PROTOCOL');
       rt.state.shake = Math.max(rt.state.shake, 14);
       triggerHaptic([50, 40, 80, 40, 100]);
@@ -953,7 +953,7 @@ registerEnemyStrategy('behemoth', {
 
       rt.state.banner = 3.5;
       rt.state.bannerText = 'BEHEMOTH ENRAGED // CORE OVERDRIVE';
-      if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'BEHEMOTH ENRAGED // CORE OVERDRIVE';
+      setStatusText('BEHEMOTH ENRAGED // CORE OVERDRIVE');
       logEvent('BEHEMOTH ENRAGED // CORE OVERDRIVE');
     }
 

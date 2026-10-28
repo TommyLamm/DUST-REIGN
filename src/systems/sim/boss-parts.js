@@ -7,7 +7,7 @@ import { damageEnemy } from '../combat.js';
 import { onShieldBreak } from '../card-effects.js';
 import { noteMetaEvent } from '../meta.js';
 import { addScore } from '../scoring.js';
-import { logEvent } from '../../ui/hud.js';
+import { logEvent, setStatusText } from '../../ui/hud.js';
 import { spawnCombatText } from '../../render/fx.js';
 
 export function notePartDestroyed() {
@@ -314,7 +314,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     var logMsg = closestPart.destroyMsg || defaultDestroyMsg(closestPart);
     if (logMsg) logEvent(logMsg);
     var statusMsg = closestPart.statusMsg || defaultStatusMsg(closestPart);
-    if (statusMsg && rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = statusMsg;
+    if (statusMsg) setStatusText(statusMsg);
     if (p) { p.hitmarkerTime = rt.renderTime || 0; p.hitmarkerType = 3; }
   }
 

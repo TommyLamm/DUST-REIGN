@@ -15,7 +15,7 @@ import { applyLoadout, onRunEnd } from './meta.js';
 import { initMode } from './modes/mode-adapter.js';
 import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
-import { updateDomUi } from '../ui/hud.js';
+import { setStatusText, updateDomUi } from '../ui/hud.js';
 import { syncCombatLayout } from '../ui/dom.js';
 import { evaluateArchetypes } from './progression.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
@@ -135,7 +135,7 @@ export function beginRun() {
   initGhostForRun(rt.state);
   if (rt.ui && rt.ui.startScreen) rt.ui.startScreen.hidden = true;
   if (rt.ui && rt.ui.runState) rt.ui.runState.textContent = 'LIVE';
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SIGNAL LIVE — KEEP MOVING';
+  setStatusText('SIGNAL LIVE — KEEP MOVING');
   if (rt.ui && rt.ui.canvas && rt.ui.canvas.focus) rt.ui.canvas.focus();
   syncCombatLayout();
   if (rt.state && rt.state.player && rt.ui && rt.ui.width) {
@@ -155,7 +155,7 @@ export function togglePause() {
   rt.state.paused = !rt.state.paused;
   if (rt.ui) {
     if (rt.ui.runState) rt.ui.runState.textContent = rt.state.paused ? 'PAUSED' : 'LIVE';
-    if (rt.ui.statusText) rt.ui.statusText.textContent = rt.state.paused ? 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME' : 'SIGNAL LIVE — KEEP MOVING';
+    setStatusText(rt.state.paused ? 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME' : 'SIGNAL LIVE — KEEP MOVING');
     if (rt.ui.pauseModal) {
       rt.ui.pauseModal.hidden = !rt.state.paused;
       if (rt.state.paused) {
@@ -217,7 +217,7 @@ export function restart() {
   var breakdown = typeof document !== 'undefined' ? document.getElementById('scoreBreakdown') : null;
   if (breakdown && breakdown.parentNode) breakdown.parentNode.removeChild(breakdown);
   if (rt.ui.runState) rt.ui.runState.textContent = 'STANDBY';
-  if (rt.ui.statusText) rt.ui.statusText.textContent = 'SELECT A RIG — PRESS START';
+  setStatusText('SELECT A RIG — PRESS START');
   updateDomUi();
 }
 
@@ -254,7 +254,7 @@ export function triggerGameOver(options) {
     if (options && options.stageId) rt.state.stageId = options.stageId;
     rt.state.banner = 3.5;
     rt.state.bannerText = 'SECTOR SECURED // MISSION COMPLETE';
-    if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = 'SECTOR SECURED // MISSION COMPLETE';
+    setStatusText('SECTOR SECURED // MISSION COMPLETE');
     if (typeof AudioFX.blast === 'function') AudioFX.blast();
 
     var stageId = rt.state.stageId || (rt.state.stageConfig && rt.state.stageConfig.id);

@@ -10,7 +10,7 @@ import { planWave } from './director.js';
 import { createDreadnought, createSovereign } from './sim/bosses.js';
 import { primeEnemy } from './sim/new-enemies.js';
 import { edgeAwareSpawnMargin } from './sim/world-edge.js';
-import { logEvent } from '../ui/hud.js';
+import { logEvent, setStatusText } from '../ui/hud.js';
 
 function currentRecipe() {
   var wave = (rt.state && rt.state.wave) || 1;
@@ -286,7 +286,7 @@ function announceBoss(text) {
   rt.state.shake = Math.max(rt.state.shake, 14);
   triggerHaptic([40, 40, 60, 40, 80]);
   logEvent(text);
-  if (rt.ui && rt.ui.statusText) rt.ui.statusText.textContent = text;
+  setStatusText(text);
 }
 
 export function spawnBoss(kind) {
