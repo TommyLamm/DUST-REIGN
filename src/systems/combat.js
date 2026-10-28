@@ -315,7 +315,18 @@ export function damagePlayer(amount, source, threatX, threatY) {
   pushFxEvent('playerHit', p.x, p.y, playerHitOpts(tagged));
   if (saved || p.hp <= 0) onLethal(p, info);
   if (!saved && p.hp <= 0) {
-    if (!rt.state.deathCause) rt.state.deathCause = tagged || normalizeDamageSource(source) || 'unknown';
+    if (!rt.state.deathCause) {
+      var lethalCause = tagged || normalizeDamageSource(source) || 'unknown';
+      // lethalScrubElite: wave≥14 never author elite / stale dread as cause once those fights are over.
+      if (((rt.state.wave | 0) >= 14) && (lethalCause === 'bullet:elite' || lethalCause === 'contact:elite')) {
+        lethalCause = rt.state.lastNonEliteDamageSource || 'unknown';
+      }
+      if (((rt.state.wave | 0) >= 15) && (lethalCause === 'boss:dreadnought' || lethalCause === 'contact:dreadnought' || lethalCause === 'bullet:dreadnought')) {
+        var dreadAlive = rt.state.boss && rt.state.boss.kind === 'dreadnought' && rt.state.boss.hp > 0;
+        if (!dreadAlive) lethalCause = rt.state.lastNonEliteDamageSource || 'unknown';
+      }
+      rt.state.deathCause = lethalCause;
+    }
     triggerGameOver();
   }
   return applied;
