@@ -285,6 +285,9 @@ function clearResidualFire() {
   if (rt.input) {
     if (rt.input.mouse) rt.input.mouse.down = false;
     rt.input.gamepadFiring = false;
+    if (rt.input.keys && typeof rt.input.keys.clear === 'function') rt.input.keys.clear();
+    rt.input.gamepadX = 0;
+    rt.input.gamepadY = 0;
   }
 }
 
