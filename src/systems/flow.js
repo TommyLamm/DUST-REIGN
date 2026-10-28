@@ -10,7 +10,7 @@ import { getCampaignStage } from '../data/campaign-stages.js';
 import { HARDCORE_OPERATIONS, getHardcoreOperation } from '../data/hardcore-operations.js';
 import { checkStageVictory, directorStartRun } from './director.js';
 import { finalizeGhostOnClear, initGhostForRun } from './ghost.js';
-import { grantDeferredExtract } from './interlude.js';
+import { clearResidualCombatInput, grantDeferredExtract } from './interlude.js';
 import { applyLoadout, onRunEnd } from './meta.js';
 import { initMode } from './modes/mode-adapter.js';
 import { calculateCombatRank } from './scoring.js';
@@ -159,6 +159,7 @@ export function togglePause() {
     if (rt.ui.pauseModal) {
       rt.ui.pauseModal.hidden = !rt.state.paused;
       if (rt.state.paused) {
+        clearResidualCombatInput();
         updateSettingsUi();
         if (getCurrentPauseTab() === 'build') renderBuildInspector();
         resetAbandonConfirm();
