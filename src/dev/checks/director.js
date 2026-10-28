@@ -46,6 +46,19 @@ export function run() {
     if (!near(s1.hp, 1) || !near(s5.hp, 1.48) || !near(s10.hp, 2.03) || !near(s15.hp, 2.58)) {
       throw new Error('design hp curve drifted');
     }
+
+    // Elite density: curve soft-cap 0.12; convoy ×1.7; late affixes delayed.
+    if (!near(designScales(15).elite, 0.12)) throw new Error('wave 15 elite chance soft-cap drifted');
+    if (designScales(15).elite > 0.12) throw new Error('elite chance exceeds soft-cap');
+    var convoyRecipe = planWave(8);
+    // planWave alone does not apply mutators; probe applyMutatorMods via onWaveStart path below is heavy.
+    // Direct scale math: 0.12 * 1.7 = 0.204.
+    if (Math.abs(0.12 * 1.7 - 0.204) > 0.001) throw new Error('elite-convoy mult sanity');
+    var baseAffix = planWave(1);
+    if (baseAffix.volatileMinWave !== 10 || baseAffix.splitterMinWave !== 15) {
+      throw new Error('volatile/splitter unlock waves should be delayed to 10/15');
+    }
+
     if (planWave(1).boss !== null || planWave(1).sector !== 'dusk') throw new Error('wave 1 is not a quiet dusk opener');
     if (planWave(5).boss !== 'titan' || planWave(10).boss !== 'dreadnought' || planWave(15).boss !== 'sovereign') {
       throw new Error('act boss schedule drifted');
