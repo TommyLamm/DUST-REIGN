@@ -40,10 +40,20 @@ export function refreshVaultPanel(container) {
 
   var pct = Math.min(100, Math.round((totalStars / 45) * 100));
   var barTrack = el('div', 'vault-progress-track');
+  barTrack.setAttribute('role', 'progressbar');
+  barTrack.setAttribute('aria-valuemin', '0');
+  barTrack.setAttribute('aria-valuemax', '45');
+  barTrack.setAttribute('aria-valuenow', String(totalStars));
+  barTrack.setAttribute('aria-label', zh ? ('戰役星數進度 ' + totalStars + ' / 45') : ('Campaign star progress ' + totalStars + ' / 45'));
   var barFill = el('div', 'vault-progress-fill');
   barFill.style.width = pct + '%';
   barTrack.appendChild(barFill);
   header.appendChild(barTrack);
+  if (totalStars <= 0) {
+    header.appendChild(el('p', 'vault-empty-hint', zh
+      ? '尚無戰役星 · 通關戰役關卡並達成星級條件以解鎖塗裝與尾焰'
+      : 'No campaign stars yet · Clear stages and meet star criteria to unlock paints and trails'));
+  }
   container.appendChild(header);
 
   // 2. Vault Milestones (15★ / 30★ / 45★)
@@ -88,10 +98,10 @@ export function refreshVaultPanel(container) {
   skinsSec.appendChild(el('h4', 'vault-section-title', zh ? '機體外觀塗裝' : 'CHASSIS PAINTWORK'));
 
   var skins = [
-    { id: 'default', name: zh ? '標準出廠塗裝' : 'Factory Standard', desc: zh ? '常規消光軍綠塗裝' : 'Standard military green coating' },
-    { id: 'paint_neon_dusk', name: zh ? '霓虹薄暮' : 'Neon Dusk', desc: zh ? '15★ 寶庫解鎖 · 琥珀霓虹脈衝輪廓' : '15★ Star Vault · Amber neon pulse contour' },
-    { id: 'paint_storm_surge', name: zh ? '風暴湧浪' : 'Storm Surge', desc: zh ? '極限作戰全通獎勵 · 電弧紫藍火花' : 'Hardcore Clear · Arc storm sparks' },
-    { id: 'paint_apex_gold', name: zh ? '巔峰金輝' : 'Apex Gold', desc: zh ? '45★ 寶庫大師 · 熔融金流黑曜裝甲' : '45★ Star Vault · Molten gold & matte black' }
+    { id: 'default', unlockAt: 0, name: zh ? '標準出廠塗裝' : 'Factory Standard', desc: zh ? '常規消光軍綠塗裝' : 'Standard military green coating' },
+    { id: 'paint_neon_dusk', unlockAt: 15, name: zh ? '霓虹薄暮' : 'Neon Dusk', desc: zh ? '15★ 寶庫解鎖 · 琥珀霓虹脈衝輪廓' : '15★ Star Vault · Amber neon pulse contour' },
+    { id: 'paint_storm_surge', unlockAt: 30, name: zh ? '風暴湧浪' : 'Storm Surge', desc: zh ? '30★ 寶庫解鎖 · 電弧紫藍火花' : '30★ Star Vault · Arc storm sparks' },
+    { id: 'paint_apex_gold', unlockAt: 45, name: zh ? '巔峰金輝' : 'Apex Gold', desc: zh ? '45★ 寶庫大師 · 熔融金流黑曜裝甲' : '45★ Star Vault · Molten gold & matte black' }
   ];
 
   var skinsGrid = el('div', 'cosmetics-picker-grid');
@@ -102,20 +112,33 @@ export function refreshVaultPanel(container) {
 
     card.appendChild(el('strong', 'cosmetic-name', skin.name));
     card.appendChild(el('p', 'cosmetic-desc', skin.desc));
+    if (!unlockedSkin) {
+      var skinNeed = Math.max(1, (skin.unlockAt || 0) - totalStars);
+      var skinLock = (skin.unlockAt || 0) > 0
+        ? (zh ? ('還需 ' + skinNeed + ' 顆戰役星（達 ' + skin.unlockAt + '★）') : ('Need ' + skinNeed + ' more stars (unlocks at ' + skin.unlockAt + '★)'))
+        : skin.desc;
+      card.appendChild(el('p', 'cosmetic-lock-reason', skinLock));
+    }
 
     var btn = el('button', 'cosmetic-select-btn');
     btn.type = 'button';
     if (!unlockedSkin) {
+      var skinReason = (skin.unlockAt || 0) > 0
+        ? (zh ? ('還需 ' + Math.max(1, skin.unlockAt - totalStars) + ' 顆戰役星') : ('Need ' + Math.max(1, skin.unlockAt - totalStars) + ' more stars'))
+        : skin.desc;
       btn.textContent = zh ? '🔒 尚未解鎖' : '🔒 LOCKED';
       btn.disabled = true;
-      btn.title = skin.desc;
-      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + skin.name + ' — ' + skin.desc);
+      btn.title = skinReason;
+      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + skin.name + ' — ' + skinReason);
     } else if (isEquipped) {
       btn.textContent = zh ? '✓ 已裝備' : '✓ EQUIPPED';
       btn.disabled = true;
       btn.classList.add('is-current');
+      btn.setAttribute('aria-label', (zh ? '已裝備' : 'EQUIPPED') + ' — ' + skin.name);
+      btn.setAttribute('aria-current', 'true');
     } else {
       btn.textContent = zh ? '裝備塗裝' : 'EQUIP SKIN';
+      btn.setAttribute('aria-label', (zh ? '裝備塗裝' : 'Equip skin') + ' — ' + skin.name);
       on(btn, 'click', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -134,10 +157,10 @@ export function refreshVaultPanel(container) {
   trailsSec.appendChild(el('h4', 'vault-section-title', zh ? '推進尾焰軌跡' : 'THRUSTER TRAILS'));
 
   var trails = [
-    { id: 'default', name: zh ? '標準推進煙霧' : 'Standard Exhaust', desc: zh ? '標準微型引擎排氣羽流' : 'Standard thruster vapor exhaust' },
-    { id: 'trail_amber_jet', name: zh ? '琥珀噴流' : 'Amber Jet Flame', desc: zh ? '高溫燃燒琥珀火焰羽流' : 'High-temp combustion amber plume' },
-    { id: 'trail_plasma_dual', name: zh ? '雙聯等離子' : 'Dual Plasma Beams', desc: zh ? '30★ 寶庫解鎖 · 雙聯高能亮青光束' : '30★ Star Vault · Twin cyan energy beams' },
-    { id: 'trail_singularity', name: zh ? '奇點微渦' : 'Singularity Wake', desc: zh ? '空間重力微透鏡紫環漣漪' : 'Gravitational distortion ring wake' }
+    { id: 'default', unlockAt: 0, name: zh ? '標準推進煙霧' : 'Standard Exhaust', desc: zh ? '標準微型引擎排氣羽流' : 'Standard thruster vapor exhaust' },
+    { id: 'trail_amber_jet', unlockAt: 15, name: zh ? '琥珀噴流' : 'Amber Jet Flame', desc: zh ? '15★ 寶庫解鎖 · 高溫燃燒琥珀火焰羽流' : '15★ Star Vault · High-temp combustion amber plume' },
+    { id: 'trail_plasma_dual', unlockAt: 30, name: zh ? '雙聯等離子' : 'Dual Plasma Beams', desc: zh ? '30★ 寶庫解鎖 · 雙聯高能亮青光束' : '30★ Star Vault · Twin cyan energy beams' },
+    { id: 'trail_singularity', unlockAt: 45, name: zh ? '奇點微渦' : 'Singularity Wake', desc: zh ? '45★ 寶庫解鎖 · 空間重力微透鏡紫環漣漪' : '45★ Star Vault · Gravitational distortion ring wake' }
   ];
 
   var trailsGrid = el('div', 'cosmetics-picker-grid');
@@ -148,20 +171,33 @@ export function refreshVaultPanel(container) {
 
     card.appendChild(el('strong', 'cosmetic-name', tr.name));
     card.appendChild(el('p', 'cosmetic-desc', tr.desc));
+    if (!unlockedTrail) {
+      var trailNeed = Math.max(1, (tr.unlockAt || 0) - totalStars);
+      var trailLock = (tr.unlockAt || 0) > 0
+        ? (zh ? ('還需 ' + trailNeed + ' 顆戰役星（達 ' + tr.unlockAt + '★）') : ('Need ' + trailNeed + ' more stars (unlocks at ' + tr.unlockAt + '★)'))
+        : tr.desc;
+      card.appendChild(el('p', 'cosmetic-lock-reason', trailLock));
+    }
 
     var btn = el('button', 'cosmetic-select-btn');
     btn.type = 'button';
     if (!unlockedTrail) {
+      var trailReason = (tr.unlockAt || 0) > 0
+        ? (zh ? ('還需 ' + Math.max(1, tr.unlockAt - totalStars) + ' 顆戰役星') : ('Need ' + Math.max(1, tr.unlockAt - totalStars) + ' more stars'))
+        : tr.desc;
       btn.textContent = zh ? '🔒 尚未解鎖' : '🔒 LOCKED';
       btn.disabled = true;
-      btn.title = tr.desc;
-      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + tr.name + ' — ' + tr.desc);
+      btn.title = trailReason;
+      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + tr.name + ' — ' + trailReason);
     } else if (isEquipped) {
       btn.textContent = zh ? '✓ 已裝備' : '✓ EQUIPPED';
       btn.disabled = true;
       btn.classList.add('is-current');
+      btn.setAttribute('aria-label', (zh ? '已裝備' : 'EQUIPPED') + ' — ' + tr.name);
+      btn.setAttribute('aria-current', 'true');
     } else {
       btn.textContent = zh ? '裝備軌跡' : 'EQUIP TRAIL';
+      btn.setAttribute('aria-label', (zh ? '裝備軌跡' : 'Equip trail') + ' — ' + tr.name);
       on(btn, 'click', function (e) {
         e.preventDefault();
         e.stopPropagation();

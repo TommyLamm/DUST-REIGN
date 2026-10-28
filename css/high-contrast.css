@@ -294,6 +294,11 @@
   border-color: #ffffff !important;
 }
 
+.game-root.is-high-contrast .cosmetic-lock-reason,
+.game-root.is-high-contrast .vault-empty-hint {
+  color: #ffffff !important;
+}
+
 
 .game-root.is-high-contrast .upgrade-action,
 .game-root.is-high-contrast .upgrade-action-key {
