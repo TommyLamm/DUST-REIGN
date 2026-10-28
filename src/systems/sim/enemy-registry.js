@@ -286,8 +286,10 @@ registerEnemyStrategy('elite', {
     }
 
     if (!empFrozen && !isCulled) {
+      // Wave 15+ / Sovereign recipe: elites that leaked onto the field do not shoot.
+      var muteElite = ((rt.state.wave | 0) >= 15) || (rt.state.recipe && rt.state.recipe.boss === 'sovereign');
       e.shootCd = (e.shootCd || 3.5) - dt;
-      if (e.shootCd <= 0) {
+      if (e.shootCd <= 0 && !muteElite) {
         var bossLive = rt.state && rt.state.boss && rt.state.boss.hp > 0;
         e.shootCd = bossLive ? 6.8 : 3.5;
         var baseAngle = Math.atan2(p.y - e.y, p.x - e.x);
