@@ -164,3 +164,19 @@
 .game-root.is-high-contrast .codex-silhouette {
   background: #fff;
 }
+
+
+.codex-card.is-locked {
+  opacity: 0.82;
+  border-style: dashed;
+}
+
+.codex-card.is-locked .codex-card-extra {
+  color: rgba(232, 224, 198, 0.7);
+}
+
+.codex-card.is-unknown .codex-card-detail {
+  color: rgba(232, 224, 198, 0.65);
+  font: 10px var(--mono);
+  letter-spacing: 0.08em;
+}

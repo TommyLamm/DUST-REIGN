@@ -80,8 +80,8 @@
    Columns: left / centre / right. Rows: top strip, open field, two bottom rows. */
 .hud {
   --hud-pad: clamp(10px, 1.6cqw, 20px);
-  --hud-panel: rgba(10, 11, 9, 0.52);
-  --hud-edge: rgba(232, 224, 198, 0.14);
+  --hud-panel: rgba(8, 9, 7, 0.72);
+  --hud-edge: rgba(232, 224, 198, 0.28);
   --hud-map-reserve: 154px; /* canvas minimap: 128px wide, 16px from the right edge, 10px gap */
   position: absolute;
   inset: 0;
@@ -143,9 +143,10 @@
 .wave-progress {
   display: block;
   flex: 0 0 100%;
-  height: 2px;
+  height: 3px;
   overflow: hidden;
-  background: rgba(232, 224, 198, 0.12);
+  background: rgba(232, 224, 198, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
 .wave-progress > i {
@@ -181,8 +182,9 @@
 }
 
 .metric-label {
-  color: var(--muted);
+  color: rgba(232, 224, 198, 0.72);
   font-size: 9px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
 }
 
 .metric strong {
@@ -384,9 +386,10 @@
 .meter {
   height: 8px;
   overflow: hidden;
-  border: 1px solid var(--line-strong);
+  border: 1px solid rgba(232, 224, 198, 0.35);
   border-radius: 1px;
-  background: rgba(10, 11, 9, 0.7);
+  background: rgba(6, 7, 5, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45);
 }
 
 .resource-block--energy .meter {
@@ -426,14 +429,16 @@
   max-width: 100%;
   padding: 3px 9px 3px 5px;
   overflow: hidden;
-  color: var(--rust);
+  color: #ffb29a;
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.1em;
   white-space: nowrap;
   text-overflow: ellipsis;
-  background: rgba(10, 11, 9, 0.45);
-  border-left: 2px solid var(--rust);
+  background: rgba(8, 9, 7, 0.82);
+  border: 1px solid rgba(237, 104, 66, 0.45);
+  border-left: 3px solid var(--rust);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .alert-mark {
@@ -483,6 +488,9 @@ html.reduced-motion .tip-toast {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 2px 6px;
+  background: rgba(8, 9, 7, 0.75);
+  border: 1px solid rgba(232, 224, 198, 0.22);
   color: var(--muted);
   font: 9px var(--mono);
   letter-spacing: 0.1em;
