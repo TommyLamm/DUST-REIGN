@@ -1766,6 +1766,13 @@ export function syncStaticHtml(lang) {
       audioBtn.setAttribute('aria-label', zh ? '切換音效' : 'Toggle audio');
     }
   }
+  var pauseBtnSeed = document.getElementById('pauseBtn');
+  if (pauseBtnSeed && /Pause game/i.test(pauseBtnSeed.getAttribute('aria-label') || '')) {
+    pauseBtnSeed.setAttribute('aria-label', zh ? '暫停遊戲' : 'Pause game');
+    if (/^PAUSE$/i.test((pauseBtnSeed.textContent || '').trim())) {
+      pauseBtnSeed.textContent = zh ? '暫停' : 'PAUSE';
+    }
+  }
 
 
   // Start Screen
@@ -1794,7 +1801,6 @@ export function syncStaticHtml(lang) {
       var buildRaw = (sFootSpans[2].textContent || '').replace(/^BUILD\s*/i, '').trim() || '0.1.2';
       sFootSpans[2].textContent = (zh ? '版本 ' : 'BUILD ') + buildRaw.replace(/^版本\s*/, '');
     }
-    var startAria = startScreen.getAttribute('aria-label');
     startScreen.setAttribute('aria-label', zh ? '出擊配置與開始畫面' : 'Loadout and deploy screen');
     var startBtn = document.getElementById('startBtn');
     if (startBtn) startBtn.setAttribute('aria-label', zh ? '確認配置並出擊' : 'Confirm loadout and deploy');
