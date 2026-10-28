@@ -280,7 +280,7 @@ function focusCombatCanvas() {
   if (rt.ui && rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
 }
 
-function clearResidualFire() {
+export function clearResidualCombatInput() {
   if (rt.firePointers && typeof rt.firePointers.clear === 'function') rt.firePointers.clear();
   if (rt.input) {
     if (rt.input.mouse) rt.input.mouse.down = false;
@@ -292,7 +292,7 @@ function clearResidualFire() {
 }
 
 function leaveInterludeInput() {
-  clearResidualFire();
+  clearResidualCombatInput();
   focusCombatCanvas();
 }
 

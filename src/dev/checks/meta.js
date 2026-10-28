@@ -11,8 +11,12 @@ import {
   readDaily,
   readLegacyBestScore,
   readMeta,
+  equipModule,
+  overclockModule,
   readTipsEnabled,
   readTipsSeen,
+  unequipModule,
+  upgradeModule,
   writeBestScoreV2,
   writeMeta
 } from '../../core/meta-store.js';
@@ -445,6 +449,19 @@ export function run() {
       workshop: { unlockedModules: { m_phase_bearing: 2 } }
     });
     assert(mergedOk === true && readBestScoreV2() === 200, 'importUnifiedSaveData smart merge failed');
+
+    // Hardcore workshop API lock (#332): non-UI paths must refuse loadout mutations.
+    var modeBefore = readMeta().selectedMode;
+    writeMeta({ selectedMode: 'hardcore' });
+    var eqDenied = equipModule('m_phase_bearing');
+    assert(eqDenied && eqDenied.ok === false && eqDenied.reason === 'HARDCORE_LOCK', 'equipModule should HARDCORE_LOCK');
+    var unDenied = unequipModule('propulsion');
+    assert(unDenied && unDenied.ok === false && unDenied.reason === 'HARDCORE_LOCK', 'unequipModule should HARDCORE_LOCK');
+    var upDenied = upgradeModule('m_phase_bearing');
+    assert(upDenied && upDenied.ok === false && upDenied.reason === 'HARDCORE_LOCK', 'upgradeModule should HARDCORE_LOCK');
+    var ocDenied = overclockModule('m_phase_bearing');
+    assert(ocDenied && ocDenied.ok === false && ocDenied.reason === 'HARDCORE_LOCK', 'overclockModule should HARDCORE_LOCK');
+    writeMeta({ selectedMode: modeBefore || 'standard' });
   } finally {
     Math.random = prevRandom;
     clearSeed();
