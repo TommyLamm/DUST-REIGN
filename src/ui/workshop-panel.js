@@ -118,6 +118,8 @@ export function refreshWorkshopPanel(container) {
       socketCard.appendChild(detachBtn);
     } else {
       sBody.appendChild(el('span', 'socket-empty-text', zh ? '[ 插槽空置 ]' : '[ EMPTY SOCKET ]'));
+      sBody.appendChild(el('span', 'socket-empty-hint', zh ? '從下方模組庫點選裝備' : 'Equip from the catalog below'));
+      socketCard.setAttribute('aria-label', br.name + ' — ' + (zh ? '插槽空置' : 'EMPTY SOCKET'));
       socketCard.appendChild(sBody);
     }
     socketsGrid.appendChild(socketCard);
