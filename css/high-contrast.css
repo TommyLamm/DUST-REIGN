@@ -295,7 +295,8 @@
 }
 
 .game-root.is-high-contrast .cosmetic-lock-reason,
-.game-root.is-high-contrast .vault-empty-hint {
+.game-root.is-high-contrast .vault-empty-hint,
+.game-root.is-high-contrast .workshop-empty-hint {
   color: #ffffff !important;
 }
 

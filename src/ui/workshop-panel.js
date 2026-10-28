@@ -53,10 +53,21 @@ export function refreshWorkshopPanel(container) {
   var titleRow = el('div', 'workshop-title-row');
   titleRow.appendChild(el('h3', 'workshop-title', zh ? '廢料改裝工坊' : 'SCRAPYARD WORKSHOP'));
   var scrapBadge = el('div', 'workshop-scrap-badge', (zh ? '精煉廢料: ' : 'REFINED SCRAP: ') + scrap + ' ⚙');
+  scrapBadge.setAttribute('aria-label', (zh ? '精煉廢料' : 'Refined scrap') + ' ' + scrap);
   titleRow.appendChild(scrapBadge);
   header.appendChild(titleRow);
+  if (!(scrap > 0)) {
+    header.appendChild(el('p', 'workshop-empty-hint', zh
+      ? '尚無精煉廢料 · 通關出擊、領取賞金或戰役獎勵後可在此升級／超頻模組'
+      : 'No refined scrap yet · Clear runs, claim bounties, or campaign rewards to upgrade / overclock modules'));
+  }
 
   var meterRow = el('div', 'workshop-meter-row');
+  meterRow.setAttribute('role', 'meter');
+  meterRow.setAttribute('aria-valuemin', '0');
+  meterRow.setAttribute('aria-valuemax', String(MAX_WATTAGE));
+  meterRow.setAttribute('aria-valuenow', String(usedWattage));
+  meterRow.setAttribute('aria-label', (zh ? '底盤負載' : 'Chassis load') + ' ' + usedWattage + ' / ' + MAX_WATTAGE);
   var meterLabel = el('span', 'workshop-meter-label', (zh ? '底盤負載: ' : 'CHASSIS LOAD: ') + usedWattage + ' / ' + MAX_WATTAGE + ' ⚡');
   meterRow.appendChild(meterLabel);
 
