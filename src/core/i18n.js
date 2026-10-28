@@ -1492,6 +1492,7 @@ export function tTip(id, kind) {
     if (id === 'just-dash') return 'JUST DASH · HUG A THREAT TO REFUND COOLDOWN AND GUARANTEE CRITS';
     if (id === 'graze') return 'SLIP PAST ENEMY SHOTS TO GRAZE · SCORES + ENERGY · 5 GRAZES → OVERDRIVE';
     if (id === 'barrel') return 'SHOOT A BARREL OR DASH-KICK IT INTO THE PACK';
+  if (id === 'barrel-fuse') return 'BARREL CHAIN FUSE · BACK OFF — BLAST IS ABOUT TO JUMP';
     if (id === 'emp') return 'Q OR RMB EMP CLEARS SHOTS AND STUNS · E/F DEPLOYS TACTICAL AUX';
     if (id === 'core-boss') return 'CORE BLASTS HIT A BOSS FOR 350';
     if (id === 'titan-parts') return 'TITAN PARTS · LEFT CANNON / RIGHT POD DROP STUN WINDOWS — HARPOON TUG IS A DPS WINDOW';
@@ -1534,6 +1535,7 @@ export function tTip(id, kind) {
   if (id === 'just-dash') return '精準衝刺 · 緊貼威脅擦身而過可重置冷卻並必定暴擊';
   if (id === 'graze') return '貼近敵彈擦身而過即可擦彈 · 得分並回能 · 累積 5 次觸發超頻';
   if (id === 'barrel') return '射擊炸藥桶或衝刺將其踢入敵群';
+  if (id === 'barrel-fuse') return '炸藥桶連鎖引信 · 快退 — 爆炸即將跳火';
   if (id === 'emp') return 'Q 或右鍵電磁脈衝可消彈擊暈 · E/F 部署戰術副裝備';
   if (id === 'core-boss') return '核心引爆可對首領造成 350 點重創';
   if (id === 'titan-parts') return '泰坦部位 · 左主砲／右發射槽破毀有硬直窗 — 魚叉拉扯是輸出窗';
