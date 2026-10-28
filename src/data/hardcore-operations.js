@@ -24,7 +24,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'titan',
-      name: 'Titan「鐵砧」',
+      name: '泰坦「鐵砧」',
       modifier: '兩側加農砲全圖覆蓋，近身釋放 360° 反衝擊震波'
     },
     badge: 'razor_edge',
@@ -55,7 +55,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'dreadnought',
-      name: 'Dreadnought「晶壁要塞」',
+      name: '無畏巨艦「晶壁要塞」',
       modifier: '正側面全反射稜鏡，唯正後方散熱閥為弱點；需 EMP 斷盾後貫穿'
     },
     badge: 'light_shatterer',
@@ -85,7 +85,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'sovereign',
-      name: 'Sovereign「法拉第之怒」',
+      name: '風暴主宰「法拉第之怒」',
       modifier: '4 座風暴塔連成電磁死刑場，射擊本體引發反向落雷；需切角逐一熔斷尖塔'
     },
     badge: 'thunder_binder',
@@ -115,7 +115,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'titan',
-      name: 'Titan「百臂巨神」',
+      name: '泰坦「百臂巨神」',
       modifier: '4 門旋轉火神機槍，全圖交叉環形密集彈幕'
     },
     badge: 'tide_turner',
@@ -145,7 +145,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'dreadnought',
-      name: 'Dreadnought「暗質主宰」',
+      name: '無畏巨艦「暗質主宰」',
       modifier: '發射黑洞坍縮力場彈，強吸力阻斷拉扯'
     },
     badge: 'singularity_hunter',
@@ -176,7 +176,7 @@ export var HARDCORE_OPERATIONS = [
     },
     bossOverride: {
       kind: 'sovereign',
-      name: 'Sovereign「終焉風皇」',
+      name: '風暴主宰「終焉風皇」',
       modifier: '4 座風暴塔連線，旋轉風刃與全屏密集天火，極致走位考驗'
     },
     badge: 'apex_conqueror',

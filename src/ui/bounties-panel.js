@@ -135,7 +135,7 @@ export function refreshBountiesPanel(container) {
   var slamCard = el('div', 'grand-slam-card' + (slamClaimed ? ' is-claimed' : (allClaimed ? ' is-ready' : '')));
 
   var slamTop = el('div', 'grand-slam-top');
-  slamTop.appendChild(el('strong', 'grand-slam-title', zh ? '★ 傭兵全清大滿貫 (GRAND SLAM)' : '★ MERCENARY GRAND SLAM'));
+  slamTop.appendChild(el('strong', 'grand-slam-title', zh ? '★ 傭兵全清大滿貫' : '★ MERCENARY GRAND SLAM'));
   slamTop.appendChild(el('span', 'grand-slam-reward-tag', '+' + GRAND_SLAM_BONUS + ' ⚙'));
   slamCard.appendChild(slamTop);
 
