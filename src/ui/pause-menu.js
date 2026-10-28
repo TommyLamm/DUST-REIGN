@@ -180,34 +180,40 @@ export function renderBuildInspector() {
   // 2. Core specs telemetry according to weapon chassis
   if (rt.ui.statFireRate) {
     var surge = p.overdrive > 0 ? (zh ? ' (湧浪)' : ' (SURGE)') : '';
+    var rpsUnit = zh ? ' 發/秒' : ' RPS';
     if (mode === 'breacher') {
       var pellets = breacherPelletCount(p);
-      rt.ui.statFireRate.textContent = pellets === 5 ? ('3.0 RPS (x5)' + surge) : ('3.0 RPS (x' + pellets + ')' + surge);
+      rt.ui.statFireRate.textContent = '3.0' + rpsUnit + ' (×' + pellets + ')' + surge;
     } else if (mode === 'vanguard') {
-      rt.ui.statFireRate.textContent = (zh ? '2.4 RPS (充能)' : '2.4 RPS (CHARGE)') + surge;
+      rt.ui.statFireRate.textContent = '2.4' + rpsUnit + (zh ? ' (充能)' : ' (CHARGE)') + surge;
     } else if (mode === 'arc-welder') {
-      rt.ui.statFireRate.textContent = '12.5 RPS' + surge;
+      rt.ui.statFireRate.textContent = '12.5' + rpsUnit + surge;
+    } else if (mode === 'colossus') {
+      rt.ui.statFireRate.textContent = (zh ? '重裝蓄力' : 'HEAVY CHARGE') + surge;
     } else {
       var rps = 1 / p.fireRate;
       if (p.overdrive > 0) rps = 1 / (p.fireRate * OVERDRIVE_COOLDOWN);
-      rt.ui.statFireRate.textContent = rps.toFixed(1) + ' RPS' + surge;
+      rt.ui.statFireRate.textContent = rps.toFixed(1) + rpsUnit + surge;
     }
   }
   if (rt.ui.statDamage) {
     var od = p.overdrive > 0;
     var odDmgMult = od ? OVERDRIVE_DAMAGE : 1;
-    var odLabel = od ? ' (+50%)' : '';
+    var odLabel = od ? (zh ? ' (+50%)' : ' (+50%)') : '';
     var dmgSuffix = zh ? ' 傷害' : ' DMG';
     if (mode === 'breacher') {
       var pelletCount = breacherPelletCount(p);
       var bDmg = Math.max(1, Math.round(p.damage * 0.58 * odDmgMult));
-      rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + dmgSuffix + odLabel;
+      rt.ui.statDamage.textContent = bDmg + '×' + pelletCount + dmgSuffix + odLabel;
     } else if (mode === 'vanguard') {
       var vDmg = Math.round(p.damage * 4.2 * odDmgMult);
       rt.ui.statDamage.textContent = vDmg + (zh ? ' 傷害 [軌道貫穿]' : ' DMG [RAIL]') + odLabel;
     } else if (mode === 'arc-welder') {
       var aDmg = Math.max(1, Math.round(p.damage * 0.44 * odDmgMult));
       rt.ui.statDamage.textContent = aDmg + (zh ? ' 傷害 [電弧光束]' : ' DMG [BEAM]') + odLabel;
+    } else if (mode === 'colossus') {
+      var cDmg = Math.round(p.damage * odDmgMult);
+      rt.ui.statDamage.textContent = cDmg + (zh ? ' 傷害 [軌道電漿]' : ' DMG [LANCE]') + odLabel;
     } else {
       var dmg = p.damage;
       if (od) dmg = Math.round(dmg * OVERDRIVE_DAMAGE);
@@ -216,21 +222,21 @@ export function renderBuildInspector() {
   }
   if (rt.ui.statCrit) {
     rt.ui.statCrit.textContent = p.highCaliber
-      ? (zh ? '2.2x [20% 固定暴擊]' : '2.2x [20% FLAT CRIT]')
-      : (zh ? '1.75x [突襲暴擊]' : '1.75x [AMBUSH CRIT]');
+      ? (zh ? '2.2× [20% 固定暴擊]' : '2.2× [20% FLAT CRIT]')
+      : (zh ? '1.75× [突襲暴擊]' : '1.75× [AMBUSH CRIT]');
   }
   if (rt.ui.statBallistics) {
     if (mode === 'vanguard') {
-      rt.ui.statBallistics.textContent = (zh ? '貫穿 99+ / 彈跳 ' : 'PIERCE 99+ / RICO ') + (p.bounces || 0);
+      rt.ui.statBallistics.textContent = (zh ? '貫穿 99+ / 彈跳 ' : 'PIERCE 99+ / RICOCHET ') + (p.bounces || 0);
     } else {
-      rt.ui.statBallistics.textContent = (zh ? '貫穿 ' : 'PIERCE ') + (p.pierce || 0) + (zh ? ' / 彈跳 ' : ' / RICO ') + (p.bounces || 0);
+      rt.ui.statBallistics.textContent = (zh ? '貫穿 ' : 'PIERCE ') + (p.pierce || 0) + (zh ? ' / 彈跳 ' : ' / RICOCHET ') + (p.bounces || 0);
     }
   }
   if (rt.ui.statSpeed) {
-    rt.ui.statSpeed.textContent = Math.round(p.speed) + (zh ? ' 像素/秒' : ' PX/S');
+    rt.ui.statSpeed.textContent = Math.round(p.speed) + (zh ? ' 像素/秒' : ' px/s');
   }
   if (rt.ui.statMagnet) {
-    rt.ui.statMagnet.textContent = Math.round(p.magnetRadius || 165) + (zh ? ' 像素' : ' PX');
+    rt.ui.statMagnet.textContent = Math.round(p.magnetRadius || 165) + (zh ? ' 像素' : ' px');
   }
 
   // 3. Dynamic passive traits
