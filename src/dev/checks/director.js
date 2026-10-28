@@ -313,7 +313,7 @@ export function run() {
     explodeBarrel(immune.barrels[0], 0, true);
     if (brick.x !== 100 || brick.y !== 100) throw new Error('knockbackImmune boss was shoved');
     if (!(brick.empTimer >= 1.5)) throw new Error('boss barrel did not stun');
-    if (brick.hp !== 560) throw new Error('boss barrel base was not 240');
+    if (Math.abs(brick.hp - 634) > 0.01) throw new Error('boss barrel through bleed softcap expected 166 (hp 634), got ' + brick.hp);
 
     // Declarative Star Criteria & Dynamic Stage Chain Verifications
     var chain = getStageChain();
