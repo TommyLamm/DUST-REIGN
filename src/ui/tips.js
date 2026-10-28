@@ -232,7 +232,7 @@ function scanTriggers() {
   if (rt.state.contract) offer('contract');
   if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
-  if ((rt.state.wave || 1) >= 10 && enemyOfKind('mine')) offer('mine');
+  if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if (moltenHazardNear()) offer('molten');
   if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
