@@ -163,14 +163,18 @@ export function renderModal() {
         tab.setAttribute('aria-selected', isSecActive ? 'true' : 'false');
         tab.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
 
-        var titleSpan = el('span', '', tCampaignSectorName(sector.id, zh ? sector.name.split(' (')[0] : sector.code));
+        var secName = tCampaignSectorName(sector.id, zh ? sector.name.split(' (')[0] : sector.code);
+        var secCode = String(sector.code || '').replace(/^SEC-/, 'SEC ');
+        var titleSpan = el('span', '', secCode + ' ' + secName);
         var sectorTip = tCampaignSectorDesc(sector.id, sector.desc || '');
         if (isLocked) {
           sectorTip = (zh ? ('需累計 ' + sector.reqStars + '★ 解鎖此區段') : ('Need ' + sector.reqStars + '★ to unlock this sector'));
         }
         tab.setAttribute('title', sectorTip);
-        tab.setAttribute('aria-label', tCampaignSectorName(sector.id, sector.code) + ' — ' + sectorTip);
-        var reqSmall = el('small', '', isLocked ? (sector.reqStars + '★ ' + (zh ? '解鎖' : 'REQ')) : (zh ? '已開放' : 'SECURED'));
+        tab.setAttribute('aria-label', secCode + ' ' + secName + ' — ' + sectorTip);
+        var reqSmall = el('small', '', isLocked
+          ? (zh ? ('需 ' + sector.reqStars + '★') : (sector.reqStars + '★ REQUIRED'))
+          : (zh ? '已開放' : 'OPEN'));
         tab.appendChild(titleSpan);
         tab.appendChild(reqSmall);
 

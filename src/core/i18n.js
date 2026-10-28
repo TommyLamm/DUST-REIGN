@@ -1267,6 +1267,20 @@ export function tLog(msg) {
   if (msg === 'SOVEREIGN STAGGERED // SPIRE FEEDBACK') return '風暴主宰踉蹌 // 尖塔反噬';
   if (msg.indexOf('TITAN COMPONENT DESTROYED // LEFT CANNON') === 0) return '泰坦組件被摧毀 // 左主砲離線';
   if (msg.indexOf('TITAN COMPONENT DESTROYED // REINFORCEMENTS') === 0) return '泰坦組件被摧毀 // 增援發射槽停用';
+  if (msg.indexOf('TITAN COMPONENT DESTROYED // HEAT-SINK') === 0) return '泰坦組件被摧毀 // 散熱鰭片過載 [眩暈 4s]';
+  if (msg.indexOf('TITAN COMPONENT DESTROYED // TREAD') === 0) return '泰坦組件被摧毀 // 履帶護裙受損 [-40% 速度]';
+  if (msg.indexOf('TITAN LEFT CANNON DESTROYED') === 0) return '泰坦左主砲被摧毀 // 雙聯砲離線 [眩暈 1.8s]';
+  if (msg.indexOf('TITAN RIGHT POD DESTROYED') === 0) return '泰坦右發射槽被摧毀 // 護衛停用 [眩暈 1.8s]';
+  if (msg.indexOf('TITAN FINS DESTROYED') === 0) return '泰坦散熱鰭被摧毀 // 過載臨界 [眩暈 4.0s]';
+  if (msg.indexOf('TITAN TREADS DESTROYED') === 0) return '泰坦履帶被摧毀 // 機動殘廢 [-40% 速度]';
+  if (msg.indexOf('BEHEMOTH COMPONENT DESTROYED // CRYSTAL HORN') === 0) return '巨獸組件被摧毀 // 晶化之角碎裂 [眩暈 2.2s]';
+  if (msg.indexOf('BEHEMOTH COMPONENT DESTROYED // CORROSIVE GLAND') === 0) return '巨獸組件被摧毀 // 腐蝕腺体破裂 [迫擊封閉]';
+  if (msg.indexOf('BEHEMOTH COMPONENT DESTROYED // SEISMIC TAIL') === 0) return '巨獸組件被摧毀 // 震盪尾切斷 [-25% 速度]';
+  if (msg.indexOf('BEHEMOTH HORN SHATTERED') === 0) return '巨獸之角碎裂 // 正面減傷失效 [硬直 2.2s]';
+  if (msg.indexOf('BEHEMOTH GLAND RUPTURED') === 0) return '巨獸腺体破裂 // 酸液迫擊已封閉';
+  if (msg.indexOf('BEHEMOTH TAIL SEVERED') === 0) return '巨獸斷尾 // 機動殘廢 [-25% 速度]';
+  if (msg.indexOf('APOCALYPSE THOR') === 0) return '天啟雷神 // 軌道離子打擊 180 傷害';
+  if (msg.indexOf('SCRAP BULKHEAD //') === 0) return msg.replace('SCRAP BULKHEAD // ', '廢料隔艙 // ').replace('TEMP SHIELD', '臨時護盾');
   if (msg === 'TITAN ENRAGED // BARRAGE PROTOCOL') return '泰坦暴怒 // 彈幕齊射協議';
   if (msg === 'GRAZE SURGE // MICRO-OVERCLOCK READY') return '擦彈湧浪 // 微型超頻就緒';
   if (msg.indexOf('SUPPLY CRATE // +') === 0 && msg.indexOf('HULL') !== -1) {
@@ -1339,7 +1353,7 @@ export function tLog(msg) {
   if (msg.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 · 四面可打';
   if (msg.indexOf('DOUBLE RAM //') === 0) return '雙重衝撞 // 中段不破甲';
   if (msg === 'DOUBLE RAM // NO MID BREACH') return '雙重衝撞 // 中段不破甲';
-  if (msg.indexOf('BOSS-WAVE CLEAR') === 0) return msg.replace('BOSS-WAVE CLEAR //', '首領戰清場 //');
+  if (msg.indexOf('BOSS-WAVE CLEAR') === 0) return msg.replace('BOSS-WAVE CLEAR //', '首領戰清場 //').replace('SCRAP', '廢料');
   if (msg === 'TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED') return '泰坦 // 拔河反制！散熱器暴露';
   if (msg === 'TITAN // HARPOON TETHER REELED') return '泰坦 // 魚叉繫繩收回';
   if (msg === 'WARNING // SEISMIC HARPOON LOCK') return '警告 // 震盪魚叉鎖定';
@@ -1356,13 +1370,6 @@ export function tLog(msg) {
   if (msg.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 彈幕消解';
 
   return msg;
-  if (text.indexOf('TITAN ARMOR BREACH -350') === 0) return '泰坦裝甲破防 -350 HP // 系統過熱眩暈 3.0s';
-  if (text.indexOf('SUPERNOVA COLLAPSE!') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！');
-  if (text.indexOf('SUPPLY CRATE // OVERDRIVE') === 0) return text.replace('SUPPLY CRATE // OVERDRIVE', '補給箱 // 超頻');
-  if (text.indexOf('SUPPLY CRATE // BATTERY +') === 0) return text.replace('SUPPLY CRATE // BATTERY +', '補給箱 // 電池 +');
-  if (text.indexOf('STORM HARVEST GRAND SLAM // +') === 0) return text.replace('STORM HARVEST GRAND SLAM // +', '風暴採集大滿貫 // +').replace('SCORE', '分數');
-  if (text.indexOf('GAMEPAD ONLINE //') === 0) return text.replace('GAMEPAD ONLINE //', '手把已連線 // ');
-  if (text.indexOf('GAMEPAD OFFLINE') === 0) return '手把已離線';
 
 }
 
@@ -1771,9 +1778,16 @@ export function syncStaticHtml(lang) {
   setAttrBySel('#meterEnergy', 'aria-label', zh ? '電池能量' : 'Battery energy');
   var audioBtn = document.getElementById('audioBtn');
   if (audioBtn && !audioBtn.getAttribute('data-aria-owned')) {
-    // pause-menu owns live mute state; only seed if still default English
-    if (/Toggle Audio/i.test(audioBtn.getAttribute('aria-label') || '')) {
-      audioBtn.setAttribute('aria-label', zh ? '切換音效' : 'Toggle audio');
+    var audioTxt = (audioBtn.textContent || '').trim();
+    // Seed / re-seed label before pause-menu updateAudioBtn owns live mute (EN↔ZH)
+    if (/^AUDIO \[(ON|OFF)\]$/i.test(audioTxt) || /^音效 \[(開啟|關閉)\]$/.test(audioTxt) || /Toggle Audio|切換音效/i.test(audioBtn.getAttribute('aria-label') || '')) {
+      var audioOff = /OFF|關閉/.test(audioTxt);
+      audioBtn.textContent = zh
+        ? (audioOff ? '音效 [關閉]' : '音效 [開啟]')
+        : (audioOff ? 'AUDIO [OFF]' : 'AUDIO [ON]');
+      audioBtn.setAttribute('aria-label', zh
+        ? (audioOff ? '開啟音效' : '關閉音效')
+        : (audioOff ? 'Turn audio on' : 'Turn audio off'));
     }
   }
   var pauseBtnSeed = document.getElementById('pauseBtn');
