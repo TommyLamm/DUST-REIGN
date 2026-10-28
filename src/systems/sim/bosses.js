@@ -298,9 +298,9 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 1.50; // trim wall break window — hull bump alone failed to lift fast deletes
-  e.empTimer = Math.max(e.empTimer || 0, 1.50);
-  e.armorBreakTimer = 1.50;
+  e.stunT = 1.80; // was 2.0 — trim break DPS window to lift p50; idle×1.00/hull kept
+  e.empTimer = Math.max(e.empTimer || 0, 1.80);
+  e.armorBreakTimer = 1.80;
   fireRing(e);
   rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();
@@ -365,11 +365,11 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           triggerHaptic([60, 50, 100]);
           logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
           rt.state.banner = 2.5;
-          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 1.30s · ALL SIDES OPEN';
+          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 1.55s · ALL SIDES OPEN';
           e.mode = 'stun';
-          e.stunT = 1.30; // crag bait: keep shorter than wall 1.50
-          e.empTimer = Math.max(e.empTimer || 0, 1.30);
-          e.armorBreakTimer = 1.30;
+          e.stunT = 1.55; // crag bait: keep shorter than wall 1.80
+          e.empTimer = Math.max(e.empTimer || 0, 1.55);
+          e.armorBreakTimer = 1.55;
           e.chargesQueued = 0;
           e._dreadMidCombo = false;
           fireRing(e);
