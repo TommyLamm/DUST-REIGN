@@ -987,7 +987,7 @@ export function tLog(msg) {
   if (msg === 'AEGIS PROTOCOL // FATAL BLOW PREVENTED') return '神盾協議 // 致命一擊已攔截';
   if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型 EMP 引爆';
   if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return 'VIP 已擊殺 // EMP 震波觸發';
-  if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED') return '岩障粉碎 // 無畏艦硬直';
+  if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED' || msg === 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN') return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
   if (msg === 'TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED') return '泰坦 // 拔河反制！散熱器暴露';
   if (msg === 'TITAN // HARPOON TETHER REELED') return '泰坦 // 魚叉繫繩收回';
   if (msg === 'WARNING // SEISMIC HARPOON LOCK') return '警告 // 震盪魚叉鎖定';
@@ -1105,6 +1105,7 @@ export function tTip(id, kind) {
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'STAY INSIDE THE STORM EYE · OUTSIDE MELTS HULL';
+    if (id === 'dread-break') return 'BAIT THE CHARGE INTO CRAGS · ARMOR BREAK OPENS ALL SIDES';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1128,6 +1129,7 @@ export function tTip(id, kind) {
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '留在風暴之眼內 · 離開會持續腐蝕裝甲';
+  if (id === 'dread-break') return '把衝撞引向岩障 · 破甲硬直時四面皆可輸出';
   return '';
 }
 
@@ -1183,7 +1185,7 @@ export function tBanner(text) {
 
 
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
-  if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 無畏艦硬直 (3.2s)';
+  if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
   if (text.indexOf('TUG-OF-WAR COUNTER') === 0) return '拔河反制 // 散熱器暴露 2.5S';
   if (text.indexOf('TITAN HARPOON') === 0) return '泰坦魚叉 // 已繫繩並緩速';
   if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';

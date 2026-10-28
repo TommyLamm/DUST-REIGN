@@ -97,6 +97,15 @@ function burrowerWarnNear() {
   return false;
 }
 
+function dreadArmorBreakThreat() {
+  var boss = rt.state && rt.state.boss;
+  if (!boss || boss.kind !== 'dreadnought' || !(boss.hp > 0)) return false;
+  if (boss.mode === 'stun' || (boss.armorBreakTimer || 0) > 0 || (boss.empTimer || 0) > 0) return true;
+  if (boss.mode === 'charge' || boss.mode === 'telegraph') return true;
+  var crags = rt.state.monolithCrags;
+  return !!(crags && crags.length);
+}
+
 function sovereignEyeThreat() {
   var boss = rt.state && rt.state.boss;
   var p = rt.state && rt.state.player;
@@ -203,6 +212,7 @@ function scanTriggers() {
   else if (rt.state.interlude) offer('route');
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
   if (sovereignEyeThreat()) offer('storm-eye');
+  if (dreadArmorBreakThreat()) offer('dread-break');
 }
 
 function showTip(toast, id) {
