@@ -3,7 +3,7 @@ import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { triggerHaptic } from '../../core/settings.js';
-import { dist2, fastUnorderedRemove } from '../../core/utils.js';
+import { clamp, dist2, fastUnorderedRemove } from '../../core/utils.js';
 import { triggerReactiveArmor } from '../abilities.js';
 import { damageEnemy, damagePlayer, killEnemy } from '../combat.js';
 import { triggerGameOver } from '../flow.js';
@@ -14,6 +14,7 @@ import { stepEnemyHazards, sweepDefeated } from './new-enemies.js';
 import { getEnemyById, populateEnemyGrid, queryGridCallback } from '../../core/spatial-grid.js';
 import { primeEnemyStrategy, stepEnemyStrategy } from './enemy-registry.js';
 import { spawnCombatText } from '../../render/fx.js';
+import { edgePressure, shoveEnemyOffEdge } from './world-edge.js';
 
 var repCurrentEnemy = null;
 var repCurrentIdx = -1;
@@ -82,6 +83,7 @@ export function stepEnemies(dt, frame) {
   var vpH = cam ? (cam.viewH || cam.h || 640) : ((rt.ui && rt.ui.height) || boundH);
   var zone3Dist = Math.hypot(vpW, vpH) * 0.5 * 1.85;
 
+  var playerEdge = edgePressure(p.x, p.y, p.r, boundW, boundH);
   for (var j = rt.state.enemies.length - 1; j >= 0; j -= 1) {
     var e = rt.state.enemies[j];
     if (!e || e.hp <= 0) continue;
@@ -261,11 +263,23 @@ export function stepEnemies(dt, frame) {
     var tdy = p.y - e.y;
     var touchR = (p.r || 16) + (e.r || 12);
     var touchD2 = tdx * tdx + tdy * tdy;
+    // Keep swarm bodies from wedging the hull against the hatch stripe.
+    if (playerEdge.pressed && !isCulled && !e.burrowed && !e.isBoss && e.kind !== 'mine' && e.kind !== 'stormTower') {
+      var nearPin = touchD2 <= (touchR + 36) * (touchR + 36);
+      if (nearPin) shoveEnemyOffEdge(e, playerEdge, 95 * dt, boundW, boundH, false);
+    }
     if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
-      var touched = damagePlayer(e.damage, 'contact');
+      var contactDmg = e.damage;
+      if (playerEdge.pressed) contactDmg = Math.max(1, Math.round(e.damage * 0.55));
+      var touched = damagePlayer(contactDmg, 'contact');
       e.touchCooldown = 0.85;
       if (touched > 0) {
-        p.invulnerable = 0.7;
+        p.invulnerable = playerEdge.pressed ? 1.05 : 0.7;
+        if (playerEdge.pressed) {
+          shoveEnemyOffEdge(e, playerEdge, 34, boundW, boundH, true);
+          p.x = clamp(p.x + playerEdge.nx * 16, p.r, boundW - p.r);
+          p.y = clamp(p.y + playerEdge.ny * 16, p.r, boundH - p.r);
+        }
         AudioFX.hurt();
         triggerHaptic([45]);
         rt.state.shake = Math.max(rt.state.shake, 10);

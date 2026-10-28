@@ -9,6 +9,7 @@ import { enemyProfile } from '../data/enemies.js';
 import { planWave } from './director.js';
 import { createDreadnought, createSovereign } from './sim/bosses.js';
 import { primeEnemy } from './sim/new-enemies.js';
+import { edgeAwareSpawnMargin } from './sim/world-edge.js';
 import { logEvent } from '../ui/hud.js';
 
 function currentRecipe() {
@@ -186,8 +187,8 @@ export function sampleRingSpawnPoint(player, camera, worldW, worldH) {
   var rawX = cx + Math.cos(angle) * radX;
   var rawY = cy + Math.sin(angle) * radY;
 
-  // Tangent sliding & border clamping
-  var margin = 32;
+  // Tangent sliding & border clamping (widen when player is hatch-pinned)
+  var margin = edgeAwareSpawnMargin(p, bW, bH, 32);
   var clampedX = clamp(rawX, margin, bW - margin);
   var clampedY = clamp(rawY, margin, bH - margin);
 
