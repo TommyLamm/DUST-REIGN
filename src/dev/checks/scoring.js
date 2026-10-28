@@ -4,6 +4,7 @@ import { damagePlayer } from '../../systems/combat.js';
 import { completeDash, dash, justDashCooldown, stepDashHeat } from '../../systems/abilities.js';
 import { addScore, calculateCombatRank, calculateFlawlessBonus } from '../../systems/scoring.js';
 import { MAX_COMBO } from '../../config.js';
+import { scoreBreakdownLabels } from '../../ui/hud.js';
 
 function breakdownSum(breakdown) {
   var sum = 0;
@@ -311,4 +312,10 @@ export function run() {
     if (state.stats) state.stats.justDashes = snap.justDashes;
     clearSeed();
   }
+
+  var zhLabels = scoreBreakdownLabels(true);
+  var enLabels = scoreBreakdownLabels(false);
+  if (zhLabels[0] !== '擊殺得分' || zhLabels[1] !== '波次得分') throw new Error('zh breakdown labels must say score, not counts');
+  if (enLabels[0] !== 'KILL SCORE' || enLabels[1] !== 'WAVE SCORE') throw new Error('en breakdown labels must say score, not counts');
+
 }
