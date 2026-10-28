@@ -30,7 +30,7 @@ export function run() {
   assert(titan.hp === 4200 && bossHp('titan', 5) === 4200, 'titan wave-5 hp drifted');
   assert(enemyProfile('crawler', 5, { hpScale: 1, dmgScale: 1 }).hp === 50, 'crawler no longer rebases at scale 1');
   assert(bossHp('titan', 10) === 4200 + 5 * 780, 'pre-overtime titan wave 10 drifted');
-  assert(bossHp('dreadnought', 10) === 8400 && bossHp('sovereign', 15) === 5200, 'story boss hp drifted');
+  assert(bossHp('dreadnought', 10) === 8400 && bossHp('sovereign', 15) === 10400, 'story boss hp drifted');
   assert(bossHp('titan', 20) === 4200 && bossHp('titan', 25) === Math.round(4200 * 1.35), 'overtime titan cycle drifted');
   assert(bossHp('titan', 5, { bossHpScale: 1.2 }) === Math.round(4200 * 1.2), 'wave 5 boss hp ignored bossHpScale');
   assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(8400 * 1.25), 'wave 10 boss hp ignored bossHpScale');
@@ -224,7 +224,7 @@ export function run() {
     assert(dreadBoss && dreadBoss.isBoss && dreadBoss.kind === 'dreadnought' && rt.state.boss === dreadBoss, 'spawnBoss dreadnought failed');
     assert(dreadBoss.hp === 8400 && dreadBoss.r === 38, 'dreadnought spawn stats drifted');
     var sov = spawnBoss('sovereign');
-    assert(sov && sov.isBoss && sov.kind === 'sovereign' && sov.hp === 5200 && rt.state.boss === sov, 'spawnBoss sovereign failed');
+    assert(sov && sov.isBoss && sov.kind === 'sovereign' && sov.hp === 10400 && rt.state.boss === sov, 'spawnBoss sovereign failed');
     rt.state.wave = 5;
     rt.state.recipe = { wave: 5, hpScale: 1, dmgScale: 1, bulletScale: 1, boss: 'titan' };
     var titanBoss = spawnBoss('titan');
