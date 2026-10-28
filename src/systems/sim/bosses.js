@@ -483,9 +483,9 @@ function fireSpiral(e) {
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
-  // 12-spoke spiral (was 16) — density cut without touching storm-eye.
-  for (i = 0; i < 12; i += 1) {
-    var a = spin + (i / 12) * TAU;
+  // 10-spoke spiral (was 16→12) — another density cut; storm-eye untouched.
+  for (i = 0; i < 10; i += 1) {
+    var a = spin + (i / 10) * TAU;
     pushEnemyBullet({
       type: 'spiral',
       fromBoss: true,
@@ -608,7 +608,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
     if (phase === 1) {
       e.spiralCd -= dt;
       if (e.spiralCd <= 0) {
-        e.spiralCd = 5.8;
+        e.spiralCd = 6.4;
         fireSpiral(e);
       }
     }
