@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tCampaignStageName, tCampaignStageDesc, tCampaignStageStar, tCampaignThreat } from '../core/i18n.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
 import { CAMPAIGN_MILESTONES, CAMPAIGN_SECTORS, CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 import { rt } from '../core/runtime.js';
@@ -33,6 +33,8 @@ function getStageTypeLabel(type, zh) {
     case 'vip_hunt': return zh ? 'VIP 斬首' : 'VIP HUNT';
     case 'beacon_defense': return zh ? '陣地堅守' : 'DEFENSE';
     case 'boss_duel': return zh ? '首領單挑' : 'BOSS DUEL';
+    case 'payload_escort': return zh ? '物資護送' : 'ESCORT';
+    case 'core_overload': return zh ? '核心超載' : 'OVERLOAD';
     default: return type ? type.toUpperCase() : (zh ? '任務' : 'MISSION');
   }
 }
@@ -188,7 +190,7 @@ export function renderModal() {
       card.appendChild(head);
 
       // Stage Name
-      var nameH3 = el('h3', 'stage-name', zh ? stg.name : (stg.code + ' ' + stg.type));
+      var nameH3 = el('h3', 'stage-name', tCampaignStageName(stg.id, stg.name));
       card.appendChild(nameH3);
 
       // Stars Row
@@ -205,11 +207,11 @@ export function renderModal() {
       var criteriaList = el('div', 'stage-criteria-list');
       if (stg.starCriteria) {
         var c1 = el('div', 'stage-criteria-item' + (record.starDetails && record.starDetails.star1 ? ' is-met' : ''));
-        c1.innerHTML = '<span class="star-bullet">★</span> <span>' + (stg.starCriteria.star1 || '') + '</span>';
+        c1.innerHTML = '<span class="star-bullet">★</span> <span>' + tCampaignStageStar(stg.id, 1, stg.starCriteria.star1 || '') + '</span>';
         var c2 = el('div', 'stage-criteria-item' + (record.starDetails && record.starDetails.star2 ? ' is-met' : ''));
-        c2.innerHTML = '<span class="star-bullet">★★</span> <span>' + (stg.starCriteria.star2 || '') + '</span>';
+        c2.innerHTML = '<span class="star-bullet">★★</span> <span>' + tCampaignStageStar(stg.id, 2, stg.starCriteria.star2 || '') + '</span>';
         var c3 = el('div', 'stage-criteria-item' + (record.starDetails && record.starDetails.star3 ? ' is-met' : ''));
-        c3.innerHTML = '<span class="star-bullet">★★★</span> <span>' + (stg.starCriteria.star3 || '') + '</span>';
+        c3.innerHTML = '<span class="star-bullet">★★★</span> <span>' + tCampaignStageStar(stg.id, 3, stg.starCriteria.star3 || '') + '</span>';
         criteriaList.appendChild(c1);
         criteriaList.appendChild(c2);
         criteriaList.appendChild(c3);
@@ -225,7 +227,7 @@ export function renderModal() {
       } else {
         records.textContent = unlocked ? (zh ? '未通關' : 'NOT CLEARED') : (zh ? '前置關卡未達成' : 'LOCKED');
       }
-      var threatSpan = el('span', 'stage-threat', (zh ? '威脅: ' : 'THREAT: ') + stg.threat);
+      var threatSpan = el('span', 'stage-threat', (zh ? '威脅: ' : 'THREAT: ') + tCampaignThreat(stg.threat));
       foot.appendChild(records);
       foot.appendChild(threatSpan);
       card.appendChild(foot);
