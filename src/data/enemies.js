@@ -30,7 +30,7 @@ var BASE = {
   behemoth: { hp: 8800, speed: 32, damage: 32, r: 44, score: 3500, xp: 80, repair: 1, firstWave: 19, color: '#a855f7' },
   prowler: { hp: 48, speed: 105, damage: 24, r: 12, score: 75, xp: 22, repair: 0.1, firstWave: 16, color: '#c084fc' },
   bulwark: { hp: 190, speed: 34, damage: 18, r: 21, score: 130, xp: 35, repair: 0.3, firstWave: 16, color: '#38bdf8' },
-  stormTower: { hp: 5000, speed: 0, damage: 0, r: 20, score: 40, xp: 12, repair: 0, firstWave: 15, color: '#d5e6f5' },
+  stormTower: { hp: 6500, speed: 0, damage: 0, r: 20, score: 40, xp: 12, repair: 0, firstWave: 15, color: '#d5e6f5' },
   mine: { hp: 16, speed: 0, damage: 0, r: 8, score: 0, xp: 0, repair: 0, firstWave: 10, color: '#e0a84e' }
 };
 
