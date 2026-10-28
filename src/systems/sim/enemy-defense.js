@@ -84,7 +84,7 @@ function livingTowers(e) {
 
 export function refreshSovereignShield(e) {
   if (!e || e.kind !== 'sovereign') return false;
-  var up = livingTowers(e) >= 2;
+  var up = livingTowers(e) >= 1;
   e.shielded = up;
   return up;
 }
