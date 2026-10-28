@@ -40,6 +40,17 @@ function offer(id) {
   queue.push(id);
 }
 
+// Mid-wave one-shot / arming threats: front of queue + skip post-tip gap.
+function offerUrgent(id) {
+  if (!readTipsEnabled()) return;
+  if (hasSeen(id)) return;
+  if (active && active.id === id) return;
+  var qi = queue.indexOf(id);
+  if (qi !== -1) queue.splice(qi, 1);
+  queue.unshift(id);
+  nextAt = Math.min(nextAt, nowMs());
+}
+
 export function onTipsReset() {
   sessionSeen = [];
   queue = [];
@@ -239,11 +250,11 @@ function mineArmingNear() {
   var list = rt.state && rt.state.enemies;
   var p = rt.state && rt.state.player;
   if (!list || !p) return false;
-  var lim = 220 * 220;
+  var lim = 260 * 260;
   var i;
   for (i = 0; i < list.length; i += 1) {
     var e = list[i];
-    if (!e || e.kind !== 'mine' || !(e.hp > 0)) continue;
+    if (!e || e.kind !== 'mine' || !(e.hp > 0) || !e.arming) continue;
     var dx = e.x - p.x;
     var dy = e.y - p.y;
     if (dx * dx + dy * dy <= lim) return true;
@@ -322,15 +333,18 @@ function scanTriggers() {
   if (rt.state.contract) offer('contract');
   if (acidHazardNear() || ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter'))) offer('acid');
   if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyNearKind('warden', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
-  if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
-  if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
-  if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 10 && rusherChargeNear()) offer('rusher-charge');
+  if ((rt.state.wave || 1) >= 12 && burrowerWarnNear()) offerUrgent('burrower');
+  else if ((rt.state.wave || 1) >= 12 && enemyOfKind('burrower')) offer('burrower');
+  if ((rt.state.wave || 1) >= 7 && scurrierArmingNear()) offerUrgent('scurrier');
+  else if ((rt.state.wave || 1) >= 7 && enemyOfKind('scurrier')) offer('scurrier');
+  if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 10 && rusherChargeNear()) offerUrgent('rusher-charge');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 8 && bruteNear()) offer('brute');
   if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
-  if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offer('mine');
+  if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offerUrgent('mine');
+  else if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
-  if (moltenHazardNear()) offer('molten');
-  if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
+  if (moltenHazardNear()) offerUrgent('molten');
+  if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offerUrgent('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   if (choices.length > 0) offer('first-upgrade');

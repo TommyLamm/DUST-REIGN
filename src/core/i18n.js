@@ -1510,7 +1510,7 @@ export function tTip(id, kind) {
     if (id === 'rusher-charge') return 'ORANGE CHARGE LANE = RUSHER BURST · SIDE-STEP OFF THE LINE BEFORE IT FIRES';
     if (id === 'brute') return 'BRUTE IS HEAVY CONTACT DAMAGE · KEEP RANGE AND STRAFE — DO NOT TRADE HULL';
     if (id === 'elite-weave') return 'ELITE ROUNDS TRACK HARD · STRAFE AND PRIORITIZE THEM BEFORE THE PACK';
-    if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
+    if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK · PUSH DEEPER NEEDS CONFIRM (HALF ON DEATH)';
     if (id === 'molten') return 'ORANGE POOLS ARE MOLTEN SLAG · DREAD LEAVES THEM ON CHARGE — STEP OUT';
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
@@ -1552,7 +1552,7 @@ export function tTip(id, kind) {
   if (id === 'rusher-charge') return '橘色衝刺走廊＝疾衝者蓄力 · 開火前側移離開那條線';
   if (id === 'brute') return '蠻卒近戰碰撞傷害很高 · 保持距離側移風箏 — 別硬換血';
   if (id === 'elite-weave') return '菁英彈道難躲 · 側移並優先清掉菁英再打群';
-  if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
+  if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離 · 深入加時需再確認（陣亡半獎）';
   if (id === 'molten') return '橘色熔渣池是無畏衝刺殘留 · 快離開以免持續灼傷';
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
