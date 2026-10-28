@@ -233,6 +233,11 @@ export function stepOrbs(dt, frame) {
         if (typeof p.scrapXpMult === 'number' && p.scrapXpMult > 0 && p.scrapXpMult !== 1) {
           scrapXp = Math.round((scrapXp || 0) * p.scrapXpMult);
         }
+        // Longer Titan fights farmed +35% end XP (757→1020) and dropped Dread p50 60→46.
+        // Dampen scrap XP while any boss lives — root-cause coupling, not a Dread hull/stun lever.
+        if (rt.state.boss && rt.state.boss.hp > 0) {
+          scrapXp = Math.max(1, Math.round((scrapXp || 0) * 0.55));
+        }
         addXp(scrapXp);
         var scrapCap = (typeof p.batteryMax === 'number') ? p.batteryMax : (p.maxEnergy || 100);
         p.energy = Math.min(scrapCap, (p.energy || 0) + 3.5);
