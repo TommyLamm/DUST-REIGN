@@ -236,6 +236,7 @@ export function chooseRepair() {
   }
   applyRepair(state);
   state.interlude = null;
+  focusCombatCanvas();
   if (routeId) assignRoute(state, routeId, false);
   commitWaveAdvance(true);
 }
@@ -263,6 +264,7 @@ function finishTitle(state) {
   if (!state || !state.interlude || state.interlude.step !== 'title') return;
   var routeId = state.interlude.routeId;
   state.interlude = null;
+  focusCombatCanvas();
   if (routeId) assignRoute(state, routeId, false);
   commitWaveAdvance(true);
 }
@@ -274,6 +276,10 @@ export function tickInterlude(now) {
   if ((now || 0) >= until) finishTitle(state);
 }
 
+function focusCombatCanvas() {
+  if (rt.ui && rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
+}
+
 export function confirmExtract() {
   var state = rt.state;
   if (!state || state.over || state.extracted) return;
@@ -282,6 +288,7 @@ export function confirmExtract() {
   state.extractPaid = true;
   state.extractDeferred = false;
   state.interlude = null;
+  focusCombatCanvas();
   extractRun();
 }
 
@@ -294,6 +301,7 @@ export function confirmPushDeeper() {
   state.extractDeferredAmount = bonus;
   state.extractPaid = false;
   state.interlude = null;
+  focusCombatCanvas();
   state.banner = Math.max(state.banner || 0, 2.4);
   state.bannerText = 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING';
   setStatusText('OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING');
