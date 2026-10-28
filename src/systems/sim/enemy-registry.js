@@ -536,8 +536,9 @@ registerEnemyStrategy('dreadnought', {
     if (broken) {
       amount *= 0.95; // mild break soft — charge DR untouched
     } else if (info && info.source === 'bullet') {
-      // Unbroken plating (not idle-mult, not charge DR): recover Dread p50 after Titan XP coupling.
-      // Break windows stay the dump; charge/tele keep falsified 0.70.
+      // Unbroken plating ×0.85 (not idle-mult/charge DR/stun/hull).
+      // Post-Titan coupling: XP dampen + plating lifted p50 45.8→57.6 (near 60).
+      // ACCEPT near-band ~55–60 while Titan holds 40–70; further plating had diminishing returns.
       amount *= 0.85;
     }
     return amount;
