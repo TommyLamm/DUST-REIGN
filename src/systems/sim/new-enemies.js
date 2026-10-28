@@ -28,7 +28,7 @@ function bounds(frame) {
   };
 }
 
-export function blastAt(x, y, radius, playerDmg, enemyDmg, tint) {
+export function blastAt(x, y, radius, playerDmg, enemyDmg, tint, source) {
   var p = rt.state && rt.state.player;
   var list = rt.state.enemies;
   if (playerDmg > 0 && p) {
@@ -36,7 +36,7 @@ export function blastAt(x, y, radius, playerDmg, enemyDmg, tint) {
     var pdx = p.x - x;
     var pdy = p.y - y;
     if (pdx * pdx + pdy * pdy <= pReach * pReach) {
-      var hit = damagePlayer(playerDmg, 'zone');
+      var hit = damagePlayer(playerDmg, source || 'zone');
       if (hit > 0) {
         p.invulnerable = 0.2;
         AudioFX.hurt();
@@ -418,7 +418,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
   if (e.kind === 'mine') {
     if (!e.arming && dist <= 80) {
       e.arming = true;
-      e.armTimer = 0.4;
+      e.armTimer = 0.65;
     }
     if (e.arming) {
       e.armTimer -= dt;
@@ -426,7 +426,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.detonated = true;
         e.hp = 0;
         e.deathCause = 'other';
-        blastAt(e.x, e.y, 80, scaledShot(25, 0, true).damage, 40, '#e0a84e');
+        blastAt(e.x, e.y, 80, scaledShot(25, 0, true).damage, 40, '#e0a84e', 'contact:mine');
       }
     }
     return setStepScratch(dx, dy, dist, 0);
@@ -481,7 +481,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
         e.arming = false;
         e.hp = 0;
         e.deathCause = 'other';
-        blastAt(e.x, e.y, 70, Math.round(18 * dmgScale()), 65, '#e07a3d');
+        blastAt(e.x, e.y, 70, Math.round(18 * dmgScale()), 65, '#e07a3d', 'contact:scurrier');
         return setStepScratch(dx, dy, dist, 0);
       }
       return setStepScratch(dx, dy, dist, 0);
