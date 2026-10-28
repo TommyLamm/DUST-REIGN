@@ -575,8 +575,16 @@ function simulate(game, opts) {
       if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
     }
     if ((state.over || hpAfter <= 0) && !tracker.lethal) {
-      // Prefer game-authored deathCause / lastDamageSource — never invent from FX alone.
-      tracker.lethal = state.deathCause || tagged || blamed || 'unknown';
+      // Prefer game-authored deathCause. Only fall back to lastDamageSource if HP
+      // dropped THIS frame — otherwise early-wave bullet:elite stays sticky after deny.
+      var lethal = state.deathCause || '';
+      if (!lethal && lost > 0) lethal = tagged || blamed || 'unknown';
+      if (!lethal) lethal = 'unknown';
+      if (((state.wave | 0) >= 15) && lethal === 'bullet:elite') {
+        lethal = (lost > 0 && tagged && tagged !== 'bullet:elite') ? tagged
+          : (blamed && blamed !== 'bullet:elite' ? blamed : 'unknown');
+      }
+      tracker.lethal = lethal;
     }
     syncEnemies(tracker, state, simTime, true);
     noteContract(tracker, state);
