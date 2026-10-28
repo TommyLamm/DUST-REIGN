@@ -1279,6 +1279,9 @@ export function tLog(msg) {
   if (msg.indexOf('BEHEMOTH HORN SHATTERED') === 0) return '巨獸之角碎裂 // 正面減傷失效 [硬直 2.2s]';
   if (msg.indexOf('BEHEMOTH GLAND RUPTURED') === 0) return '巨獸腺体破裂 // 酸液迫擊已封閉';
   if (msg.indexOf('BEHEMOTH TAIL SEVERED') === 0) return '巨獸斷尾 // 機動殘廢 [-25% 速度]';
+  if (msg.indexOf('BOSS COMPONENT DESTROYED //') === 0) {
+    return msg.replace('BOSS COMPONENT DESTROYED //', '首領組件被摧毀 //');
+  }
   if (msg.indexOf('APOCALYPSE THOR') === 0) return '天啟雷神 // 軌道離子打擊 180 傷害';
   if (msg.indexOf('SCRAP BULKHEAD //') === 0) return msg.replace('SCRAP BULKHEAD // ', '廢料隔艙 // ').replace('TEMP SHIELD', '臨時護盾');
   if (msg === 'TITAN ENRAGED // BARRAGE PROTOCOL') return '泰坦暴怒 // 彈幕齊射協議';
@@ -1791,10 +1794,17 @@ export function syncStaticHtml(lang) {
     }
   }
   var pauseBtnSeed = document.getElementById('pauseBtn');
-  if (pauseBtnSeed && /Pause game/i.test(pauseBtnSeed.getAttribute('aria-label') || '')) {
-    pauseBtnSeed.setAttribute('aria-label', zh ? '暫停遊戲' : 'Pause game');
-    if (/^PAUSE$/i.test((pauseBtnSeed.textContent || '').trim())) {
-      pauseBtnSeed.textContent = zh ? '暫停' : 'PAUSE';
+  if (pauseBtnSeed) {
+    var pauseTxt = (pauseBtnSeed.textContent || '').trim();
+    var pauseAria = pauseBtnSeed.getAttribute('aria-label') || '';
+    if (/^PAUSE$/i.test(pauseTxt) || /^暫停$/.test(pauseTxt) || /Pause game|暫停遊戲/i.test(pauseAria)) {
+      // Only rewrite idle seed; hud owns RESUME/繼續 while paused mid-run
+      if (/^PAUSE$/i.test(pauseTxt) || /^暫停$/.test(pauseTxt)) {
+        pauseBtnSeed.textContent = zh ? '暫停' : 'PAUSE';
+      }
+      if (!pauseBtnSeed.disabled || /Pause game|暫停遊戲|Pause game/i.test(pauseAria) || /暫停遊戲 \/ Pause game/.test(pauseAria)) {
+        pauseBtnSeed.setAttribute('aria-label', zh ? '暫停遊戲' : 'Pause game');
+      }
     }
   }
 
