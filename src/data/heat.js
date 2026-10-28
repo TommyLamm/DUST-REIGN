@@ -10,7 +10,10 @@ export function getHeatModifiers(heat) {
     enemyDmgScale: 1 + 0.05 * h,
     eliteAffixMinWave: h >= 2 ? 3 : 4,
     eliteChanceBonus: h >= 2 ? 0.03 : 0,
-    repairHeal: h >= 3 ? 12 : 18,
+    // Keep scrap heal at 18 for all Heat. Cutting to 12 at Heat≥3 stacked with
+    // enemyHpScale/enemyDmgScale and created a scissors (less heal, tougher foes).
+    // Overflow-to-score stays REPAIR_OVERFLOW_SCORE (12) in config — not heat-gated.
+    repairHeal: 18,
     stormSeconds: h >= 4 ? 8 : 5,
     bulletSpeedScale: h >= 4 ? 1.15 : 1,
     bossPhaseEarly: h >= 5 ? 0.1 : 0,

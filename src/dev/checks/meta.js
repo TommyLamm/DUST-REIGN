@@ -290,6 +290,7 @@ export function run() {
     state = makeState(320, 240);
     applyLoadout(state);
     assert(state.heat === 5 && state.rerolls === getHeatModifiers(5).startingRerolls, 'Heat 5 did not take starting rerolls');
+    assert(getHeatModifiers(0).repairHeal === 18 && getHeatModifiers(3).repairHeal === 18 && getHeatModifiers(5).repairHeal === 18, 'Heat must not slash repair scrap heal');
 
     assert(localDateKey(new Date(2026, 9, 9)) === '2026-10-09', 'local date key mismatch');
     assert(getDailyRule(null) === null && getDailyRule('nope') === null && getDailyRule('2026-02-31') === null, 'invalid daily keys should be null');
@@ -451,4 +452,5 @@ export function run() {
     installed.restore();
   }
 }
+
 
