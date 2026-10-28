@@ -1,4 +1,5 @@
 import { isChinese } from '../core/i18n.js';
+import { formatDamageSourceLabel } from '../systems/combat.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
 import { CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
 import { beginRun, restart } from '../systems/flow.js';
@@ -168,7 +169,10 @@ export function updateGameOverUi(state) {
       stampElement.innerHTML = 'SIGNAL LOST <span>//</span> RUN ENDED';
     }
     if (kickerElement) {
-      kickerElement.textContent = zh ? '荒原終將索取一切' : 'THE DRYLINE ALWAYS COLLECTS';
+      var cause = formatDamageSourceLabel(state.lastDamageSource, zh);
+      kickerElement.textContent = zh
+        ? ('死因 // ' + cause + ' · 荒原終將索取一切')
+        : ('KILLED BY // ' + cause + ' · THE DRYLINE ALWAYS COLLECTS');
     }
     if (titleElement) {
       titleElement.innerHTML = zh ? '塵埃之境<br /><span>吞噬萬物</span>' : 'THE DUST<br /><span>TAKES ALL.</span>';

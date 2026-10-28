@@ -706,7 +706,7 @@ export function stepBossArena(dt, frame) {
         boss.eyeTick -= 0.5;
         var eyeHit = 0;
         if (p.invulnerable <= 0) {
-          eyeHit = damagePlayer(scaledShot(8, 0, true).damage, 'zone');
+          eyeHit = damagePlayer(scaledShot(8, 0, true).damage, 'storm-eye');
         }
         if (eyeHit > 0) {
           p.invulnerable = 0.12;
@@ -728,7 +728,7 @@ export function stepBossArena(dt, frame) {
       if (p) {
         var dist = pointLineDist(p.x, p.y, bolt.x1, bolt.y1, bolt.x2, bolt.y2);
         if (dist <= bolt.width * 0.5 + p.r && p.invulnerable <= 0) {
-          var zap = damagePlayer(bolt.damage || 26, 'zone');
+          var zap = damagePlayer(bolt.damage || 26, 'lightning');
           if (zap > 0) {
             p.invulnerable = 0.28;
             AudioFX.hurt();

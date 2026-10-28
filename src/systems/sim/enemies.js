@@ -289,7 +289,7 @@ export function stepEnemies(dt, frame) {
         firstTitan = beaten.indexOf('titan') === -1 && (rt.state.wave || 1) <= 5;
         if (firstTitan) contactDmg = Math.max(1, Math.min(Math.round(contactDmg * 0.55), 14));
       }
-      var touched = damagePlayer(contactDmg, 'contact');
+      var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
       e.touchCooldown = firstTitan ? 1.15 : 0.85;
       if (touched > 0) {
         p.invulnerable = playerEdge.pressed ? 1.05 : 0.7;

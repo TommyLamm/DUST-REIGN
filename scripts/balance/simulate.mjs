@@ -567,7 +567,7 @@ function simulate(game, opts) {
       addDamage(tracker.damage, hits[h], 1, h === hits.length - 1 ? lost : 0);
     }
     if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
-    if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = blamed || 'unknown';
+    if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = state.lastDamageSource || blamed || 'unknown';
     syncEnemies(tracker, state, simTime, true);
     noteContract(tracker, state);
     noteWave(tracker, state, simTime);
