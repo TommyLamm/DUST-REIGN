@@ -416,7 +416,7 @@ export function run() {
     state.acquiredUpgrades = [findUpgrade('tracer-rounds'), findUpgrade('flechette-pack')];
     rt.ui = mock;
     renderBuildInspector();
-    assert(mock.statFireRate.textContent === '2.3 RPS (x5)' || mock.statFireRate.textContent.indexOf('RPS') !== -1, 'build fire rate still renders');
+    assert(mock.statFireRate.textContent === '3.0 RPS (x5)' || mock.statFireRate.textContent.indexOf('RPS') !== -1, 'build fire rate still renders');
     assert(mock.chassisDesc.textContent.indexOf('MASTERY M0') !== -1, 'build page shows mastery');
     assert(mock.installedChipsList.innerHTML.indexOf('INACTIVE') !== -1, 'off-weapon card is marked inactive');
     assert(mock.chassisSelector.buttons[0].disabled === true, 'chassis buttons stay read-only');

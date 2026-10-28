@@ -192,7 +192,7 @@ export function renderBuildInspector() {
     var surge = p.overdrive > 0 ? (zh ? ' (湧浪)' : ' (SURGE)') : '';
     if (mode === 'breacher') {
       var pellets = breacherPelletCount(p);
-      rt.ui.statFireRate.textContent = pellets === 5 ? ('2.3 RPS (x5)' + surge) : ('2.3 RPS (x' + pellets + ')' + surge);
+      rt.ui.statFireRate.textContent = pellets === 5 ? ('3.0 RPS (x5)' + surge) : ('3.0 RPS (x' + pellets + ')' + surge);
     } else if (mode === 'vanguard') {
       rt.ui.statFireRate.textContent = (zh ? '1.8 RPS (充能)' : '1.8 RPS (CHARGE)') + surge;
     } else if (mode === 'arc-welder') {
@@ -210,7 +210,7 @@ export function renderBuildInspector() {
     var dmgSuffix = zh ? ' 傷害' : ' DMG';
     if (mode === 'breacher') {
       var pelletCount = breacherPelletCount(p);
-      var bDmg = Math.max(1, Math.round(p.damage * 0.42 * odDmgMult));
+      var bDmg = Math.max(1, Math.round(p.damage * 0.58 * odDmgMult));
       rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + dmgSuffix + odLabel;
     } else if (mode === 'vanguard') {
       var vDmg = Math.round(p.damage * 3.4 * odDmgMult);
