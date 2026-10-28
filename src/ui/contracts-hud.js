@@ -54,7 +54,7 @@ export function updateContractsHud() {
   var mutId = mutator && typeof mutator === 'object' ? mutator.id : (typeof mutator === 'string' ? mutator : '');
   var cId = contract && contract.id ? contract.id : '';
   var progress = contract && contract.progress ? Math.floor(contract.progress * 10) : 0;
-  var canDouble = contract && !contract.done && !contract.doubled && (rt.state.waveTime || 0) <= 12 ? 1 : 0;
+  var canDouble = contract && !contract.done && !contract.doubled && (rt.state.waveTime || 0) <= 16 ? 1 : 0;
   var isDoubled = contract && contract.doubled ? 1 : 0;
   var sig = cId + '|' + progress + '|' + (contract && contract.done ? 1 : 0) + '|' + isDoubled + '|' + canDouble + '|' + (contract && contract.resets ? contract.resets : 0) + '|' + mutId + '|' + (zh ? 'zh' : 'en');
   if (!cId && !mutId) {
