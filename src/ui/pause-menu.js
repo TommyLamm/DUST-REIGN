@@ -251,14 +251,15 @@ export function renderBuildInspector() {
       { name: 'REACTIVE ARMOR', active: Boolean(p.reactiveArmor) },
       { name: 'HIGH CALIBER', active: Boolean(p.highCaliber) }
     ];
+    var anyActive = traits.some(function (t) { return t.active; });
     rt.ui.buildPassiveTags.innerHTML = traits.map(function (t) {
       var status = t.active ? (zh ? '● 已連線' : '● ONLINE') : (zh ? '○ 已離線' : '○ OFFLINE');
       var name = zh ? tPassiveName(t.name) : t.name;
-      return '<div class="passive-tag ' + (t.active ? 'is-active' : 'is-inactive') + '">' +
+      return '<div class="passive-tag ' + (t.active ? 'is-active' : 'is-inactive') + '" aria-label="' + name + ' — ' + status + '">' +
         '<span class="tag-status">' + status + '</span>' +
         '<strong class="tag-name">' + name + '</strong>' +
         '</div>';
-    }).join('');
+    }).join('') + (anyActive ? '' : ('<p class="passives-empty">' + (zh ? '尚無動態被動上線 — 透過升級卡觸發' : 'No dynamic passives online — unlock via upgrade cards') + '</p>'));
   }
 
   // 4. Installed mod chips

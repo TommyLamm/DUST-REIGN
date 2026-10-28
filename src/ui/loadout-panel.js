@@ -274,6 +274,22 @@ function refresh() {
     heatValue.tabIndex = 0;
     heatValue.textContent = (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' ' + formatMult(pick.heat);
     heatValue.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
+    if (lockedDaily) {
+      var heatLock = zh ? '每日挑戰鎖定熱度' : 'Daily challenge locks heat';
+      heatValue.title = heatLock;
+      heatValue.setAttribute('aria-label', heatValue.textContent + ' — ' + heatLock);
+      heatDown.title = heatLock;
+      heatUp.title = heatLock;
+      heatDown.setAttribute('aria-label', (zh ? '降低熱度（已鎖定）' : 'Lower heat (locked)'));
+      heatUp.setAttribute('aria-label', (zh ? '提高熱度（已鎖定）' : 'Raise heat (locked)'));
+    } else {
+      heatValue.removeAttribute('title');
+      heatValue.setAttribute('aria-label', heatValue.textContent);
+      heatDown.title = zh ? '降低熱度' : 'Lower heat';
+      heatUp.title = zh ? '提高熱度' : 'Raise heat';
+      heatDown.setAttribute('aria-label', zh ? '降低熱度' : 'Lower heat');
+      heatUp.setAttribute('aria-label', zh ? '提高熱度' : 'Raise heat');
+    }
   }
 
   // Mode Buttons Refresh
