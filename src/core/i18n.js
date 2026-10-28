@@ -1074,7 +1074,49 @@ export function tRouteReward(id) {
   return '';
 }
 
+var ACT_TITLES_I18N = {
+  1: { zh: '第一幕 — 乾線邊境', en: 'ACT I — THE DRYLINE' },
+  2: { zh: '第二幕 — 鐵鏽盆地', en: 'ACT II — RUST BASIN' },
+  3: { zh: '第三幕 — 黑玻璃', en: 'ACT III — BLACK GLASS' }
+};
 
+var ARMORY_OPTIONS_I18N = {
+  swap: {
+    name: { zh: '更換主武', en: 'SWAP WEAPON' },
+    detail: { zh: '更換主武器。已安裝卡片保留。', en: 'Change the main gun. Cards stay.' }
+  },
+  mastery: {
+    name: { zh: '武器精通', en: 'WEAPON MASTERY' },
+    detail: { zh: '目前持用主武精通 +1。', en: 'Mastery +1 on the gun you hold.' }
+  },
+  repair: {
+    name: { zh: '戰場維修', en: 'FIELD REPAIR' },
+    detail: { zh: '回復 50% 裝甲並獲得 +1 重骰。', en: 'Restore 50% hull and gain +1 reroll.' }
+  },
+  smuggler: {
+    name: { zh: '黑市超頻', en: 'BLACK-MARKET OVERCLOCK' },
+    detail: { zh: '犧牲 25% HP，換取精通 +1、+2 重骰、+1 放逐、6 秒超頻與 +800 分。', en: 'Sacrifice 25% HP for Mastery +1, +2 Rerolls, +1 Banish, 6s Overdrive & +800 Score.' }
+  }
+};
+
+export function tActTitle(act, fallback) {
+  var item = ACT_TITLES_I18N[act];
+  if (item) return currentLang === 'zh' ? item.zh : item.en;
+  if (fallback) return fallback;
+  return currentLang === 'zh' ? ('第 ' + act + ' 幕 — 加時') : ('ACT ' + act + ' — OVERTIME');
+}
+
+export function tArmoryOptionName(id) {
+  var item = ARMORY_OPTIONS_I18N[id];
+  if (item && item.name) return currentLang === 'zh' ? item.name.zh : item.name.en;
+  return '';
+}
+
+export function tArmoryOptionDetail(id) {
+  var item = ARMORY_OPTIONS_I18N[id];
+  if (item && item.detail) return currentLang === 'zh' ? item.detail.zh : item.detail.en;
+  return '';
+}
 
 export function tCampaignMilestoneName(id, fallback) {
   var item = CAMPAIGN_MILESTONES_I18N[id];
