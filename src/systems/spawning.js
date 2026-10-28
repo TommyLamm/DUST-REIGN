@@ -233,10 +233,9 @@ export function spawnEnemy() {
   var pacingPhase = rt.state.pacingPhase || 0;
   // Phase 3 Elite Peak: denser elites without changing the wave recipe permanently.
   if (pacingPhase === 3) eliteChance = Math.min(0.6, eliteChance * 1.35);
-  // While any Sovereign is alive (shielded OR post-shell), suppress elite spawns.
-  // Baseline #132: one seed hit eliteShare 25% with contact:elite — one lever only.
+  // Sovereign wave: no elites before OR during the fight (recipe also cuts to 0).
   var liveBoss = rt.state.boss;
-  if (liveBoss && liveBoss.kind === 'sovereign' && liveBoss.hp > 0) {
+  if ((recipe && recipe.boss === 'sovereign') || (liveBoss && liveBoss.kind === 'sovereign' && liveBoss.hp > 0)) {
     eliteChance = 0;
   }
   var weights = recipe.weights || null;
