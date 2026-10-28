@@ -291,3 +291,52 @@
   color: #ffffff !important;
   border-color: #ffffff !important;
 }
+
+
+.game-root.is-high-contrast .upgrade-action,
+.game-root.is-high-contrast .upgrade-action-key {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ffffff !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.game-root.is-high-contrast .upgrade-action-key {
+  border-bottom-color: #ff4422 !important;
+}
+
+.game-root.is-high-contrast .upgrade-action.is-armed {
+  outline: 2px solid #ffcc33 !important;
+  background: #221100 !important;
+}
+
+.game-root.is-high-contrast .upgrade-action:disabled {
+  opacity: 1 !important;
+  color: #aaaaaa !important;
+  border-style: dashed !important;
+}
+
+.game-root.is-high-contrast .upgrade-action--skip {
+  border-color: #00ffaa !important;
+  color: #00ffaa !important;
+}
+
+.game-root.is-high-contrast .upgrade-control-hint {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .loadout-heat.is-locked,
+.game-root.is-high-contrast .banished-empty,
+.game-root.is-high-contrast .banished-chip {
+  background: #000000 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.game-root.is-high-contrast .loadout-heat-lock-tag,
+.game-root.is-high-contrast .banished-mark {
+  color: #ffcc33 !important;
+}

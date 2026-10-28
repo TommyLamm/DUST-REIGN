@@ -264,7 +264,10 @@ function refresh() {
 
   // Heat Controls Refresh
   if (lockedHardcore) {
-    if (heatRow) heatRow.style.display = 'none';
+    if (heatRow) {
+      heatRow.style.display = 'none';
+      heatRow.classList.remove('is-locked');
+    }
   } else {
     if (heatRow) heatRow.style.display = '';
     setPressed(heatDown, false, lockedDaily);
@@ -274,14 +277,35 @@ function refresh() {
     heatValue.tabIndex = 0;
     heatValue.textContent = (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' ' + formatMult(pick.heat);
     heatValue.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
+    if (heatRow) {
+      heatRow.classList.toggle('is-locked', !!lockedDaily);
+      heatRow.setAttribute('aria-disabled', lockedDaily ? 'true' : 'false');
+      var lockTag = heatRow.querySelector('.loadout-heat-lock-tag');
+      if (lockedDaily) {
+        if (!lockTag) {
+          lockTag = document.createElement('div');
+          lockTag.className = 'loadout-heat-lock-tag';
+          heatRow.appendChild(lockTag);
+        }
+        lockTag.textContent = zh ? '🔒 每日鎖定 · 不可調整熱度' : '🔒 DAILY LOCK · HEAT FIXED';
+        lockTag.hidden = false;
+        heatRow.setAttribute('aria-label', (zh ? '熱度列' : 'Heat row') + ' — ' + lockTag.textContent);
+      } else {
+        if (lockTag) lockTag.hidden = true;
+        heatRow.removeAttribute('aria-label');
+      }
+    }
+    heatDown.classList.toggle('is-locked', !!lockedDaily);
+    heatUp.classList.toggle('is-locked', !!lockedDaily);
+    heatValue.classList.toggle('is-locked', !!lockedDaily);
     if (lockedDaily) {
-      var heatLock = zh ? '每日挑戰鎖定熱度' : 'Daily challenge locks heat';
+      var heatLock = zh ? '每日挑戰鎖定熱度 — 不可調整' : 'Daily challenge locks heat — not adjustable';
       heatValue.title = heatLock;
       heatValue.setAttribute('aria-label', heatValue.textContent + ' — ' + heatLock);
       heatDown.title = heatLock;
       heatUp.title = heatLock;
-      heatDown.setAttribute('aria-label', (zh ? '降低熱度（已鎖定）' : 'Lower heat (locked)'));
-      heatUp.setAttribute('aria-label', (zh ? '提高熱度（已鎖定）' : 'Raise heat (locked)'));
+      heatDown.setAttribute('aria-label', zh ? '降低熱度（已鎖定）' : 'Lower heat (locked)');
+      heatUp.setAttribute('aria-label', zh ? '提高熱度（已鎖定）' : 'Raise heat (locked)');
     } else {
       heatValue.removeAttribute('title');
       heatValue.setAttribute('aria-label', heatValue.textContent);

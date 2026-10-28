@@ -360,6 +360,7 @@ export function renderBuildInspector() {
   }
 
   renderRunSummary(p);
+  renderBanishedList();
 }
 
 function runLabel(value) {
@@ -406,6 +407,33 @@ function renderRunSummary(p) {
     var isNone = row[1] === noneLabel;
     return '<div class="run-summary-row' + (isNone ? ' is-empty' : '') + '"><span>' + row[0] + '</span><strong>' + row[1] + '</strong></div>';
   }).join('') + emptyNote;
+}
+
+function renderBanishedList() {
+  if (typeof document === 'undefined' || !rt.ui || !rt.ui.panelBuild || !rt.ui.panelBuild.appendChild) return;
+  var zh = isChinese();
+  var node = document.getElementById('buildBanishedList');
+  if (!node) {
+    node = document.createElement('section');
+    node.id = 'buildBanishedList';
+    node.className = 'build-banished-list';
+    rt.ui.panelBuild.appendChild(node);
+  }
+  var list = (rt.state && rt.state.banished) || [];
+  var title = zh ? '已放逐晶片' : 'BANISHED CHIPS';
+  if (!list.length) {
+    node.innerHTML = '<div class="build-col-title">' + title + '</div>' +
+      '<div class="banished-empty" role="status"><strong>' + (zh ? '尚未放逐任何卡片' : 'NO CARDS BANISHED') + '</strong>' +
+      '<p>' + (zh ? '升級時按 B 進入放逐 · 被放逐的卡本局不再出現' : 'Press B during upgrades to banish · banished cards stay out this run') + '</p></div>';
+    return;
+  }
+  var items = list.map(function (id) {
+    var up = findUpgrade(id);
+    var name = up ? (zh ? tUpgradeTitle(up) : (up.title || id)) : String(id).toUpperCase();
+    return '<div class="banished-chip" aria-label="' + name + ' — ' + (zh ? '已放逐' : 'BANISHED') + '">' +
+      '<span class="banished-mark" aria-hidden="true">✕</span><strong>' + name + '</strong></div>';
+  }).join('');
+  node.innerHTML = '<div class="build-col-title">' + title + ' (' + list.length + ')</div>' + items;
 }
 
 export function getCurrentPauseTab() {
