@@ -602,7 +602,7 @@ registerWeaponStrategy({
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
 
-    var arcDmg = Math.max(1, Math.round(p.damage * 0.40 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
+    var arcDmg = Math.max(1, Math.round(p.damage * 0.44 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
     var arcSpeed = p.bulletSpeed * (p.bulletSpeedMult || 1);
     if (rt.state.stats) rt.state.stats.shotsFired += 1;
     var arcR = 3.0 + (isPlasma ? 3 : 0);
@@ -649,7 +649,7 @@ registerWeaponStrategy({
     rt.state.shake = Math.max(rt.state.shake, 1.5);
   },
   bulletProfile: {
-    damageMult: 0.32,
+    damageMult: 0.44,
     speed: 600,
     life: 1.0
   },
