@@ -276,9 +276,9 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 3.2; // 3.2s forced armor-break stun
-  e.empTimer = Math.max(e.empTimer || 0, 3.2);
-  e.armorBreakTimer = 3.2;
+  e.stunT = 2.5; // 2.5s forced armor-break stun
+  e.empTimer = Math.max(e.empTimer || 0, 2.5);
+  e.armorBreakTimer = 2.5;
   fireRing(e);
   rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();
@@ -342,11 +342,11 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           triggerHaptic([60, 50, 100]);
           logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
           rt.state.banner = 2.5;
-          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 2.4s · ALL SIDES OPEN';
+          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 2.0s · ALL SIDES OPEN';
           e.mode = 'stun';
-          e.stunT = 2.4; // crag bait: shorter than wall slam so lane hits are not free deletes
-          e.empTimer = Math.max(e.empTimer || 0, 2.4);
-          e.armorBreakTimer = 2.4;
+          e.stunT = 2.0; // crag bait: shorter than wall slam so lane hits are not free deletes
+          e.empTimer = Math.max(e.empTimer || 0, 2.0);
+          e.armorBreakTimer = 2.0;
           fireRing(e);
           return { handled: true, vx: 0, vy: 0 };
         }
