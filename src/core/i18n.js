@@ -1105,7 +1105,7 @@ export function tTip(id, kind) {
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'STAY INSIDE THE STORM EYE · OUTSIDE MELTS HULL';
-    if (id === 'dread-break') return 'BAIT THE CHARGE INTO CRAGS · ARMOR BREAK OPENS ALL SIDES';
+    if (id === 'dread-break') return 'BAIT CHARGE INTO THE LANE CRAG · BREAK WINDOWS OPEN ALL SIDES';
     if (id === 'storm-weave') return 'WEAVE THE STORM SHOTS · BULLETS END MORE RUNS THAN THE EYE';
     return '';
   }
@@ -1130,7 +1130,7 @@ export function tTip(id, kind) {
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '留在風暴之眼內 · 離開會持續腐蝕裝甲';
-  if (id === 'dread-break') return '把衝撞引向岩障 · 破甲硬直時四面皆可輸出';
+  if (id === 'dread-break') return '把衝撞引向航道岩障 · 破甲窗四面皆可輸出';
   if (id === 'storm-weave') return '穿梭風暴彈幕 · 敵彈比風暴之眼更能終結一局';
   return '';
 }
