@@ -288,7 +288,8 @@ registerEnemyStrategy('elite', {
     if (!empFrozen && !isCulled) {
       e.shootCd = (e.shootCd || 3.5) - dt;
       if (e.shootCd <= 0) {
-        e.shootCd = 3.5;
+        var bossLive = rt.state && rt.state.boss && rt.state.boss.hp > 0;
+        e.shootCd = bossLive ? 5.2 : 3.5;
         var baseAngle = Math.atan2(p.y - e.y, p.x - e.x);
         var spread = [-0.26, 0, 0.26];
         for (var si = 0; si < spread.length; si += 1) {

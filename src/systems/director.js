@@ -505,7 +505,14 @@ export function onWaveStart(state) {
   applyRouteMods(recipe, route);
   var mut = rollMutator(wave, recipe.act, recipe.boss, state.lastMutatorId || null);
   applyMutatorMods(recipe, mut);
-  if (recipe.boss) recipe.spawnInterval = round2(recipe.spawnInterval * 1.6);
+  if (recipe.boss) {
+    // Wave-15 deaths were mostly add/elite rounds under the old 1.6x throttle.
+    var bossGap = recipe.boss === 'sovereign' ? 2.35 : recipe.boss === 'dreadnought' ? 2.0 : 1.75;
+    recipe.spawnInterval = round2(recipe.spawnInterval * bossGap);
+    if (recipe.boss === 'sovereign' && typeof recipe.cap === 'number') {
+      recipe.cap = Math.max(28, Math.round(recipe.cap * 0.72));
+    }
+  }
   if (recipe.eliteChance < 0) recipe.eliteChance = 0;
   if (recipe.eliteChance > 0.6) recipe.eliteChance = 0.6;
   refreshCuts(recipe);
