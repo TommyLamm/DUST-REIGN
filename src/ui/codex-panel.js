@@ -3,7 +3,7 @@ import { on } from '../core/utils.js';
 import { enemyProfile } from '../data/enemies.js';
 import { FUSION_CHIPS } from '../data/upgrades.js';
 import { listAchievements } from '../systems/meta.js';
-import { isChinese, onLanguageChange, tAchievementDetail, tAchievementReward, tAchievementTitle, tEnemyName, tFusionTitle, tUpgradeTitle } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tAchievementDetail, tAchievementReward, tAchievementTitle, tEnemyBlurb, tEnemyName, tFusionText, tFusionTitle, tUpgradeTitle } from '../core/i18n.js';
 
 var TABS = ['achievements', 'enemies', 'fusions', 'stats'];
 var PROFILED = { crawler: 1, rusher: 1, brute: 1, artillery: 1, elite: 1, titan: 1 };
@@ -119,7 +119,8 @@ function paintEnemies(body, meta) {
       profile = enemyProfile(entry.id, 1);
       detail += ' · HP ' + Math.round(profile.hp) + ' · R ' + profile.r;
     }
-    body.appendChild(card(zh ? tEnemyName(entry.id) : entry.name, detail, ''));
+    var blurb = tEnemyBlurb(entry.id);
+    body.appendChild(card(zh ? tEnemyName(entry.id) : entry.name, detail, blurb));
   }
   for (i = 0; i < seen.length; i += 1) {
     if (!known[seen[i]]) body.appendChild(card(zh ? tEnemyName(seen[i]) : String(seen[i]).toUpperCase(), zh ? '敵機' : 'HOSTILE', ''));
@@ -138,7 +139,10 @@ function paintFusions(body, meta) {
       continue;
     }
     var reqs = (chip.required || []).map(function (rid) { return tUpgradeTitle(rid); }).join(' + ');
-    body.appendChild(card(tFusionTitle(chip), reqs, zh ? '已記錄' : 'SEEN'));
+    var fDetail = tFusionText(chip) || '';
+    var node = card(tFusionTitle(chip), fDetail || reqs, (zh ? '已記錄' : 'SEEN') + (reqs ? ' · ' + reqs : ''));
+    node.classList.add('is-unlocked');
+    body.appendChild(node);
   }
 }
 
