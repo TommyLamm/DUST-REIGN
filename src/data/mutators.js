@@ -11,7 +11,7 @@ export var MUTATORS = {
     id: 'elite-convoy',
     name: 'ELITE CONVOY',
     blurb: 'Elites pack the lane.',
-    detail: 'Elite chance ×2.5, enemy cap ×0.7. Elite crates rise from 15% to 40%.'
+    detail: 'Elite chance ×1.7, enemy cap ×0.7. Elite crates rise from 15% to 40%.'
   },
   'scrap-rain': {
     id: 'scrap-rain',
@@ -29,7 +29,7 @@ export var MUTATORS = {
     id: 'dust-devils',
     name: 'DUST DEVILS',
     blurb: 'Two funnels walk the basin.',
-    detail: 'Radius 60, pull 40 px/s. Player shots that cross them yaw 15°.'
+    detail: 'Radius 60, player pull 28 px/s (enemies 40). Player shots that cross them yaw 8° once.'
   },
   overcharged: {
     id: 'overcharged',

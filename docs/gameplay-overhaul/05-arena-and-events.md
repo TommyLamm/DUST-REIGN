@@ -16,7 +16,7 @@
 | `elite-convoy` | ELITE CONVOY | 精英機率 ×1.7；敵人上限 ×0.7 | 精英掉補給箱機率 15% → 40% |
 | `scrap-rain` | SCRAP RAIN | 每 3 秒有 1 個隕落點（0.8 秒陰影預警，r 34）：命中 12 傷，落地留下 4 顆 scrap | — |
 | `barrage` | ARTILLERY BARRAGE | 每 5 秒場外砲擊：玩家附近 3 個預警圈（1.2 秒、r 46），沿用既有熔岩規則 | 每波結束 +200 分 |
-| `dust-devils` | DUST DEVILS | 2 個沙捲在場上遊走（r 60），弱拉力 40 px/s 影響玩家與敵人，穿過的玩家子彈偏轉 15° | — |
+| `dust-devils` | DUST DEVILS | 2 個沙捲在場上遊走（r 60），玩家拉力 28／敵人 40 px/s，穿過的玩家子彈偏轉 8°（每旋風一次） | — |
 | `overcharged` | OVERCHARGED | 所有敵人速度 ×1.2 | 玩家回能 ×2 |
 
 - 突變只改導演配方與對應 sim 步驟，不改敵人資料表。

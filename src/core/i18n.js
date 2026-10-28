@@ -406,7 +406,7 @@ var MUTATORS_I18N = {
   'elite-convoy': {
     name: { zh: '菁英護航隊', en: 'ELITE CONVOY' },
     blurb: { zh: '菁英敵怪盤據戰場。', en: 'Elites pack the lane.' },
-    detail: { zh: '菁英機率 ×2.5，敵方數量上限 ×0.7。菁英物資箱掉落率由 15% 提高至 40%。', en: 'Elite chance ×2.5, enemy cap ×0.7. Elite crates rise from 15% to 40%.' }
+    detail: { zh: '菁英機率 ×1.7，敵方數量上限 ×0.7。菁英物資箱掉落率由 15% 提高至 40%。', en: 'Elite chance ×1.7, enemy cap ×0.7. Elite crates rise from 15% to 40%.' }
   },
   'scrap-rain': {
     name: { zh: '廢料之雨', en: 'SCRAP RAIN' },
@@ -421,7 +421,7 @@ var MUTATORS_I18N = {
   'dust-devils': {
     name: { zh: '塵捲風暴', en: 'DUST DEVILS' },
     blurb: { zh: '兩股旋風橫掃盆地。', en: 'Two funnels walk the basin.' },
-    detail: { zh: '旋風半徑 60，牽引力 40 px/s。穿越旋風的子彈將偏轉 15°。', en: 'Radius 60, pull 40 px/s. Player shots that cross them yaw 15°.' }
+    detail: { zh: '旋風半徑 60，對玩家拉力 28 px/s（敵人 40）。玩家子彈穿越僅偏轉 8° 一次。', en: 'Radius 60, player pull 28 px/s (enemies 40). Player shots that cross them yaw 8° once.' }
   },
   overcharged: {
     name: { zh: '能量超載', en: 'OVERCHARGED' },
