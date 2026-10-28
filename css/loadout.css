@@ -705,6 +705,28 @@ html.reduced-motion .cosmetic-card {
   color: #fff;
 }
 
+.bounties-empty {
+  grid-column: 1 / -1;
+  padding: 14px 12px;
+  color: rgba(232, 224, 198, 0.85);
+  background: rgba(8, 9, 7, 0.72);
+  border: 1px dashed rgba(232, 224, 198, 0.35);
+  text-align: center;
+}
+
+.bounties-empty strong {
+  display: block;
+  font: 700 12px var(--mono);
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.bounties-empty p {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(232, 224, 198, 0.7);
+}
+
 .milestone-lock-reason {
   margin: 6px 0 0;
   color: rgba(255, 178, 154, 0.9);

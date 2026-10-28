@@ -51,6 +51,12 @@ export function refreshBountiesPanel(container) {
   listSec.appendChild(el('h4', 'bounties-section-title', zh ? '今日懸賞目標 (全清解鎖大滿貫)' : 'TODAY TARGETS (CLEAR ALL FOR GRAND SLAM)'));
 
   var listGrid = el('div', 'bounties-grid');
+  if (!bounties.length) {
+    var empty = el('div', 'bounties-empty');
+    empty.appendChild(el('strong', null, zh ? '今日尚無賞金契約' : 'NO DAILY CONTRACTS'));
+    empty.appendChild(el('p', null, zh ? '跨日後自動刷新三項傭兵目標' : 'Three mercenary targets refresh after the calendar day rolls'));
+    listGrid.appendChild(empty);
+  }
   bounties.forEach(function (b) {
     var isDone = (b.progress >= b.goal);
     var isClaimed = !!b.claimed;
@@ -92,10 +98,20 @@ export function refreshBountiesPanel(container) {
         refreshBountiesPanel(container);
       });
     } else {
-      actionBtn.textContent = zh ? '進行中...' : 'IN PROGRESS';
+      var left = (b.goal || 0) - (b.progress || 0);
+      if (left < 0) left = 0;
+      actionBtn.textContent = zh
+        ? ('進行中 · 還差 ' + left + (b.unit ? ' ' + b.unit : ''))
+        : ('IN PROGRESS · ' + left + ' LEFT');
       actionBtn.disabled = true;
       actionBtn.classList.add('is-pending');
+      actionBtn.title = (zh ? b.descZh : b.desc) || '';
     }
+    card.setAttribute('aria-label', [
+      zh ? b.titleZh : b.title,
+      isClaimed ? (zh ? '已領取' : 'CLAIMED') : (isDone ? (zh ? '可領取' : 'CLAIMABLE') : (zh ? '進行中' : 'IN PROGRESS')),
+      (b.progress || 0) + ' / ' + (b.goal || 0)
+    ].join(' — '));
     card.appendChild(actionBtn);
     listGrid.appendChild(card);
   });
@@ -131,9 +147,15 @@ export function refreshBountiesPanel(container) {
       refreshBountiesPanel(container);
     });
   } else {
-    slamBtn.textContent = zh ? '🔒 需全清 3 項契約 (' + claimedCount + '/3)' : '🔒 3/3 CONTRACTS REQUIRED (' + claimedCount + '/3)';
+    var needSlam = 3 - claimedCount;
+    if (needSlam < 1) needSlam = 1;
+    slamBtn.textContent = zh
+      ? ('🔒 還需領取 ' + needSlam + ' 項契約 (' + claimedCount + '/3)')
+      : ('🔒 NEED ' + needSlam + ' MORE CLAIMS (' + claimedCount + '/3)');
     slamBtn.disabled = true;
     slamBtn.classList.add('is-pending');
+    slamBtn.title = zh ? '同一自然日內領取全部 3 項賞金後解鎖' : 'Claim all 3 daily bounties the same calendar day';
+    slamBtn.setAttribute('aria-label', slamBtn.textContent + ' — ' + slamBtn.title);
   }
   slamCard.appendChild(slamBtn);
   slamSec.appendChild(slamCard);
