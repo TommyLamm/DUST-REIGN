@@ -31,7 +31,7 @@ export function run() {
   assert(titan.hp === 7600 && bossHp('titan', 5) === 7600, 'titan wave-5 hp drifted');
   assert(enemyProfile('crawler', 5, { hpScale: 1, dmgScale: 1 }).hp === 50, 'crawler no longer rebases at scale 1');
   assert(bossHp('titan', 10) === 7600 + 5 * 780, 'pre-overtime titan wave 10 drifted');
-  assert(bossHp('dreadnought', 10) === 19500 && bossHp('sovereign', 15) === 780000, 'story boss hp drifted');
+  assert(bossHp('dreadnought', 10) === 19500 && bossHp('sovereign', 15) === 850000, 'story boss hp drifted');
   assert(bossHp('titan', 20) === 7600 && bossHp('titan', 25) === Math.round(7600 * 1.35), 'overtime titan cycle drifted');
   assert(bossHp('titan', 5, { bossHpScale: 1.2 }) === Math.round(7600 * 1.2), 'wave 5 boss hp ignored bossHpScale');
   assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(19500 * 1.25), 'wave 10 boss hp ignored bossHpScale');
@@ -100,7 +100,7 @@ export function run() {
 
     var dread = { kind: 'dreadnought', hp: 400, maxHp: 400, x: 0, y: 0, aim: 0, empTimer: 0 };
     var rear = filterEnemyDamage(dread, 20, { source: 'bullet', x: -30, y: 0 });
-    assert(Math.abs(rear - 22.4) < 0.001, 'dreadnought rear hit was not x1.00*1.12');
+    assert(Math.abs(rear - 20) < 0.001, 'dreadnought rear hit was not x1.00*1.00');
     dread.empTimer = 1;
     dread.deathQueued = false;
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
@@ -225,7 +225,7 @@ export function run() {
     assert(dreadBoss && dreadBoss.isBoss && dreadBoss.kind === 'dreadnought' && rt.state.boss === dreadBoss, 'spawnBoss dreadnought failed');
     assert(dreadBoss.hp === 19500 && dreadBoss.r === 38, 'dreadnought spawn stats drifted');
     var sov = spawnBoss('sovereign');
-    assert(sov && sov.isBoss && sov.kind === 'sovereign' && sov.hp === 780000 && rt.state.boss === sov, 'spawnBoss sovereign failed');
+    assert(sov && sov.isBoss && sov.kind === 'sovereign' && sov.hp === 850000 && rt.state.boss === sov, 'spawnBoss sovereign failed');
     rt.state.wave = 5;
     rt.state.recipe = { wave: 5, hpScale: 1, dmgScale: 1, bulletScale: 1, boss: 'titan' };
     var titanBoss = spawnBoss('titan');

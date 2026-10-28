@@ -286,9 +286,9 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 2.1; // 2.1s forced armor-break stun
-  e.empTimer = Math.max(e.empTimer || 0, 2.1);
-  e.armorBreakTimer = 2.1;
+  e.stunT = 1.75; // shorter final break — cuts fast-cluster deletes
+  e.empTimer = Math.max(e.empTimer || 0, 1.75);
+  e.armorBreakTimer = 1.75;
   fireRing(e);
   rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();

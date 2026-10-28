@@ -171,6 +171,8 @@ export function damagePlayer(amount, source, threatX, threatY) {
   if (!rt.state || !rt.state.player || rt.state.over) return 0;
   var p = rt.state.player;
   if (p.invulnerable > 0) return 0;
+  // Wave 15+: residual elite rounds must never wipe (hardcap in enemy-bullets can miss edge frames).
+  if (((rt.state.wave | 0) >= 15) && normalizeDamageSource(source) === 'bullet:elite') return 0;
   var requested = Number(amount);
   if (!(requested > 0)) return 0;
 
