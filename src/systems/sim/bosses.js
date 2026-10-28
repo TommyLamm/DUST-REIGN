@@ -247,7 +247,7 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Soft arena charges end in ~1.5s; big-world diagonals used to run 5–8s with no armor-break.
-  e.chargeMaxDist = e.bossPhase >= 3 ? 900 : 780;
+  e.chargeMaxDist = e.bossPhase >= 3 ? 1120 : 980;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
@@ -370,7 +370,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.empTimer = Math.max(e.empTimer || 0, e.stunT > 0 ? e.stunT : 0);
     if (e.stunT <= 0) {
       e.mode = 'idle';
-      e.attackCd = 2.6;
+      e.attackCd = 3.3;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
