@@ -115,6 +115,7 @@ export function makeState(width, height) {
     bannerText: '',
     shake: 0,
     hurtFlash: 0,
+    deathCause: null,
     hitstop: 0,
     hitstopDilation: 0,
     heartbeatTimer: 0,
