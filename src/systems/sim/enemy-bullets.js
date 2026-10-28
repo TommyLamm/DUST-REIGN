@@ -155,7 +155,7 @@ export function stepEnemyBullets(dt, frame) {
         // Live boss arenas already throttle elite spawns; their rounds were still
         // a top wipe cause — chip softer while a boss hull is up.
         if (rt.state.boss && rt.state.boss.hp > 0 && bulletSrc === 'bullet:elite') {
-          bulletDmg = Math.max(1, Math.round(bulletDmg * 0.48));
+          bulletDmg = Math.max(1, Math.round(bulletDmg * 0.40));
         }
         var bulletHit = damagePlayer(bulletDmg, bulletSrc, eb.x, eb.y);
         if (bulletHit > 0) {
