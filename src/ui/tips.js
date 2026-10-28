@@ -241,7 +241,8 @@ function scanTriggers() {
   if ((rt.state.player.energy || 0) >= 50) offer('emp');
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
   if (rt.state.contract) offer('contract');
-  if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
+  if (acidHazardNear() || ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter'))) offer('acid');
+  if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyOfKind('warden') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
   if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
