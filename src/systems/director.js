@@ -512,8 +512,8 @@ export function onWaveStart(state) {
     if (recipe.boss === 'sovereign' && typeof recipe.cap === 'number') {
       recipe.cap = Math.max(28, Math.round(recipe.cap * 0.72));
     }
-    // Fewer elites during boss arenas — sovereign deepest (0.04); other bosses 0.40.
-    var eliteCut = recipe.boss === 'sovereign' ? 0.04 : (recipe.boss ? 0.40 : 1);
+    // Fewer elites during boss arenas — sovereign near-floor (0.015); other bosses 0.40.
+    var eliteCut = recipe.boss === 'sovereign' ? 0.015 : (recipe.boss ? 0.40 : 1);
     recipe.eliteChance = round2((recipe.eliteChance || 0) * eliteCut);
   }
   if (recipe.eliteChance < 0) recipe.eliteChance = 0;
