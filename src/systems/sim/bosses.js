@@ -318,7 +318,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
 
   if (!e.mode) {
     e.mode = 'idle';
-    e.attackCd = 1.72;
+    e.attackCd = 2.05;
     e.fanCd = 1.5;
     e.summonCd = 8;
   }
@@ -400,7 +400,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       }
       e._dreadMidCombo = false;
       e.mode = 'idle';
-      e.attackCd = 1.72;
+      e.attackCd = 2.05;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
@@ -849,7 +849,7 @@ export function createDreadnought(wave, frameW, frameH) {
     phase: 0,
     aim: Math.PI / 2,
     mode: 'idle',
-    attackCd: 1.85,
+    attackCd: 2.05,
     fanCd: 1.5,
     summonCd: 8,
     bossPhase: 1,
