@@ -15,6 +15,7 @@ import {
   toPropName
 } from '../data/upgrades.js';
 import { resyncMastery } from './weapons.js';
+import { clearResidualCombatInput } from './interlude.js';
 import { addScore } from './scoring.js';
 import { logEvent, updateDomUi } from '../ui/hud.js';
 import { presentUpgradePick, renderUpgradePanel } from '../ui/upgrade-panel.js';
@@ -187,6 +188,7 @@ function drawReplacement(hand) {
 }
 
 function openUpgradePick() {
+  clearResidualCombatInput();
   rt.state.banishPicking = false;
   rt.state.upgradeChoices = randomUpgradeChoices();
   renderUpgradePanel();
@@ -223,6 +225,8 @@ function finishPick(index) {
   }
   rt.state.paused = false;
   rt.state.banishPicking = false;
+  clearResidualCombatInput();
+  if (rt.ui && rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
   if (rt.ui && rt.ui.overlay) presentUpgradePick(index);
 }
 
