@@ -172,19 +172,9 @@ export function renderBuildInspector() {
     }
   }
   if (rt.ui.chassisDesc) {
-    if (zh) {
-      rt.ui.chassisDesc.textContent = tChassisDesc(mode) + '  ·  專精 M' + (p.mastery || 0);
-    } else {
-      var desc = 'STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS';
-      if (mode === 'breacher') {
-        desc = 'PULSE BREACHER SHOTGUN // 5-PELLET CONE & POINT-BLANK BREACH';
-      } else if (mode === 'vanguard') {
-        desc = 'VANGUARD RAIL CHARGER // CHARGED BEAM & PENETRATION BLAST';
-      } else if (mode === 'arc-welder') {
-        desc = 'INDUCTION ARC WELDER // ULTRA HIGH-FREQUENCY VOLTAIC STREAM';
-      }
-      rt.ui.chassisDesc.textContent = desc + '  ·  MASTERY M' + (p.mastery || 0);
-    }
+    var masteryLabel = zh ? ('專精 M' + (p.mastery || 0)) : ('MASTERY M' + (p.mastery || 0));
+    rt.ui.chassisDesc.textContent = (tChassisDesc(mode) || String(mode || '').toUpperCase()) + '  ·  ' + masteryLabel;
+    rt.ui.chassisDesc.setAttribute('aria-label', rt.ui.chassisDesc.textContent);
   }
 
   // 2. Core specs telemetry according to weapon chassis
