@@ -56,9 +56,9 @@ export var CAMPAIGN_MILESTONES = [
   { stars: 20, reward: 'paint', id: 'paint_rust_heavy', name: '機體塗裝【鐵鏽重工】' },
   { stars: 25, reward: 'booster', id: 'heavy_pierce', name: '戰術晶片【重裝穿甲】' },
   { stars: 30, reward: 'paint', id: 'paint_storm_emp', name: '機體塗裝【暴風電磁】' },
-  { stars: 36, reward: 'mastery', id: 'paint_aurora_sovereign', name: '傳奇塗裝【極光神君】與稱號【APEX CONQUEROR】' },
+  { stars: 36, reward: 'mastery', id: 'paint_aurora_sovereign', name: '傳奇塗裝【極光神君】與稱號【巔峰征服者】' },
   { stars: 42, reward: 'booster', id: 'abyss_resonator', name: '戰術晶片【晶化共振核】' },
-  { stars: 50, reward: 'paint', id: 'paint_crystal_prismatic', name: '傳奇塗裝【稜鏡晶芒】與稱號【ABYSS DOMINATOR】' }
+  { stars: 50, reward: 'paint', id: 'paint_crystal_prismatic', name: '傳奇塗裝【稜鏡晶芒】與稱號【深淵支配者】' }
 ];
 
 export var CAMPAIGN_STAGES = [
@@ -75,7 +75,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 0,
     targetTime: 60,
     threat: 'LOW',
-    desc: '視野開闊，中央爆炸桶，Rusher 衝刺群快速突襲。',
+    desc: '視野開闊，中央爆炸桶，衝刺蟲群快速突襲。',
     recommended: { rig: 'scrapper', weapon: 'standard' },
     starCriteria: {
       star1: '擊破 3 波敵潮',
@@ -107,7 +107,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 100,
     targetTime: 75,
     threat: 'LOW',
-    desc: '高熱流星墜落，四周持續刷新 Crawler 爬行怪群。',
+    desc: '高熱流星墜落，四周持續刷新爬行怪群。',
     recommended: { rig: 'strider', weapon: 'arc-welder' },
     starCriteria: {
       star1: '收集 100 廢料',
@@ -139,10 +139,10 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 2,
     targetTime: 90,
     threat: 'MEDIUM',
-    desc: '2 隻高護甲精英 Brute，小怪無限掩護推進。',
+    desc: '2 隻高護甲精英蠻兵，小怪無限掩護推進。',
     recommended: { rig: 'bulwark', weapon: 'vanguard' },
     starCriteria: {
-      star1: '擊殺 2 隻精英 Brute',
+      star1: '擊殺 2 隻精英蠻兵',
       star2: '60 秒內通關',
       star3: '剩餘 HP ≥ 70%'
     },
@@ -166,10 +166,10 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 0,
     targetTime: 120,
     threat: 'HIGH',
-    desc: '純招式拆解，Titan 巨拳砸地與旋轉激光掃射。',
+    desc: '純招式拆解，泰坦巨拳砸地與旋轉激光掃射。',
     recommended: { rig: 'strider', weapon: 'breacher' },
     starCriteria: {
-      star1: '擊敗 Titan 首領',
+      star1: '擊敗泰坦首領',
       star2: '90 秒內擊破',
       star3: '達成 3 次 Just Dash 且剩餘 HP ≥ 80%'
     },
@@ -200,7 +200,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 0,
     targetTime: 90,
     threat: 'MEDIUM',
-    desc: '熔岩灼燒地磚，遠程曲射 Artillery 火砲登場封鎖路徑。',
+    desc: '熔岩灼燒地磚，遠程曲射火砲登場封鎖路徑。',
     recommended: { rig: 'bulwark', weapon: 'vanguard' },
     starCriteria: {
       star1: '擊破 4 波敵潮',
@@ -227,7 +227,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 1,
     targetTime: 60,
     threat: 'MEDIUM',
-    desc: '裝甲貨車橫越戰場，兩側 Spitter 酸液護航。',
+    desc: '裝甲貨車橫越戰場，兩側酸液噴吐者護航。',
     recommended: { rig: 'salvager', weapon: 'breacher' },
     starCriteria: {
       star1: '摧毀裝甲護送車',
@@ -254,7 +254,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 0,
     targetTime: 90,
     threat: 'HIGH',
-    desc: 'Scurrier 刺尾怪與酸液群圍攻中央數據塔。',
+    desc: '刺尾怪與酸液群圍攻中央數據塔。',
     recommended: { rig: 'bulwark', weapon: 'arc-welder' },
     starCriteria: {
       star1: '信號塔存活至計時結束',
@@ -284,7 +284,7 @@ export var CAMPAIGN_STAGES = [
     desc: '全屏水雷陣、散彈高射砲與連續履帶撞角。',
     recommended: { rig: 'strider', weapon: 'standard' },
     starCriteria: {
-      star1: '擊沉 Dreadnought',
+      star1: '擊沉無畏巨艦',
       star2: '100 秒內完成擊殺',
       star3: '剩餘 HP ≥ 70%'
     },
@@ -369,7 +369,7 @@ export var CAMPAIGN_STAGES = [
     targetQuota: 3,
     targetTime: 100,
     threat: 'CRITICAL',
-    desc: '鑽地無敵 Burrower + 相位硬光 Warden 協同進攻。',
+    desc: '鑽地無敵鑽地蟲 + 相位硬光典獄官協同進攻。',
     recommended: { rig: 'bulwark', weapon: 'breacher' },
     starCriteria: {
       star1: '擊殺 3 隻潛地巨蟲',
@@ -399,7 +399,7 @@ export var CAMPAIGN_STAGES = [
     desc: '4 座風暴塔護盾、風眼鎖定與雷暴天火。',
     recommended: { rig: 'strider', weapon: 'vanguard' },
     starCriteria: {
-      star1: '擊敗 Storm Sovereign',
+      star1: '擊敗風暴主宰',
       star2: '110 秒內擊破神君',
       star3: '剩餘 HP ≥ 75%'
     },
