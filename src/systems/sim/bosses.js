@@ -60,13 +60,14 @@ function fireFlak(e, angle, speed, damage) {
   pushEnemyBullet({
     type: 'flak',
     fromBoss: true,
+    ownerKind: (e && e.kind) || 'dreadnought',
     x: e.x + Math.cos(angle) * (e.r + 6),
     y: e.y + Math.sin(angle) * (e.r + 6),
     vx: Math.cos(angle) * shot.speed,
     vy: Math.sin(angle) * shot.speed,
     r: 5.2,
     damage: shot.damage,
-    life: 5.5,
+    life: 2.8,
     glow: true,
     color: '#ff8a3d',
     glowColor: '#ff5a2a'
@@ -483,6 +484,7 @@ function fireSpiral(e) {
     pushEnemyBullet({
       type: 'spiral',
       fromBoss: true,
+      ownerKind: (e && e.kind) || 'sovereign',
       x: e.x + Math.cos(a) * (e.r + 8),
       y: e.y + Math.sin(a) * (e.r + 8),
       vx: Math.cos(a) * shot.speed,

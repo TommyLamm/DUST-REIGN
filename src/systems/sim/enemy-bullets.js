@@ -145,8 +145,10 @@ export function stepEnemyBullets(dt, frame) {
       hitPlayer = true;
       if (p.invulnerable <= 0) {
         var bulletSrc = 'bullet';
-        if (eb.fromBoss) bulletSrc = 'boss:' + (eb.type || 'shot');
-        else if (eb.ownerKind) bulletSrc = 'bullet:' + eb.ownerKind;
+        if (eb.fromBoss) {
+          // Prefer owner so dread flak cannot be mistaken for a Sovereign lethal.
+          bulletSrc = 'boss:' + (eb.ownerKind || eb.type || 'shot');
+        } else if (eb.ownerKind) bulletSrc = 'bullet:' + eb.ownerKind;
         var bulletHit = damagePlayer(eb.damage, bulletSrc, eb.x, eb.y);
         if (bulletHit > 0) {
           p.invulnerable = 0.5;
