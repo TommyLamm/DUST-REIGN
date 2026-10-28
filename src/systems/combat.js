@@ -277,7 +277,10 @@ export function damagePlayer(amount, source, threatX, threatY) {
   noteMetaEvent('player-damaged', info);
   pushFxEvent('playerHit', p.x, p.y, playerHitOpts(tagged));
   if (saved || p.hp <= 0) onLethal(p, info);
-  if (!saved && p.hp <= 0) triggerGameOver();
+  if (!saved && p.hp <= 0) {
+    if (!rt.state.deathCause) rt.state.deathCause = tagged || normalizeDamageSource(source) || 'unknown';
+    triggerGameOver();
+  }
   return applied;
 }
 

@@ -169,7 +169,7 @@ export function updateGameOverUi(state) {
       stampElement.innerHTML = 'SIGNAL LOST <span>//</span> RUN ENDED';
     }
     if (kickerElement) {
-      var cause = formatDamageSourceLabel(state.lastDamageSource, zh);
+      var cause = formatDamageSourceLabel(state.deathCause || state.lastDamageSource, zh);
       kickerElement.textContent = zh
         ? ('死因 // ' + cause + ' · 荒原終將索取一切')
         : ('KILLED BY // ' + cause + ' · THE DRYLINE ALWAYS COLLECTS');
