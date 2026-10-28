@@ -244,15 +244,15 @@ export function renderBuildInspector() {
   // 3. Dynamic passive traits
   if (rt.ui.buildPassiveTags) {
     var traits = [
-      { name: 'SHOCKWAVE DASH', active: Boolean(p.shockwaveDash) },
-      { name: 'TESLA COIL', active: Boolean(p.teslaCoil) },
-      { name: 'REACTIVE ARMOR', active: Boolean(p.reactiveArmor) },
-      { name: 'HIGH CALIBER', active: Boolean(p.highCaliber) }
+      { id: 'shockwave-dash', name: 'SHOCKWAVE DASH', active: Boolean(p.shockwaveDash) },
+      { id: 'tesla-coil', name: 'TESLA COIL', active: Boolean(p.teslaCoil) },
+      { id: 'reactive-armor', name: 'REACTIVE ARMOR', active: Boolean(p.reactiveArmor) },
+      { id: 'high-caliber', name: 'HIGH CALIBER', active: Boolean(p.highCaliber) }
     ];
     var anyActive = traits.some(function (t) { return t.active; });
     rt.ui.buildPassiveTags.innerHTML = traits.map(function (t) {
       var status = t.active ? (zh ? '● 已連線' : '● ONLINE') : (zh ? '○ 已離線' : '○ OFFLINE');
-      var name = zh ? tPassiveName(t.name) : t.name;
+      var name = zh ? tPassiveName(t.id || t.name) : t.name;
       return '<div class="passive-tag ' + (t.active ? 'is-active' : 'is-inactive') + '" aria-label="' + name + ' — ' + status + '">' +
         '<span class="tag-status">' + status + '</span>' +
         '<strong class="tag-name">' + name + '</strong>' +
@@ -296,10 +296,13 @@ export function renderBuildInspector() {
         var titleDisplay = zh ? tUpgradeTitle(c) : (c.title || '');
         var textDisplay = zh ? tUpgradeText(c) : (c.text || '');
         var inactText = zh ? '未啟用' : 'INACTIVE';
+        var idDisplay = zh
+          ? (tPassiveName(c.id) || tUpgradeTitle(c) || tFusionTitle(c) || c.id || '')
+          : (c.id || '');
         return '<div class="chip-card ' + catClass + (inactive ? ' is-inactive' : '') + '">' +
           '<div class="chip-strip">' +
           '<span class="chip-cat">[' + catDisplay + ']</span>' +
-          '<span class="chip-id">' + (c.id || '') + cap + '</span>' +
+          '<span class="chip-id">' + idDisplay + cap + '</span>' +
           (inactive ? '<span class="chip-inactive">' + inactText + '</span>' : '') +
           '</div>' +
           '<strong class="chip-title">' + titleDisplay + '</strong>' +
