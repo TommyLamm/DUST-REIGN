@@ -29,8 +29,8 @@ export var HARDCORE_OPERATIONS = [
     },
     badge: 'razor_edge',
     badgeTitle: '[血染雙刃合金標記]',
-    briefing: 'HP 鎖定 35；戰場常駐 2 台無敵重砲轟炸；Scurrier 死亡必自爆。同屏 55 隻迫擊砲+自爆+酸液天敵群。',
-    tacticalHint: '利用 Dash 撞殺不觸發自爆底層代碼，滑步貼臉破防。'
+    briefing: '生命鎖定 35；戰場常駐 2 台無敵重砲轟炸；疾走幼體死亡必自爆。同屏 55 隻迫擊砲+自爆+酸液天敵群。',
+    tacticalHint: '利用衝刺撞殺不觸發自爆底層代碼，滑步貼臉破防。'
   },
   {
     id: 'op_02',
@@ -56,12 +56,12 @@ export var HARDCORE_OPERATIONS = [
     bossOverride: {
       kind: 'dreadnought',
       name: '無畏巨艦「晶壁要塞」',
-      modifier: '正側面全反射稜鏡，唯正後方散熱閥為弱點；需 EMP 斷盾後貫穿'
+      modifier: '正側面全反射稜鏡，唯正後方散熱閥為弱點；需電磁脈衝斷盾後貫穿'
     },
     badge: 'light_shatterer',
     badgeTitle: '[折光稜鏡破碎之眼]',
-    briefing: '40% 精英帶 mirror 反射盾（反彈 100% 殺傷）；空槍反噬扣 6 HP；HP 鎖定 45。同屏 60 隻散開怪潮。',
-    tacticalHint: 'EMP 破盾聚怪，創造直線貫穿視窗；切勿盲目對鏡面射擊。'
+    briefing: '40% 精英帶鏡面反射盾（反彈 100% 殺傷）；空槍反噬扣 6 生命；生命鎖定 45。同屏 60 隻散開怪潮。',
+    tacticalHint: '電磁脈衝破盾聚怪，創造直線貫穿視窗；切勿盲目對鏡面射擊。'
   },
   {
     id: 'op_03',
@@ -90,8 +90,8 @@ export var HARDCORE_OPERATIONS = [
     },
     badge: 'thunder_binder',
     badgeTitle: '[高壓紫電球形禁錮鎖]',
-    briefing: 'Brute 獲 70% 電弧抗性且免疫麻痺；Warden 護盾吸收電弧；HP 鎖定 50；維修廢料為 0。同屏 55 隻。',
-    tacticalHint: '切角繞後死鎖 Warden，引爆環境炸藥造成真實傷害。'
+    briefing: '蠻卒獲 70% 電弧抗性且免疫麻痺；守衛者護盾吸收電弧；生命鎖定 50；維修廢料為 0。同屏 55 隻。',
+    tacticalHint: '切角繞後死鎖守衛者，引爆環境炸藥造成真實傷害。'
   },
   {
     id: 'op_04',
@@ -120,8 +120,8 @@ export var HARDCORE_OPERATIONS = [
     },
     badge: 'tide_turner',
     badgeTitle: '[黑色雙聯彈殼交錯之印]',
-    briefing: '同屏實體強制鎖定 65 隻；連續開火超過 1.8s 散布擴大 250%（強迫點射）；HP 鎖定 40。',
-    tacticalHint: '嚴格 3 連發控槍點射，走長蛇陣拉扯並結合 Just Dash 衝擊波。'
+    briefing: '同屏實體強制鎖定 65 隻；連續開火超過 1.8 秒散布擴大 250%（強迫點射）；生命鎖定 40。',
+    tacticalHint: '嚴格 3 連發控槍點射，走長蛇陣拉扯並結合精準衝刺衝擊波。'
   },
   {
     id: 'op_05',
@@ -150,7 +150,7 @@ export var HARDCORE_OPERATIONS = [
     },
     badge: 'singularity_hunter',
     badgeTitle: '[深空坍縮黑洞紫金徽印]',
-    briefing: '戰場徘徊 2 個移動引力奇點（扭曲彈道）；可視半徑縮小至 280px；HP 鎖定 30（兩擊必殺）。固定 blink + volatile 瞬移自爆暗殺隊。',
+    briefing: '戰場徘徊 2 個移動引力奇點（扭曲彈道）；可視半徑縮小至 280px；生命鎖定 30（兩擊必殺）。固定瞬移+不穩定自爆暗殺隊。',
     tacticalHint: '精準預判奇點引力引導彈道，優先狙殺瞬移暗殺者。'
   },
   {
@@ -181,8 +181,8 @@ export var HARDCORE_OPERATIONS = [
     },
     badge: 'apex_conqueror',
     badgeTitle: '[終焉風暴皇冠黃金神聖徽章]',
-    briefing: '永久 8 級黑風暴（風速 110px/s，散彈射程縮減 35%）；單次受擊扣 50% HP；零掉落。全天敵混編（同屏 65 隻，精英 35%）。',
-    tacticalHint: '順應強風走位，利用重裝推進與 EMP 創造破局契機。'
+    briefing: '永久 8 級黑風暴（風速 110px/s，散彈射程縮減 35%）；單次受擊扣 50% 生命；零掉落。全天敵混編（同屏 65 隻，精英 35%）。',
+    tacticalHint: '順應強風走位，利用重裝推進與電磁脈衝創造破局契機。'
   }
 ];
 
