@@ -584,26 +584,32 @@
   }
 }
 
-/* 狀態 3: is-locked 暗調線框 */
+/* 狀態 3: is-locked — readable lock reason, not washed out */
 .fusion-matrix-card.is-locked {
-  border-color: var(--line);
-  opacity: 0.65;
+  border-color: rgba(232, 224, 198, 0.28);
+  border-style: dashed;
+  opacity: 0.92;
+  background: rgba(8, 9, 7, 0.72);
 }
 
 .fusion-matrix-card.is-locked .fusion-badge {
-  color: var(--muted);
+  color: rgba(255, 178, 154, 0.92);
 }
 
 .fusion-matrix-card.is-locked .fusion-proto {
-  color: var(--muted);
+  color: rgba(232, 224, 198, 0.7);
 }
 
 .fusion-matrix-card.is-locked .fusion-title {
-  color: var(--dust);
+  color: rgba(232, 224, 198, 0.88);
 }
 
 .fusion-matrix-card.is-locked .fusion-desc {
-  color: var(--muted);
+  color: rgba(232, 224, 198, 0.68);
+}
+
+.fusion-matrix-card.is-locked .fusion-req.is-missing {
+  color: rgba(255, 178, 154, 0.9);
 }
 
 .chip-card.is-inactive {
