@@ -401,9 +401,9 @@ registerWeaponStrategy({
   name: 'VANGUARD',
   category: 'energy',
   chargeNeed: function (p) {
-    var need = 0.6;
+    var need = 0.72;
     if (!p) return need;
-    if ((p.mastery || 0) >= 1) need = 0.45;
+    if ((p.mastery || 0) >= 1) need = 0.55;
     if (p.capacitorRail) need *= 0.75;
     if (p.chargeTimeMult) need *= p.chargeTimeMult;
     return need;
@@ -448,7 +448,7 @@ registerWeaponStrategy({
     var extraPierce = isVulcan ? 1 : 0;
 
     var railBonus = weaponModActive(rt.state, 'capacitor-rail') ? 1.2 : 1;
-    var vgDmg = Math.round(p.damage * 3.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1) * railBonus);
+    var vgDmg = Math.round(p.damage * 2.9 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1) * railBonus);
     if (rt.state.stats) rt.state.stats.shotsFired += 1;
     var vgR = 6.0 + (isPlasma ? 3 : 0);
     var vgTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.45)');
