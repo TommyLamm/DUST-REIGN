@@ -101,6 +101,22 @@ function enemyWithin(px) {
   return false;
 }
 
+function enemyBulletWithin(px) {
+  var p = rt.state.player;
+  if (!p) return false;
+  var list = rt.state.enemyBullets || [];
+  var limit = px * px;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var b = list[i];
+    if (!b || b.grazed || b.noGraze) continue;
+    var dx = b.x - p.x;
+    var dy = b.y - p.y;
+    if (dx * dx + dy * dy <= limit) return true;
+  }
+  return false;
+}
+
 function choiceCompletesFusion(choice) {
   if (!choice) return false;
   if (choice.completes || choice.completesFusion || choice.fusionName) return true;
@@ -117,7 +133,8 @@ function scanTriggers() {
   offer('move-shoot');
   if (enemyWithin(THREAT_PX)) offer('dash');
   if (rt.state.stats && (rt.state.stats.justDashes || 0) > 0) offer('just-dash');
-  if (rt.state.stats && (rt.state.stats.grazes || 0) > 0) offer('graze');
+  // Teach graze when shots are near — do not wait for a successful graze first.
+  if (enemyBulletWithin(140) || ((rt.state.waveTime || 0) >= 6 && (rt.state.enemyBullets || []).length > 0)) offer('graze');
   if (rt.state.barrels && rt.state.barrels.length > 0) offer('barrel');
   if ((rt.state.player.energy || 0) >= 50) offer('emp');
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');

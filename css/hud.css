@@ -567,6 +567,17 @@
   background: linear-gradient(90deg, currentColor calc(var(--chain, 0) * 100%), rgba(232, 224, 198, 0.16) 0);
 }
 
+.hud > .hud-chain-badge.is-graze-hint {
+  color: rgba(150, 186, 160, 0.85);
+  font-size: clamp(12px, 1.6cqw, 16px);
+  letter-spacing: 0.06em;
+  opacity: 0.92;
+  box-shadow: 0 0 10px rgba(150, 186, 160, 0.2);
+}
+.hud > .hud-chain-badge.is-graze-hint::after {
+  display: none;
+}
+
 .hud > .hud-chain-badge[data-heat="3"],
 .hud > .hud-chain-badge[data-heat="4"] {
   color: var(--amber);

@@ -1059,7 +1059,7 @@ export function tTip(id, kind) {
     }
     if (id === 'dash') return 'DASH THROUGH A THREAT · A SHORT INVULNERABLE BURST';
     if (id === 'just-dash') return 'JUST DASH · HUG A THREAT TO REFUND COOLDOWN AND GUARANTEE CRITS';
-    if (id === 'graze') return 'GRAZE SCORES AND CHARGES · 5 GRAZES TRIGGER OVERDRIVE';
+    if (id === 'graze') return 'SLIP PAST ENEMY SHOTS TO GRAZE · SCORES + ENERGY · 5 GRAZES → OVERDRIVE';
     if (id === 'barrel') return 'SHOOT A BARREL OR DASH-KICK IT INTO THE PACK';
     if (id === 'emp') return 'Q OR RMB EMP CLEARS SHOTS AND STUNS · E/F DEPLOYS TACTICAL AUX';
     if (id === 'core-boss') return 'CORE BLASTS HIT A BOSS FOR 350';
@@ -1074,7 +1074,7 @@ export function tTip(id, kind) {
   }
   if (id === 'dash') return '衝刺穿過威脅 · 獲得短暫無敵突進';
   if (id === 'just-dash') return '精準衝刺 · 緊貼威脅擦身而過可重置冷卻並必定暴擊';
-  if (id === 'graze') return '擦彈可得分與蓄能 · 累積 5 次擦彈觸發超頻';
+  if (id === 'graze') return '貼近敵彈擦身而過即可擦彈 · 得分並回能 · 累積 5 次觸發超頻';
   if (id === 'barrel') return '射擊炸藥桶或衝刺將其踢入敵群';
   if (id === 'emp') return 'Q 或右鍵 EMP 可消彈擊暈 · E/F 部署戰術副裝備';
   if (id === 'core-boss') return '核心引爆可對首領造成 350 點重創';

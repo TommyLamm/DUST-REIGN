@@ -237,6 +237,18 @@ function syncChain() {
   }
   var hot = rt.state.combo > 1 || rt.state.grazeCombo > 0;
   var now = rt.renderTime || 0;
+  var neverGrazed = !(rt.state.stats && (rt.state.stats.grazes || 0) > 0);
+  if (!hot && neverGrazed && (rt.state.enemyBullets || []).length > 0 && !rt.state.paused) {
+    el.hidden = false;
+    if (el.classList) {
+      el.classList.remove('is-break');
+      el.classList.add('is-graze-hint');
+    }
+    el.textContent = isChinese() ? '擦彈：貼近敵彈擦過' : 'GRAZE: SLIP PAST SHOTS';
+    if (el.setAttribute) el.setAttribute('data-heat', '1');
+    return;
+  }
+  if (el.classList) el.classList.remove('is-graze-hint');
   if (hot) {
     el.hidden = false;
     if (el.classList) el.classList.remove('is-break');
