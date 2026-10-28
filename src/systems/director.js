@@ -14,6 +14,7 @@ import { triggerGameOver } from './flow.js';
 import { checkStageVictory, onModeBossDefeated } from './modes/mode-adapter.js';
 import { AudioFX } from '../audio/audio-fx.js';
 import { logEvent } from '../ui/hud.js';
+import { damagePlayer } from './combat.js';
 
 var WEIGHT_KEYS = ['crawler', 'rusher', 'brute', 'artillery', 'spitter', 'scurrier', 'warden', 'burrower'];
 var UNLOCK_WAVE = { crawler: 1, rusher: 1, brute: 1, artillery: 2, spitter: 6, scurrier: 7, warden: 11, burrower: 12 };
@@ -603,7 +604,9 @@ export function onWaveEnd(state) {
     var p = state.player;
     if (p && p.hp > 1) {
       var backlash = Math.max(1, Math.round(p.hp * 0.25));
-      p.hp = Math.max(1, p.hp - backlash);
+      damagePlayer(backlash, 'contract-backlash');
+      // Keep floor so backlash cannot finish a run by itself.
+      if (p.hp < 1) p.hp = 1;
       logEvent('CONTRACT FAILED // BACKLASH -25% HP');
       state.shake = Math.max(state.shake || 0, 8);
       if (AudioFX && typeof AudioFX.hurt === 'function') AudioFX.hurt();

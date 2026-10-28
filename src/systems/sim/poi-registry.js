@@ -4,7 +4,7 @@ import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { clamp } from '../../core/utils.js';
-import { damageEnemy } from '../combat.js';
+import { damageEnemy, damagePlayer } from '../combat.js';
 import { spawnEnemy } from '../spawning.js';
 
 export function spawnScrapBurst(cx, cy, count) {
@@ -926,7 +926,8 @@ export var POI_REGISTRY = {
             if (p) {
               var pDist = Math.hypot(p.x - poi.x, p.y - poi.y);
               if (pDist <= poi.r) {
-                p.hp = Math.max(1, p.hp - 20);
+                damagePlayer(20, 'poi-overload');
+                if (p.hp < 1) p.hp = 1;
                 p.invulnerable = Math.max(p.invulnerable || 0, 0.8);
               }
             }
