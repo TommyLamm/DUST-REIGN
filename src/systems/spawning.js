@@ -317,14 +317,20 @@ export function spawnBoss(kind) {
   } else if (kind === 'sovereign') {
     announceBoss('WARNING // STORM SOVEREIGN');
     boss = createSovereign(rt.state.wave || 1, boundW, boundH);
-    // Drop residual elites that entered before the boss — they were the wave-15
-    // bullet:elite wipe source after spawn-gate #134 (no new elites, old ones stayed).
+    // Drop residual elites + their in-flight rounds (hp=0 left them shooting one frame).
     if (rt.state.enemies && rt.state.enemies.length) {
       for (var ei = rt.state.enemies.length - 1; ei >= 0; ei -= 1) {
         var foe = rt.state.enemies[ei];
-        if (foe && foe.kind === 'elite' && foe.hp > 0) {
-          foe.hp = 0;
-          foe.alive = false;
+        if (foe && foe.kind === 'elite') {
+          rt.state.enemies.splice(ei, 1);
+        }
+      }
+    }
+    if (rt.state.enemyBullets && rt.state.enemyBullets.length) {
+      for (var bi = rt.state.enemyBullets.length - 1; bi >= 0; bi -= 1) {
+        var eb = rt.state.enemyBullets[bi];
+        if (eb && (eb.ownerKind === 'elite' || eb.source === 'elite' || eb.kind === 'elite')) {
+          rt.state.enemyBullets.splice(bi, 1);
         }
       }
     }
