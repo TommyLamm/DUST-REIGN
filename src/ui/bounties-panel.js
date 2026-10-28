@@ -83,6 +83,11 @@ export function refreshBountiesPanel(container) {
     // Progress bar
     var progRow = el('div', 'bounty-progress-row');
     var barTrack = el('div', 'bounty-progress-track');
+    barTrack.setAttribute('role', 'progressbar');
+    barTrack.setAttribute('aria-valuemin', '0');
+    barTrack.setAttribute('aria-valuemax', String(b.goal || 0));
+    barTrack.setAttribute('aria-valuenow', String(b.progress || 0));
+    barTrack.setAttribute('aria-label', (zh ? b.titleZh : b.title) + ' — ' + (b.progress || 0) + ' / ' + (b.goal || 0));
     var barFill = el('div', 'bounty-progress-fill');
     var pct = Math.min(100, Math.round((Math.max(0, b.progress) / Math.max(1, b.goal)) * 100));
     barFill.style.width = pct + '%';
@@ -98,9 +103,11 @@ export function refreshBountiesPanel(container) {
       actionBtn.textContent = zh ? '✓ 已領取' : '✓ CLAIMED';
       actionBtn.disabled = true;
       actionBtn.classList.add('is-claimed');
+      actionBtn.setAttribute('aria-label', (zh ? '已領取' : 'CLAIMED') + ' — ' + (zh ? b.titleZh : b.title));
     } else if (isDone) {
       actionBtn.textContent = (zh ? '領取獎勵 +' : 'CLAIM +') + b.reward + ' ⚙';
       actionBtn.classList.add('is-claimable');
+      actionBtn.setAttribute('aria-label', (zh ? '領取獎勵' : 'Claim reward') + ' +' + b.reward + ' — ' + (zh ? b.titleZh : b.title));
       on(actionBtn, 'click', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -116,6 +123,7 @@ export function refreshBountiesPanel(container) {
       actionBtn.disabled = true;
       actionBtn.classList.add('is-pending');
       actionBtn.title = (zh ? b.descZh : b.desc) || '';
+      actionBtn.setAttribute('aria-label', actionBtn.textContent + (actionBtn.title ? (' — ' + actionBtn.title) : ''));
     }
     card.setAttribute('aria-label', [
       zh ? b.titleZh : b.title,
