@@ -2,6 +2,7 @@ import { clearSeed, seedRun } from '../../core/rng.js';
 import { rt } from '../../core/runtime.js';
 import { bossHp, enemyProfile } from '../../data/enemies.js';
 import { spawnBoss, spawnEnemy } from '../../systems/spawning.js';
+import { dropBossShard, rollDrops } from '../../systems/drops.js';
 import { filterEnemyDamage, clearEnemyShields, takeDeathEvents } from '../../systems/sim/enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from '../../systems/sim/enemy-bullets.js';
 import { resolveDeathEvents } from '../../systems/sim/new-enemies.js';
@@ -286,6 +287,23 @@ export function run() {
     rt.state.score = saved.score;
     rt.state.over = saved.over;
     if (rt.state.scoreBreakdown) rt.state.scoreBreakdown.style = saved.style;
+    clearSeed();
+  }
+
+  // Boss scrap shards must grant XP (dread/sovereign path).
+  seedRun(7);
+  var dropSaved = { orbs: rt.state.orbs, score: rt.state.score };
+  try {
+    rt.state.orbs = [];
+    dropBossShard(100, 100);
+    assert(rt.state.orbs.length === 1 && rt.state.orbs[0].kind === 'scrap' && rt.state.orbs[0].value >= 60, 'boss scrap shard XP must be > 0');
+    rt.state.orbs = [];
+    rollDrops({ kind: 'dreadnought', x: 50, y: 50, xp: 60 });
+    var scrapCount = rt.state.orbs.filter(function (o) { return o && o.kind === 'scrap' && o.value > 0; }).length;
+    assert(scrapCount >= 3, 'dreadnought should drop multiple valued scrap shards');
+  } finally {
+    rt.state.orbs = dropSaved.orbs;
+    rt.state.score = dropSaved.score;
     clearSeed();
   }
 

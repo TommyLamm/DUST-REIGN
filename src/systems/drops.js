@@ -112,9 +112,10 @@ function chainReact(e) {
   chainDepth -= 1;
 }
 
-export function dropBossShard(x, y) {
+export function dropBossShard(x, y, value) {
   if (!rt.state) return;
   addScore(10, 'style');
+  var scrapXp = (typeof value === 'number' && value > 0) ? value : 60;
   pushOrb({
     kind: 'scrap',
     x: x,
@@ -122,7 +123,7 @@ export function dropBossShard(x, y) {
     vx: (rng('loot') - 0.5) * 70,
     vy: (rng('loot') - 0.5) * 70,
     r: 8,
-    value: 0,
+    value: scrapXp,
     life: 22
   });
 }
@@ -135,8 +136,11 @@ export function rollDrops(e) {
     return;
   }
   if (e.noDrop) return;
-  if (e.kind === 'dreadnought' || e.kind === 'sovereign') {
-    dropBossShard(e.x, e.y);
+  if (e.kind === 'dreadnought' || e.kind === 'sovereign' || e.kind === 'behemoth') {
+    var shardXp = (typeof e.xp === 'number' && e.xp > 0) ? e.xp : 60;
+    var shards = e.kind === 'sovereign' ? 4 : 3;
+    var si;
+    for (si = 0; si < shards; si += 1) dropBossShard(e.x, e.y, shardXp);
     return;
   }
   var elite = e.kind === 'elite';
