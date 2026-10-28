@@ -6,6 +6,37 @@ var bound = false;
 var lastSig = '';
 var defaultTitle = null;
 var lastTitleKind = null;
+var pushConfirmUntil = 0;
+var pushConfirmTimerId = null;
+
+function resetPushConfirm() {
+  if (pushConfirmTimerId) {
+    clearTimeout(pushConfirmTimerId);
+    pushConfirmTimerId = null;
+  }
+  pushConfirmUntil = 0;
+}
+
+function pushConfirmArmed() {
+  return pushConfirmUntil > 0 && Date.now() < pushConfirmUntil;
+}
+
+function requestPushDeeper() {
+  var now = Date.now();
+  if (pushConfirmArmed() && now < pushConfirmUntil) {
+    resetPushConfirm();
+    lastSig = '';
+    confirmPushDeeper();
+    return;
+  }
+  if (pushConfirmTimerId) clearTimeout(pushConfirmTimerId);
+  pushConfirmUntil = now + 4000;
+  pushConfirmTimerId = setTimeout(function () {
+    resetPushConfirm();
+    lastSig = '';
+  }, 4000);
+  lastSig = '';
+}
 
 function el(tag, className, text) {
   var node = document.createElement(tag);
@@ -22,7 +53,7 @@ function panelSig() {
   var i;
   var options = il.options || [];
   for (i = 0; i < options.length; i += 1) ids += (options[i].id || '') + ',';
-  return il.step + '|' + (il.selected || 0) + '|' + ids + '|' + (il.title || '') + '|' + (il.extractBonus || 0) + '|' + Math.floor(state.score || 0) + '|' + (isChinese() ? 'zh' : 'en');
+  return il.step + '|' + (il.selected || 0) + '|' + ids + '|' + (il.title || '') + '|' + (il.extractBonus || 0) + '|' + Math.floor(state.score || 0) + '|' + (isChinese() ? 'zh' : 'en') + '|push:' + (pushConfirmArmed() ? '1' : '0');
 }
 
 function syncOutcomeTitle() {
@@ -150,15 +181,24 @@ function renderExtract(panel, il) {
   var extractBtn = el('button', 'extract-action extract-action--go' + ((il.selected || 0) === 0 ? ' is-selected' : ''), zh ? '立即撤離' : 'EXTRACT');
   extractBtn.type = 'button';
   extractBtn.setAttribute('aria-label', zh ? '撤離並結算本次出擊' : 'Extract and file this run');
-  extractBtn.addEventListener('click', function () { confirmExtract(); });
-  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : ''), zh ? ('深入戰區 · 陣亡半獎 +' + String(il.extractHalf || 0)) : ('PUSH DEEPER · HALF +' + String(il.extractHalf || 0)));
+  extractBtn.addEventListener('click', function () {
+    resetPushConfirm();
+    confirmExtract();
+  });
+  var armed = pushConfirmArmed();
+  var pushLabel = armed
+    ? (zh ? '確認深入戰區？' : 'CONFIRM PUSH DEEPER?')
+    : (zh ? ('深入戰區 · 陣亡半獎 +' + String(il.extractHalf || 0)) : ('PUSH DEEPER · HALF +' + String(il.extractHalf || 0)));
+  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : '') + (armed ? ' is-confirming' : ''), pushLabel);
   pushBtn.type = 'button';
-  pushBtn.setAttribute('aria-label', zh ? '深入延長戰區。若陣亡僅發放一半撤離獎勵。' : 'Push deeper into overtime. Death pays half the extract bonus.');
-  pushBtn.addEventListener('click', function () { confirmPushDeeper(); });
+  pushBtn.setAttribute('aria-label', armed
+    ? (zh ? '再次確認以進入加時戰區。陣亡僅半獎。' : 'Click again to confirm overtime. Death pays half extract.')
+    : (zh ? '深入延長戰區（需再次確認）。若陣亡僅發放一半撤離獎勵。' : 'Push deeper into overtime (requires confirm). Death pays half the extract bonus.'));
+  pushBtn.addEventListener('click', function () { requestPushDeeper(); });
   row.appendChild(extractBtn);
   row.appendChild(pushBtn);
   shell.appendChild(row);
-  shell.appendChild(el('p', 'extract-note', zh ? ('深入戰區: 若陣亡僅發放一半撤離獎勵 +' + String(il.extractHalf || 0) + '（全額 +' + String(il.extractBonus || 0) + '）。') : ('PUSH DEEPER: death pays half extract +' + String(il.extractHalf || 0) + ' (full +' + String(il.extractBonus || 0) + ').')));
+  shell.appendChild(el('p', 'extract-note', zh ? ('深入戰區: 若陣亡僅發放一半撤離獎勵 +' + String(il.extractHalf || 0) + '（全額 +' + String(il.extractBonus || 0) + '）。需再次確認。') : ('PUSH DEEPER: death pays half extract +' + String(il.extractHalf || 0) + ' (full +' + String(il.extractBonus || 0) + '). Requires confirm.')));
   panel.appendChild(shell);
   var selected = shell.querySelector('.is-selected');
   if (selected && selected.focus) selected.focus();
@@ -168,8 +208,11 @@ function pickInterludeKey(index) {
   var il = rt.state && rt.state.interlude;
   if (!il) return;
   if (il.step === 'extract') {
-    if (index === 1) confirmPushDeeper();
-    else confirmExtract();
+    if (index === 1) requestPushDeeper();
+    else {
+      resetPushConfirm();
+      confirmExtract();
+    }
     return;
   }
   chooseInterlude(index);
@@ -236,14 +279,16 @@ export function updateInterludePanel() {
   if (!interlude && !extract) return;
   var il = rt.state && rt.state.interlude;
   if (!il) {
+    resetPushConfirm();
     lastSig = '';
     if (interlude) interlude.hidden = true;
     if (extract) extract.hidden = true;
     return;
   }
   pollPad();
-  var sig = panelSig();
   var showExtract = il.step === 'extract';
+  if (!showExtract) resetPushConfirm();
+  var sig = panelSig();
   if (interlude) interlude.hidden = showExtract;
   if (extract) extract.hidden = !showExtract;
   if (sig === lastSig) return;

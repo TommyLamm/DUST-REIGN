@@ -95,6 +95,14 @@
   border-bottom-color: var(--rust-deep);
 }
 
+.extract-action.is-confirming {
+  color: #fff;
+  background: var(--rust);
+  border-color: var(--amber);
+  border-bottom-color: var(--rust-deep);
+  box-shadow: 0 0 14px rgba(237, 104, 66, 0.55);
+}
+
 .interlude-rule,
 .interlude-hint,
 .extract-note,
@@ -173,4 +181,10 @@
 .game-root.is-high-contrast .extract-action--go {
   background: #ffffff;
   color: #000000;
+}
+
+.game-root.is-high-contrast .extract-action.is-confirming {
+  background: #ffcc00;
+  color: #000000;
+  border-color: #ffffff;
 }
