@@ -297,6 +297,8 @@ export function killEnemy(enemyOrIndex, cause) {
     p.speedBoostTimer = Math.max(p.speedBoostTimer || 0, 1.5);
     p.speedBoostMult = Math.max(p.speedBoostMult || 1, 1.12);
   }
+  rt.state._lastKillX = e.x;
+  rt.state._lastKillY = e.y;
   if (baseScore > 0) addScore(Math.round(baseScore * (1 + (rt.state.combo - 1) * 0.25)), 'kill');
 
   if (isTitan) {

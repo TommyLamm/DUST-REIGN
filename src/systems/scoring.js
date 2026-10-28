@@ -1,5 +1,6 @@
 import { rt } from '../core/runtime.js';
 import { getHeatModifiers } from '../data/heat.js';
+import { spawnScoreFloater } from '../render/fx.js';
 
 function emptyBreakdown() {
   return {
@@ -60,6 +61,11 @@ export function addScore(amount, source) {
   var key = source || 'kill';
   if (typeof rt.state.scoreBreakdown[key] !== 'number') rt.state.scoreBreakdown[key] = 0;
   rt.state.scoreBreakdown[key] += finalScore;
+  if (key === 'kill' || key === 'boss' || key === 'bounty' || key === 'style') {
+    var px = (typeof rt.state._lastKillX === 'number') ? rt.state._lastKillX : ((rt.state.player && rt.state.player.x) || 0);
+    var py = (typeof rt.state._lastKillY === 'number') ? rt.state._lastKillY : ((rt.state.player && rt.state.player.y) || 0);
+    spawnScoreFloater(px, py - 18, finalScore, key);
+  }
   return finalScore;
 }
 
