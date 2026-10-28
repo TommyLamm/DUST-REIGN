@@ -90,7 +90,7 @@
                 </div>
               </div>
 
-              <span id="hudChain" class="hud-chain-badge" hidden>CHAIN x0</span>
+              <span id="hudChain" class="hud-chain-badge" hidden>連擊 x0</span>
               <div id="hudResonances" class="hud-resonances" aria-label="流派共鳴">
                 <div class="resonance-pill" data-archetype="kinetic" data-tier="0" data-count="0" title="Kinetic Ballistics">
                   <span class="res-icon">⚡</span>
@@ -196,7 +196,7 @@
                 <div class="overlay-foot">
                   <span class="overlay-foot-controls">鍵鼠: WASD + 滑鼠左鍵 / 空白鍵 · 手把: 類比搖桿 + RT / A</span>
                   <span>殘命易逝 <i aria-hidden="true">/</i> 彈藥難尋</span>
-                  <span>BUILD 0.1.2</span>
+                  <span>版本 0.1.2</span>
                 </div>
               </div>
             </div>
@@ -427,39 +427,39 @@
                       <div class="build-stats-col">
                         <div class="build-col-title">武器機底（出擊中鎖定）</div>
                         <div class="chassis-selector" id="chassisSelector">
-                          <button type="button" class="chassis-btn is-active" data-mode="standard" disabled>STANDARD</button>
-                          <button type="button" class="chassis-btn" data-mode="breacher" disabled>BREACHER</button>
-                          <button type="button" class="chassis-btn" data-mode="vanguard" disabled>VANGUARD</button>
-                          <button type="button" class="chassis-btn" data-mode="arc-welder" disabled>ARC-WELDER</button>
-                          <button type="button" class="chassis-btn" data-mode="colossus" disabled>COLOSSUS</button>
+                          <button type="button" class="chassis-btn is-active" data-mode="standard" disabled>標準突擊步槍</button>
+                          <button type="button" class="chassis-btn" data-mode="breacher" disabled>脈衝破障散彈槍</button>
+                          <button type="button" class="chassis-btn" data-mode="vanguard" disabled>先鋒軌道蓄力槍</button>
+                          <button type="button" class="chassis-btn" data-mode="arc-welder" disabled>感應電弧焊接槍</button>
+                          <button type="button" class="chassis-btn" data-mode="colossus" disabled>巨神重型軌道砲</button>
                         </div>
-                        <div id="chassisDesc" class="chassis-desc">標準制式自動步槍 // 均衡速射火力</div>
+                        <div id="chassisDesc" class="chassis-desc">標準突擊步槍 // 均衡高速輸出</div>
 
                         <div class="build-col-title">核心規格數據</div>
                         <div class="build-stats-grid">
                           <div class="build-stat-card">
                             <span class="stat-name">射擊速率</span>
-                            <strong id="statFireRate">5.6 RPS</strong>
+                            <strong id="statFireRate">5.6 發/秒</strong>
                           </div>
                           <div class="build-stat-card">
                             <span class="stat-name">子彈傷害</span>
-                            <strong id="statDamage">26 DMG</strong>
+                            <strong id="statDamage">26 傷害</strong>
                           </div>
                           <div class="build-stat-card">
                             <span class="stat-name">暴擊機制</span>
-                            <strong id="statCrit">1.75x AMBUSH</strong>
+                            <strong id="statCrit">1.75× [突襲暴擊]</strong>
                           </div>
                           <div class="build-stat-card">
                             <span class="stat-name">彈道特性</span>
-                            <strong id="statBallistics">PIERCE 0 / RICO 0</strong>
+                            <strong id="statBallistics">貫穿 0 / 彈跳 0</strong>
                           </div>
                           <div class="build-stat-card">
                             <span class="stat-name">機體推進</span>
-                            <strong id="statSpeed">235 PX/S</strong>
+                            <strong id="statSpeed">235 像素/秒</strong>
                           </div>
                           <div class="build-stat-card">
                             <span class="stat-name">磁吸範圍</span>
-                            <strong id="statMagnet">165 PX</strong>
+                            <strong id="statMagnet">165 像素</strong>
                           </div>
                         </div>
 
@@ -580,9 +580,8 @@
             <p class="rail-title">活下去。<br /><span>掀起風暴。</span></p>
             <p id="objectiveText" class="rail-copy">在沙暴吞沒訊號前清除每一波敵軍。波次 3 後將有菁英訊號入侵。</p>
             <div class="objective-rule"><span id="objectiveProgress" style="width: 12%"></span></div>
-            <div class="objective-meta"><span>威脅指數</span><strong id="threatIndex">低</strong></div>
-            <div class="objective-meta"><span>沙暴時鐘</span><strong id="waveTimer" class="wave-timer">NEXT FRONT
-                30s</strong></div>
+            <div class="objective-meta"><span>威脅指數</span><strong id="threatIndex">低度</strong></div>
+            <div class="objective-meta"><span>沙暴時鐘</span><strong id="waveTimer" class="wave-timer">下一波次 30s</strong></div>
           </section>
 
           <section class="rail-card rail-card--log">
