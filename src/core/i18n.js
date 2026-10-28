@@ -885,9 +885,13 @@ var RARITIES_I18N = {
 
 var PASSIVES_I18N = {
   'SHOCKWAVE DASH': { zh: '衝擊波衝刺', en: 'SHOCKWAVE DASH' },
+  'shockwave-dash': { zh: '衝擊波衝刺', en: 'SHOCKWAVE DASH' },
   'TESLA COIL': { zh: '特斯拉線圈', en: 'TESLA COIL' },
+  'tesla-coil': { zh: '特斯拉線圈', en: 'TESLA COIL' },
   'REACTIVE ARMOR': { zh: '反應裝甲', en: 'REACTIVE ARMOR' },
-  'HIGH CALIBER': { zh: '大口徑重彈', en: 'HIGH CALIBER' }
+  'reactive-armor': { zh: '反應裝甲', en: 'REACTIVE ARMOR' },
+  'HIGH CALIBER': { zh: '大口徑重彈', en: 'HIGH CALIBER' },
+  'high-caliber': { zh: '大口徑重彈', en: 'HIGH CALIBER' }
 };
 
 // =========================================================================
@@ -1006,9 +1010,21 @@ export function tChassisDesc(weaponMode) {
 }
 
 export function tPassiveName(name) {
-  var item = PASSIVES_I18N[name];
+  if (!name) return '';
+  var key = String(name);
+  var item = PASSIVES_I18N[key];
+  if (!item && key.indexOf('-') !== -1) {
+    item = PASSIVES_I18N[key.replace(/-/g, ' ').toUpperCase()];
+  }
+  if (!item) {
+    item = PASSIVES_I18N[key.toUpperCase()];
+  }
   if (item) return currentLang === 'zh' ? item.zh : item.en;
-  return name;
+  var fromUp = tUpgradeTitle(key);
+  if (fromUp && fromUp !== key) return fromUp;
+  var fromFu = tFusionTitle(key);
+  if (fromFu && fromFu !== key) return fromFu;
+  return key;
 }
 
 export function tContractName(id) {
@@ -1258,7 +1274,7 @@ export function tLog(msg) {
   if (msg.indexOf('TITAN STRUCK BY KICKED BARREL') === 0) return '踢出的炸藥桶命中泰坦 // -240 HP';
   if (msg === 'BARREL DETONATED // SUPERCRIT') return '炸藥桶引爆 // 致命超暴擊';
   if (msg === 'BARREL DETONATED') return '炸藥桶引爆';
-  if (msg === 'PLAYROOM // SCORE SAVED') return 'PLAYROOM // 成績已保存';
+  if (msg === 'PLAYROOM // SCORE SAVED') return '遊樂室 // 成績已保存';
   if (msg.indexOf('WEAPON CHASSIS //') === 0) {
     var mode = msg.split('//')[1].trim().toLowerCase();
     return '武器機底 // ' + tWeaponName(mode);
@@ -1362,9 +1378,9 @@ export function tLog(msg) {
   if (msg === 'WARNING // SEISMIC HARPOON LOCK') return '警告 // 震盪魚叉鎖定';
   if (msg === 'WOLF PACK SURGE // CENTRIPETAL COMPRESSION') return '狼群湧浪 // 向心壓迫';
   if (msg === 'MOMENTUM SURGE // A-TIER COMBO ONLINE') return '動能湧浪 // A 級連擊上線';
-  if (msg === 'PLAYROOM // CLOUD SAVE SYNCED') return 'PLAYROOM // 雲端存檔已同步';
-  if (msg === 'PLAYROOM // SAVE FORMAT INCOMPATIBLE') return 'PLAYROOM // 存檔格式不相容';
-  if (msg.indexOf('PLAYROOM // REVISION CONFLICT') === 0) return 'PLAYROOM // 版本衝突 → 自動合併';
+  if (msg === 'PLAYROOM // CLOUD SAVE SYNCED') return '遊樂室 // 雲端存檔已同步';
+  if (msg === 'PLAYROOM // SAVE FORMAT INCOMPATIBLE') return '遊樂室 // 存檔格式不相容';
+  if (msg.indexOf('PLAYROOM // REVISION CONFLICT') === 0) return '遊樂室 // 版本衝突 → 自動合併';
   if (msg === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
   if (msg === 'BEHEMOTH ENRAGED // CORE OVERDRIVE') return '巨獸暴怒 // 核心超頻';
   if (msg === 'BOSS PHASE TRANSITION // OVERDRIVE ENGAGED') return '首領階段轉換 // 超頻啟動';
@@ -1611,9 +1627,22 @@ export function tUnlockLabel(item) {
   var kind = item.kind || '';
   var raw = item.label || '';
   if (!zh) return raw || id;
+  function zhAchievementTitle(achId, enTitle) {
+    var t = achId ? tAchievementTitle(achId) : '';
+    if (t && t !== achId) return t;
+    if (enTitle) {
+      for (var ak in ACHIEVEMENTS_I18N) {
+        if (!Object.prototype.hasOwnProperty.call(ACHIEVEMENTS_I18N, ak)) continue;
+        var entry = ACHIEVEMENTS_I18N[ak];
+        if (entry && entry.title && entry.title.en === enTitle) return entry.title.zh;
+      }
+    }
+    return t || enTitle || achId || '';
+  }
   if (kind === 'achievement') {
-    var title = tAchievementTitle(id);
-    return title ? ('已解鎖 // ' + title) : (raw.indexOf('UNLOCKED // ') === 0 ? ('已解鎖 // ' + raw.slice(12)) : raw);
+    var enPart = raw.indexOf('UNLOCKED // ') === 0 ? raw.slice(12) : '';
+    var title = zhAchievementTitle(id, enPart);
+    return title ? ('已解鎖 // ' + title) : raw;
   }
   if (kind === 'rig') {
     var rig = tRigName(id);
@@ -1623,7 +1652,9 @@ export function tUnlockLabel(item) {
     var hm = id.match(/heat-(\d+)/);
     return hm ? ('熱度 ' + hm[1] + ' 已解鎖') : raw.replace('HEAT ', '熱度 ').replace(' UNLOCKED', ' 已解鎖');
   }
-  if (raw.indexOf('UNLOCKED // ') === 0) return '已解鎖 // ' + raw.slice(12);
+  if (raw.indexOf('UNLOCKED // ') === 0) {
+    return '已解鎖 // ' + zhAchievementTitle(id, raw.slice(12));
+  }
   if (raw.indexOf(' UNLOCKED') !== -1) return raw.replace(' UNLOCKED', ' 已解鎖').replace('HEAT ', '熱度 ');
   return raw;
 }
@@ -1924,7 +1955,7 @@ export function syncStaticHtml(lang) {
     var recordStamp = gameOver.querySelector('#newRecordStamp');
     if (recordStamp) recordStamp.innerHTML = zh ? '<span>新紀錄</span> <small>//</small> <span>區段之冠</span>' : '<span>NEW RECORD</span> <small>//</small> <span>SECTOR TOP</span>';
     var saveBadge = gameOver.querySelector('#accountSaveBadge span:last-child');
-    if (saveBadge) saveBadge.textContent = zh ? '已記錄至 PLAYROOM' : 'RECORDED TO PLAYROOM';
+    if (saveBadge) saveBadge.textContent = zh ? '已記錄至遊樂室' : 'RECORDED TO PLAYROOM';
     var restartBtnSpan = gameOver.querySelector('#restartBtn span');
     if (restartBtnSpan) restartBtnSpan.textContent = zh ? '再次出擊' : 'RUN IT BACK';
     var restartBtnEl = document.getElementById('restartBtn');
