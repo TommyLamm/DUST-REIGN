@@ -286,9 +286,9 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 2.0; // restore near-2.1 — 1.75 raised slow%; rear floor carries fast nerf
-  e.empTimer = Math.max(e.empTimer || 0, 2.0);
-  e.armorBreakTimer = 2.0;
+  e.stunT = 1.80; // was 2.0 — trim break DPS window to lift p50; idle×1.00/hull kept
+  e.empTimer = Math.max(e.empTimer || 0, 1.80);
+  e.armorBreakTimer = 1.80;
   fireRing(e);
   rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();
@@ -352,11 +352,11 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           triggerHaptic([60, 50, 100]);
           logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
           rt.state.banner = 2.5;
-          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 1.7s · ALL SIDES OPEN';
+          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 1.55s · ALL SIDES OPEN';
           e.mode = 'stun';
-          e.stunT = 1.7; // crag bait: shorter than wall slam so lane hits are not free deletes
-          e.empTimer = Math.max(e.empTimer || 0, 1.7);
-          e.armorBreakTimer = 1.7;
+          e.stunT = 1.55; // crag bait: keep shorter than wall 1.80
+          e.empTimer = Math.max(e.empTimer || 0, 1.55);
+          e.armorBreakTimer = 1.55;
           e.chargesQueued = 0;
           e._dreadMidCombo = false;
           fireRing(e);

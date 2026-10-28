@@ -606,7 +606,7 @@ function simulate(game, opts) {
   // Do NOT re-apply sticky lastDamageSource here — it undoes the death-frame
   // elite scrub (early-wave bullet:elite survives as lastDamageSource).
   if (outcome === 'death' && (!tracker.lethal || tracker.lethal === 'unknown')) {
-    if (state.deathCause && state.deathCause !== 'bullet:elite') tracker.lethal = state.deathCause;
+    if (state.deathCause && state.deathCause !== 'bullet:elite' && state.deathCause !== 'contact:elite') tracker.lethal = state.deathCause;
     else if ((state.deathCause === 'bullet:elite' || state.deathCause === 'contact:elite') && ((state.wave | 0) >= 14)) tracker.lethal = state.lastNonEliteDamageSource || 'unknown';
     else if (state.deathCause) tracker.lethal = state.deathCause;
     else if (state.lastDamageSource && state.lastDamageSource !== 'bullet:elite') tracker.lethal = state.lastDamageSource;
