@@ -479,7 +479,7 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(8, 105, true);
+  var shot = scaledShot(7, 100, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
@@ -494,9 +494,9 @@ function fireSpiral(e) {
       y: e.y + Math.sin(a) * (e.r + 8),
       vx: Math.cos(a) * shot.speed,
       vy: Math.sin(a) * shot.speed,
-      r: 4.2,
+      r: 3.8,
       damage: shot.damage,
-      life: 4.5,
+      life: 3.8,
       glow: true,
       color: '#9ec0ea',
       glowColor: '#d5e8ff'
