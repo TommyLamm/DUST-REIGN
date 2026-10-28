@@ -259,11 +259,11 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Cap big-world charge travel so armor-break duty cycle stays dense (was 860/1000).
-  e.chargeMaxDist = e.bossPhase >= 3 ? 660 : 560;
+  e.chargeMaxDist = e.bossPhase >= 3 ? 820 : 700;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
-  e.chargeDamage = scaledShot(24, 520, true).damage;
+  e.chargeDamage = scaledShot(18, 520, true).damage;
 }
 
 function endCharge(e, frame) {
