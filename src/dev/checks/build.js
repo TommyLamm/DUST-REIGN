@@ -288,11 +288,11 @@ export function run() {
     state.player.weaponMode = 'vanguard';
     state.player.mastery = 0;
     state.player.capacitorRail = false;
-    assert(vanguardChargeNeed(state.player) === 0.72, 'vanguard base charge');
+    assert(vanguardChargeNeed(state.player) === 0.62, 'vanguard base charge');
     state.player.mastery = 1;
-    assert(Math.abs(vanguardChargeNeed(state.player) - 0.55) < 0.0001, 'vanguard mastery 1 charge');
+    assert(Math.abs(vanguardChargeNeed(state.player) - 0.48) < 0.0001, 'vanguard mastery 1 charge');
     state.player.capacitorRail = true;
-    assert(Math.abs(vanguardChargeNeed(state.player) - 0.4125) < 0.0001, 'capacitor rail shortens charge');
+    assert(Math.abs(vanguardChargeNeed(state.player) - 0.36) < 0.0001, 'capacitor rail shortens charge');
 
     state.player.weaponMode = 'arc-welder';
     state.player.mastery = 0;
