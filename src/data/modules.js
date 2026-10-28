@@ -76,7 +76,7 @@ export var MODULES = [
       {
         tier: 2,
         bonusDesc: 'Move speed +18%; Dash leaves a 1.5s plasma trail (40 DPS)',
-        bonusDescZh: '常規移動速度 +18%；衝刺身後留下一道持續 1.5 秒的電漿烈焰 (40 DPS)',
+        bonusDescZh: '常規移動速度 +18%；衝刺身後留下一道持續 1.5 秒的電漿烈焰 (40 傷害/秒)',
         moveSpeedBonus: 0.18,
         plasmaTrail: true,
         plasmaTrailSlow: false
@@ -84,7 +84,7 @@ export var MODULES = [
       {
         tier: 3,
         bonusDesc: 'Move speed +18%; Dash plasma trail deals 40 DPS and slows enemies by 35%',
-        bonusDescZh: '常規移動速度 +18%；衝刺電漿烈焰造成 40 DPS 並附加 35% 緩速力場',
+        bonusDescZh: '常規移動速度 +18%；衝刺電漿烈焰造成 40 傷害/秒 並附加 35% 緩速力場',
         moveSpeedBonus: 0.18,
         plasmaTrail: true,
         plasmaTrailSlow: true

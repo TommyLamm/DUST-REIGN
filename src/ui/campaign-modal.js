@@ -30,7 +30,7 @@ function getStageTypeLabel(type, zh) {
   switch (type) {
     case 'wave_wipeout': return zh ? '波次肅清' : 'WIPEOUT';
     case 'scrap_rush': return zh ? '廢料爭奪' : 'SCRAP RUSH';
-    case 'vip_hunt': return zh ? 'VIP 斬首' : 'VIP HUNT';
+    case 'vip_hunt': return zh ? '要人斬首' : 'VIP HUNT';
     case 'beacon_defense': return zh ? '陣地堅守' : 'DEFENSE';
     case 'boss_duel': return zh ? '首領單挑' : 'BOSS DUEL';
     case 'payload_escort': return zh ? '物資護送' : 'ESCORT';
