@@ -415,6 +415,11 @@ export function setWorkshopLoadout(propulsionId, armorId, tacticalId) {
   return getWorkshopState();
 }
 
+function hardcoreWorkshopBlocked(meta) {
+  var m = meta || readMeta();
+  return m && m.selectedMode === 'hardcore';
+}
+
 export function equipModule(slotOrId, maybeId) {
   var slot;
   var moduleId;
@@ -433,6 +438,7 @@ export function equipModule(slotOrId, maybeId) {
   if (!mod || mod.branch !== slot) return { ok: false, success: false, reason: 'BRANCH_MISMATCH' };
 
   var meta = readMeta();
+  if (hardcoreWorkshopBlocked(meta)) return { ok: false, success: false, reason: 'HARDCORE_LOCK' };
   var ws = meta.workshop || { unlockedModules: {}, loadout: {} };
   var unlockedTier = (ws.unlockedModules && ws.unlockedModules[moduleId]) || 1;
   if (!unlockedTier) return { ok: false, success: false, reason: 'MODULE_LOCKED' };
@@ -455,6 +461,7 @@ export function equipModule(slotOrId, maybeId) {
 export function unequipModule(slot) {
   if (MODULE_BRANCHES.indexOf(slot) === -1) return { ok: false, success: false, reason: 'INVALID_SLOT' };
   var meta = readMeta();
+  if (hardcoreWorkshopBlocked(meta)) return { ok: false, success: false, reason: 'HARDCORE_LOCK' };
   if (!meta.workshop || !meta.workshop.loadout) return { ok: true, success: true };
   meta.workshop.loadout[slot] = null;
   writeMeta(meta);
@@ -465,6 +472,7 @@ export function overclockModule(moduleId) {
   var mod = getModule(moduleId);
   if (!mod) return { ok: false, success: false, reason: 'MODULE_NOT_FOUND' };
   var meta = readMeta();
+  if (hardcoreWorkshopBlocked(meta)) return { ok: false, success: false, reason: 'HARDCORE_LOCK' };
   if (!meta.workshop) meta.workshop = { unlockedModules: defaultUnlockedModules(), loadout: {}, tuning: {} };
   if (!meta.workshop.unlockedModules) meta.workshop.unlockedModules = defaultUnlockedModules();
   if (!meta.workshop.tuning) meta.workshop.tuning = {};
@@ -488,6 +496,7 @@ export function upgradeModule(moduleId) {
   var mod = getModule(moduleId);
   if (!mod) return { ok: false, success: false, reason: 'MODULE_NOT_FOUND' };
   var meta = readMeta();
+  if (hardcoreWorkshopBlocked(meta)) return { ok: false, success: false, reason: 'HARDCORE_LOCK' };
   if (!meta.workshop) meta.workshop = { unlockedModules: {}, loadout: {} };
   if (!meta.workshop.unlockedModules) meta.workshop.unlockedModules = defaultUnlockedModules();
   var currentTier = (meta.workshop.unlockedModules && meta.workshop.unlockedModules[moduleId]) || 1;
