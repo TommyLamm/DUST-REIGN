@@ -228,6 +228,10 @@ function rusherChargeNear() {
   return false;
 }
 
+function bruteNear() {
+  return enemyNearKind('brute', 240) || enemyOfKind('brute');
+}
+
 function mineArmingNear() {
   var list = rt.state && rt.state.enemies;
   var p = rt.state && rt.state.player;
@@ -317,6 +321,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 10 && rusherChargeNear()) offer('rusher-charge');
+  if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 8 && bruteNear()) offer('brute');
   if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
   if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');

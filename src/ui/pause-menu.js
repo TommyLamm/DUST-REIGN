@@ -269,8 +269,8 @@ export function renderBuildInspector() {
   if (rt.ui.installedChipsList) {
     if (chips.length === 0) {
       rt.ui.installedChipsList.innerHTML = zh
-        ? '<div class="chips-empty">[ 未安裝改裝晶片 — 需搜刮貯藏箱 ]</div>'
-        : '<div class="chips-empty">[ NO MOD CHIPS INSTALLED — SALVAGE REQUIRED ]</div>';
+        ? '<div class="chips-empty">[ 尚未安裝改裝晶片 — 戰鬥升級時挑選卡片 ]</div>'
+        : '<div class="chips-empty">[ NO MOD CHIPS YET — LEVEL UP MID-RUN TO INSTALL ]</div>';
     } else {
       var grouped = [];
       var seen = {};
