@@ -161,10 +161,10 @@ function spawnPartBreakParticles(x, y, part) {
  *
  * @param {Object} enemy
  * @param {Object} bullet
- * @returns {Boolean} true if a part was hit and resolved
+ * @returns {{hit:boolean, absorption:number, exposed:boolean}|null} part hit info; null if no part resolved
  */
 export function checkMultiPartBulletHit(enemy, bullet) {
-  if (!enemy || !enemy.parts || !enemy.parts.length || !bullet) return false;
+  if (!enemy || !enemy.parts || !enemy.parts.length || !bullet) return null;
 
   var p = rt.state && rt.state.player;
   var cache = enemy.partCache;
@@ -173,7 +173,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     cache = updateEnemyPartCache(enemy, p);
     if (cache) cache._frameTime = waveTime;
   }
-  if (!cache) return false;
+  if (!cache) return null;
 
   // Local rotation transform (inverse of aim angle)
   var bdx = bullet.x - enemy.x;
@@ -196,7 +196,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     }
   }
 
-  if (!closestPart) return false;
+  if (!closestPart) return null;
 
   var isDestroyed = Boolean(closestPart.destroyed ||
     (closestPart.id === 'left_cannon' && enemy.leftCannonDestroyed) ||
@@ -206,7 +206,7 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     (closestPart.id === 'behemoth_horn' && enemy.hornDestroyed) ||
     (closestPart.id === 'behemoth_gland' && enemy.acidGlandDestroyed) ||
     (closestPart.id === 'behemoth_tail' && enemy.crystalTailDestroyed));
-  if (isDestroyed) return false;
+  if (isDestroyed) return null;
 
   var pos = getPartWorldPos(enemy, closestPart, cache);
   var ptX = pos.x;
@@ -318,7 +318,14 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     if (p) { p.hitmarkerTime = rt.renderTime || 0; p.hitmarkerType = 3; }
   }
 
-  return true;
+  var absorption = 0;
+  if (!isExposed) {
+    absorption = typeof closestPart.coreAbsorption === 'number' ? closestPart.coreAbsorption : 0;
+    if (absorption < 0) absorption = 0;
+    if (absorption > 1) absorption = 1;
+  }
+  // Exposed weakpoint: full hull + existing vuln bonus. Intact plating: absorb into the part.
+  return { hit: true, absorption: absorption, exposed: Boolean(isExposed), partId: closestPart.id };
 }
 
 export function initBehemothParts(boss) {

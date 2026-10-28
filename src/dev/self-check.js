@@ -707,7 +707,7 @@ export function selfCheck() {
     // Bullet closer to left cannon (lcX = 122, rpX = 78)
     test.bullets = [{ x: 120, y: 100, vx: 0, vy: -100, r: 4, damage: 50, life: 1, bounces: 0, pierce: 0, hits: [], trail: [] }];
     update(0.016);
-    var damageTransferOk = spawnedTitan.hp === (titanHull - 50) &&
+    var damageTransferOk = spawnedTitan.hp === (titanHull - 20) && // cannon coreAbsorption 0.6
       spawnedTitan.leftCannonHp === (titanPart - 50) &&
       spawnedTitan.rightPodHp === titanPart;
 

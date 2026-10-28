@@ -732,7 +732,14 @@ export function stepBullets(dt, frame) {
           p.hitmarkerType = (isExecution || (enemy.staggerHp <= 0 && enemy.staggerTimer > 0)) ? 3 : ((isCrit || isCounter) ? 2 : 1);
 
           var isClose = distToP2 <= 120 * 120;
-          damageEnemy(enemy, damageDealt, {
+          // Titan/Behemoth plating: wire unused coreAbsorption so intact parts soak hull DPS.
+          // Exposed weakpoint → full hull (vuln bonus still applied inside part hit).
+          var partHit = enemy.parts ? checkMultiPartBulletHit(enemy, b) : null;
+          var hullDealt = damageDealt;
+          if (partHit && partHit.hit && partHit.absorption > 0) {
+            hullDealt = Math.max(0, Math.round(damageDealt * (1 - partHit.absorption)));
+          }
+          damageEnemy(enemy, hullDealt, {
             source: isExecution ? 'execution' : 'bullet',
             execution: isExecution,
             crit: isCrit,
@@ -759,12 +766,6 @@ export function stepBullets(dt, frame) {
               spawnCombatText(enemy.x, enemy.y - 12, 'PRISMATIC ' + trueDmg, true);
               spawnParticles(enemy.x, enemy.y, '#ffd700', 8, 120, 2);
               enemy._prismaticHits = 0;
-            }
-          }
-
-          if (enemy.parts) {
-            if (checkMultiPartBulletHit(enemy, b)) {
-              // Multi-part collision handled
             }
           }
 
