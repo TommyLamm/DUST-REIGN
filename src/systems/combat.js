@@ -45,23 +45,60 @@ export function normalizeDamageSource(source) {
   return s;
 }
 
+var CONTACT_KIND_ZH = {
+  enemy: '敵機',
+  crawler: '爬行者',
+  rusher: '衝鋒者',
+  brute: '蠻力機',
+  artillery: '砲兵',
+  elite: '菁英',
+  spitter: '噴吐者',
+  scurrier: '疾行自爆蟲',
+  warden: '衛士',
+  burrower: '鑽地蟲',
+  prowler: '潛行者',
+  bulwark: '堡壘',
+  titan: '泰坦',
+  dreadnought: '無畏巨艦',
+  sovereign: '風暴主宰',
+  behemoth: '巨獸',
+  mine: '地雷'
+};
+
 export function formatDamageSourceLabel(source, zh) {
   var s = normalizeDamageSource(source);
   if (zh) {
-    if (s.indexOf('contact:') === 0) return '接觸 · ' + s.slice(8);
+    if (s.indexOf('contact:') === 0) {
+      var kind = s.slice(8);
+      return '接觸 · ' + (CONTACT_KIND_ZH[kind] || kind);
+    }
     if (s === 'bullet:projectile') return '敵彈';
     if (s === 'bullet:mortar') return '迫擊砲';
     if (s === 'dot:acid') return '酸液';
     if (s === 'dot:molten') return '熔岩';
     if (s === 'env:meteor') return '隕石';
-    if (s === 'zone:hazard') return '範圍危害';
+    if (s === 'zone:hazard') return '範圍爆炸';
     if (s === 'boss:lightning') return '首領雷擊';
     if (s === 'boss:storm-eye') return '風暴之眼';
     if (s === 'friendly:core') return '不穩定核心';
     if (s === 'friendly:barrel') return '炸藥桶';
     if (s === 'hardcore:corrosion') return '硬核腐蝕';
+    if (s === 'unknown') return '不明傷害';
     return s;
   }
+  if (s.indexOf('contact:') === 0) return 'CONTACT · ' + s.slice(8).toUpperCase();
+  if (s === 'bullet:projectile') return 'HOSTILE ROUND';
+  if (s === 'bullet:mortar') return 'MORTAR';
+  if (s === 'dot:acid') return 'ACID';
+  if (s === 'dot:molten') return 'MOLTEN';
+  if (s === 'env:meteor') return 'METEOR';
+  if (s === 'zone:hazard') return 'BLAST ZONE';
+  if (s === 'boss:lightning') return 'LIGHTNING';
+  if (s === 'boss:storm-eye') return 'STORM EYE';
+  if (s === 'friendly:core') return 'VOLATILE CORE';
+  if (s === 'friendly:barrel') return 'BARREL';
+  if (s === 'hardcore:corrosion') return 'CORROSION';
+  if (s === 'unknown') return 'UNKNOWN';
   return s;
 }
 
