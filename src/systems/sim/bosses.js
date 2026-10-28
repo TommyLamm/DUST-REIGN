@@ -360,6 +360,8 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           e.stunT = 1.7; // crag bait: shorter than wall slam so lane hits are not free deletes
           e.empTimer = Math.max(e.empTimer || 0, 1.7);
           e.armorBreakTimer = 1.7;
+          e.chargesQueued = 0;
+          e._dreadMidCombo = false;
           fireRing(e);
           return { handled: true, vx: 0, vy: 0 };
         }
