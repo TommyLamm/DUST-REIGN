@@ -405,3 +405,15 @@
     filter: brightness(1);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .combat-rank-stamp,
+  .new-record-stamp {
+    animation: none !important;
+  }
+}
+
+html.reduced-motion .combat-rank-stamp,
+html.reduced-motion .new-record-stamp {
+  animation: none !important;
+}

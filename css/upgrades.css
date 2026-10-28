@@ -508,3 +508,18 @@
 html.reduced-motion .upgrade-choice.is-reroll {
   animation: none;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-card.is-fusion-chip,
+  #upgradeChoices .upgrade-choice.is-fusion-chip,
+  #upgradeChoices .upgrade-choice.is-fusion-chip::after,
+  .upgrade-choice.is-reroll {
+    animation: none !important;
+  }
+}
+
+html.reduced-motion .upgrade-card.is-fusion-chip,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-fusion-chip,
+html.reduced-motion #upgradeChoices .upgrade-choice.is-fusion-chip::after {
+  animation: none !important;
+}
