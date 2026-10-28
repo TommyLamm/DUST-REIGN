@@ -45,6 +45,50 @@ export function isStormFront() {
   return rt.state.waveTime >= WAVE_LENGTH - stormSeconds();
 }
 
+/** Live threat tier 0=LOW, 1=HIGH, 2=CRITICAL from field pressure, not wave alone. */
+export function computeThreatTier(state) {
+  if (!state) state = rt.state;
+  if (!state) return 0;
+  var score = 0;
+  var wave = state.wave || 1;
+  if (wave >= 10) score += 1;
+  else if (wave >= 5) score += 0; // wave is only a mild baseline now
+
+  if (state.wolfPackSurge) score += 2;
+  var storm = false;
+  if (livingSovereign()) storm = true;
+  else if (state.waveTime >= WAVE_LENGTH - stormSeconds()) storm = true;
+  if (storm) score += 2;
+
+  var boss = state.boss;
+  var list = state.enemies || [];
+  var i;
+  var elites = 0;
+  var living = 0;
+  var bossAlive = !!(boss && boss.hp > 0);
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || !(e.hp > 0)) continue;
+    living += 1;
+    if (e.isBoss || e.kind === 'titan' || e.kind === 'dreadnought' || e.kind === 'sovereign' || e.kind === 'behemoth') bossAlive = true;
+    if (e.kind === 'elite' || e.elite || e.affix) elites += 1;
+  }
+  if (bossAlive) score += 5;
+
+  var cap = (state.recipe && typeof state.recipe.cap === 'number') ? state.recipe.cap : Math.min(95, 5 + wave * 4);
+  var density = cap > 0 ? living / cap : 0;
+  if (density >= 0.7 || living >= 28) score += 2;
+  else if (density >= 0.4 || living >= 14) score += 1;
+
+  if (elites >= 3) score += 2;
+  else if (elites >= 1) score += 1;
+
+  if (score >= 5) return 2;
+  if (score >= 2) return 1;
+  return 0;
+}
+
+
 export function stormWind() {
   if (!isStormFront()) return null;
   var sov = livingSovereign();
