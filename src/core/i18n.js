@@ -1004,6 +1004,14 @@ export function tLog(msg) {
   if (msg.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 彈幕消解';
 
   return msg;
+  if (text.indexOf('TITAN ARMOR BREACH -350') === 0) return '泰坦裝甲破防 -350 HP // 系統過熱眩暈 3.0s';
+  if (text.indexOf('SUPERNOVA COLLAPSE!') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！');
+  if (text.indexOf('SUPPLY CRATE // OVERDRIVE') === 0) return text.replace('SUPPLY CRATE // OVERDRIVE', '補給箱 // 超頻');
+  if (text.indexOf('SUPPLY CRATE // BATTERY +') === 0) return text.replace('SUPPLY CRATE // BATTERY +', '補給箱 // 電池 +');
+  if (text.indexOf('STORM HARVEST GRAND SLAM // +') === 0) return text.replace('STORM HARVEST GRAND SLAM // +', '風暴採集大滿貫 // +').replace('SCORE', '分數');
+  if (text.indexOf('GAMEPAD ONLINE //') === 0) return text.replace('GAMEPAD ONLINE //', '手把已連線 // ');
+  if (text.indexOf('GAMEPAD OFFLINE') === 0) return '手把已離線';
+
 }
 
 export function tStatus(text) {
