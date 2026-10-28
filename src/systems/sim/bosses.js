@@ -272,16 +272,13 @@ function endCharge(e, frame) {
   if (e.bossPhase >= 2) dropMines(e);
   e.chargesQueued = (e.chargesQueued || 1) - 1;
   if (e.chargesQueued > 0) {
-    // Double-ram used to stay armored for two full charges — slow-tail driver.
-    // Insert a brief breach beat so lane bait / rear DPS can land between rams.
+    // Mid-ram breach beat for slow tails; kept short so denser duty does not delete.
     e.mode = 'stun';
-    e.stunT = 1.0;
-    e.empTimer = Math.max(e.empTimer || 0, 1.0);
-    e.armorBreakTimer = 1.0;
+    e.stunT = 0.55;
+    e.empTimer = Math.max(e.empTimer || 0, 0.55);
+    e.armorBreakTimer = 0.55;
     e._dreadMidCombo = true;
-    fireRing(e);
-    rt.state.shake = Math.max(rt.state.shake, 10);
-    AudioFX.blast();
+    rt.state.shake = Math.max(rt.state.shake, 6);
     if (rt.state) {
       rt.state.banner = Math.max(rt.state.banner || 0, 1.15);
       rt.state.bannerText = 'DOUBLE RAM BEAT // BRIEF ARMOR BREAK';
@@ -403,7 +400,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       }
       e._dreadMidCombo = false;
       e.mode = 'idle';
-      e.attackCd = 1.65;
+      e.attackCd = 1.85;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
