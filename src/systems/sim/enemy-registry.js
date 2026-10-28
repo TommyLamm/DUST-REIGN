@@ -196,6 +196,9 @@ registerEnemyStrategy('elite', {
     return null;
   },
   step: function (e, dt, frame, empFrozen, isCulled) {
+    // Absolute: no living elites on wave 15+ (spawn/cull leaks still wiped bots).
+    if (((rt.state.wave | 0) >= 15)) { e.hp = 0; e.alive = false; return; }
+
     var p = frame.p;
     var boundW = frame.boundW;
     var boundH = frame.boundH;
