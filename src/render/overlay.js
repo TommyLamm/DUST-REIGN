@@ -211,7 +211,8 @@ export function drawBossHealthBar(ctx, boss) {
   if (zh) {
     if (rawName === 'TITAN') bName = '泰坦';
     else if (rawName === 'DREADNOUGHT') bName = '無畏巨艦';
-    else if (rawName === 'STORM SOVEREIGN') bName = '風暴領主';
+    else if (rawName === 'STORM SOVEREIGN') bName = '風暴主宰';
+    else if (rawName === 'BEHEMOTH') bName = '巨獸';
 
     if (rawSub === 'ENRAGED') bSub = '暴怒';
     else if (rawSub === 'ARMOR BREAK') bSub = '破甲輸出';
@@ -222,6 +223,7 @@ export function drawBossHealthBar(ctx, boss) {
     else if (rawSub === 'EYE') bSub = '風暴之眼';
     else if (rawSub === 'TWIN SPIRES') bSub = '雙生尖塔';
     else if (rawSub === 'GALE') bSub = '烈風狂嘯';
+    else if (rawSub === 'ABYSSAL COLOSSUS') bSub = '深淵巨像';
   }
   var bossTitle = bName + ' // ' + bSub;
   ctx.fillText(bossTitle, barX, barY - 11);
