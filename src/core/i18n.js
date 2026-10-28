@@ -1021,6 +1021,20 @@ export function tStatus(text) {
   if (text === 'SELECT A RIG — PRESS START') return '選擇機體 — 按 ENTER 出擊';
   if (text === 'SELECT A RIG — PRESS ENTER TO DEPLOY') return '選擇機體 — 按 ENTER 出擊';
   if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
+  if (text.indexOf('APOCALYPSE THOR') === 0) return '天啟雷神 // 軌道離子打擊 180 傷害';
+  if (text.indexOf('WEAPON CHASSIS //') === 0) return text.replace('WEAPON CHASSIS //', '武器機底 // ');
+  if (text.indexOf('RESONANCE ASCENSION //') === 0) return text.replace('RESONANCE ASCENSION //', '共鳴升華 // ');
+  if (text.indexOf('GRAVITON BULWARK') === 0) return '引力壁壘 // 重力過載爆發';
+  if (text.indexOf('GRAVITON BURST') === 0) return '引力爆發 // 敵彈消散';
+  if (text.indexOf('BULWARK SHIELD SHATTERED') === 0) return '堡壘護盾粉碎 // 癱瘓 [4.0s]';
+  if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已清除 // EMP 引爆';
+  if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！');
+  if (text.indexOf('SCRAP BULKHEAD //') === 0) return text.replace('SCRAP BULKHEAD //', '廢料隔艙 // ');
+  if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
+  if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP';
+  if (text.indexOf('AEGIS PROTOCOL ACTIVATED') === 0) return '神盾協議啟動 // 緊急護盾已展開';
+
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
