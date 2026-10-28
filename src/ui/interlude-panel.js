@@ -138,14 +138,14 @@ function renderExtract(panel, il) {
   extractBtn.type = 'button';
   extractBtn.setAttribute('aria-label', zh ? '撤離並結算本次出擊' : 'Extract and file this run');
   extractBtn.addEventListener('click', function () { confirmExtract(); });
-  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : ''), zh ? '深入戰區' : 'PUSH DEEPER');
+  var pushBtn = el('button', 'extract-action' + ((il.selected || 0) === 1 ? ' is-selected' : ''), zh ? ('深入戰區 · 陣亡半獎 +' + String(il.extractHalf || 0)) : ('PUSH DEEPER · HALF +' + String(il.extractHalf || 0)));
   pushBtn.type = 'button';
   pushBtn.setAttribute('aria-label', zh ? '深入延長戰區。若陣亡僅發放一半撤離獎勵。' : 'Push deeper into overtime. Death pays half the extract bonus.');
   pushBtn.addEventListener('click', function () { confirmPushDeeper(); });
   row.appendChild(extractBtn);
   row.appendChild(pushBtn);
   shell.appendChild(row);
-  shell.appendChild(el('p', 'extract-note', zh ? '深入戰區: 若在此戰死，撤離獎勵僅發放 50%。' : 'PUSH DEEPER: if you die, the extract bonus pays 50%.'));
+  shell.appendChild(el('p', 'extract-note', zh ? ('深入戰區: 若陣亡僅發放一半撤離獎勵 +' + String(il.extractHalf || 0) + '（全額 +' + String(il.extractBonus || 0) + '）。') : ('PUSH DEEPER: death pays half extract +' + String(il.extractHalf || 0) + ' (full +' + String(il.extractBonus || 0) + ').')));
   panel.appendChild(shell);
   var selected = shell.querySelector('.is-selected');
   if (selected && selected.focus) selected.focus();

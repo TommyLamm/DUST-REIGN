@@ -1020,6 +1020,7 @@ export function tStatus(text) {
   if (text === 'SIGNAL LOST — PRESS R TO REDEPLOY') return '訊號中斷 — 按 R 重新部署';
   if (text === 'SELECT A RIG — PRESS START') return '選擇機體 — 按 ENTER 出擊';
   if (text === 'SELECT A RIG — PRESS ENTER TO DEPLOY') return '選擇機體 — 按 ENTER 出擊';
+  if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
@@ -1049,6 +1050,7 @@ export function tStatus(text) {
   if (text.indexOf('AEGIS PROTOCOL') === 0) return '神盾協議啟動 // 緊急護盾接合';
   if (text.indexOf('VIP TARGET NEUTRALIZED') === 0) return 'VIP 目標已擊殺 // EMP 引爆';
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (text === 'EXTRACTION GATE // BANK OR PUSH DEEPER') return '撤離閘門 // 結算撤離或深入加時';
   if (text.indexOf('BEHEMOTH ENRAGED') === 0) return '巨獸暴怒 // 核心超頻';
   if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！').replace('BONUS DMG', '額外傷害');
   if (text.indexOf('READY') !== -1 && text.indexOf(' // READY') !== -1) return text.replace(' // READY', ' // 就緒');
@@ -1075,6 +1077,7 @@ export function tTip(id, kind) {
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
+    if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1094,6 +1097,7 @@ export function tTip(id, kind) {
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
+  if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
   return '';
 }
 

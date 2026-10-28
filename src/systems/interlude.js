@@ -4,6 +4,7 @@ import { getHeatModifiers } from '../data/heat.js';
 import { routeById } from '../data/routes.js';
 import { rollRouteIds } from './director.js';
 import { extractRun } from './flow.js';
+import { setStatusText } from '../ui/hud.js';
 import { addScore } from './scoring.js';
 import { commitWaveAdvance } from './sim/timers-wave.js';
 import { cycleWeaponMode, grantArmoryMastery } from './weapons.js';
@@ -136,6 +137,9 @@ export function openExtract(state) {
     extractBonus: heat.extractBonus,
     extractHalf: Math.round(heat.extractBonus * 0.5)
   };
+  state.banner = Math.max(state.banner || 0, 2.2);
+  state.bannerText = 'EXTRACTION GATE // BANK OR PUSH DEEPER';
+  setStatusText('EXTRACTION GATE // BANK OR PUSH DEEPER');
 }
 
 function enterTitle(state) {
