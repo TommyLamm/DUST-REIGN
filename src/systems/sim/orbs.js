@@ -75,17 +75,40 @@ export function stepOrbs(dt, frame) {
     if (orb.kind === 'repair' && typeof p.repairPickupRadiusMult === 'number') {
       reach *= p.repairPickupRadiusMult;
     }
-    if (!crate && !isStormCore && od < reach) {
-      var pull = (1 - od / reach) * 520;
-      orb.vx += (odx / od) * pull * dt;
-      orb.vy += (ody / od) * pull * dt;
-    }
-    orb.vx *= Math.pow(0.08, dt);
-    orb.vy *= Math.pow(0.08, dt);
-    orb.x += orb.vx * dt;
-    orb.y += orb.vy * dt;
-    orb.life -= dt;
     var pickupRadius = isStormCore ? (p.r + orb.r + 14) : (p.r + orb.r + 5);
+    // Latch magnet once the orb enters reach: never cancel if the player outruns
+    // the radius (dash / dash-burst used to leave scrap lagging on the ground).
+    if (!crate && !isStormCore && (orb.magnetized || od < reach)) {
+      if (!orb.magnetized) orb.magnetized = true;
+      orb.magnetAge = (orb.magnetAge || 0) + dt;
+      // Ramp chase so a latched orb catches a fast player; skip heavy damp.
+      var chase = 480 + Math.min(orb.magnetAge, 1.25) * 820;
+      orb.vx = (odx / od) * chase;
+      orb.vy = (ody / od) * chase;
+      // Guarantee collect when close enough — snap into the player.
+      if (od <= Math.max(pickupRadius * 2.5, 42)) {
+        orb.x = p.x;
+        orb.y = p.y;
+        orb.vx = 0;
+        orb.vy = 0;
+        od = 0;
+      } else {
+        orb.x += orb.vx * dt;
+        orb.y += orb.vy * dt;
+        odx = p.x - orb.x;
+        ody = p.y - orb.y;
+        od = Math.hypot(odx, ody) || 1;
+      }
+    } else {
+      orb.vx *= Math.pow(0.08, dt);
+      orb.vy *= Math.pow(0.08, dt);
+      orb.x += orb.vx * dt;
+      orb.y += orb.vy * dt;
+      odx = p.x - orb.x;
+      ody = p.y - orb.y;
+      od = Math.hypot(odx, ody) || 1;
+    }
+    orb.life -= dt;
     if (od < pickupRadius) {
       if (!crate && p.teslaCoil && rt.state.enemies.length > 0) {
         triggerTeslaCoil(orb);
