@@ -129,10 +129,16 @@ function sovereignEyeThreat() {
 
 function moltenHazardNear() {
   var list = rt.state && rt.state.artilleryTargets;
-  if (!list || !list.length) return false;
+  var p = rt.state && rt.state.player;
+  if (!list || !list.length || !p) return false;
   var i;
+  var lim = 220 * 220;
   for (i = 0; i < list.length; i += 1) {
-    if (list[i] && list[i].state === 'molten') return true;
+    var at = list[i];
+    if (!at || at.state !== 'molten') continue;
+    var dx = at.x - p.x;
+    var dy = at.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
   }
   return false;
 }
