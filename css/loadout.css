@@ -254,6 +254,9 @@
   .loadout-codex {
     transition: none;
   }
+  .bounty-action-btn.is-claimable {
+    animation: none !important;
+  }
 }
 
 html.reduced-motion .loadout-card,
@@ -1086,4 +1089,8 @@ html.reduced-motion .cosmetic-card {
   font-weight: 800;
   padding: 4px 10px;
   border-radius: 3px;
+}
+
+html.reduced-motion .bounty-action-btn.is-claimable {
+  animation: none !important;
 }
