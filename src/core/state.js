@@ -96,7 +96,7 @@ export function makeState(width, height) {
     over: false,
     level: 1,
     xp: 0,
-    xpNext: 80,
+    xpNext: 55,
     score: 0,
     combo: 0,
     comboTimer: 0,

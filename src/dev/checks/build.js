@@ -81,13 +81,13 @@ export function run() {
       xpSum += threshold;
       threshold = nextXpThreshold(threshold);
     }
-    assert(xpSum === 1324, 'six-card XP curve should be 1324, got ' + xpSum);
+    assert(xpSum === 1060, 'six-card XP curve should be 1060, got ' + xpSum);
 
     state.level = 1;
     state.xp = 0;
     state.xpNext = 100;
     syncXpCurve(state);
-    assert(state.xpNext === 80, 'legacy first threshold migrates to 80');
+    assert(state.xpNext === 55, 'legacy first threshold migrates to 55');
 
     var legacy = ['rapid-fire', 'scatter-shot', 'heavy-plating', 'overdrive-injector', 'magnet-core', 'hot-load', 'rail-slug', 'ricochet', 'shockwave-dash', 'tesla-coil', 'reactive-armor', 'high-caliber'];
     legacy.forEach(function (id) { assert(findUpgrade(id), 'missing legacy card ' + id); });

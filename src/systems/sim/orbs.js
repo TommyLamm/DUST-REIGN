@@ -61,7 +61,9 @@ function applyCrate(orb, p) {
 export function stepOrbs(dt, frame) {
   resolveConvoyHits();
   var p = frame.p;
+  // Early-run magnet bump until first upgrade so scrap to level 2 is easier to vacuum.
   var magnetReach = p.magnetRadius || 165;
+  if ((rt.state.level || 1) <= 1) magnetReach += 40;
   for (var oi = rt.state.orbs.length - 1; oi >= 0; oi -= 1) {
     var orb = rt.state.orbs[oi];
     var crate = isCrate(orb);

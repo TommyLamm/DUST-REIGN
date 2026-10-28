@@ -19,7 +19,7 @@ import { addScore } from './scoring.js';
 import { logEvent, updateDomUi } from '../ui/hud.js';
 import { presentUpgradePick, renderUpgradePanel } from '../ui/upgrade-panel.js';
 
-export var XP_START = 80;
+export var XP_START = 55;
 
 export function nextXpThreshold(current) {
   return Math.round(current * 1.22 + 24);
@@ -27,7 +27,7 @@ export function nextXpThreshold(current) {
 
 export function syncXpCurve(state) {
   if (!state) return;
-  if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && state.xpNext === 100) state.xpNext = XP_START;
+  if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && (state.xpNext === 100 || state.xpNext === 80)) state.xpNext = XP_START;
   if (state.player && !state.player.resonances) evaluateArchetypes(state, true);
 }
 
