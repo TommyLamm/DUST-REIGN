@@ -154,7 +154,10 @@ export function stepEnemyBullets(dt, frame) {
         var bulletDmg = eb.damage;
         // Live boss arenas throttle elite spawns; residual pre-boss elites still
         // a top wipe cause — chip softer while a boss hull is up.
-        if (rt.state.boss && rt.state.boss.hp > 0 && bulletSrc === 'bullet:elite') {
+        var sovWave = (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0);
+        if (sovWave && bulletSrc === 'bullet:elite') {
+          bulletDmg = Math.max(1, Math.round(bulletDmg * 0.12));
+        } else if (rt.state.boss && rt.state.boss.hp > 0 && bulletSrc === 'bullet:elite') {
           bulletDmg = Math.max(1, Math.round(bulletDmg * 0.28));
         }
         var bulletHit = damagePlayer(bulletDmg, bulletSrc, eb.x, eb.y);
