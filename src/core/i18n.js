@@ -836,24 +836,24 @@ var ACHIEVEMENTS_I18N = {
 };
 
 var ENEMIES_I18N = {
-  crawler: { zh: '爬行者', en: 'CRAWLER' },
-  rusher: { zh: '疾衝者', en: 'RUSHER' },
-  brute: { zh: '蠻卒', en: 'BRUTE' },
-  artillery: { zh: '火砲者', en: 'ARTILLERY' },
-  elite: { zh: '菁英體', en: 'ELITE' },
-  spitter: { zh: '噴吐者', en: 'SPITTER' },
-  scurrier: { zh: '疾走幼體', en: 'SCURRIER' },
-  warden: { zh: '守衛者', en: 'WARDEN' },
-  burrower: { zh: '潛伏者', en: 'BURROWER' },
-  titan: { zh: '泰坦', en: 'TITAN' },
-  dreadnought: { zh: '無畏巨艦', en: 'DREADNOUGHT' },
-  sovereign: { zh: '風暴主宰', en: 'STORM SOVEREIGN' },
-  stormTower: { zh: '風暴尖塔', en: 'STORM TOWER' },
-  mine: { zh: '懸浮地雷', en: 'MINE' },
-  prowler: { zh: '潛行者', en: 'PROWLER' },
-  bulwark: { zh: '堡壘體', en: 'BULWARK' },
-  behemoth: { zh: '巨獸', en: 'BEHEMOTH' },
-  spire: { zh: '傳導尖塔', en: 'CONDUCTION SPIRE' }
+  crawler: { zh: '爬行者', en: 'CRAWLER', blurb: { zh: "近距蜂群單位，以數量壓迫走位", en: "Close swarm unit that crowds your kite path" } },
+  rusher: { zh: '疾衝者', en: 'RUSHER', blurb: { zh: "高速直線衝撞，逼出精準閃避", en: "High-speed linear charge that forces precise dashes" } },
+  brute: { zh: '蠻卒', en: 'BRUTE', blurb: { zh: "厚甲近戰壓制，威脅機體護甲", en: "Armored melee pressure that taxes hull integrity" } },
+  artillery: { zh: '火砲者', en: 'ARTILLERY', blurb: { zh: "遠距拋射火力，需優先壓制", en: "Long-range lobbed fire that demands priority focus" } },
+  elite: { zh: '菁英體', en: 'ELITE', blurb: { zh: "強化詞綴個體，掉落更豐", en: "Affixed elite specimen with richer drops" } },
+  spitter: { zh: '噴吐者', en: 'SPITTER', blurb: { zh: "噴射酸液或投射物封鎖路徑", en: "Spits acid or projectiles to gate lanes" } },
+  scurrier: { zh: '疾走幼體', en: 'SCURRIER', blurb: { zh: "輕型高速幼體，常成群纏鬥", en: "Light fastlings that swarm and cling" } },
+  warden: { zh: '守衛者', en: 'WARDEN', blurb: { zh: "護盾支援單位，保護友軍", en: "Shield support that bubbles allies" } },
+  burrower: { zh: '潛伏者', en: 'BURROWER', blurb: { zh: "潛地接近後突然冒出", en: "Burrows then erupts into melee range" } },
+  titan: { zh: '泰坦', en: 'TITAN', blurb: { zh: "戰役級巨型首領，多階段威脅", en: "Campaign-scale titan with multi-phase threat" } },
+  dreadnought: { zh: '無畏巨艦', en: 'DREADNOUGHT', blurb: { zh: "重裝要塞型首領，依賴弱點窗", en: "Fortress dreadnought that hinges on weak windows" } },
+  sovereign: { zh: '風暴主宰', en: 'STORM SOVEREIGN', blurb: { zh: "風暴主宰，掌控尖塔與天火", en: "Storm sovereign commanding spires and skyfire" } },
+  stormTower: { zh: '風暴尖塔', en: 'STORM TOWER', blurb: { zh: "固定風暴尖塔，構築電場", en: "Fixed storm tower that builds the kill-field" } },
+  mine: { zh: '懸浮地雷', en: 'MINE', blurb: { zh: "懸浮地雷，靠近即引爆", en: "Hover mine that detonates on proximity" } },
+  prowler: { zh: '潛行者', en: 'PROWLER', blurb: { zh: "側翼潛行襲擊者", en: "Flanking stalker that strikes from the side" } },
+  bulwark: { zh: '堡壘體', en: 'BULWARK', blurb: { zh: "前線壁壘，阻擋彈道", en: "Frontline bulwark that blocks shot lanes" } },
+  behemoth: { zh: '巨獸', en: 'BEHEMOTH', blurb: { zh: "超重型碾壓單位", en: "Ultra-heavy crushing chassis" } },
+  spire: { zh: '傳導尖塔', en: 'CONDUCTION SPIRE', blurb: { zh: "傳導尖塔，連線強化怪潮", en: "Conduction spire that links and buffs the pack" } }
 };
 
 var RANKS_I18N = {
@@ -1214,6 +1214,12 @@ export function tEnemyName(id) {
   var item = ENEMIES_I18N[id];
   if (item) return currentLang === 'zh' ? item.zh : item.en;
   return String(id || '').toUpperCase();
+}
+
+export function tEnemyBlurb(id) {
+  var item = ENEMIES_I18N[id];
+  if (item && item.blurb) return currentLang === 'zh' ? item.blurb.zh : item.blurb.en;
+  return '';
 }
 
 export function tRankTitle(title) {
