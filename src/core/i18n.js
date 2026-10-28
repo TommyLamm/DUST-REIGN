@@ -1402,6 +1402,7 @@ export function tTip(id, kind) {
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     if (id === 'scurrier') return 'SCURRIER ARMING · KILL OR FLEE BEFORE THE POP — DO NOT DASH INTO THE BLAST';
     if (id === 'rusher-charge') return 'ORANGE CHARGE LANE = RUSHER BURST · SIDE-STEP OFF THE LINE BEFORE IT FIRES';
+    if (id === 'brute') return 'BRUTE IS HEAVY CONTACT DAMAGE · KEEP RANGE AND STRAFE — DO NOT TRADE HULL';
     if (id === 'elite-weave') return 'ELITE ROUNDS TRACK HARD · STRAFE AND PRIORITIZE THEM BEFORE THE PACK';
     if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
     if (id === 'molten') return 'ORANGE POOLS ARE MOLTEN SLAG · DREAD LEAVES THEM ON CHARGE — STEP OUT';
@@ -1441,6 +1442,7 @@ export function tTip(id, kind) {
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   if (id === 'scurrier') return '疾走幼體正在引爆 · 擊殺或逃離，別衝進爆炸';
   if (id === 'rusher-charge') return '橘色衝刺走廊＝疾衝者蓄力 · 開火前側移離開那條線';
+  if (id === 'brute') return '蠻卒近戰碰撞傷害很高 · 保持距離側移風箏 — 別硬換血';
   if (id === 'elite-weave') return '菁英彈道難躲 · 側移並優先清掉菁英再打群';
   if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
   if (id === 'molten') return '橘色熔渣池是無畏衝刺殘留 · 快離開以免持續灼傷';
@@ -1715,7 +1717,7 @@ export function syncStaticHtml(lang) {
     var upgTitle = document.getElementById('upgradeTitle');
     if (upgTitle) upgTitle.innerHTML = zh ? '強化機體，<span>兇悍進化。</span>' : 'MAKE THE RIG <span>MEANER.</span>';
     var upgHint = upgPanel.querySelector('.upgrade-hint');
-    if (upgHint) upgHint.textContent = zh ? '戰鬥已暫停 — 挑選 1 張卡片 (或按 1–3)' : 'COMBAT PAUSED — PICK 1 CARD (OR PRESS 1–3)';
+    if (upgHint) upgHint.textContent = zh ? '戰鬥已暫停 — 按 1–3 挑選 · R 重骰 · B 放逐 · X 跳過' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP';
     var upgCountSpan = upgPanel.querySelector('.upgrade-count span');
     if (upgCountSpan) upgCountSpan.textContent = zh ? '決策窗口' : 'DECISION WINDOW';
     setTextById('upgradeTimer', zh ? '戰鬥已暫停 — 挑選一張' : 'COMBAT PAUSED — PICK ONE');
@@ -1785,7 +1787,7 @@ export function syncStaticHtml(lang) {
       matrixHead[2].textContent = zh ? '手把' : 'GAMEPAD';
     }
     var matrixRows = pauseModal.querySelectorAll('.controls-matrix-row');
-    if (matrixRows && matrixRows.length >= 8) {
+    if (matrixRows && matrixRows.length >= 11) {
       var r0 = matrixRows[0].querySelectorAll('span');
       if (r0.length >= 3) { r0[0].textContent = zh ? '移動機體' : 'MOVE RIG'; r0[1].textContent = zh ? 'W A S D / 方向鍵' : 'W A S D / ARROWS'; r0[2].textContent = zh ? '左搖桿 / 十字鍵' : 'L-STICK / D-PAD'; }
       var r1 = matrixRows[1].querySelectorAll('span');
@@ -1801,7 +1803,13 @@ export function syncStaticHtml(lang) {
       var r5 = matrixRows[6].querySelectorAll('span');
       if (r5.length >= 3) { r5[0].textContent = zh ? '暫停 / 繼續' : 'PAUSE / RESUME'; r5[1].textContent = 'ESC / P'; r5[2].textContent = zh ? 'START / 選單鍵' : 'START / MENU'; }
       var r6 = matrixRows[7].querySelectorAll('span');
-      if (r6.length >= 3) { r6[0].textContent = zh ? '選擇強化' : 'SELECT UPGRADE'; r6[1].textContent = zh ? '數字鍵 1, 2, 3' : 'KEYS 1, 2, 3'; r6[2].textContent = 'X / Y / B (OR A)'; }
+      if (r6.length >= 3) { r6[0].textContent = zh ? '選擇強化' : 'SELECT UPGRADE'; r6[1].textContent = zh ? '數字鍵 1, 2, 3' : 'KEYS 1, 2, 3'; r6[2].textContent = zh ? '十字鍵／搖桿 · A 確認' : 'D-PAD / STICK · A CONFIRM'; }
+      var r7 = matrixRows[8].querySelectorAll('span');
+      if (r7.length >= 3) { r7[0].textContent = zh ? '重骰卡片' : 'REROLL CARDS'; r7[1].textContent = 'R'; r7[2].textContent = zh ? 'X 鍵' : 'X BUTTON'; }
+      var r8 = matrixRows[9].querySelectorAll('span');
+      if (r8.length >= 3) { r8[0].textContent = zh ? '放逐卡片' : 'BANISH CARD'; r8[1].textContent = 'B'; r8[2].textContent = zh ? 'Y 鍵' : 'Y BUTTON'; }
+      var r9 = matrixRows[10].querySelectorAll('span');
+      if (r9.length >= 3) { r9[0].textContent = zh ? '跳過強化' : 'SKIP UPGRADE'; r9[1].textContent = 'X'; r9[2].textContent = zh ? 'B 鍵' : 'B BUTTON'; }
     }
 
     var resumeSpan = pauseModal.querySelector('#pauseResumeBtn span');
