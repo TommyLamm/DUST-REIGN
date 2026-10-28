@@ -259,7 +259,7 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Cap big-world charge travel so armor-break duty cycle stays dense (was 860/1000).
-  e.chargeMaxDist = e.bossPhase >= 3 ? 720 : 620; // slight shrink — cut ultra-slow charge stalls
+  e.chargeMaxDist = e.bossPhase >= 3 ? 820 : 700; // restore — short charge overshot fast/p50
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;

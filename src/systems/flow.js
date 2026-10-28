@@ -254,7 +254,12 @@ export function triggerGameOver(options) {
       var nonElite = rt.state.lastNonEliteDamageSource || '';
       var muteElite = ((rt.state.wave | 0) >= 14);
       if (muteElite && (sticky === 'bullet:elite' || sticky === 'contact:elite')) {
-        rt.state.deathCause = nonElite || 'unknown';
+        var recent = rt.state.recentDamageSources || [];
+        var fromRecent = '';
+        for (var ri = recent.length - 1; ri >= 0; ri -= 1) {
+          if (recent[ri] && recent[ri] !== 'bullet:elite' && recent[ri] !== 'contact:elite') { fromRecent = recent[ri]; break; }
+        }
+        rt.state.deathCause = nonElite || fromRecent || 'unknown';
       } else {
         rt.state.deathCause = sticky || nonElite || 'unknown';
       }
