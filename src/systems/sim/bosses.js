@@ -218,24 +218,25 @@ function ensureChargeLaneCrag(e, p, frame) {
   if (!rt.state || !e || !p) return;
   if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
   var list = rt.state.monolithCrags;
-  // Every-telegraph lane bait made armor-break nearly constant (p50 ~23–28s).
-  // Only plant when the ring is sparse so players still get a readable bait, not a free stun.
+  // One teaching bait per Dread fight — continuous lane replants fed 14–23s deletes.
+  if (e._laneBaitUsed) return;
   var alive = 0;
   var i;
   for (i = 0; i < list.length; i += 1) {
     if (list[i] && list[i].active) alive += 1;
   }
-  if (alive >= 2) return;
+  if (alive > 0) return;
   var box = boxOf(frame);
   var ang = Math.atan2(p.y - e.y, p.x - e.x);
   var cragR = 45;
-  var dist = 560;
+  var dist = 620;
   var px = clamp(e.x + Math.cos(ang) * dist, cragR + 25, box.w - cragR - 25);
   var py = clamp(e.y + Math.sin(ang) * dist, cragR + 25, box.h - cragR - 25);
   for (i = 0; i < list.length; i += 1) {
     var c = list[i];
     if (c && c.active && Math.hypot(c.x - px, c.y - py) < 140) return;
   }
+  e._laneBaitUsed = true;
   list.push({
     id: 'crag_lane_' + Math.floor(rt.state.waveTime || 0),
     x: px,
@@ -336,11 +337,11 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           triggerHaptic([60, 50, 100]);
           logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
           rt.state.banner = 2.5;
-          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN';
+          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 2.4s · ALL SIDES OPEN';
           e.mode = 'stun';
-          e.stunT = 3.2; // 3.2s forced armor-break stun
-          e.empTimer = Math.max(e.empTimer || 0, 3.2);
-          e.armorBreakTimer = 3.2;
+          e.stunT = 2.4; // crag bait: shorter than wall slam so lane hits are not free deletes
+          e.empTimer = Math.max(e.empTimer || 0, 2.4);
+          e.armorBreakTimer = 2.4;
           fireRing(e);
           return { handled: true, vx: 0, vy: 0 };
         }
