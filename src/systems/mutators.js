@@ -76,8 +76,8 @@ function fireBarrage(frame) {
       x: x,
       y: y,
       r: 46,
-      timer: 1.2,
-      maxTimer: 1.2,
+      timer: 1.55,
+      maxTimer: 1.55,
       wave: rt.state.wave || 1,
       state: 'warning',
       damageTickTimer: 0

@@ -531,8 +531,8 @@ export function fireArtillery(e) {
     x: targetX,
     y: targetY,
     r: 46,
-    timer: 1.2,
-    maxTimer: 1.2,
+    timer: 1.55,
+    maxTimer: 1.55,
     wave: rt.state.wave,
     state: 'warning',
     damageTickTimer: 0
