@@ -559,20 +559,26 @@ function simulate(game, opts) {
         });
       });
     }
+    // Prefer the live rt.state — update() may have written lastDamageSource on it.
+    state = game.rt.state || state;
     var hits = classifyHits(frameEvents, state.hurtFlash || 0);
     var hpAfter = state.player ? state.player.hp : hpBefore;
     var lost = hpBefore > hpAfter ? hpBefore - hpAfter : 0;
-    var blamed = hits.length ? hits[hits.length - 1] : (lost > 0 ? 'unknown' : '');
-    for (var h = 0; h < hits.length; h += 1) {
-      addDamage(tracker.damage, hits[h], 1, h === hits.length - 1 ? lost : 0);
+    var tagged = state.lastDamageSource || '';
+    var blamed = tagged || (hits.length ? hits[hits.length - 1] : (lost > 0 ? 'unknown' : ''));
+    if (lost > 0 && tagged) {
+      addDamage(tracker.damage, tagged, Math.max(1, hits.length), lost);
+    } else {
+      for (var h = 0; h < hits.length; h += 1) {
+        addDamage(tracker.damage, hits[h], 1, h === hits.length - 1 ? lost : 0);
+      }
+      if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
     }
-    if (!hits.length && lost > 0) addDamage(tracker.damage, 'unknown', 0, lost);
-    if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = state.lastDamageSource || blamed || 'unknown';
+    if ((state.over || hpAfter <= 0) && !tracker.lethal) tracker.lethal = tagged || blamed || 'unknown';
     syncEnemies(tracker, state, simTime, true);
     noteContract(tracker, state);
     noteWave(tracker, state, simTime);
     noteLevel(tracker, state, simTime);
-    state = game.rt.state || state;
   }
 
   if (outcome === 'death' && state.extracted) outcome = 'extract';
@@ -586,6 +592,19 @@ function simulate(game, opts) {
   noteLevel(tracker, state, simTime);
   var waveReached = state.wave || 1;
   if (outcome === 'wave-cap' && opts.waves > 0) waveReached = opts.waves;
+  if (outcome === 'death' && (!tracker.lethal || tracker.lethal === 'unknown')) {
+    var topSource = '';
+    var topHp = 0;
+    var dmgKeys = Object.keys(tracker.damage || {});
+    for (var di = 0; di < dmgKeys.length; di += 1) {
+      var row = tracker.damage[dmgKeys[di]];
+      if (row && row.hp > topHp && dmgKeys[di] !== 'unknown') {
+        topHp = row.hp;
+        topSource = dmgKeys[di];
+      }
+    }
+    if (topSource) tracker.lethal = topSource;
+  }
   var deathCause = outcome === 'death' ? (tracker.lethal || 'unknown') : outcome;
   if (outcome === 'extract') deathCause = 'extract';
   if (tracker.contractCur) {
