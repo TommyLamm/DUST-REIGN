@@ -52,8 +52,8 @@ function detonateAcid(eb) {
     x: eb.targetX,
     y: eb.targetY,
     r: 38,
-    timer: 3,
-    maxTimer: 3,
+    timer: 2.4,
+    maxTimer: 2.4,
     tick: 0
   });
   var p = rt.state.player;

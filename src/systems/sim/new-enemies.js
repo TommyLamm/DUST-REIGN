@@ -203,7 +203,7 @@ function stepAcidPools(dt, frame) {
     pool.tick = (pool.tick || 0) + dt;
     if (pool.tick >= 0.5) {
       pool.tick -= 0.5;
-      var hit = damagePlayer(6, 'acid');
+      var hit = damagePlayer(4, 'acid');
       if (hit > 0) {
         p.invulnerable = 0.12;
         AudioFX.hurt();
@@ -344,7 +344,7 @@ function spitAcid(e, frame) {
     targetX: tx,
     targetY: ty,
     age: 0,
-    flight: 0.7,
+    flight: 0.9,
     arc: 42,
     vx: 0,
     vy: 0,
