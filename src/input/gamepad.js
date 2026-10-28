@@ -143,6 +143,13 @@ function pollGamepadInner(dt) {
     return;
   }
 
+  // Route / extract / armory interludes: panel owns pad nav; block combat binds.
+  if (rt.state.interlude) {
+    releaseGamepadFire();
+    for (var ili = 0; ili < buttons.length; ili += 1) rt.gamepadState.prevButtons[ili] = isBtnPressed(buttons[ili]);
+    return;
+  }
+
   // Pause Toggle / Navigation. D-pad stays on tabs here; in play it moves.
   if (rt.state.paused) {
     releaseGamepadFire();
