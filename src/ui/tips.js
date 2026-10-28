@@ -163,6 +163,22 @@ function enemyOfKind(kind) {
   return false;
 }
 
+function enemyNearKind(kind, px) {
+  var p = rt.state && rt.state.player;
+  var list = rt.state && rt.state.enemies;
+  if (!p || !list) return false;
+  var lim = (px || 220) * (px || 220);
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || e.kind !== kind || !(e.hp > 0)) continue;
+    var dx = e.x - p.x;
+    var dy = e.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function scurrierArmingNear() {
   var list = rt.state && rt.state.enemies;
   if (!list) return false;
