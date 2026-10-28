@@ -32,7 +32,7 @@ DUST//REIGN 是純瀏覽器 Canvas 2D roguelike 射擊遊戲，以原生 ES Modu
 | `src/core/spatial-grid.js` | 55px 單元格 2D 空間雜湊網格（Spatial Hash Grid，以 $64 \times 48$ 單元格零分配無縫覆蓋 $3520 \times 2640$ 大世界，提供 `initSpatialGrid` 動態重配置接口與大世界尺寸優先邊界夾持），以 TypedArray 達成 0-GC 執行期廣域碰撞篩選，提供 zero-allocation 提前終止回調（`queryGridCallback`）供酸池、焦痕與爆炸危害查詢。 |
 | `src/core/pools.js`、`src/core/utils.js` | 模擬側彈殼、焦痕與粒子池，Swap-and-Pop 實體快速移除（`fastUnorderedRemove`），平方距離計算（`dist2`），以及共用工具與事件註冊。 |
 | `src/core/settings.js` | 觸覺、無障礙與畫質偏好，以及舊版最高分的唯讀相容。 |
-| `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。 |
+| `src/core/i18n.js` | 多語言本地化（英文與繁體中文）、靜態 DOM 文本同步、字典與動態字串轉換。HOLD／凍結說明見 `docs/I18N-FREEZE.md`。 |
 | `src/core/meta-store.js`、`src/core/cloud-save.js` | 局外存檔、v2 最高分、每日成績、提示紀錄、闖關模式（`dust-reign:campaign:v1`）與極限作戰（`dust-reign:hardcore:v1`）的 `localStorage` 入口，以及全進度 Unified Save 與雲端存檔智慧合併。 |
 | `src/core/fx-events.js` | sim 呼叫 `pushFxEvent`、render 呼叫 `drainFxEvents` 的視覺事件環形佇列；不影響玩法。 |
 | `src/input/` | 鍵盤、滑鼠事件、解耦座標追蹤（避免同步 layout 查詢）與每幀手把輪詢。 |
