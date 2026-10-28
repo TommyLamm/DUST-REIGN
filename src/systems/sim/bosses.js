@@ -259,7 +259,7 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Cap big-world charge travel so armor-break duty cycle stays dense (was 860/1000).
-  e.chargeMaxDist = e.bossPhase >= 3 ? 820 : 700;
+  e.chargeMaxDist = e.bossPhase >= 3 ? 660 : 560;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
@@ -272,11 +272,11 @@ function endCharge(e, frame) {
   if (e.bossPhase >= 2) dropMines(e);
   e.chargesQueued = (e.chargesQueued || 1) - 1;
   if (e.chargesQueued > 0) {
-    // Mid-ram breach beat for slow tails; kept short so denser duty does not delete.
+    // Mid-ram breach: shorter window so fast deletes do not snowball (slow already OK).
     e.mode = 'stun';
-    e.stunT = 0.55;
-    e.empTimer = Math.max(e.empTimer || 0, 0.55);
-    e.armorBreakTimer = 0.55;
+    e.stunT = 0.40;
+    e.empTimer = Math.max(e.empTimer || 0, 0.40);
+    e.armorBreakTimer = 0.40;
     e._dreadMidCombo = true;
     rt.state.shake = Math.max(rt.state.shake, 6);
     if (rt.state) {
@@ -395,7 +395,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     if (e.stunT <= 0) {
       if (e._dreadMidCombo && (e.chargesQueued || 0) > 0) {
         e._dreadMidCombo = false;
-        startTelegraph(e, p, 0.55);
+        startTelegraph(e, p, 0.70);
         return { dx: 0, dy: 1, d: 1, speed: 0 };
       }
       e._dreadMidCombo = false;
