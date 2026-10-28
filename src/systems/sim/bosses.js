@@ -67,7 +67,7 @@ function fireFlak(e, angle, speed, damage) {
     vy: Math.sin(angle) * shot.speed,
     r: 5.2,
     damage: shot.damage,
-    life: 2.8,
+    life: 3.3,
     glow: true,
     color: '#ff8a3d',
     glowColor: '#ff5a2a'
