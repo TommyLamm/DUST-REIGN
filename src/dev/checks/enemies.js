@@ -230,7 +230,7 @@ export function run() {
     rt.state.recipe = { wave: 5, hpScale: 1, dmgScale: 1, bulletScale: 1, boss: 'titan' };
     var titanBoss = spawnBoss('titan');
     assert(titanBoss.kind === 'titan' && titanBoss.isBoss && titanBoss.hp === 7600, 'spawnBoss titan failed');
-    assert(titanBoss.leftCannonHp === Math.round(7600 * 0.22), 'titan parts were not 22% hp');
+    assert(titanBoss.leftCannonHp === Math.round(7600 * 0.28), 'titan parts were not 28% hp');
 
     rt.state.over = false;
     rt.state.bossSpawned = true;

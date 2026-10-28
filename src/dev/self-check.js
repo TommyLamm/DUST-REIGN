@@ -684,7 +684,7 @@ export function selfCheck() {
     spawnTitan();
     var spawnedTitan = test.enemies[0];
     var titanHull = spawnedTitan.maxHp;
-    var titanPart = Math.round(titanHull * 0.22);
+    var titanPart = Math.round(titanHull * 0.28);
     var titanComponentsExistOk = Boolean(spawnedTitan &&
       spawnedTitan.leftCannonHp === titanPart &&
       spawnedTitan.leftCannonMaxHp === spawnedTitan.leftCannonHp &&

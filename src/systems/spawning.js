@@ -368,10 +368,10 @@ export function ensureScriptedBoss() {
 function createTitan(boundW) {
   var stats = enemyProfile('titan', rt.state.wave, currentRecipe());
   var titanHp = stats.hp;
-  var leftPartHp = Math.round(titanHp * 0.22);
-  var rightPartHp = Math.round(titanHp * 0.22);
-  var radiatorPartHp = Math.round(titanHp * 0.18);
-  var treadPartHp = Math.round(titanHp * 0.20);
+  var leftPartHp = Math.round(titanHp * 0.28);
+  var rightPartHp = Math.round(titanHp * 0.28);
+  var radiatorPartHp = Math.round(titanHp * 0.24);
+  var treadPartHp = Math.round(titanHp * 0.26);
 
   return {
     kind: 'titan',
