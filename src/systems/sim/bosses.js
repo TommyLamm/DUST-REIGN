@@ -263,7 +263,7 @@ function beginCharge(e) {
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
-  e.chargeDamage = scaledShot(18, 520, true).damage;
+  e.chargeDamage = scaledShot(12, 520, true).damage;
 }
 
 function endCharge(e, frame) {
@@ -381,7 +381,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     return { handled: true, vx: Math.cos(e.aim) * e.chargeSpeed, vy: Math.sin(e.aim) * e.chargeSpeed };
   }
 
-  e.damage = Math.round(34 * dmgScale());
+  e.damage = Math.round(22 * dmgScale()); // soft contact — dread×4 deaths post-#196
 
   if (e.mode === 'telegraph') {
     e.telegraphT -= dt;

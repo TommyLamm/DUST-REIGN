@@ -293,11 +293,19 @@ export function stepEnemies(dt, frame) {
         firstTitan = beaten.indexOf('titan') === -1 && (rt.state.wave || 1) <= 5;
         if (firstTitan) contactDmg = Math.max(1, Math.min(Math.round(contactDmg * 0.55), 14));
       }
-      if (e.kind === 'elite' && ((rt.state.wave | 0) >= 15)) contactDmg = 1;
+      // Wave 14+ / sovereign: never apply elite contact (damagePlayer deny alone still leaked attribution).
+      var eliteMute = (e.kind === 'elite') && (((rt.state.wave | 0) >= 14) || (rt.state.recipe && rt.state.recipe.boss === 'sovereign'));
+      if (eliteMute) {
+        e.touchCooldown = 0.85;
+        continue;
+      }
+      if (e.kind === 'dreadnought' || e.kind === 'sovereign') {
+        contactDmg = Math.max(1, Math.round(contactDmg * 0.55));
+      }
       var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
-      e.touchCooldown = firstTitan ? 1.15 : 0.85;
+      e.touchCooldown = firstTitan ? 1.15 : (e.kind === 'dreadnought' ? 1.05 : 0.85);
       if (touched > 0) {
-        p.invulnerable = playerEdge.pressed ? 1.05 : 0.7;
+        p.invulnerable = playerEdge.pressed ? 1.05 : (e.kind === 'dreadnought' ? 1.0 : 0.7);
         if (playerEdge.pressed) {
           shoveEnemyOffEdge(e, playerEdge, 34, boundW, boundH, true);
           p.x = clamp(p.x + playerEdge.nx * 16, p.r, boundW - p.r);
