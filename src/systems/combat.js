@@ -359,6 +359,22 @@ export function damageEnemy(e, amount, info) {
   return applied;
 }
 
+function maybeBossWaveClearBounty(e) {
+  if (!rt.state || !e) return;
+  if (!(rt.state.boss && rt.state.boss.hp > 0)) return;
+  if (e.isBoss || e.kind === 'titan' || e.kind === 'dreadnought' || e.kind === 'sovereign') return;
+  var isPriority = e.kind === 'elite' || e.kind === 'artillery' || e.kind === 'warden' || e.kind === 'spitter';
+  if (!isPriority) return;
+  var scrap = e.kind === 'elite' ? 18 : 10;
+  var style = e.kind === 'elite' ? 40 : 20;
+  rt.state.totalScrapCollected = (rt.state.totalScrapCollected || 0) + scrap;
+  if (rt.state.scoreBreakdown) {
+    rt.state.scoreBreakdown.style = (rt.state.scoreBreakdown.style || 0) + style;
+  }
+  rt.state.score = (rt.state.score || 0) + style;
+  logEvent('BOSS-WAVE CLEAR // +' + scrap + ' SCRAP');
+}
+
 function processEnemyDrops(e) {
   if (!canDropLoot(e)) return;
   var orbs = rt.state.orbs;
