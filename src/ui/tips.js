@@ -97,6 +97,7 @@ function tipText(id) {
   else if (id === 'meteor-fall') copyId = 'meteor';
   else if (id === 'warden-shield') copyId = 'warden-bubble';
   else if (id === 'elite-rounds') copyId = 'elite-weave';
+  else if (id === 'artillery-mark') copyId = 'artillery-lob';
   return tTip(copyId, inputKind());
 }
 
@@ -284,6 +285,22 @@ function wardenShieldActive() {
   return false;
 }
 
+function artilleryMarkNear() {
+  var list = rt.state && rt.state.artilleryTargets;
+  var p = rt.state && rt.state.player;
+  if (!list || !p || !list.length) return false;
+  var lim = 240 * 240;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var at = list[i];
+    if (!at || at.state === 'molten') continue;
+    var dx = at.x - p.x;
+    var dy = at.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function eliteRoundsNear() {
   var p = rt.state && rt.state.player;
   var bullets = rt.state && rt.state.enemyBullets;
@@ -400,7 +417,10 @@ function scanTriggers() {
   else if ((rt.state.wave || 1) >= 7 && enemyOfKind('scurrier')) offer('scurrier');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 10 && rusherChargeNear()) offerUrgent('rusher-charge');
   if ((rt.state.wave || 1) >= 1 && (rt.state.wave || 1) <= 8 && bruteNear()) offer('brute');
-  if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
+  if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8) {
+    if (artilleryMarkNear()) offerUrgent('artillery-mark');
+    else if (enemyNearKind('artillery', 280) || enemyOfKind('artillery')) offer('artillery-lob');
+  }
   if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offerUrgent('mine-arming');
   else if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && !(rt.state.boss && rt.state.boss.hp > 0)) {
