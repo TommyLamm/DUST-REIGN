@@ -1107,6 +1107,8 @@ export function tTip(id, kind) {
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
+    if (id === 'scurrier') return 'SCURRIER ARMING · KILL OR FLEE BEFORE THE POP — DO NOT DASH INTO THE BLAST';
+    if (id === 'elite-weave') return 'ELITE ROUNDS TRACK HARD · STRAFE AND PRIORITIZE THEM BEFORE THE PACK';
     if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
     if (id === 'molten') return 'ORANGE POOLS ARE MOLTEN SLAG · DREAD LEAVES THEM ON CHARGE — STEP OUT';
     if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
@@ -1135,6 +1137,8 @@ export function tTip(id, kind) {
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
+  if (id === 'scurrier') return '疾走幼體正在引爆 · 擊殺或逃離，別衝進爆炸';
+  if (id === 'elite-weave') return '菁英彈道難躲 · 側移並優先清掉菁英再打群';
   if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
   if (id === 'molten') return '橘色熔渣池是無畏衝刺殘留 · 快離開以免持續灼傷';
   if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';

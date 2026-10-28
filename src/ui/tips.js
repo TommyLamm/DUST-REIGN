@@ -163,6 +163,17 @@ function enemyOfKind(kind) {
   return false;
 }
 
+function scurrierArmingNear() {
+  var list = rt.state && rt.state.enemies;
+  if (!list) return false;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (e && e.kind === 'scurrier' && e.arming && e.hp > 0) return true;
+  }
+  return false;
+}
+
 function acidHazardNear() {
   var pools = rt.state && rt.state.acidPools;
   if (pools && pools.length) return true;
@@ -232,7 +243,9 @@ function scanTriggers() {
   if (rt.state.contract) offer('contract');
   if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
+  if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
   if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
+  if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyOfKind('elite') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offer('molten');
   if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
