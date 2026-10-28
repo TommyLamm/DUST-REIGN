@@ -1018,7 +1018,8 @@ export function tStatus(text) {
   if (text === 'SIGNAL LIVE — KEEP MOVING') return '訊號連線 — 保持移動';
   if (text === 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME') return '戰鬥已暫停 — 按 P 或 ESC 繼續';
   if (text === 'SIGNAL LOST — PRESS R TO REDEPLOY') return '訊號中斷 — 按 R 重新部署';
-  if (text === 'SELECT A RIG — PRESS START') return '選擇機體 — 按下開始';
+  if (text === 'SELECT A RIG — PRESS START') return '選擇機體 — 按 ENTER 出擊';
+  if (text === 'SELECT A RIG — PRESS ENTER TO DEPLOY') return '選擇機體 — 按 ENTER 出擊';
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
@@ -1241,7 +1242,7 @@ export function syncStaticHtml(lang) {
       ? '甩開漫天塵暴。擊潰潛伏其中的異怪。<br />每一次出擊，都在舊世界的殘骸上刻下新的地圖。'
       : 'Outrun the dust. Outshoot the things that live in it.<br />Every run writes a new map in the bones of the old world.';
     var sBtnSpan = startScreen.querySelector('#startBtn span');
-    if (sBtnSpan) sBtnSpan.textContent = zh ? '踏入塵暴' : 'ENTER THE DUST';
+    if (sBtnSpan) sBtnSpan.textContent = zh ? '出擊' : 'DEPLOY';
     var sControls = startScreen.querySelector('.overlay-foot-controls');
     if (sControls) sControls.textContent = zh
       ? '鍵鼠: WASD + 滑鼠左鍵 / 空白鍵 · 手把: 類比搖桿 + RT / A'
@@ -1338,7 +1339,7 @@ export function syncStaticHtml(lang) {
     // Build Tab Columns
     var buildTitles = pauseModal.querySelectorAll('#panelBuild .build-col-title');
     if (buildTitles && buildTitles.length >= 4) {
-      buildTitles[0].textContent = zh ? '武器機底選擇' : 'WEAPON CHASSIS SELECTION';
+      buildTitles[0].textContent = zh ? '武器機底（出擊中鎖定）' : 'WEAPON CHASSIS (LOCKED MID-RUN)';
       buildTitles[1].textContent = zh ? '核心規格數據' : 'CORE SPECS TELEMETRY';
       buildTitles[2].textContent = zh ? '動態被動特徵' : 'DYNAMIC PASSIVE TRAITS';
       buildTitles[3].innerHTML = zh ? '已安裝改裝晶片 (<span id="installedChipsCount">0</span>)' : 'INSTALLED MOD CHIPS (<span id="installedChipsCount">0</span>)';

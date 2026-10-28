@@ -164,8 +164,10 @@ export function renderBuildInspector() {
       var isActive = btnMode === mode;
       btns[bi].classList.toggle('is-active', isActive);
       btns[bi].disabled = true;
+      btns[bi].hidden = !isActive; // dead mid-run switches: show current chassis only
       btns[bi].setAttribute('aria-pressed', isActive ? 'true' : 'false');
       btns[bi].setAttribute('aria-disabled', 'true');
+      btns[bi].title = zh ? '出擊中鎖定 — 請在出擊配置選武器' : 'Locked mid-run — pick weapon on the loadout screen';
       btns[bi].textContent = zh ? tWeaponName(btnMode) : (btnMode === 'arc-welder' ? 'ARC-WELDER' : btnMode.toUpperCase());
     }
   }
