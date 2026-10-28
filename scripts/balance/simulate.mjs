@@ -592,6 +592,11 @@ function simulate(game, opts) {
     noteLevel(tracker, state, simTime);
   }
 
+  // preferTimeCap: last-frame death at the seconds wall is a soft timeout, not a real kill.
+  if (outcome === 'death' && opts.seconds > 0 && simTime >= opts.seconds - 1e-6) {
+    outcome = 'time-cap';
+    tracker.lethal = '';
+  }
   if (outcome === 'death' && state.extracted) outcome = 'extract';
   if (tracker.waveTimes.length === 0 || tracker.waveTimes[tracker.waveTimes.length - 1].wave !== tracker.wave) {
     tracker.waveTimes.push({
@@ -610,6 +615,19 @@ function simulate(game, opts) {
     else if ((state.deathCause === 'bullet:elite' || state.deathCause === 'contact:elite') && ((state.wave | 0) >= 14)) tracker.lethal = state.lastNonEliteDamageSource || 'unknown';
     else if (state.deathCause) tracker.lethal = state.deathCause;
     else if (state.lastDamageSource && state.lastDamageSource !== 'bullet:elite') tracker.lethal = state.lastDamageSource;
+  }
+  // scrubStaleDread: wave≥15 + dread dead → never keep boss:dreadnought as lethal
+  if (outcome === 'death' && ((state.wave | 0) >= 15) && tracker.lethal && String(tracker.lethal).indexOf('dreadnought') !== -1) {
+    var dreadLive = state.boss && state.boss.kind === 'dreadnought' && state.boss.hp > 0;
+    if (!dreadLive) {
+      var recent2 = (state.recentDamageSources || []).slice();
+      var pick2 = '';
+      for (var r2 = recent2.length - 1; r2 >= 0; r2 -= 1) {
+        if (recent2[r2] && String(recent2[r2]).indexOf('dreadnought') === -1 && recent2[r2] !== 'bullet:elite' && recent2[r2] !== 'contact:elite') { pick2 = recent2[r2]; break; }
+      }
+      tracker.lethal = pick2 || state.lastNonEliteDamageSource || 'unknown';
+      if (String(tracker.lethal).indexOf('dreadnought') !== -1) tracker.lethal = 'unknown';
+    }
   }
   if (outcome === 'death' && (tracker.lethal === 'unknown' || !tracker.lethal)) {
     var recent = (state.recentDamageSources || []).slice();
