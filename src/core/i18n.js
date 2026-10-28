@@ -1579,6 +1579,10 @@ export function tBanner(text) {
     if (rest === '+1 REROLL') rest = '+1 重骰';
     else if (rest.indexOf('REPAIR') === 0) rest = rest.replace('REPAIR', '修復');
     else if (rest.indexOf('+') === 0 && rest.indexOf('SCORE') !== -1) rest = rest.replace('SCORE', '分數');
+    else {
+      var labelMap = { BARRELS: '炸藥桶', CLEAN: '無傷', GRAZE: '擦彈', JUST: '精準衝刺', COMBO: '連擊', ELITES: '菁英', SPIRE: '尖塔' };
+      if (labelMap[rest]) rest = labelMap[rest];
+    }
     return '合約達成 // ' + rest;
   }
   if (text === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';

@@ -1,3 +1,4 @@
+import { tContractLabel, tContractName, tRewardLabel } from '../core/i18n.js';
 import { rt } from '../core/runtime.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
@@ -50,7 +51,8 @@ function finish(c) {
     logEvent('OVERCLOCKED CONTRACT COMPLETED // 3x REWARD + TACTICAL CRATE');
   }
   rt.state.banner = Math.max(rt.state.banner || 0, 1.8);
-  rt.state.bannerText = 'CONTRACT SEALED // ' + (reward.label || c.name || c.id);
+  var sealTag = tRewardLabel(reward) || tContractLabel(c.id) || tContractName(c.id) || reward.label || c.name || c.id;
+  rt.state.bannerText = 'CONTRACT SEALED // ' + sealTag;
 }
 
 function bump(c, amount) {
