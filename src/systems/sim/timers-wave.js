@@ -109,6 +109,7 @@ export function commitWaveAdvance(early) {
   rt.state.coreSpawnTime = 8 + rng('spawn') * 8;
   rt.state.coreSpawned = false;
   rt.state.bossSpawned = false;
+  rt.state.bossDueAt = 5.5 + rng('director') * 3.5; // 5.5–9.0s, less rigid than fixed 8s
   rt.state.recycledTokens = 0;
   rt.state.recycleRefundTimer = 0;
   rt.state.recycleSpentThisWave = 0;
@@ -306,9 +307,14 @@ export function stepWaveClock(dt, frame) {
   var recipe = rt.state.recipe;
   var bossKind = recipe ? recipe.boss : null;
   if (!recipe && (rt.state.wave === 5 || rt.state.wave === 10)) bossKind = 'titan';
-  if (bossKind && rt.state.waveTime >= 8 && !rt.state.bossSpawned) {
-    rt.state.bossSpawned = true;
-    summonBoss(bossKind);
+  if (bossKind && !rt.state.bossSpawned) {
+    var due = (typeof rt.state.bossDueAt === 'number') ? rt.state.bossDueAt : 8;
+    // Also allow an early cue once the field is thin after mid-intro (~5.5s+).
+    var thinField = (rt.state.waveTime || 0) >= 5.5 && (rt.state.enemies || []).length <= 4;
+    if ((rt.state.waveTime || 0) >= due || thinField) {
+      rt.state.bossSpawned = true;
+      summonBoss(bossKind);
+    }
   }
 
   if (rt.state.forceWaveAdvance) {

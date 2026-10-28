@@ -328,7 +328,8 @@ export function ensureScriptedBoss() {
   var recipe = rt.state.recipe;
   var kind = recipe && recipe.boss;
   if (kind !== 'dreadnought' && kind !== 'sovereign') return;
-  if ((rt.state.waveTime || 0) < 8) return;
+  var due = (typeof rt.state.bossDueAt === 'number') ? rt.state.bossDueAt : 8;
+  if ((rt.state.waveTime || 0) < due && !((rt.state.waveTime || 0) >= 5.5 && (rt.state.enemies || []).length <= 4)) return;
   if (rt.state.boss && rt.state.boss.hp > 0) return;
   rt.state.bossSpawned = true;
   spawnBoss(kind);
