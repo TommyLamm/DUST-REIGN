@@ -1,3 +1,4 @@
+import { isChinese } from '../core/i18n.js';
 import { rt } from '../core/runtime.js';
 import { clamp, first, on } from '../core/utils.js';
 import { clearSpriteCache } from '../render/sprites.js';
@@ -21,7 +22,7 @@ export function setupDom(options) {
     canvas = document.createElement('canvas');
     canvas.id = 'gameCanvas';
     canvas.className = 'game-canvas';
-    canvas.setAttribute('aria-label', 'Wasteland Run game arena');
+    canvas.setAttribute('aria-label', isChinese() ? '廢土戰鬥區' : 'Wasteland combat arena');
     canvas.style.display = 'block';
     canvas.style.width = '100%';
     canvas.style.height = '100%';

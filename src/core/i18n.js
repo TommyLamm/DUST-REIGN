@@ -1834,6 +1834,22 @@ export function syncStaticHtml(lang) {
     if (saveBadge) saveBadge.textContent = zh ? '已記錄至 PLAYROOM' : 'RECORDED TO PLAYROOM';
     var restartBtnSpan = gameOver.querySelector('#restartBtn span');
     if (restartBtnSpan) restartBtnSpan.textContent = zh ? '再次出擊' : 'RUN IT BACK';
+    var restartBtnEl = document.getElementById('restartBtn');
+    if (restartBtnEl) restartBtnEl.setAttribute('aria-label', zh ? '再次出擊' : 'Run it back');
+    var nextSectorSpan = gameOver.querySelector('#nextSectorBtn span');
+    if (nextSectorSpan && !/戰役全數通關|CAMPAIGN COMPLETE/.test(nextSectorSpan.textContent || '')) {
+      nextSectorSpan.textContent = zh ? '下一區域出擊' : 'NEXT SECTOR';
+    }
+    var nextSectorEl = document.getElementById('nextSectorBtn');
+    if (nextSectorEl) nextSectorEl.setAttribute('aria-label', (nextSectorSpan && nextSectorSpan.textContent) || (zh ? '下一區域出擊' : 'NEXT SECTOR'));
+    var replaySpanSeed = gameOver.querySelector('#replayBtn span');
+    if (replaySpanSeed) replaySpanSeed.textContent = zh ? '原關重試' : 'REPLAY';
+    var replayEl = document.getElementById('replayBtn');
+    if (replayEl) replayEl.setAttribute('aria-label', zh ? '重試本關戰役' : 'Replay this stage');
+    var stageSelectSpan = gameOver.querySelector('#stageSelectBtn span');
+    if (stageSelectSpan) stageSelectSpan.textContent = zh ? '關卡選擇' : 'STAGE SELECT';
+    var stageSelectEl = document.getElementById('stageSelectBtn');
+    if (stageSelectEl) stageSelectEl.setAttribute('aria-label', zh ? '開啟關卡選擇' : 'Open stage select');
     var goFootSpans = gameOver.querySelectorAll('.overlay-foot span');
     if (goFootSpans && goFootSpans.length >= 2) {
       goFootSpans[0].textContent = zh ? '廢土之中，死者亦不沉眠' : 'NOTHING OUT THERE STAYS DEAD';
@@ -1844,6 +1860,7 @@ export function syncStaticHtml(lang) {
   // Upgrade Panel
   var upgPanel = document.getElementById('upgradePanel');
   if (upgPanel) {
+    upgPanel.setAttribute('aria-label', zh ? '強化三選一' : 'Upgrade pick');
     var upgKicker = upgPanel.querySelector('.overlay-kicker');
     if (upgKicker) upgKicker.textContent = zh ? '搜刮貯藏箱 // 選擇一項' : 'SALVAGE CACHE / CHOOSE ONE';
     var upgTitle = document.getElementById('upgradeTitle');

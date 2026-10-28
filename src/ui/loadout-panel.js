@@ -976,7 +976,7 @@ export function initLoadoutPanel() {
 
   var stageInfo = el('div', 'campaign-stage-info');
   var metaDiv = el('div', 'campaign-stage-meta');
-  campaignStageCode = el('span', 'campaign-stage-code', 'STAGE 1-1');
+  campaignStageCode = el('span', 'campaign-stage-code', zhSeed ? '關卡 1-1' : 'STAGE 1-1');
   campaignStageStars = el('span', 'campaign-stage-stars', '[☆☆☆]');
   metaDiv.appendChild(campaignStageCode);
   metaDiv.appendChild(campaignStageStars);
