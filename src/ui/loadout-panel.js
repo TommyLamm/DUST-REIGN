@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tCampaignStageName, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 import { getCampaignStore, readBestScoreV2, readDaily, readLegacyBestScore, readMeta, writeMeta } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
@@ -258,7 +258,7 @@ function refresh() {
       var starsStr = (stgRecord.stars >= 1 ? '★' : '☆') + (stgRecord.stars >= 2 ? '★' : '☆') + (stgRecord.stars >= 3 ? '★' : '☆');
 
       if (campaignStageCode) campaignStageCode.textContent = stgObj ? stgObj.code : 'STAGE 1-1';
-      if (campaignStageName) campaignStageName.textContent = stgObj ? (zh ? stgObj.name : stgObj.name) : '荒漠清道夫';
+      if (campaignStageName) campaignStageName.textContent = stgObj ? tCampaignStageName(stgObj.id, stgObj.name) : tCampaignStageName('stage_1_1', '荒漠清道夫');
       if (campaignStageStars) campaignStageStars.textContent = '[' + starsStr + ']';
       if (campaignSelectStageBtn) campaignSelectStageBtn.textContent = zh ? '選擇關卡 ⊞' : 'SELECT STAGE ⊞';
     }
@@ -287,7 +287,7 @@ function refresh() {
     if (zh) {
       ruleText = tDailyTitle(pick.rule.id) + ' — ' + tDailySummary(pick.rule.id) + ' 鎖定 ' + tRigName(pick.rigId) + ' / ' + tWeaponName(pick.weaponId) + ' / 熱度 ' + pick.heat + '。' + routeText(pick.rule) + '。今日最佳 ' + padScore(best) + ' · 出擊 ' + runs;
     } else {
-      ruleText = pick.rule.title + ' — ' + pick.rule.summary + ' Lock ' + pick.rigId.toUpperCase() + ' / ' + pick.weaponId.toUpperCase() + ' / HEAT ' + pick.heat + '. ' + routeText(pick.rule) + '. TODAY BEST ' + padScore(best) + ' · RUNS ' + runs;
+      ruleText = tDailyTitle(pick.rule.id) + ' — ' + tDailySummary(pick.rule.id) + ' Lock ' + tRigName(pick.rigId) + ' / ' + tWeaponName(pick.weaponId) + ' / HEAT ' + pick.heat + '. ' + routeText(pick.rule) + '. TODAY BEST ' + padScore(best) + ' · RUNS ' + runs;
     }
   } else if (currentMode === 'campaign') {
     ruleText = zh ? '戰役區域闖關 — 目標突破與三星精通評級' : 'SECTOR CAMPAIGN — STAGE OBJECTIVES & 3-STAR MASTERY';

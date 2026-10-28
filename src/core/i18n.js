@@ -463,6 +463,158 @@ var ROUTES_I18N = {
   }
 };
 
+
+var CAMPAIGN_STAGES_I18N = {
+  stage_1_1: {
+    name: { zh: '荒漠清道夫', en: 'WASTELAND SWEEPER' },
+    desc: { zh: '視野開闊，中央爆炸桶，衝刺蟲群快速突襲。', en: 'Open sightlines, center barrels, rusher packs on a fast tip.' },
+    star1: { zh: '擊破 3 波敵潮', en: 'Clear 3 waves' },
+    star2: { zh: '60 秒內通關', en: 'Finish under 60s' },
+    star3: { zh: '剩餘 HP ≥ 80% 且完成 1 次桶殺', en: 'HP ≥ 80% and 1 barrel kill' }
+  },
+  stage_1_2: {
+    name: { zh: '廢料爭奪戰', en: 'SCRAP RUSH' },
+    desc: { zh: '高熱流星墜落，四周持續刷新爬行怪群。', en: 'Hot meteors fall while crawler packs keep respawning.' },
+    star1: { zh: '收集 100 廢料', en: 'Collect 100 scrap' },
+    star2: { zh: '50 秒內提前達成', en: 'Hit quota under 50s' },
+    star3: { zh: '剩餘 HP ≥ 75% 且承受傷害 ≤ 25', en: 'HP ≥ 75% and damage taken ≤ 25' }
+  },
+  stage_1_3: {
+    name: { zh: '刺穿前哨', en: 'BREACH OUTPOST' },
+    desc: { zh: '2 隻高護甲精英蠻兵，小怪無限掩護推進。', en: 'Two armored elite brutes with endless fodder cover.' },
+    star1: { zh: '擊殺 2 隻精英蠻兵', en: 'Kill 2 elite brutes' },
+    star2: { zh: '60 秒內通關', en: 'Finish under 60s' },
+    star3: { zh: '剩餘 HP ≥ 70%', en: 'HP ≥ 70%' }
+  },
+  stage_1_4: {
+    name: { zh: '雙臂泰坦試煉', en: 'TITAN ARMS TRIAL' },
+    desc: { zh: '純招式拆解，泰坦巨拳砸地與旋轉激光掃射。', en: 'Pure pattern read — Titan fists and spinning lasers.' },
+    star1: { zh: '擊敗泰坦首領', en: 'Defeat the Titan' },
+    star2: { zh: '90 秒內擊破', en: 'Kill under 90s' },
+    star3: { zh: '達成 3 次 Just Dash 且剩餘 HP ≥ 80%', en: '3 Just Dashes and HP ≥ 80%' }
+  },
+  stage_2_1: {
+    name: { zh: '熔渣火線', en: 'MOLTEN FIRELINE' },
+    desc: { zh: '熔岩灼燒地磚，遠程曲射火砲登場封鎖路徑。', en: 'Lava tiles and lobbing artillery lock the lanes.' },
+    star1: { zh: '擊破 4 波敵潮', en: 'Clear 4 waves' },
+    star2: { zh: '全程未踩入熔岩池', en: 'Never step in molten pools' },
+    star3: { zh: '剩餘 HP ≥ 70%', en: 'HP ≥ 70%' }
+  },
+  stage_2_2: {
+    name: { zh: '攔截物資車', en: 'INTERCEPT CONVOY' },
+    desc: { zh: '裝甲貨車橫越戰場，兩側酸液噴吐者護航。', en: 'Armored convoy crosses while spitters escort both flanks.' },
+    star1: { zh: '摧毀裝甲護送車', en: 'Destroy the armored escort' },
+    star2: { zh: '36 秒內擊毀', en: 'Destroy under 36s' },
+    star3: { zh: '剩餘 HP ≥ 75%', en: 'HP ≥ 75%' }
+  },
+  stage_2_3: {
+    name: { zh: '陣地堅守 90 秒', en: 'HOLD THE BEACON 90s' },
+    desc: { zh: '刺尾怪與酸液群圍攻中央數據塔。', en: 'Scurriers and acid packs siege the center data tower.' },
+    star1: { zh: '信號塔存活至計時結束', en: 'Beacon survives the timer' },
+    star2: { zh: '信號塔剩餘耐久 ≥ 75%', en: 'Beacon HP ≥ 75%' },
+    star3: { zh: '在防守光圈內累計停留 ≥ 45 秒', en: 'Stay in the defense ring ≥ 45s' }
+  },
+  stage_2_4: {
+    name: { zh: '鋼鐵巨艦滅絕', en: 'DREADNOUGHT EXTINCTION' },
+    desc: { zh: '全屏水雷陣、散彈高射砲與連續履帶撞角。', en: 'Minefields, flak volleys, and continuous ram charges.' },
+    star1: { zh: '擊沉無畏巨艦', en: 'Sink the Dreadnought' },
+    star2: { zh: '100 秒內完成擊殺', en: 'Kill under 100s' },
+    star3: { zh: '剩餘 HP ≥ 70%', en: 'HP ≥ 70%' }
+  },
+  stage_3_1: {
+    name: { zh: '逆風肅清', en: 'HEADWIND WIPEOUT' },
+    desc: { zh: '周期性強風暴推力，彈道偏移，迷霧收窄。', en: 'Cyclic storm shove, bent shots, and tightening fog.' },
+    star1: { zh: '肅清 3 波暴風敵潮', en: 'Clear 3 storm waves' },
+    star2: { zh: '75 秒內通關', en: 'Finish under 75s' },
+    star3: { zh: '達成 10+ Chain Combo', en: 'Reach a 10+ chain combo' }
+  },
+  stage_3_2: {
+    name: { zh: '電磁風暴尖塔', en: 'STORM SPIRE HARVEST' },
+    desc: { zh: '2 座雷電共振尖塔，觸發全屏連鎖電弧。', en: 'Two conduction spires — trigger full-field arc chains.' },
+    star1: { zh: '收集 150 廢料', en: 'Collect 150 scrap' },
+    star2: { zh: '觸發至少 3 次尖塔共振', en: 'Trigger ≥ 3 spire resonances' },
+    star3: { zh: '未消耗過 EMP 且 HP ≥ 70%', en: 'No EMP used and HP ≥ 70%' }
+  },
+  stage_3_3: {
+    name: { zh: '潛地破壞者', en: 'SUBTERRANEAN BREAKERS' },
+    desc: { zh: '鑽地無敵鑽地蟲 + 相位硬光典獄官協同進攻。', en: 'Invuln burrowers plus phase wardens attack together.' },
+    star1: { zh: '擊殺 3 隻潛地巨蟲', en: 'Kill 3 burrowers' },
+    star2: { zh: '75 秒內通關', en: 'Finish under 75s' },
+    star3: { zh: '剩餘 HP ≥ 80%', en: 'HP ≥ 80%' }
+  },
+  stage_3_4: {
+    name: { zh: '暴風神君終局', en: 'STORM SOVEREIGN FINALE' },
+    desc: { zh: '4 座風暴塔護盾、風眼鎖定與雷暴天火。', en: 'Tower shields, eye lock, and thunderfall.' },
+    star1: { zh: '擊敗風暴主宰', en: 'Defeat the Storm Sovereign' },
+    star2: { zh: '110 秒內擊破神君', en: 'Kill under 110s' },
+    star3: { zh: '剩餘 HP ≥ 75%', en: 'HP ≥ 75%' }
+  },
+  stage_4_1: {
+    name: { zh: '晶石裂隙', en: 'CRYSTAL RIFT' },
+    desc: { zh: '狹長裂谷地形，高速晶化衝鋒怪包抄，考驗走位拉扯。', en: 'Narrow rift — fast crystal rushers force kiting.' },
+    star1: { zh: '擊破 4 波晶化敵潮', en: 'Clear 4 crystal waves' },
+    star2: { zh: '65 秒內通關', en: 'Finish under 65s' },
+    star3: { zh: '剩餘 HP ≥ 80% 且達成 12+ 連擊', en: 'HP ≥ 80% and 12+ combo' }
+  },
+  stage_4_2: {
+    name: { zh: '深淵運輸線', en: 'ABYSS CONVOY LINE' },
+    desc: { zh: '物資推車護送任務，在光圈內維持載具動力，兩側高頻火砲壓制。', en: 'Escort the payload — stay in the ring while artillery pressures both sides.' },
+    star1: { zh: '護送物資車抵達撤離點', en: 'Escort the payload to extract' },
+    star2: { zh: '物資車剩餘耐久 ≥ 75%', en: 'Payload HP ≥ 75%' },
+    star3: { zh: '在光圈內累計停留 ≥ 50 秒且承受傷害 ≤ 35', en: 'Ring time ≥ 50s and damage taken ≤ 35' }
+  },
+  stage_4_3: {
+    name: { zh: '地脈超載防線', en: 'LEYLINE OVERLOAD LINE' },
+    desc: { zh: '核心能量超載防線，消滅充能精英並在核心散熱區域冷卻熱量。', en: 'Hold the core — cull charging elites and cool heat in the vent zone.' },
+    star1: { zh: '堅守核心直至計時結束且未過載熔毀', en: 'Hold the core to timer without meltdown' },
+    star2: { zh: '核心超載峰值 ≤ 65% 或 70 秒內完成冷卻', en: 'Peak overload ≤ 65% or cool under 70s' },
+    star3: { zh: '剩餘 HP ≥ 80% 且達成 4 次極限閃避', en: 'HP ≥ 80% and 4 Just Dashes' }
+  },
+  stage_4_4: {
+    name: { zh: '晶化巨獸獵殺', en: 'CRYSTAL BEHEMOTH HUNT' },
+    desc: { zh: '斬首 3 隻晶化變異巨獸，注意半血狂暴衝撞與酸液轟炸。', en: 'Hunt 3 crystal behemoths — watch half-HP rages and acid bombs.' },
+    star1: { zh: '斬首 3 隻晶化變異巨獸', en: 'Slay 3 crystal behemoths' },
+    star2: { zh: '80 秒內完成斬首', en: 'Finish under 80s' },
+    star3: { zh: '剩餘 HP ≥ 75% 且承受傷害 ≤ 40', en: 'HP ≥ 75% and damage taken ≤ 40' }
+  },
+  stage_4_5: {
+    name: { zh: '稜鏡天尊終局', en: 'PRISM SOVEREIGN FINALE' },
+    desc: { zh: '晶化深淵終章對決，面對具備多重防禦部位的稜鏡天尊深淵巨獸。', en: 'Abyss finale — a multi-part prism behemoth.' },
+    star1: { zh: '擊潰深淵巨獸首領', en: 'Defeat the abyss behemoth' },
+    star2: { zh: '110 秒內完成擊殺', en: 'Kill under 110s' },
+    star3: { zh: '達成 5 次極限閃避且剩餘 HP ≥ 75%', en: '5 Just Dashes and HP ≥ 75%' }
+  },
+  stage_ex_1: {
+    name: { zh: '深淵生存試煉', en: 'ABYSS SURVIVAL TRIAL' },
+    desc: { zh: '高密度全天敵混編敵潮，極限走位拉扯考驗。', en: 'Dense mixed counter-swarms — pure movement exam.' },
+    star1: { zh: '肅清 5 波極限混編敵潮', en: 'Clear 5 extreme mixed waves' },
+    star2: { zh: '100 秒內通關', en: 'Finish under 100s' },
+    star3: { zh: '剩餘 HP ≥ 80% 且達成 15+ Chain', en: 'HP ≥ 80% and 15+ chain' }
+  },
+  stage_ex_2: {
+    name: { zh: '虛空尖塔守衛', en: 'VOID SPIRE DEFENSE' },
+    desc: { zh: '雙子尖塔電磁風暴，守護信號塔不被潛地蟲與硬光護盾摧毀。', en: 'Twin-spire storm — protect the beacon from burrowers and hardlight.' },
+    star1: { zh: '極限信號塔防守 100 秒', en: 'Defend the beacon for 100s' },
+    star2: { zh: '信號塔剩餘耐久 ≥ 80%', en: 'Beacon HP ≥ 80%' },
+    star3: { zh: '在防守圈內累計停留 ≥ 60 秒且 HP ≥ 75%', en: 'Ring time ≥ 60s and HP ≥ 75%' }
+  },
+  stage_ex_3: {
+    name: { zh: '三位一體天譴', en: 'TRINITY JUDGMENT' },
+    desc: { zh: '終極首領巔峰決戰，連續高強度彈幕與雷暴洗禮。', en: 'Peak boss duel — stacked barrages and thunder baptism.' },
+    star1: { zh: '擊潰終極暴風神君', en: 'Defeat the final Storm Sovereign' },
+    star2: { zh: '120 秒內完成擊殺', en: 'Kill under 120s' },
+    star3: { zh: '達成 5 次 Just Dash 且剩餘 HP ≥ 80%', en: '5 Just Dashes and HP ≥ 80%' }
+  }
+};
+
+var CAMPAIGN_THREAT_I18N = {
+  LOW: { zh: '低', en: 'LOW' },
+  MEDIUM: { zh: '中', en: 'MEDIUM' },
+  HIGH: { zh: '高', en: 'HIGH' },
+  CRITICAL: { zh: '危急', en: 'CRITICAL' },
+  APEX: { zh: '巔峰', en: 'APEX' }
+};
+
 var DAILY_I18N = {
   'all-elites-early': {
     title: { zh: '菁英先行', en: 'ALL ELITES EARLY' },
@@ -838,6 +990,32 @@ export function tRouteReward(id) {
   var item = ROUTES_I18N[id];
   if (item && item.reward) return currentLang === 'zh' ? item.reward.zh : item.reward.en;
   return '';
+}
+
+
+export function tCampaignStageName(id, fallback) {
+  var item = CAMPAIGN_STAGES_I18N[id];
+  if (item && item.name) return currentLang === 'zh' ? item.name.zh : item.name.en;
+  return fallback || id || '';
+}
+
+export function tCampaignStageDesc(id, fallback) {
+  var item = CAMPAIGN_STAGES_I18N[id];
+  if (item && item.desc) return currentLang === 'zh' ? item.desc.zh : item.desc.en;
+  return fallback || '';
+}
+
+export function tCampaignStageStar(id, which, fallback) {
+  var item = CAMPAIGN_STAGES_I18N[id];
+  var key = which === 2 ? 'star2' : which === 3 ? 'star3' : 'star1';
+  if (item && item[key]) return currentLang === 'zh' ? item[key].zh : item[key].en;
+  return fallback || '';
+}
+
+export function tCampaignThreat(level) {
+  var item = CAMPAIGN_THREAT_I18N[level];
+  if (item) return currentLang === 'zh' ? item.zh : item.en;
+  return level || '';
 }
 
 export function tDailyTitle(id) {
