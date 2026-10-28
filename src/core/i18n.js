@@ -1278,7 +1278,7 @@ export function tLog(msg) {
   if (msg === 'BARREL KICK-LAUNCHED') return '炸藥桶已踢出';
   if (msg === 'STATIC TEMPEST // 6-WAY CHAIN DISCHARGE') return '靜電風暴 // 6向連鎖放電';
   if (msg === 'EMP BLAST // SECTOR DISRUPTED') return '電磁脈衝衝擊 // 區段訊號干擾';
-  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級電磁脈衝 280PX 引爆';
+  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級電磁脈衝 280px 引爆';
   if (msg === 'OVERCHARGE RETALIATION // RETALIATORY SPIKE FIRED') return '超載反擊 // 復仇尖刺發射';
   if (msg === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';
   if (msg === 'BOUNTY SECURED // SURGE ONLINE') return '懸賞已完成 // 湧浪超頻上線';
@@ -1433,13 +1433,13 @@ export function tStatus(text) {
   if (text.indexOf('SCRAP BULKHEAD //') === 0) return text.replace('SCRAP BULKHEAD //', '廢料隔艙 // ');
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return '電磁脈衝衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280PX [眩暈 3.0s]';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280px [眩暈 3.0s]';
   if (text.indexOf('AEGIS PROTOCOL ACTIVATED') === 0) return '神盾協議啟動 // 緊急護盾已展開';
 
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return '電磁脈衝衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280PX [眩暈 3.0s]';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級電磁脈衝 280px [眩暈 3.0s]';
   if (text.indexOf('TITAN NEUTRALIZED') === 0) return '泰坦已被擊毀 // 區段安全';
   if (text.indexOf('BOUNTY CLEAR') === 0) {
     return text.replace('BOUNTY CLEAR +', '懸賞完成 +').replace('SCORE // SURGE', '分數 // 湧浪');
@@ -1626,7 +1626,7 @@ export function tCombatFloater(text) {
   if (text.indexOf('PRISMATIC ') === 0) return text.replace('PRISMATIC ', '稜鏡 ');
   if (text === 'CRUSH!') return '碾壓！';
   if (text === 'WALL SLAM!') return '撞牆！';
-  if (text === 'AEGIS REFLECT 2X') return '神盾反射 2X';
+  if (text === 'AEGIS REFLECT 2X') return '神盾反射 ×2';
   if (text === 'WAR-CRY INTERRUPT!') return '戰吼中斷！';
   if (text === 'BLINK INTERCEPTED!') return '瞬移攔截！';
   if (text.indexOf('BOSS +') === 0) return text.replace('BOSS +', '首領 +');
