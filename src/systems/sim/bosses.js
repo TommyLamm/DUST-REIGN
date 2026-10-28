@@ -263,7 +263,7 @@ function beginCharge(e) {
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
-  e.chargeDamage = scaledShot(30, 520, true).damage;
+  e.chargeDamage = scaledShot(24, 520, true).damage;
 }
 
 function endCharge(e, frame) {
@@ -409,7 +409,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.attackCd -= dt;
     if (e.attackCd <= 0) {
       e.chargesQueued = e.bossPhase >= 2 ? 2 : 1;
-      startTelegraph(e, p, 0.9);
+      startTelegraph(e, p, 1.05);
     }
   }
   aimAtPlayer(e, p);
