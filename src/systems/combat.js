@@ -175,7 +175,13 @@ export function damagePlayer(amount, source, threatX, threatY) {
   // Sovereign / wave15+: elite rounds never connect (wave-14 leftovers can still tag deathWave 15).
   var _src = normalizeDamageSource(source);
   var _sovWave = (rt.state.recipe && rt.state.recipe.boss === 'sovereign') || ((rt.state.wave | 0) >= 15);
-  if (_sovWave && (_src === 'bullet:elite' || _src === 'contact:elite')) return 0;
+  if (_sovWave && (_src === 'bullet:elite' || _src === 'contact:elite' || /elite/i.test(String(source || '')))) {
+    // Scrub sticky elite tag so a later unexplained death is not blamed on early-wave elites.
+    if (rt.state.lastDamageSource === 'bullet:elite' || rt.state.lastDamageSource === 'contact:elite') {
+      rt.state.lastDamageSource = '';
+    }
+    return 0;
+  }
   var requested = Number(amount);
   if (!(requested > 0)) return 0;
 
