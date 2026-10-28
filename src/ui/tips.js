@@ -94,6 +94,7 @@ function tipText(id) {
   else if (id === 'burrower-warn') copyId = 'burrower';
   else if (id === 'barrel-fuse') copyId = 'barrel-fuse';
   else if (id === 'acid-pool') copyId = 'acid';
+  else if (id === 'meteor-fall') copyId = 'meteor';
   return tTip(copyId, inputKind());
 }
 
@@ -370,7 +371,8 @@ function scanTriggers() {
   else if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offerUrgent('molten');
-  if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offerUrgent('meteor');
+  if ((rt.state.wave || 1) >= 4 && meteorHazardNear()) offerUrgent('meteor-fall');
+  else if (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain')) offer('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   if (choices.length > 0) offer('first-upgrade');
