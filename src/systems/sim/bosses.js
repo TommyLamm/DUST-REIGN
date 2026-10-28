@@ -479,12 +479,13 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(9, 110, true);
+  var shot = scaledShot(8, 105, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
-  for (i = 0; i < 16; i += 1) {
-    var a = spin + (i / 16) * TAU;
+  // 12-spoke spiral (was 16) — density cut without touching storm-eye.
+  for (i = 0; i < 12; i += 1) {
+    var a = spin + (i / 12) * TAU;
     pushEnemyBullet({
       type: 'spiral',
       fromBoss: true,
@@ -495,7 +496,7 @@ function fireSpiral(e) {
       vy: Math.sin(a) * shot.speed,
       r: 4.2,
       damage: shot.damage,
-      life: 6,
+      life: 4.5,
       glow: true,
       color: '#9ec0ea',
       glowColor: '#d5e8ff'
@@ -607,7 +608,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
     if (phase === 1) {
       e.spiralCd -= dt;
       if (e.spiralCd <= 0) {
-        e.spiralCd = 5.2;
+        e.spiralCd = 5.8;
         fireSpiral(e);
       }
     }
