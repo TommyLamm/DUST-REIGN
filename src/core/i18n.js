@@ -1790,6 +1790,14 @@ export function syncStaticHtml(lang) {
     if (sFootSpans && sFootSpans.length >= 2) {
       sFootSpans[1].innerHTML = zh ? '殘命易逝 <i aria-hidden="true">/</i> 彈藥難尋' : 'RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT';
     }
+    if (sFootSpans && sFootSpans.length >= 3) {
+      var buildRaw = (sFootSpans[2].textContent || '').replace(/^BUILD\s*/i, '').trim() || '0.1.2';
+      sFootSpans[2].textContent = (zh ? '版本 ' : 'BUILD ') + buildRaw.replace(/^版本\s*/, '');
+    }
+    var startAria = startScreen.getAttribute('aria-label');
+    startScreen.setAttribute('aria-label', zh ? '出擊配置與開始畫面' : 'Loadout and deploy screen');
+    var startBtn = document.getElementById('startBtn');
+    if (startBtn) startBtn.setAttribute('aria-label', zh ? '確認配置並出擊' : 'Confirm loadout and deploy');
   }
 
   // Game Over Screen

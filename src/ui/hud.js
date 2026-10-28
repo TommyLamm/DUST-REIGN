@@ -812,8 +812,12 @@ export function updateDomUi() {
   }
   if (rt.ui.accountSaveBadge) rt.ui.accountSaveBadge.hidden = !rt.state.over || !rt.accountRunSaved;
   fitGameOverOverlay();
-  if (rt.ui.runState && rt.state.over) rt.ui.runState.textContent = zh ? '中斷' : 'SIGNAL LOST';
-  else if (rt.ui.runState && !rt.ui.startScreen) rt.ui.runState.textContent = zh ? '即時' : 'LIVE';
+  if (rt.ui.runState) {
+    if (rt.state.over) rt.ui.runState.textContent = zh ? '中斷' : 'SIGNAL LOST';
+    else if (rt.ui.startScreen && !rt.ui.startScreen.hidden) rt.ui.runState.textContent = zh ? '待命' : 'STANDBY';
+    else if (rt.state.paused) rt.ui.runState.textContent = zh ? '暫停' : 'PAUSED';
+    else rt.ui.runState.textContent = zh ? '即時' : 'LIVE';
+  }
   if (rt.ui.statusText && rt.state.over) rt.ui.statusText.textContent = zh ? '訊號中斷 — 按 R 重新部署' : 'SIGNAL LOST — PRESS R TO REDEPLOY';
 }
 
