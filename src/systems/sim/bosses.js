@@ -274,9 +274,9 @@ function endCharge(e, frame) {
   if (e.chargesQueued > 0) {
     // Mid-ram breach beat for slow tails; kept short so denser duty does not delete.
     e.mode = 'stun';
-    e.stunT = 0.55;
-    e.empTimer = Math.max(e.empTimer || 0, 0.55);
-    e.armorBreakTimer = 0.55;
+    e.stunT = 0.70;
+    e.empTimer = Math.max(e.empTimer || 0, 0.70);
+    e.armorBreakTimer = 0.70;
     e._dreadMidCombo = true;
     rt.state.shake = Math.max(rt.state.shake, 6);
     if (rt.state) {
@@ -318,7 +318,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
 
   if (!e.mode) {
     e.mode = 'idle';
-    e.attackCd = 1.85;
+    e.attackCd = 1.55;
     e.fanCd = 1.5;
     e.summonCd = 8;
   }
@@ -400,7 +400,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       }
       e._dreadMidCombo = false;
       e.mode = 'idle';
-      e.attackCd = 1.85;
+      e.attackCd = 1.55;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
@@ -849,7 +849,7 @@ export function createDreadnought(wave, frameW, frameH) {
     phase: 0,
     aim: Math.PI / 2,
     mode: 'idle',
-    attackCd: 2.0,
+    attackCd: 1.7,
     fanCd: 1.5,
     summonCd: 8,
     bossPhase: 1,
