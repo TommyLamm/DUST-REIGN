@@ -31,10 +31,10 @@ export function run() {
   assert(titan.hp === 7600 && bossHp('titan', 5) === 7600, 'titan wave-5 hp drifted');
   assert(enemyProfile('crawler', 5, { hpScale: 1, dmgScale: 1 }).hp === 50, 'crawler no longer rebases at scale 1');
   assert(bossHp('titan', 10) === 7600 + 5 * 780, 'pre-overtime titan wave 10 drifted');
-  assert(bossHp('dreadnought', 10) === 17200 && bossHp('sovereign', 15) === 128000, 'story boss hp drifted');
+  assert(bossHp('dreadnought', 10) === 15500 && bossHp('sovereign', 15) === 128000, 'story boss hp drifted');
   assert(bossHp('titan', 20) === 7600 && bossHp('titan', 25) === Math.round(7600 * 1.35), 'overtime titan cycle drifted');
   assert(bossHp('titan', 5, { bossHpScale: 1.2 }) === Math.round(7600 * 1.2), 'wave 5 boss hp ignored bossHpScale');
-  assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(17200 * 1.25), 'wave 10 boss hp ignored bossHpScale');
+  assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(15500 * 1.25), 'wave 10 boss hp ignored bossHpScale');
 
   var grown = enemyProfile('rusher', 5, { hpScale: 1.48, dmgScale: 1.2 });
   var legacyRusher = 26 + 5 * 5;
@@ -104,11 +104,11 @@ export function run() {
     dread.empTimer = 1;
     dread.deathQueued = false;
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
-    assert(Math.abs(stunnedBarrel - 22) < 0.001, 'stunned dreadnought barrel was not x1.10');
+    assert(Math.abs(stunnedBarrel - 23.2) < 0.001, 'stunned dreadnought barrel was not x1.16');
     var styleBefore = rt.state.scoreBreakdown ? (rt.state.scoreBreakdown.style || 0) : 0;
     var stunKill = { kind: 'dreadnought', hp: 22, maxHp: 1600, x: 0, y: 0, aim: 0, empTimer: 1.2, mode: 'stun' };
     var lethalRear = filterEnemyDamage(stunKill, 20, { source: 'bullet', x: -40, y: 0 });
-    assert(Math.abs(lethalRear - 22) < 0.001 && stunKill.deathQueued, 'stun armor-break hit did not kill the dreadnought');
+    assert(Math.abs(lethalRear - 23.2) < 0.001 && stunKill.deathQueued, 'stun armor-break hit did not kill the dreadnought');
     assert((rt.state.scoreBreakdown.style || 0) - styleBefore === 100, 'dreadnought stun-kill style score was not 100');
 
     var towerA = { kind: 'stormTower', hp: 200, x: 10, y: 10 };
@@ -223,7 +223,7 @@ export function run() {
     rt.state.recipe = { wave: 10, hpScale: 1, dmgScale: 1, bulletScale: 1.41, boss: 'dreadnought' };
     var dreadBoss = spawnBoss('dreadnought');
     assert(dreadBoss && dreadBoss.isBoss && dreadBoss.kind === 'dreadnought' && rt.state.boss === dreadBoss, 'spawnBoss dreadnought failed');
-    assert(dreadBoss.hp === 17200 && dreadBoss.r === 38, 'dreadnought spawn stats drifted');
+    assert(dreadBoss.hp === 15500 && dreadBoss.r === 38, 'dreadnought spawn stats drifted');
     var sov = spawnBoss('sovereign');
     assert(sov && sov.isBoss && sov.kind === 'sovereign' && sov.hp === 128000 && rt.state.boss === sov, 'spawnBoss sovereign failed');
     rt.state.wave = 5;
