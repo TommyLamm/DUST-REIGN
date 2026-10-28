@@ -293,6 +293,9 @@ export function stepEnemies(dt, frame) {
       // Elite debuts wave 3 at 21 contact — teaching cliff after brute soft (#219). Cap like first Titan.
       var earlyElite = e.kind === 'elite' && ((rt.state.wave | 0) <= 3) && !(rt.state.boss && rt.state.boss.hp > 0);
       if (earlyElite) contactDmg = Math.max(1, Math.min(Math.round(contactDmg * 0.65), 14));
+      // Mid-early teaching: artillery 19-contact debuts w2 — soft until w5 outside bosses.
+      var earlyArtillery = e.kind === 'artillery' && ((rt.state.wave | 0) <= 5) && !(rt.state.boss && rt.state.boss.hp > 0);
+      if (earlyArtillery) contactDmg = Math.max(1, Math.min(Math.round(contactDmg * 0.7), 12));
       var firstTitan = false;
       if (e.kind === 'titan') {
         var beaten = rt.state.bossesDefeated || [];
@@ -309,7 +312,7 @@ export function stepEnemies(dt, frame) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.55));
       }
       var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
-      e.touchCooldown = firstTitan ? 1.15 : ((earlyBrute || earlyElite) ? 1.05 : (e.kind === 'dreadnought' ? 1.05 : 0.85));
+      e.touchCooldown = firstTitan ? 1.15 : ((earlyBrute || earlyElite || earlyArtillery) ? 1.05 : (e.kind === 'dreadnought' ? 1.05 : 0.85));
       if (touched > 0) {
         p.invulnerable = playerEdge.pressed ? 1.05 : (e.kind === 'dreadnought' ? 1.0 : 0.7);
         if (playerEdge.pressed) {
