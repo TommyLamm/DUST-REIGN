@@ -119,7 +119,7 @@ export function filterEnemyDamage(e, amount, info) {
   }
 
   if (e.defenseAuraTimer > 0) left *= (1 - (e.damageMitigation || 0.35));
-  if (e.armorBreakTimer > 0) left *= 1.4;
+  if (e.armorBreakTimer > 0 && e.kind !== 'dreadnought') left *= 1.4;
   if (e.concussionTimer > 0) left *= 1.35;
   if (e.commandChanneling) {
     e.commandDamageTaken = (e.commandDamageTaken || 0) + left;
