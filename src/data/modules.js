@@ -27,7 +27,7 @@ export var MODULES = [
       {
         tier: 1,
         bonusDesc: 'Just Dash window +25%',
-        bonusDescZh: 'Just Dash 判定視窗 +25%',
+        bonusDescZh: '精準衝刺判定視窗 +25%',
         justDashWindowBonus: 0.25,
         dashInvulnBonus: 0,
         justDashCooldownReset: false
@@ -35,7 +35,7 @@ export var MODULES = [
       {
         tier: 2,
         bonusDesc: 'Just Dash window +40%, invulnerability +0.10s',
-        bonusDescZh: 'Just Dash 判定視窗 +40%，無敵時間 +0.10s',
+        bonusDescZh: '精準衝刺判定視窗 +40%，無敵時間 +0.10s',
         justDashWindowBonus: 0.40,
         dashInvulnBonus: 0.10,
         justDashCooldownReset: false
@@ -43,7 +43,7 @@ export var MODULES = [
       {
         tier: 3,
         bonusDesc: 'Just Dash window +40%, invulnerability +0.10s; Just Dash resets dash cooldown (max once per 4s)',
-        bonusDescZh: 'Just Dash 判定視窗 +40%，無敵時間 +0.10s；觸發 Just Dash 立即重置衝刺冷卻 (每 4 秒最多 1 次)',
+        bonusDescZh: '精準衝刺判定視窗 +40%，無敵時間 +0.10s；觸發精準衝刺立即重置衝刺冷卻 (每 4 秒最多 1 次)',
         justDashWindowBonus: 0.40,
         dashInvulnBonus: 0.10,
         justDashCooldownReset: true
@@ -154,7 +154,7 @@ export var MODULES = [
       {
         tier: 1,
         bonusDesc: 'Taking >18 damage releases a 120px micro-EMP clearing bullets (18s CD)',
-        bonusDescZh: '單次受傷大於 18 點時釋放微型 EMP，消除半徑 120px 內敵彈 (冷卻 18s)',
+        bonusDescZh: '單次受傷大於 18 點時釋放微型電磁脈衝，消除半徑 120px 內敵彈 (冷卻 18s)',
         empRadius: 120,
         empCooldown: 18,
         stunDuration: 0
@@ -162,7 +162,7 @@ export var MODULES = [
       {
         tier: 2,
         bonusDesc: 'Micro-EMP radius increased to 160px with 12s cooldown',
-        bonusDescZh: '微型 EMP 半徑增至 160px，冷卻縮短至 12s',
+        bonusDescZh: '微型電磁脈衝半徑增至 160px，冷卻縮短至 12s',
         empRadius: 160,
         empCooldown: 12,
         stunDuration: 0
@@ -170,7 +170,7 @@ export var MODULES = [
       {
         tier: 3,
         bonusDesc: 'Micro-EMP radius 160px (12s CD) and stuns nearby medium/small enemies for 1.0s',
-        bonusDescZh: '微型 EMP 半徑 160px (冷卻 12s)，並短暫眩暈周圍中小型敵兵 1.0 秒',
+        bonusDescZh: '微型電磁脈衝半徑 160px (冷卻 12s)，並短暫眩暈周圍中小型敵兵 1.0 秒',
         empRadius: 160,
         empCooldown: 12,
         stunDuration: 1.0
@@ -249,7 +249,7 @@ export var MODULES = [
       {
         tier: 3,
         bonusDesc: 'Fatal blow 2.5s invulnerability, +60% burst speed, and instantly refills 100% EMP energy',
-        bonusDescZh: '免死 2.5 秒無敵，+60% 爆發移速，並立刻補滿 100% EMP 能量',
+        bonusDescZh: '免死 2.5 秒無敵，+60% 爆發移速，並立刻補滿 100% 電磁脈衝能量',
         invulnDuration: 2.5,
         burstSpeed: 1.6,
         refillEmp: true
@@ -278,7 +278,7 @@ export var MODULES = [
       {
         tier: 1,
         bonusDesc: 'While Kill Streak >= 6, Critical Hit chance +10%',
-        bonusDescZh: '連擊數 (Streak) ≥ 6 時，暴擊率 +10%',
+        bonusDescZh: '連擊數 ≥ 6 時，暴擊率 +10%',
         critChanceBonus: 0.10,
         critDmgBonus: 0,
         chainExplosion: false
@@ -319,7 +319,7 @@ export var MODULES = [
       {
         tier: 1,
         bonusDesc: 'Vanguard charge time -20%, spread angle -15%',
-        bonusDescZh: 'Vanguard 充能時間 -20%，散彈擴散角 -15%',
+        bonusDescZh: '先鋒軌道蓄力槍充能時間 -20%，散彈擴散角 -15%',
         chargeTimeMult: 0.80,
         spreadMult: 0.85,
         bulletSpeedMult: 1.0,
@@ -357,13 +357,13 @@ export var MODULES = [
       stat: 'empClear',
       value: 0,
       desc: 'EMP loses bullet-clearing shockwave and enemy stun',
-      descZh: '失去 EMP 原本的全場清彈幕與擊暈控制功能'
+      descZh: '失去電磁脈衝原本的全場清彈幕與擊暈控制功能'
     },
     tiers: [
       {
         tier: 1,
         bonusDesc: 'EMP converts to Overload Surge: +40% weapon fire rate for 5s',
-        bonusDescZh: 'EMP 轉化為【過載充能】：5 秒內武器射速提升 40%',
+        bonusDescZh: '電磁脈衝轉化為【過載充能】：5 秒內武器射速提升 40%',
         fireRateBonus: 0.40,
         moveSpeedBonus: 0,
         killExtension: false

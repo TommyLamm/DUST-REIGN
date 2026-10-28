@@ -17,6 +17,16 @@ function branchLabel(branch, zh) {
   return String(branch || '').toUpperCase();
 }
 
+/** Display-only catalog code (M-01 → 動-01). Keeps modules.js code ids unchanged. */
+function moduleCodeLabel(code, zh) {
+  var raw = String(code || '');
+  if (!zh || !raw) return raw;
+  if (raw.indexOf('M-') === 0) return '動-' + raw.slice(2);
+  if (raw.indexOf('B-') === 0) return '甲-' + raw.slice(2);
+  if (raw.indexOf('C-') === 0) return '戰-' + raw.slice(2);
+  return raw;
+}
+
 export function createWorkshopPanel() {
   var container = el('div', 'workshop-panel-container');
   container.id = 'tabPanelWorkshop';
@@ -102,8 +112,8 @@ export function refreshWorkshopPanel(container) {
     if (equippedMod) {
       var modTier = unlocked[equippedMod.id] || 1;
       var modTuning = (tuning && tuning[equippedMod.id]) || 0;
-      var tierText = 'T' + modTier + (modTuning > 0 ? ' [+' + (modTuning * 5) + '%]' : '');
-      sBody.appendChild(el('strong', 'socket-mod-title', (equippedMod.code ? equippedMod.code + ' ' : '') + (zh ? equippedMod.nameZh : equippedMod.name)));
+      var tierText = (zh ? ('階' + modTier) : ('T' + modTier)) + (modTuning > 0 ? ' [+' + (modTuning * 5) + '%]' : '');
+      sBody.appendChild(el('strong', 'socket-mod-title', (equippedMod.code ? moduleCodeLabel(equippedMod.code, zh) + ' ' : '') + (zh ? equippedMod.nameZh : equippedMod.name)));
       sBody.appendChild(el('span', 'socket-tier-badge', tierText));
 
       var detachBtn = el('button', 'workshop-detach-btn', zh ? '卸下模組' : 'DETACH');
@@ -142,7 +152,9 @@ export function refreshWorkshopPanel(container) {
     // Top Row: Code, Name, Branch, Wattage
     var topRow = el('div', 'module-card-top');
     var codeName = el('div', 'module-code-name');
-    codeName.appendChild(el('span', 'module-code', mod.code));
+    var codeSpan = el('span', 'module-code', moduleCodeLabel(mod.code, zh));
+    codeSpan.setAttribute('aria-label', (zh ? '模組代號 ' : 'Module code ') + moduleCodeLabel(mod.code, zh));
+    codeName.appendChild(codeSpan);
     codeName.appendChild(el('strong', 'module-name', zh ? mod.nameZh : mod.name));
     topRow.appendChild(codeName);
 
