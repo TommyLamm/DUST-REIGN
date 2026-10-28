@@ -98,6 +98,8 @@ function tipText(id) {
   else if (id === 'warden-shield') copyId = 'warden-bubble';
   else if (id === 'elite-rounds') copyId = 'elite-weave';
   else if (id === 'artillery-mark') copyId = 'artillery-lob';
+  else if (id === 'prowler-flash') copyId = 'prowler-lunge';
+  else if (id === 'bulwark-shield') copyId = 'bulwark-face';
   return tTip(copyId, inputKind());
 }
 
@@ -285,6 +287,40 @@ function wardenShieldActive() {
   return false;
 }
 
+function prowlerTelegraphNear() {
+  var list = rt.state && rt.state.enemies;
+  var p = rt.state && rt.state.player;
+  if (!list || !p) return false;
+  var lim = 280 * 280;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || e.kind !== 'prowler' || !(e.hp > 0)) continue;
+    if (e.phaseState !== 'telegraph' && !(e.lungeTimer > 0)) continue;
+    var dx = e.x - p.x;
+    var dy = e.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
+function bulwarkShieldUpNear() {
+  var list = rt.state && rt.state.enemies;
+  var p = rt.state && rt.state.player;
+  if (!list || !p) return false;
+  var lim = 280 * 280;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || e.kind !== 'bulwark' || !(e.hp > 0)) continue;
+    if (!((e.shieldHp || 0) > 0) || e.shieldBroken) continue;
+    var dx = e.x - p.x;
+    var dy = e.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function artilleryMarkNear() {
   var list = rt.state && rt.state.artilleryTargets;
   var p = rt.state && rt.state.player;
@@ -443,8 +479,12 @@ function scanTriggers() {
   if (rt.state.interlude && rt.state.interlude.step === 'extract') offer('extract');
   else if (rt.state.interlude) offer('route');
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
-  if (((rt.state.wave || 1) >= 16 || rt.state.overtime) && enemyNearKind('prowler', 220)) offer('prowler-lunge');
-  if (((rt.state.wave || 1) >= 16 || rt.state.overtime) && enemyNearKind('bulwark', 240)) offer('bulwark-face');
+  if ((rt.state.wave || 1) >= 16 || rt.state.overtime) {
+    if (prowlerTelegraphNear()) offerUrgent('prowler-flash');
+    else if (enemyNearKind('prowler', 220) || enemyOfKind('prowler')) offer('prowler-lunge');
+    if (bulwarkShieldUpNear()) offerUrgent('bulwark-shield');
+    else if (enemyNearKind('bulwark', 240) || enemyOfKind('bulwark')) offer('bulwark-face');
+  }
   if (((rt.state.wave || 1) >= 19 || (rt.state.boss && rt.state.boss.kind === 'behemoth')) && (enemyNearKind('behemoth', 420) || (rt.state.boss && rt.state.boss.kind === 'behemoth' && rt.state.boss.hp > 0))) offer('behemoth-parts');
   if (sovereignEyeThreat()) offer('storm-eye');
   if (sovereignShieldedThreat() || stormTowerNear()) offer('storm-tower');
