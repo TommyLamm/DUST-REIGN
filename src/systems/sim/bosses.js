@@ -259,7 +259,7 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Cap big-world charge travel so armor-break duty cycle stays dense (was 860/1000).
-  e.chargeMaxDist = e.bossPhase >= 3 ? 820 : 700;
+  e.chargeMaxDist = e.bossPhase >= 3 ? 720 : 620; // slight shrink — cut ultra-slow charge stalls
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
@@ -780,8 +780,8 @@ export function stepBossArena(dt, frame) {
 
       boss.eyeTick = (boss.eyeTick || 0) + dt;
       // Soft cadence/damage: post-#147 still saw boss:storm-eye kills on wave 15.
-      if (boss.eyeTick >= 1.7) {
-        boss.eyeTick -= 1.7;
+      if (boss.eyeTick >= 2.0) {
+        boss.eyeTick -= 2.0;
         var eyeHit = 0;
         if (p.invulnerable <= 0) {
           eyeHit = damagePlayer(scaledShot(1, 0, true).damage, 'storm-eye');

@@ -51,13 +51,13 @@ function detonateAcid(eb) {
   rt.state.acidPools.push({
     x: eb.targetX,
     y: eb.targetY,
-    r: 38,
-    timer: 2.4,
-    maxTimer: 2.4,
+    r: 32,
+    timer: 1.8,
+    maxTimer: 1.8,
     tick: 0
   });
   var p = rt.state.player;
-  if (p && Math.hypot(p.x - eb.targetX, p.y - eb.targetY) <= 38 + p.r) {
+  if (p && Math.hypot(p.x - eb.targetX, p.y - eb.targetY) <= 32 + p.r) {
     var hit = damagePlayer(eb.damage, 'acid');
     if (hit > 0) {
       p.invulnerable = 0.16;

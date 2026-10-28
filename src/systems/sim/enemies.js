@@ -282,7 +282,7 @@ export function stepEnemies(dt, frame) {
     }
     if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
       var contactDmg = e.damage;
-      if (e.kind === 'burrower') contactDmg = Math.max(1, Math.round(contactDmg * 0.35));
+      if (e.kind === 'burrower') contactDmg = Math.max(1, Math.round(contactDmg * 0.25));
       if (playerEdge.pressed) contactDmg = Math.max(1, Math.round(e.damage * 0.55));
       if (rt.state.boss && rt.state.boss.hp > 0 && (e.kind === 'elite' || e.kind === 'brute')) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.7));
@@ -316,7 +316,19 @@ export function stepEnemies(dt, frame) {
   populateEnemyGrid(rt.state.enemies);
   stepEnemyHazards(dt, frame);
   sweepDefeated();
-  if (p.hp <= 0 && !rt.state.over) triggerGameOver();
+  if (p.hp <= 0 && !rt.state.over) {
+    // Author deathCause here — callers may have emptied HP without damagePlayer lethal branch.
+    if (!rt.state.deathCause) {
+      var sticky = rt.state.lastDamageSource || '';
+      var nonElite = rt.state.lastNonEliteDamageSource || '';
+      if (sticky === 'bullet:elite' || sticky === 'contact:elite') {
+        rt.state.deathCause = nonElite || 'unknown';
+      } else {
+        rt.state.deathCause = sticky || nonElite || 'unknown';
+      }
+    }
+    triggerGameOver();
+  }
 }
 
 export function decorateSpawn(kind, e) {
