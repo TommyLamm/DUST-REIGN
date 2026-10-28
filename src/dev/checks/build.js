@@ -298,7 +298,7 @@ export function run() {
     state.player.mastery = 0;
     state.player.arcLattice = false;
     var chain = arcChainProfile(state.player);
-    assert(chain.targets === 2 && chain.range === 110 && chain.ratio === 0.7, 'arc base chain');
+    assert(chain.targets === 2 && chain.range === 120 && chain.ratio === 0.78, 'arc base chain');
     state.player.mastery = 2;
     state.player.arcLattice = true;
     chain = arcChainProfile(state.player);
