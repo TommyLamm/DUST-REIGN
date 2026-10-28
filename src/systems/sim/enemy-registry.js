@@ -515,8 +515,9 @@ registerEnemyStrategy('dreadnought', {
     // Make the break window position-independent; keep a mild rear bonus only when intact.
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
-      amount *= 1.4;
-      if (info && info.source === 'barrel') amount *= 1.2;
+      // Fast tails were still stacking break ×1.4 + barrel ×1.2 + raised bleed cap.
+      amount *= 1.22;
+      if (info && info.source === 'barrel') amount *= 1.08;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
