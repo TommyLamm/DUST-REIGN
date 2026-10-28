@@ -525,8 +525,8 @@ export function explodeCore(core, index) {
         AudioFX.critHit();
         triggerHaptic([50, 40, 60, 80]);
         rt.state.shake = Math.max(rt.state.shake, 18);
-        logEvent('TITAN ARMOR BREACH // CORE STRIKE -350 HP');
-        setStatusText('TITAN ARMOR BREACH -350 HP // SYSTEM OVERHEAT STUN 3.0s');
+        logEvent('TITAN ARMOR BREACH // CORE STRIKE');
+        setStatusText('TITAN ARMOR BREACH // SYSTEM OVERHEAT STUN 3.0s');
         spawnParticles(enemy.x, enemy.y, '#ff4d2e', 30, 240, 4);
       } else {
         damageEnemy(enemy, 90, { source: 'core', x: core.x, y: core.y });
@@ -593,7 +593,7 @@ export function explodeBarrel(barrel, index, isKicked) {
         AudioFX.critHit();
         triggerHaptic([40, 50, 70]);
         rt.state.shake = Math.max(rt.state.shake, 16);
-        logEvent('TITAN STRUCK BY KICKED BARREL // -240 HP');
+        logEvent('TITAN STRUCK BY KICKED BARREL // ARMOR BREACH');
         spawnParticles(enemy.x, enemy.y, '#ff4d2e', 20, 220, 4);
       }
       shoveEnemy(enemy, enemy.x - barrel.x, enemy.y - barrel.y, 40);
