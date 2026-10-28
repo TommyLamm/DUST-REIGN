@@ -770,7 +770,7 @@ export function updateDomUi() {
     }
   }
 
-  // Contract double-down style sync; the localized prompt for the 12s window is owned by contracts-hud.js.
+  // Contract double-down style sync; the localized prompt for the 16s window is owned by contracts-hud.js.
   if (typeof document !== 'undefined' && rt.state && rt.state.contract) {
     var cCard = document.querySelector('#contractTracker .contract-card');
     if (cCard) cCard.classList.toggle('is-doubled', Boolean(rt.state.contract.doubled));

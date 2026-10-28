@@ -124,7 +124,7 @@ export function stepContracts(frame) {
 export function doubleDownCurrentContract() {
   if (!rt.state || !rt.state.contract) return false;
   var c = rt.state.contract;
-  if (c.done || c.doubled || (rt.state.waveTime || 0) > 12) return false;
+  if (c.done || c.doubled || (rt.state.waveTime || 0) > 16) return false;
   c.doubled = true;
   c.goal = Math.ceil(c.goal * 1.5);
   rt.state.banner = Math.max(rt.state.banner || 0, 2.5);
