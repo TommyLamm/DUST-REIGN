@@ -48,6 +48,7 @@ Tips and i18n only — no HP/DR/scrap/absorb/stun/cd/spawn:
 - Campaign EN twins + threat/types (#252–#253)
 - Hardcore EN twins (#254)
 - Clock-fail GO kicker when long Dread warned (#246)
+- Telegraph / hazard **visual** contrast only (#260–#261): stroke/alpha/color — never timing/duration/cd/spawn/HP/DR
 
 ## Dual-verify rule (if numbers ever change)
 

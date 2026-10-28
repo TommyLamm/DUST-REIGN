@@ -887,11 +887,11 @@ export function drawPlasmaZones(ctx) {
     if (fade > 1) fade = 1;
     ctx.save();
 
-    // Contrast dark backing rim
+    // Contrast dark backing rim (visual only)
     ctx.beginPath();
     ctx.arc(pz.x, pz.y, pz.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(18, 4, 8, ' + (fade * 0.85).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 4.0 : 3.0;
+    ctx.strokeStyle = 'rgba(18, 4, 8, ' + (fade * 0.92).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 5.0 : 3.8;
     ctx.stroke();
 
     if (!view.key) drawGlow(ctx, pz.x, pz.y, pz.r, '#ff4d2e', fade * 0.45);
@@ -915,8 +915,8 @@ export function drawPlasmaZones(ctx) {
     // High-contrast radiant border
     ctx.beginPath();
     ctx.arc(pz.x, pz.y, pz.r, 0, TAU);
-    ctx.strokeStyle = 'rgba(255, 120, 80, ' + (fade * 0.88).toFixed(3) + ')';
-    ctx.lineWidth = view.contrast ? 2.4 : 1.6;
+    ctx.strokeStyle = 'rgba(255, 150, 100, ' + (fade * 0.96).toFixed(3) + ')';
+    ctx.lineWidth = view.contrast ? 2.8 : 2.2;
     ctx.stroke();
 
     ctx.restore();
@@ -942,12 +942,17 @@ export function drawVortices(ctx) {
     ctx.scale(1, 0.37);
     ctx.beginPath();
     ctx.arc(0, 0, vr * 0.92, 0, TAU);
-    ctx.strokeStyle = 'rgba(181,95,230,' + (fade * 0.45).toFixed(3) + ')';
+    ctx.strokeStyle = 'rgba(8, 4, 12, ' + (fade * 0.88).toFixed(3) + ')';
+    ctx.lineWidth = 9;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, vr * 0.92, 0, TAU);
+    ctx.strokeStyle = 'rgba(200,120,255,' + (fade * 0.62).toFixed(3) + ')';
     ctx.lineWidth = 6;
     ctx.stroke();
     ctx.restore();
     if (!view.key) drawGlow(ctx, 0, 0, vr * 0.5, '#9d4edd', fade * 0.35);
-    ctx.strokeStyle = 'rgba(181,95,230,' + (fade * 0.55).toFixed(3) + ')';
+    ctx.strokeStyle = 'rgba(210,140,255,' + (fade * 0.7).toFixed(3) + ')';
     ctx.lineWidth = 2;
     var arms = 3;
     for (var arm = 0; arm < arms; arm += 1) {
