@@ -323,7 +323,15 @@ export function damagePlayer(amount, source, threatX, threatY) {
       }
       if (((rt.state.wave | 0) >= 15) && (lethalCause === 'boss:dreadnought' || lethalCause === 'contact:dreadnought' || lethalCause === 'bullet:dreadnought')) {
         var dreadAlive = rt.state.boss && rt.state.boss.kind === 'dreadnought' && rt.state.boss.hp > 0;
-        if (!dreadAlive) lethalCause = rt.state.lastNonEliteDamageSource || 'unknown';
+        if (!dreadAlive) {
+          var skipDread = function (c) { return c && c.indexOf('dreadnought') === -1 && c !== 'bullet:elite' && c !== 'contact:elite'; };
+          var pick = skipDread(rt.state.lastNonEliteDamageSource) ? rt.state.lastNonEliteDamageSource : '';
+          if (!pick) {
+            var rec = rt.state.recentDamageSources || [];
+            for (var di = rec.length - 1; di >= 0; di -= 1) { if (skipDread(rec[di])) { pick = rec[di]; break; } }
+          }
+          lethalCause = pick || 'unknown';
+        }
       }
       rt.state.deathCause = lethalCause;
     }
@@ -349,8 +357,8 @@ function softenBossHit(e, amount, info) {
   // Keep a mild explosive bonus (60% of excess) instead of a full bypass.
   var explosive = info && (info.source === 'core' || info.source === 'barrel');
   var broken = (e.armorBreakTimer || 0) > 0 || e.mode === 'stun' || (e.empTimer || 0) > 0;
-  var cap = broken ? BOSS_BLEED_FULL * 1.35 : BOSS_BLEED_FULL;
-  var overflow = broken ? 0.4 : (explosive ? 0.6 : BOSS_BLEED_OVERFLOW);
+  var cap = broken ? BOSS_BLEED_FULL * 1.20 : BOSS_BLEED_FULL;
+  var overflow = broken ? 0.32 : (explosive ? 0.6 : BOSS_BLEED_OVERFLOW);
   var now = rt.state.waveTime || 0;
   if (typeof e.bossBleedAt !== 'number' || now < e.bossBleedAt || now - e.bossBleedAt > BOSS_BLEED_WINDOW) {
     e.bossBleedAt = now;
