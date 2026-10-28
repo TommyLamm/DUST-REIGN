@@ -223,14 +223,15 @@ function ensureChargeLaneCrag(e, p, frame) {
   if (!rt.state || !e || !p) return;
   if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
   var list = rt.state.monolithCrags;
-  // One teaching bait per Dread fight — continuous lane replants fed 14–23s deletes.
-  if (e._laneBaitUsed) return;
+  // Lane bait on 28s CD when empty (was once/fight) — extreme kites starved of pillars.
   var alive = 0;
   var i;
   for (i = 0; i < list.length; i += 1) {
     if (list[i] && list[i].active) alive += 1;
   }
   if (alive > 0) return;
+  var now = (rt.state && rt.state.waveTime) || 0;
+  if (e._laneBaitAt != null && now - e._laneBaitAt < 28) return;
   var box = boxOf(frame);
   var ang = Math.atan2(p.y - e.y, p.x - e.x);
   var cragR = 45;
@@ -241,7 +242,7 @@ function ensureChargeLaneCrag(e, p, frame) {
     var c = list[i];
     if (c && c.active && Math.hypot(c.x - px, c.y - py) < 140) return;
   }
-  e._laneBaitUsed = true;
+  e._laneBaitAt = now;
   list.push({
     id: 'crag_lane_' + Math.floor(rt.state.waveTime || 0),
     x: px,
@@ -252,6 +253,15 @@ function ensureChargeLaneCrag(e, p, frame) {
     laneBait: true
   });
   spawnParticles(px, py, '#e6d2a8', 10, 120, 2.2);
+}
+
+function dreadAttackCd(e) {
+  // Late-fight denser charge cycles cut 280–480s kite tails without touching p50 (~60s) band.
+  // Does NOT change charge DR or chargeMaxDist.
+  var t = e && e.fightT != null ? e.fightT : 0;
+  if (t >= 180) return 1.45;
+  if (t >= 100) return 1.75;
+  return 2.25;
 }
 
 function beginCharge(e) {
@@ -298,6 +308,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
   var p = frame.p;
   var box = boxOf(frame);
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
+  e.fightT = (e.fightT || 0) + dt;
   e.bossPhase = dreadPhase(ratio);
   if (e.mode === 'stun' || (e.armorBreakTimer || 0) > 0) e.bossSubtitle = 'ARMOR BREAK';
   else e.bossSubtitle = e.bossPhase >= 3 ? 'OVERDRIVE' : e.bossPhase === 2 ? 'DOUBLE RAM' : 'CHARGE';
@@ -318,7 +329,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
 
   if (!e.mode) {
     e.mode = 'idle';
-    e.attackCd = 2.25;
+    e.attackCd = dreadAttackCd(e);
     e.fanCd = 1.5;
     e.summonCd = 8;
   }
@@ -400,9 +411,9 @@ function stepDreadnought(e, dt, frame, empFrozen) {
       }
       e._dreadMidCombo = false;
       e.mode = 'idle';
-      e.attackCd = 2.25;
+      e.attackCd = dreadAttackCd(e);
       e.fanCd = 1.2;
-      if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
+      if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 3)) {
         spawnMonolithCrags(e, frame);
       }
     }
