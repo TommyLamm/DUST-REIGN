@@ -369,9 +369,9 @@ function emergeBurrower(e, frame, fireSpikes) {
   e.surfaceT = 3;
   e.warnT = 0;
   if (!fireSpikes) return;
-  var hitR = 20 + (p ? p.r : 0);
+  var hitR = 18 + (p ? p.r : 0);
   if (p && Math.hypot(p.x - e.x, p.y - e.y) <= hitR) {
-    var dmg = Math.round(4 * dmgScale());
+    var dmg = Math.round(3 * dmgScale());
     var hit = damagePlayer(dmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
     if (hit > 0) {
       p.invulnerable = 0.35;
@@ -382,9 +382,9 @@ function emergeBurrower(e, frame, fireSpikes) {
     }
   }
   var i;
-  for (i = 0; i < 3; i += 1) {
-    var a = (i / 3) * TAU;
-    var shot = scaledShot(1, 160, false);
+  for (i = 0; i < 2; i += 1) {
+    var a = (i / 2) * TAU;
+    var shot = scaledShot(1, 140, false);
     pushEnemyBullet({
       type: 'spike',
       ownerKind: e.kind || 'burrower',
