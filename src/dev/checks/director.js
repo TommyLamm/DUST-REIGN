@@ -14,7 +14,7 @@ import { triggerGameOver } from '../../systems/flow.js';
 import { assignRoute, chooseInterlude, chooseRepair, confirmExtract, confirmPushDeeper, grantDeferredExtract } from '../../systems/interlude.js';
 import { stepHazards } from '../../systems/sim/hazards.js';
 import { stepOrbs } from '../../systems/sim/orbs.js';
-import { wolfPackWindowsFor } from '../../systems/sim/timers-wave.js';
+import { pacingSpawnRate, wolfPackWindowsFor } from '../../systems/sim/timers-wave.js';
 import { EDGE_BAND, EDGE_PIN, edgeAwareSpawnMargin, edgePressure } from '../../systems/sim/world-edge.js';
 
 function near(actual, expected) {
@@ -405,6 +405,9 @@ export function run() {
     if (computeThreatTier(surge) < 1) throw new Error('wolf pack surge should raise threat');
     var bossField = { wave: 5, waveTime: 0, enemies: [{ hp: 100, kind: 'titan', isBoss: true }], recipe: { cap: 40 }, wolfPackSurge: false, boss: { hp: 100, kind: 'titan' } };
     if (computeThreatTier(bossField) < 2) throw new Error('living boss should be CRITICAL threat');
+    if (pacingSpawnRate(1) !== 0.8 || pacingSpawnRate(2) !== 1.2 || pacingSpawnRate(3) !== 1.0 || pacingSpawnRate(4) !== 1.4) {
+      throw new Error('pacingSpawnRate phase table drifted');
+    }
   } finally {
     clearSeed();
     rt.state = saved;
