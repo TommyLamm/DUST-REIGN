@@ -91,7 +91,9 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'contract:backlash') return '合約反噬';
     if (s === 'poi:overload') return '據點過載';
     if (s === 'meta:smuggler') return '走私交易';
-    if (s === 'boss:flak') return '首領散彈';
+    if (s === 'boss:dreadnought' || s === 'boss:flak') return '無畏散彈';
+    if (s === 'boss:titan') return '泰坦彈幕';
+    if (s === 'boss:sovereign') return '主宰彈幕';
     if (s === 'boss:spiral') return '首領螺旋彈';
     if (s === 'boss:shot' || s === 'boss:basic') return '首領彈幕';
     if (s === 'bullet:elite') return '菁英彈';
@@ -115,7 +117,9 @@ export function formatDamageSourceLabel(source, zh) {
   if (s === 'contract:backlash') return 'CONTRACT BACKLASH';
   if (s === 'poi:overload') return 'POI OVERLOAD';
   if (s === 'meta:smuggler') return 'SMUGGLER DEAL';
-  if (s === 'boss:flak') return 'BOSS FLAK';
+  if (s === 'boss:dreadnought' || s === 'boss:flak') return 'DREAD FLAK';
+  if (s === 'boss:titan') return 'TITAN SHOT';
+  if (s === 'boss:sovereign') return 'SOVEREIGN SHOT';
   if (s === 'boss:spiral') return 'BOSS SPIRAL';
   if (s === 'boss:shot' || s === 'boss:basic') return 'BOSS SHOT';
   if (s === 'bullet:elite') return 'ELITE ROUND';

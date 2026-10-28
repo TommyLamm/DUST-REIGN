@@ -674,6 +674,18 @@ export function onBossDefeated(enemy) {
   if (!kind) kind = 'titan';
   rt.state.bossesDefeated.push(kind);
   if (rt.state.boss === enemy) rt.state.boss = null;
+  // Purge lingering fromBoss shots (dread flak life used to leak into later waves as boss:flak).
+  if (rt.state.enemyBullets && rt.state.enemyBullets.length) {
+    var keep = [];
+    var bi;
+    for (bi = 0; bi < rt.state.enemyBullets.length; bi += 1) {
+      var bb = rt.state.enemyBullets[bi];
+      if (!bb || !bb.fromBoss) { keep.push(bb); continue; }
+      if (bb.ownerKind && kind && bb.ownerKind !== kind) { keep.push(bb); continue; }
+      // Drop flak/ring/fan from the defeated boss (and untagged fromBoss leftovers).
+    }
+    rt.state.enemyBullets = keep;
+  }
   addScore(bossScoreAmount(kind, rt.state.wave || 1), 'boss');
   noteMetaEvent('boss', { kind: kind, wave: rt.state.wave || 1 });
   onWaveEnd(rt.state);
