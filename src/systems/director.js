@@ -513,7 +513,7 @@ export function onWaveStart(state) {
       recipe.cap = Math.max(28, Math.round(recipe.cap * 0.72));
     }
     // Fewer elites during boss arenas — their rounds were still a top wave-15 killer.
-    var eliteCut = recipe.boss === 'sovereign' ? 0.45 : 0.65;
+    var eliteCut = recipe.boss === 'sovereign' ? 0.28 : 0.55;
     recipe.eliteChance = round2((recipe.eliteChance || 0) * eliteCut);
   }
   if (recipe.eliteChance < 0) recipe.eliteChance = 0;
