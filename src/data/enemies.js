@@ -24,7 +24,7 @@ var BASE = {
   warden: { hp: 70, speed: 55, damage: 8, r: 15, score: 110, xp: 30, repair: 0.2, firstWave: 11, color: '#7eb6d6' },
   burrower: { hp: 95, speed: 40, damage: 18, r: 17, score: 120, xp: 32, repair: 0.25, firstWave: 12, color: '#c4a574' },
   elite: { hp: 214, speed: 45, damage: 21, r: 19, score: 180, xp: 40, repair: 1, firstWave: 3, color: '#75d1b0' },
-  titan: { hp: 4200, speed: 36, damage: 28, r: 32, score: 800, xp: 60, repair: 1, firstWave: 5, color: '#e69535' },
+  titan: { hp: 7600, speed: 36, damage: 28, r: 32, score: 800, xp: 60, repair: 1, firstWave: 5, color: '#e69535' },
   dreadnought: { hp: 8400, speed: 30, damage: 34, r: 38, score: 1500, xp: 60, repair: 1, firstWave: 10, color: '#d4654a' },
   sovereign: { hp: 10400, speed: 24, damage: 30, r: 34, score: 3000, xp: 60, repair: 1, firstWave: 15, color: '#9ec0ea' },
   behemoth: { hp: 8800, speed: 32, damage: 32, r: 44, score: 3500, xp: 80, repair: 1, firstWave: 19, color: '#a855f7' },
@@ -50,7 +50,7 @@ function bossMult(wave, scales) {
   return 1 + 0.35 * bossCycle(wave, scales);
 }
 
-var TITAN_HULL = 4200;
+var TITAN_HULL = 7600;
 var TITAN_STEP = 780;
 var DREADNOUGHT_HULL = 8400;
 var SOVEREIGN_HULL = 10400;
