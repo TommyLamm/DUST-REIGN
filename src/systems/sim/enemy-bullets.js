@@ -144,7 +144,10 @@ export function stepEnemyBullets(dt, frame) {
     if (ebDist <= hitRadius) {
       hitPlayer = true;
       if (p.invulnerable <= 0) {
-        var bulletHit = damagePlayer(eb.damage, 'bullet', eb.x, eb.y);
+        var bulletSrc = 'bullet';
+        if (eb.fromBoss) bulletSrc = 'boss:' + (eb.type || 'shot');
+        else if (eb.ownerKind) bulletSrc = 'bullet:' + eb.ownerKind;
+        var bulletHit = damagePlayer(eb.damage, bulletSrc, eb.x, eb.y);
         if (bulletHit > 0) {
           p.invulnerable = 0.5;
           AudioFX.hurt();

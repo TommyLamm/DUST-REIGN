@@ -383,6 +383,7 @@ function emergeBurrower(e, frame, fireSpikes) {
     var shot = scaledShot(9, 240, false);
     pushEnemyBullet({
       type: 'spike',
+      ownerKind: e.kind || 'burrower',
       x: e.x + Math.cos(a) * (e.r + 4),
       y: e.y + Math.sin(a) * (e.r + 4),
       vx: Math.cos(a) * shot.speed,
