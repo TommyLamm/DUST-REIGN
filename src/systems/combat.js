@@ -646,11 +646,11 @@ export function explodeBarrel(barrel, index, isKicked) {
     var pkd = Math.hypot(pkdx, pkdy) || 1;
     p.x = clamp(p.x + (pkdx / pkd) * 20, p.r, boundW - p.r);
     p.y = clamp(p.y + (pkdy / pkd) * 20, p.r, boundH - p.r);
-    // Player-facing barrel damage is half of the old 10, and one chain can only
+    // Player-facing barrel damage is 4 (was 5 post-softcap), and one chain can only
     // hurt once inside the guard window (covers hardcore short invuln caps).
     var chainGuarded = (rt.state._barrelChainGuard || 0) > 0;
     if (p.invulnerable <= 0 && !chainGuarded) {
-      var barrelHit = damagePlayer(5, 'barrel');
+      var barrelHit = damagePlayer(4, 'barrel');
       if (barrelHit > 0) {
         rt.state._barrelChainGuard = 1.0;
         p._capNextInvuln = undefined;
