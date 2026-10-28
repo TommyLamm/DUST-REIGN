@@ -9,8 +9,9 @@ import { clamp } from '../../core/utils.js';
 
 export function initCampaignStage(state, stageConfig) {
   if (!state || !stageConfig) return;
-  var boundW = (rt.ui && rt.ui.width) || state.width || 960;
-  var boundH = (rt.ui && rt.ui.height) || state.height || 640;
+  // Prefer world/map size over viewport so convoy / VIP / overload anchors sit on the big map.
+  var boundW = state.width || (rt.ui && rt.ui.width) || 3520;
+  var boundH = state.height || (rt.ui && rt.ui.height) || 2640;
   var type = stageConfig.type || stageConfig.goalType || '';
 
   if (type === 'beacon_defense' || type === 'payload_escort') {
@@ -194,8 +195,8 @@ export function stepCampaignMode(dt, frame) {
 
   // 2. Canyon Fleeing Elite (沿峽谷撤離的逃亡精英)
   if (type === 'vip_hunt' && state.vipList && state.vipList.length > 0) {
-    var boundW = frame.boundW || 960;
-    var boundH = frame.boundH || 640;
+    var boundW = frame.boundW || state.width || 3520;
+    var boundH = frame.boundH || state.height || 2640;
     for (var vi = 0; vi < state.vipList.length; vi += 1) {
       var vip = state.vipList[vi];
       if (!vip || vip.hp <= 0) continue;
