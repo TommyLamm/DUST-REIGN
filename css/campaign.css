@@ -694,7 +694,37 @@ html.reduced-motion .op-pill {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  min-width: 80px;
+  min-width: 88px;
+  padding: 6px 4px;
+  background: rgba(8, 9, 7, 0.55);
+  border: 1px solid rgba(232, 224, 198, 0.18);
+  border-radius: 2px;
+}
+
+.victory-star-num {
+  font: 700 9px var(--mono);
+  letter-spacing: 0.14em;
+  color: rgba(232, 224, 198, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.victory-star-status {
+  font: 700 8px var(--mono);
+  letter-spacing: 0.12em;
+  color: rgba(232, 224, 198, 0.55);
+}
+
+.victory-star-slot.is-lit .victory-star-status {
+  color: #ffd700;
+}
+
+.victory-star-slot.is-missed .victory-star-status {
+  color: rgba(255, 154, 122, 0.85);
+}
+
+.victory-star-slot.is-lit {
+  border-color: rgba(255, 215, 0, 0.45);
+  background: rgba(20, 16, 6, 0.7);
 }
 
 .victory-star-glyph {

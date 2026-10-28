@@ -44,8 +44,21 @@
 .mutator-chip small,
 .contract-reward {
   display: block;
-  color: var(--dust);
+  color: rgba(232, 224, 198, 0.82);
   font: 11px var(--body);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.contract-reset-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  color: #ffb29a;
+  font: 700 9px var(--mono);
+  letter-spacing: 0.1em;
+  background: rgba(237, 104, 66, 0.18);
+  border: 1px solid rgba(237, 104, 66, 0.5);
+  border-radius: 2px;
 }
 
 .contract-reward::before {

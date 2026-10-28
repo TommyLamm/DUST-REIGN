@@ -69,6 +69,14 @@ export function refreshVaultPanel(container) {
     else if (starReq === 30) descText = zh ? '雙聯高能等離子推進尾焰軌跡' : 'Dual high-energy cyan thruster beam trail';
     else if (starReq === 45) descText = zh ? '全消光黑合金裝甲佐以熔融金流刻線' : 'Matte black alloy with molten gold racing lines';
     card.appendChild(el('p', 'milestone-desc', descText));
+    if (!isUnlocked) {
+      var need = starReq - totalStars;
+      if (need < 1) need = 1;
+      card.appendChild(el('p', 'milestone-lock-reason', zh
+        ? ('還需 ' + need + ' 顆戰役星解鎖')
+        : ('Need ' + need + ' more campaign stars')));
+    }
+    card.setAttribute('aria-label', (zh ? ms.nameZh : ms.nameEn) + ' — ' + (isUnlocked ? (zh ? '已解鎖' : 'UNLOCKED') : (zh ? '未達成' : 'LOCKED')));
 
     milestonesGrid.appendChild(card);
   });
@@ -100,6 +108,8 @@ export function refreshVaultPanel(container) {
     if (!unlockedSkin) {
       btn.textContent = zh ? '🔒 尚未解鎖' : '🔒 LOCKED';
       btn.disabled = true;
+      btn.title = skin.desc;
+      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + skin.name + ' — ' + skin.desc);
     } else if (isEquipped) {
       btn.textContent = zh ? '✓ 已裝備' : '✓ EQUIPPED';
       btn.disabled = true;
@@ -144,6 +154,8 @@ export function refreshVaultPanel(container) {
     if (!unlockedTrail) {
       btn.textContent = zh ? '🔒 尚未解鎖' : '🔒 LOCKED';
       btn.disabled = true;
+      btn.title = tr.desc;
+      btn.setAttribute('aria-label', (zh ? '尚未解鎖' : 'LOCKED') + ' — ' + tr.name + ' — ' + tr.desc);
     } else if (isEquipped) {
       btn.textContent = zh ? '✓ 已裝備' : '✓ EQUIPPED';
       btn.disabled = true;
