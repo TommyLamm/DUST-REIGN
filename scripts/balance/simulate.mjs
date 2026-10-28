@@ -611,6 +611,16 @@ function simulate(game, opts) {
     else if (state.deathCause) tracker.lethal = state.deathCause;
     else if (state.lastDamageSource && state.lastDamageSource !== 'bullet:elite') tracker.lethal = state.lastDamageSource;
   }
+  if (outcome === 'death' && (tracker.lethal === 'unknown' || !tracker.lethal)) {
+    var recent = (state.recentDamageSources || []).slice();
+    var pick = state.lastNonEliteDamageSource || '';
+    if (!pick) {
+      for (var ri = recent.length - 1; ri >= 0; ri -= 1) {
+        if (recent[ri] && recent[ri] !== 'bullet:elite' && recent[ri] !== 'contact:elite') { pick = recent[ri]; break; }
+      }
+    }
+    if (pick) tracker.lethal = pick;
+  }
   var deathCause = outcome === 'death' ? (tracker.lethal || 'unknown') : outcome;
   if (outcome === 'extract') deathCause = 'extract';
   if (tracker.contractCur) {
