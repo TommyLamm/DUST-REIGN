@@ -66,10 +66,12 @@ function renderVictoryStars(state) {
   var stageObj = getCampaignStage(stageId);
 
   var starsEarned = state.stageStars || { star1: true, star2: false, star3: false };
-  var criteria = (stageObj && stageObj.starCriteria) || {
-    star1: zh ? '通關任務主要目標' : 'Primary mission objective fulfilled',
-    star2: zh ? '剩餘生命值 ≥ 75%' : 'Hull integrity maintained ≥ 75%',
-    star3: zh ? '戰術極限精通評級' : 'Tactical mastery evaluation'
+  var raw = (stageObj && stageObj.starCriteria) || null;
+  var sid = (stageObj && stageObj.id) || stageId || '';
+  var criteria = {
+    star1: raw ? tCampaignStageStar(sid, 1, raw.star1) : (zh ? '通關任務主要目標' : 'Primary mission objective fulfilled'),
+    star2: raw ? tCampaignStageStar(sid, 2, raw.star2) : (zh ? '剩餘生命值 ≥ 75%' : 'Hull integrity maintained ≥ 75%'),
+    star3: raw ? tCampaignStageStar(sid, 3, raw.star3) : (zh ? '戰術極限精通評級' : 'Tactical mastery evaluation')
   };
 
   var starDefs = [
