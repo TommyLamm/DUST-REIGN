@@ -388,16 +388,40 @@
 }
 
 .upgrade-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-width: 44px;
   min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid var(--line-strong);
-  background: rgba(22, 24, 20, 0.92);
+  padding: 10px 14px;
+  border: 1px solid rgba(232, 224, 198, 0.35);
+  background: rgba(8, 9, 7, 0.92);
   color: var(--bone);
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.upgrade-action-key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  color: #f4eedc;
+  font: 700 11px var(--mono);
+  background: rgba(16, 17, 14, 0.95);
+  border: 1px solid rgba(232, 224, 198, 0.45);
+  border-bottom: 2px solid var(--rust);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.upgrade-action-label {
+  font-weight: 700;
 }
 
 .upgrade-action:hover,
@@ -405,23 +429,66 @@
 .upgrade-action.is-armed {
   border-color: var(--amber);
   color: var(--amber);
+  outline: 2px solid rgba(232, 185, 78, 0.55);
+  outline-offset: 2px;
+}
+
+.upgrade-action.is-armed {
+  background: rgba(40, 28, 10, 0.95);
+  box-shadow: 0 0 12px rgba(232, 185, 78, 0.35);
 }
 
 .upgrade-action:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   cursor: default;
+  color: rgba(232, 224, 198, 0.55);
+  border-style: dashed;
 }
 
-.upgrade-action--skip { border-color: var(--mint); }
+.upgrade-action:disabled .upgrade-action-key {
+  opacity: 0.7;
+  border-bottom-color: rgba(232, 224, 198, 0.35);
+}
+
+.upgrade-action--reroll { border-left: 3px solid var(--amber); }
+.upgrade-action--banish { border-left: 3px solid #f0cf88; }
+.upgrade-action--skip {
+  border-color: rgba(124, 240, 200, 0.55);
+  border-left: 3px solid var(--mint);
+  color: #b8f5d8;
+}
 
 .upgrade-control-hint {
   flex: 1 0 100%;
   margin: 0;
-  color: var(--muted);
+  padding: 6px 8px;
+  color: rgba(232, 224, 198, 0.78);
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.1em;
   text-align: center;
+  background: rgba(8, 9, 7, 0.72);
+  border: 1px solid rgba(232, 224, 198, 0.22);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.game-root.is-high-contrast .upgrade-action,
+.game-root.is-high-contrast .upgrade-action-key {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.game-root.is-high-contrast .upgrade-action--skip {
+  border-color: #00ffaa !important;
+  color: #00ffaa !important;
+}
+
+.game-root.is-high-contrast .upgrade-control-hint {
+  color: #ffffff !important;
+  background: #000000 !important;
+  border-color: #ffffff !important;
 }
 
 .upgrade-panel.is-banish-mode .upgrade-choice,

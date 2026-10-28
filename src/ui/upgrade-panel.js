@@ -173,33 +173,63 @@ function renderControlRow() {
   var banishes = rt.state.banishes || 0;
   var picking = !!rt.state.banishPicking;
   row.innerHTML = '';
+  row.setAttribute('role', 'group');
+  row.setAttribute('aria-label', zh ? '強化控制：重骰、放逐、跳過' : 'Upgrade controls: reroll, banish, skip');
+
   var reroll = document.createElement('button');
   reroll.type = 'button';
-  reroll.className = 'upgrade-action';
+  reroll.className = 'upgrade-action upgrade-action--reroll';
   reroll.id = 'upgradeRerollBtn';
-  reroll.textContent = (zh ? '重骰 (' : 'REROLL (') + rerolls + ')';
+  reroll.innerHTML = '<kbd class="upgrade-action-key" aria-hidden="true">R</kbd><span class="upgrade-action-label">' +
+    (zh ? ('重骰 · 剩餘 ' + rerolls) : ('REROLL · ' + rerolls + ' LEFT')) + '</span>';
   reroll.disabled = rerolls <= 0;
-  reroll.setAttribute('aria-label', (zh ? '重骰三張卡片。剩餘 ' : 'Reroll the three cards. ') + rerolls + (zh ? ' 次。' : ' remaining.'));
+  if (rerolls <= 0) {
+    reroll.title = zh ? '本局重骰已用盡' : 'No rerolls left this run';
+    reroll.setAttribute('aria-label', zh ? '重骰不可用：本局次數已用盡' : 'Reroll unavailable: none remaining');
+  } else {
+    reroll.title = zh ? ('重骰三張卡片（快捷鍵 R）· 剩餘 ' + rerolls + ' 次') : ('Reroll three cards (R) · ' + rerolls + ' left');
+    reroll.setAttribute('aria-label', (zh ? '重骰三張卡片。剩餘 ' : 'Reroll the three cards. ') + rerolls + (zh ? ' 次。快捷鍵 R。' : ' remaining. Hotkey R.'));
+  }
   reroll.addEventListener('click', function () { rerollUpgrades(); });
+
   var banish = document.createElement('button');
   banish.type = 'button';
-  banish.className = 'upgrade-action' + (picking ? ' is-armed' : '');
+  banish.className = 'upgrade-action upgrade-action--banish' + (picking ? ' is-armed' : '');
   banish.id = 'upgradeBanishBtn';
-  banish.textContent = picking ? (zh ? '取消放逐' : 'CANCEL BANISH') : ((zh ? '放逐 (' : 'BANISH (') + banishes + ')');
+  var banishLabel = picking
+    ? (zh ? '取消放逐' : 'CANCEL BANISH')
+    : (zh ? ('放逐 · 剩餘 ' + banishes) : ('BANISH · ' + banishes + ' LEFT'));
+  banish.innerHTML = '<kbd class="upgrade-action-key" aria-hidden="true">B</kbd><span class="upgrade-action-label">' + banishLabel + '</span>';
   banish.disabled = banishes <= 0 && !picking;
   banish.setAttribute('aria-pressed', picking ? 'true' : 'false');
-  banish.setAttribute('aria-label', picking ? (zh ? '取消放逐選擇' : 'Cancel banish selection') : ((zh ? '放逐一張卡片。剩餘 ' : 'Banish one card. ') + banishes + (zh ? ' 次。' : ' remaining.')));
+  if (picking) {
+    banish.title = zh ? '取消放逐模式（ESC）' : 'Cancel banish mode (Esc)';
+    banish.setAttribute('aria-label', zh ? '取消放逐選擇。快捷鍵 ESC 或再按 B。' : 'Cancel banish selection. Esc or B again.');
+  } else if (banishes <= 0) {
+    banish.title = zh ? '本局放逐已用盡' : 'No banishes left this run';
+    banish.setAttribute('aria-label', zh ? '放逐不可用：本局次數已用盡' : 'Banish unavailable: none remaining');
+  } else {
+    banish.title = zh ? ('進入放逐模式（快捷鍵 B）· 剩餘 ' + banishes + ' 次') : ('Enter banish mode (B) · ' + banishes + ' left');
+    banish.setAttribute('aria-label', (zh ? '放逐一張卡片。剩餘 ' : 'Banish one card. ') + banishes + (zh ? ' 次。快捷鍵 B。' : ' remaining. Hotkey B.'));
+  }
   banish.addEventListener('click', function () { beginBanish(); });
+
   var skip = document.createElement('button');
   skip.type = 'button';
   skip.className = 'upgrade-action upgrade-action--skip';
   skip.id = 'upgradeSkipBtn';
-  skip.textContent = zh ? '跳過' : 'SKIP';
-  skip.setAttribute('aria-label', zh ? '跳過強化。修復 10 點裝甲並獲得 100 分。' : 'Skip the card. Heal 10 and gain 100 score.');
+  skip.innerHTML = '<kbd class="upgrade-action-key" aria-hidden="true">X</kbd><span class="upgrade-action-label">' +
+    (zh ? '跳過 · 修 10 / +100 分' : 'SKIP · HEAL 10 / +100') + '</span>';
+  skip.title = zh ? '跳過本輪強化：修復 10 點裝甲並獲得 100 分（快捷鍵 X）' : 'Skip this pick: heal 10 hull and +100 score (X)';
+  skip.setAttribute('aria-label', zh ? '跳過強化。修復 10 點裝甲並獲得 100 分。快捷鍵 X。' : 'Skip the card. Heal 10 and gain 100 score. Hotkey X.');
   skip.addEventListener('click', function () { skipUpgrade(); });
+
   var hint = document.createElement('p');
   hint.className = 'upgrade-control-hint';
-  hint.textContent = picking ? (zh ? '選擇要放逐的卡片 · 按 ESC 取消' : 'SELECT A CARD TO BANISH · ESC CANCELS') : (zh ? '數字鍵 1–3 選擇 · R 重骰 · B 放逐 · X 跳過' : '1–3 PICK · R REROLL · B BANISH · X SKIP');
+  hint.id = 'upgradeControlHint';
+  hint.textContent = picking
+    ? (zh ? '放逐模式：點選要永久移除的卡片 · ESC 取消' : 'BANISH MODE: click a card to remove it forever · ESC CANCELS')
+    : (zh ? '數字鍵 1–3 選擇 · R 重骰 · B 放逐 · X 跳過（修 10 / +100 分）' : '1–3 PICK · R REROLL · B BANISH · X SKIP (HEAL 10 / +100)');
   row.appendChild(reroll);
   row.appendChild(banish);
   row.appendChild(skip);
