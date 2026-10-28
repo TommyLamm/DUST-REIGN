@@ -217,7 +217,12 @@ export function damagePlayer(amount, source, threatX, threatY) {
   if (!(remaining > 0)) return 0;
   var tagged = normalizeDamageSource(source);
   rt.state.lastDamageSource = tagged;
-  if (tagged !== 'bullet:elite' && tagged !== 'contact:elite') rt.state.lastNonEliteDamageSource = tagged;
+  if (tagged !== 'bullet:elite' && tagged !== 'contact:elite') {
+    rt.state.lastNonEliteDamageSource = tagged;
+    if (!rt.state.recentDamageSources) rt.state.recentDamageSources = [];
+    rt.state.recentDamageSources.push(tagged);
+    if (rt.state.recentDamageSources.length > 8) rt.state.recentDamageSources.shift();
+  }
   var applied = remaining;
   var saved = false;
   if (p.phoenix && p.hp - remaining <= 0) {

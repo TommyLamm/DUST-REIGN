@@ -322,7 +322,12 @@ export function stepEnemies(dt, frame) {
       var sticky = rt.state.lastDamageSource || '';
       var nonElite = rt.state.lastNonEliteDamageSource || '';
       if (sticky === 'bullet:elite' || sticky === 'contact:elite') {
-        rt.state.deathCause = nonElite || 'unknown';
+        var recent = rt.state.recentDamageSources || [];
+        var fromRecent = '';
+        for (var ri = recent.length - 1; ri >= 0; ri -= 1) {
+          if (recent[ri] && recent[ri] !== 'bullet:elite' && recent[ri] !== 'contact:elite') { fromRecent = recent[ri]; break; }
+        }
+        rt.state.deathCause = nonElite || fromRecent || 'unknown';
       } else {
         rt.state.deathCause = sticky || nonElite || 'unknown';
       }
