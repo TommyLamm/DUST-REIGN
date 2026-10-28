@@ -38,15 +38,15 @@
         </div>
         <div class="topbar-meta" aria-label="Signal status">
           <div class="signal-readout">
-            <span class="meta-label">COMMS</span>
+            <span class="meta-label">通訊</span>
             <strong id="commsStatus">OPEN</strong>
           </div>
           <div class="signal-readout">
-            <span class="meta-label">WIND</span>
+            <span class="meta-label">風向</span>
             <strong id="windStatus">NW 18</strong>
           </div>
           <div class="signal-readout signal-readout--best">
-            <span class="meta-label">BEST</span>
+            <span class="meta-label">最高</span>
             <strong id="hudBest">000000</strong>
           </div>
           <button id="audioBtn" class="pause-button" type="button" aria-label="切換音效 / Toggle audio">AUDIO [ON]</button>
@@ -73,18 +73,18 @@
             <div id="hud" class="hud">
               <div class="hud-top">
                 <div class="metric metric--wave">
-                  <span class="metric-label">WAVE</span>
+                  <span class="metric-label">波次</span>
                   <strong id="hudWave" data-wave="">01</strong>
                   <small id="hudWaveLabel">拾荒時刻</small>
                   <span class="wave-progress" aria-hidden="true"><i id="hudWaveProgress"></i></span>
                 </div>
                 <div class="metric metric--score">
-                  <span class="metric-label">SCORE</span>
+                  <span class="metric-label">分數</span>
                   <strong id="hudScore" data-score="">000000</strong>
                   <small id="hudKills">0 敵機</small>
                 </div>
                 <div class="metric metric--level">
-                  <span class="metric-label">RIG LVL</span>
+                  <span class="metric-label">機體等級</span>
                   <strong id="hudLevel" data-level="">01</strong>
                   <small>保持移動</small>
                 </div>
@@ -123,7 +123,7 @@
               <div class="hud-bottom">
                 <div class="resource-block resource-block--health">
                   <div class="resource-label">
-                    <span>HULL INTEGRITY</span>
+                    <span>機體裝甲</span>
                     <strong><span id="hudHealth" data-health="">100</span><em>%</em></strong>
                   </div>
                   <div id="healthBar" class="meter meter--health" role="progressbar" aria-label="Hull integrity"
@@ -134,7 +134,7 @@
                 </div>
                 <div class="resource-block resource-block--xp">
                   <div class="resource-label">
-                    <span>SCRAP MEMORY</span>
+                    <span>廢料核心</span>
                     <strong><span id="hudXp" data-xp="">0 / 55</span></strong>
                   </div>
                   <div id="xpBar" class="meter meter--xp" role="progressbar" aria-label="Scrap memory" aria-valuemin="0"
@@ -144,9 +144,9 @@
                 </div>
                 <div class="resource-block resource-block--energy">
                   <div class="resource-label">
-                    <span>BATTERY</span>
+                    <span>電池能量</span>
                     <strong><span id="hudEnergy" data-energy="">50</span><em>%</em></strong>
-                    <span id="empReady" class="emp-ready" hidden>EMP READY</span>
+                    <span id="empReady" class="emp-ready" hidden>EMP 就緒</span>
                   </div>
                   <div id="meterEnergy" class="meter meter--energy" role="progressbar" aria-label="Battery energy"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
@@ -175,7 +175,7 @@
 
               <div class="hud-alert" id="hudStatus">
                 <span class="alert-mark" aria-hidden="true">!</span>
-                <span id="hudStatusText">SIGNAL LOCKED — PRESS ENTER TO DEPLOY</span>
+                <span id="hudStatusText">訊號已鎖定 — 按下 ENTER 出擊</span>
               </div>
             </div>
 
@@ -191,7 +191,7 @@
                 </p>
                 <div id="loadoutPanel" hidden></div>
                 <button id="startBtn" class="action-button action-button--primary" data-start type="button">
-                  <span>DEPLOY</span><b aria-hidden="true">↗</b>
+                  <span>出擊</span><b aria-hidden="true">↗</b>
                 </button>
                 <div class="overlay-foot">
                   <span class="overlay-foot-controls">DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A</span>
@@ -275,9 +275,9 @@
               aria-labelledby="campaignModalTitle" hidden>
               <div class="overlay-inner campaign-modal-inner">
                 <div class="campaign-modal-header">
-                  <div class="overlay-stamp">CAMPAIGN OPERATIONS <span>//</span> SECTOR GRID</div>
+                  <div class="overlay-stamp">戰役作戰 <span>//</span> 區段網格</div>
                   <h2 id="campaignModalTitle">SECTOR <span>CAMPAIGN</span></h2>
-                  <p class="overlay-kicker">SELECT OBJECTIVE &amp; DEPLOY INTO THE WASTES</p>
+                  <p class="overlay-kicker">選擇目標並部署進入廢土</p>
                   <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="Close stage select">✕</button>
                 </div>
                 <div class="campaign-summary-bar">
