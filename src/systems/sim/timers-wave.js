@@ -99,6 +99,10 @@ export function commitWaveAdvance(early) {
   rt.state.coreSpawnTime = 8 + rng('spawn') * 8;
   rt.state.coreSpawned = false;
   rt.state.bossSpawned = false;
+  rt.state.recycledTokens = 0;
+  rt.state.recycleRefundTimer = 0;
+  rt.state.recycleSpentThisWave = 0;
+  rt.state._recycleArmed = false;
   if (early) rt.state.waveTime = 0;
   else rt.state.waveTime -= WAVE_LENGTH;
   rt.state.wave += 1;
@@ -334,10 +338,43 @@ export function stepEnemySpawner(dt, frame) {
   var recipe = rt.state.recipe;
   var enemyCap = recipe && typeof recipe.cap === 'number' ? recipe.cap : Math.min(95, 5 + rt.state.wave * 4);
 
-  // Silent refund: immediately replenish recycled tokens in front of player
-  while ((rt.state.recycledTokens || 0) > 0 && rt.state.enemies.length < enemyCap) {
+  // Large-world recycle refund: culls must not instantly restack front pressure.
+  // Delay first refund ~2s, drip ~0.85s between spends, and cap spends per wave.
+  var worldW = (rt.state && rt.state.width) || 960;
+  var largeWorld = worldW >= 2400;
+  var recycleDelay = largeWorld ? 2.0 : 0;
+  var recycleDrip = largeWorld ? 0.85 : 0;
+  var recycleWaveCap = largeWorld ? Math.max(4, Math.floor(enemyCap * 0.35)) : 999;
+  var tokens = rt.state.recycledTokens || 0;
+  if (tokens > 0) {
+    if (!(rt.state.recycleRefundTimer > 0) && rt.state._recycleArmed !== true) {
+      rt.state.recycleRefundTimer = recycleDelay;
+      rt.state._recycleArmed = true;
+    } else {
+      rt.state.recycleRefundTimer = (rt.state.recycleRefundTimer || 0) - dt;
+    }
+  } else {
+    rt.state.recycleRefundTimer = 0;
+    rt.state._recycleArmed = false;
+  }
+  var spent = rt.state.recycleSpentThisWave || 0;
+  while (
+    (rt.state.recycledTokens || 0) > 0 &&
+    rt.state.enemies.length < enemyCap &&
+    spent < recycleWaveCap &&
+    (rt.state.recycleRefundTimer || 0) <= 0
+  ) {
     rt.state.recycledTokens -= 1;
     spawning.spawnEnemy();
+    spent += 1;
+    rt.state.recycleSpentThisWave = spent;
+    if (recycleDrip > 0 && (rt.state.recycledTokens || 0) > 0) {
+      rt.state.recycleRefundTimer = recycleDrip;
+      break;
+    }
+  }
+  if (spent >= recycleWaveCap && (rt.state.recycledTokens || 0) > 0) {
+    rt.state.recycledTokens = 0;
   }
 
   if (rt.state.spawnTimer <= 0 && rt.state.enemies.length < enemyCap) {

@@ -105,7 +105,11 @@ export function stepEnemies(dt, frame) {
       if (!e.isBoss && e.kind !== 'elite') {
         e.zone3Timer = (e.zone3Timer || 0) + dt;
         if (e.zone3Timer >= 3.0) {
-          rt.state.recycledTokens = (rt.state.recycledTokens || 0) + 1;
+          // Soft bank cap on large worlds so a long kite cannot stockpile a spawn bomb.
+          var bankCap = (boundW >= 2400) ? 8 : 99;
+          if ((rt.state.recycledTokens || 0) < bankCap) {
+            rt.state.recycledTokens = (rt.state.recycledTokens || 0) + 1;
+          }
           fastUnorderedRemove(rt.state.enemies, j);
           continue;
         }
