@@ -217,7 +217,7 @@ export function restart() {
   var breakdown = typeof document !== 'undefined' ? document.getElementById('scoreBreakdown') : null;
   if (breakdown && breakdown.parentNode) breakdown.parentNode.removeChild(breakdown);
   if (rt.ui.runState) rt.ui.runState.textContent = 'STANDBY';
-  setStatusText('SELECT A RIG — PRESS START');
+  setStatusText('SELECT A RIG — PRESS ENTER TO DEPLOY');
   updateDomUi();
 }
 

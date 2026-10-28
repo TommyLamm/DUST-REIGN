@@ -317,7 +317,7 @@ function refresh() {
   var modeLabel = document.querySelector('#loadoutPanel [data-loadout-row="mode"] .loadout-label');
   if (modeLabel) modeLabel.textContent = zh ? '模式' : 'MODE';
   var hintNode = document.querySelector('#loadoutPanel .loadout-hint');
-  if (hintNode) hintNode.textContent = zh ? '方向鍵 選擇 · TAB 切換 · ENTER 開始' : 'ARROWS SELECT · TAB MOVES · ENTER STARTS';
+  if (hintNode) hintNode.textContent = zh ? '方向鍵 選擇 · TAB 切換 · ENTER 出擊' : 'ARROWS SELECT · TAB MOVES · ENTER DEPLOYS';
   var codexOpenBtn = document.getElementById('codexOpenBtn');
   if (codexOpenBtn) codexOpenBtn.textContent = zh ? '檔案庫' : 'CODEX';
 
@@ -926,7 +926,7 @@ export function initLoadoutPanel() {
   scoreNode = el('p', 'loadout-legacy', '');
   tabPanelLoadout.appendChild(ruleNode);
   tabPanelLoadout.appendChild(scoreNode);
-  tabPanelLoadout.appendChild(el('p', 'loadout-hint', 'ARROWS SELECT · TAB MOVES · ENTER STARTS'));
+  tabPanelLoadout.appendChild(el('p', 'loadout-hint', 'ARROWS SELECT · TAB MOVES · ENTER DEPLOYS'));
 
   codexBtn = el('button', 'loadout-codex', 'CODEX');
   codexBtn.type = 'button';
