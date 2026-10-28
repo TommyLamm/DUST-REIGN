@@ -181,6 +181,11 @@ function startTelegraph(e, p, seconds) {
   e.mode = 'telegraph';
   e.telegraphT = seconds;
   e.telegraphMax = seconds;
+  ensureChargeLaneCrag(e, p, { boundW: (rt.state && rt.state.width) || 960, boundH: (rt.state && rt.state.height) || 640 });
+  if (rt.state) {
+    rt.state.banner = Math.max(rt.state.banner || 0, 1.2);
+    rt.state.bannerText = 'CHARGE TELEGRAPH // BAIT INTO THE CRAG';
+  }
 }
 
 export function spawnMonolithCrags(e, frame) {
@@ -206,6 +211,35 @@ export function spawnMonolithCrags(e, frame) {
     });
     spawnParticles(px, py, '#c4a574', 12, 140, 2.5);
   }
+}
+
+
+function ensureChargeLaneCrag(e, p, frame) {
+  if (!rt.state || !e || !p) return;
+  if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
+  var box = boxOf(frame);
+  var ang = Math.atan2(p.y - e.y, p.x - e.x);
+  var cragR = 45;
+  var dist = 420;
+  var px = clamp(e.x + Math.cos(ang) * dist, cragR + 25, box.w - cragR - 25);
+  var py = clamp(e.y + Math.sin(ang) * dist, cragR + 25, box.h - cragR - 25);
+  // Skip if a crag already sits near the lane.
+  var list = rt.state.monolithCrags;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var c = list[i];
+    if (c && c.active && Math.hypot(c.x - px, c.y - py) < 120) return;
+  }
+  list.push({
+    id: 'crag_lane_' + Math.floor(rt.state.waveTime || 0),
+    x: px,
+    y: py,
+    r: cragR,
+    hp: 1,
+    active: true,
+    laneBait: true
+  });
+  spawnParticles(px, py, '#e6d2a8', 10, 120, 2.2);
 }
 
 function beginCharge(e) {

@@ -1187,6 +1187,7 @@ export function tBanner(text) {
 
 
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
+  if (text.indexOf('CHARGE TELEGRAPH') === 0) return '衝撞預兆 // 引向岩障破甲';
   if (text.indexOf('CHARGE SPENT') === 0) return '衝撞力竭 // 破甲輸出窗';
   if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
   if (text.indexOf('TUG-OF-WAR COUNTER') === 0) return '拔河反制 // 散熱器暴露 2.5S';
