@@ -49,7 +49,7 @@ function fillCards(parent, options, selected, onPick) {
       var rule = option.rule;
       var detail = option.detail;
       var reward = option.reward;
-      if (zh && option.id) {
+      if (option.id) {
         name = tArmoryOptionName(option.id) || tRouteName(option.id) || tUpgradeTitle(option) || tWeaponName(option.id) || name;
         rule = tRouteRule(option.id) || tUpgradeText(option) || rule;
         detail = tArmoryOptionDetail(option.id) || tUpgradeText(option) || tWeaponLine(option.id) || detail;

@@ -269,8 +269,8 @@ export function renderBuildInspector() {
   if (rt.ui.installedChipsList) {
     if (chips.length === 0) {
       rt.ui.installedChipsList.innerHTML = zh
-        ? '<div class="chips-empty">[ 尚未安裝改裝晶片 — 戰鬥升級時挑選卡片 ]</div>'
-        : '<div class="chips-empty">[ NO MOD CHIPS YET — LEVEL UP MID-RUN TO INSTALL ]</div>';
+        ? '<div class="chips-empty" role="status"><strong>尚無改裝晶片</strong><p>戰鬥升級三選一時安裝 · 融合就緒會顯示於下方矩陣</p></div>'
+        : '<div class="chips-empty" role="status"><strong>NO MOD CHIPS YET</strong><p>Install during level-up picks · ready fusions appear in the matrix below</p></div>';
     } else {
       var grouped = [];
       var seen = {};
@@ -401,9 +401,14 @@ function renderRunSummary(p) {
     [zh ? '合約' : 'CONTRACT', contractText],
     [zh ? '機底' : 'WEAPON', weaponVal]
   ];
-  node.innerHTML = '<div class="build-col-title">' + (zh ? '局次總覽' : 'RUN') + '</div>' + rows.map(function (row) {
-    return '<div class="run-summary-row"><span>' + row[0] + '</span><strong>' + row[1] + '</strong></div>';
-  }).join('');
+  var emptyRun = !rt.state.route && !rt.state.mutator && !rt.state.contract;
+  var emptyNote = emptyRun
+    ? ('<p class="run-summary-empty">' + (zh ? '出擊進行中資料會顯示於此 · 路線／變異／合約尚無' : 'Live run data fills in here · route / mutator / contract pending') + '</p>')
+    : '';
+  node.innerHTML = '<div class="build-col-title">' + (zh ? '局次總覽' : 'RUN OVERVIEW') + '</div>' + rows.map(function (row) {
+    var isNone = row[1] === noneLabel;
+    return '<div class="run-summary-row' + (isNone ? ' is-empty' : '') + '"><span>' + row[0] + '</span><strong>' + row[1] + '</strong></div>';
+  }).join('') + emptyNote;
 }
 
 export function getCurrentPauseTab() {
