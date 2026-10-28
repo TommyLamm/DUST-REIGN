@@ -757,17 +757,18 @@ export function initLoadoutPanel() {
   if (!panel) return;
   panel.classList.add('loadout-panel');
   panel.setAttribute('role', 'group');
-  panel.setAttribute('aria-label', 'Run loadout');
+  var zhSeed = isChinese();
+  panel.setAttribute('aria-label', zhSeed ? '出擊配置' : 'Run loadout');
 
   // Top Nav Tabs
   var navTabs = el('div', 'loadout-nav-tabs');
-  tabBtnLoadout = el('button', 'loadout-nav-tab is-active', '[1] LOADOUT');
+  tabBtnLoadout = el('button', 'loadout-nav-tab is-active', zhSeed ? '[1] 出擊配置' : '[1] LOADOUT');
   tabBtnLoadout.type = 'button';
-  tabBtnWorkshop = el('button', 'loadout-nav-tab', '[2] WORKSHOP ⚡');
+  tabBtnWorkshop = el('button', 'loadout-nav-tab', zhSeed ? '[2] 改裝工坊 ⚡' : '[2] WORKSHOP ⚡');
   tabBtnWorkshop.type = 'button';
-  tabBtnVault = el('button', 'loadout-nav-tab', '[3] STAR VAULT ★');
+  tabBtnVault = el('button', 'loadout-nav-tab', zhSeed ? '[3] 星級寶庫 ★' : '[3] STAR VAULT ★');
   tabBtnVault.type = 'button';
-  tabBtnBounties = el('button', 'loadout-nav-tab', '[4] BOUNTIES ⚙');
+  tabBtnBounties = el('button', 'loadout-nav-tab', zhSeed ? '[4] 每日賞金 ⚙' : '[4] BOUNTIES ⚙');
   tabBtnBounties.type = 'button';
 
   on(tabBtnLoadout, 'click', function (e) { e.preventDefault(); e.stopPropagation(); switchNavTab('loadout'); });
@@ -787,7 +788,7 @@ export function initLoadoutPanel() {
   tabPanelVault = createVaultPanel();
   tabPanelBounties = createBountiesPanel();
 
-  tabPanelLoadout.appendChild(el('p', 'loadout-kicker', 'LOADOUT'));
+  tabPanelLoadout.appendChild(el('p', 'loadout-kicker', zhSeed ? '出擊配置' : 'LOADOUT'));
   statusNode = el('p', 'loadout-status', '');
   statusNode.setAttribute('aria-live', 'polite');
   tabPanelLoadout.appendChild(statusNode);
@@ -796,8 +797,8 @@ export function initLoadoutPanel() {
   rigRow = el('div', 'loadout-row');
   rigRow.setAttribute('data-loadout-row', 'rig');
   rigRow.setAttribute('role', 'radiogroup');
-  rigRow.setAttribute('aria-label', 'Rig');
-  rigRow.appendChild(el('span', 'loadout-label', 'RIG'));
+  rigRow.setAttribute('aria-label', zhSeed ? '機體' : 'Rig');
+  rigRow.appendChild(el('span', 'loadout-label', zhSeed ? '機體' : 'RIG'));
   var rigChoices = el('div', 'loadout-choices');
   for (i = 0; i < RIGS.length; i += 1) {
     (function (rig) {
@@ -821,8 +822,8 @@ export function initLoadoutPanel() {
   weaponRow = el('div', 'loadout-row');
   weaponRow.setAttribute('data-loadout-row', 'weapon');
   weaponRow.setAttribute('role', 'radiogroup');
-  weaponRow.setAttribute('aria-label', 'Primary weapon');
-  weaponRow.appendChild(el('span', 'loadout-label', 'WEAPON'));
+  weaponRow.setAttribute('aria-label', zhSeed ? '主武器' : 'Primary weapon');
+  weaponRow.appendChild(el('span', 'loadout-label', zhSeed ? '武器' : 'WEAPON'));
   var weaponChoices = el('div', 'loadout-choices');
   for (i = 0; i < WEAPONS.length; i += 1) {
     (function (weapon) {
@@ -848,8 +849,8 @@ export function initLoadoutPanel() {
   tacticalRow = el('div', 'loadout-row');
   tacticalRow.setAttribute('data-loadout-row', 'tactical');
   tacticalRow.setAttribute('role', 'radiogroup');
-  tacticalRow.setAttribute('aria-label', 'Tactical gear');
-  tacticalRow.appendChild(el('span', 'loadout-label', 'TACTICAL'));
+  tacticalRow.setAttribute('aria-label', zhSeed ? '戰術裝備' : 'Tactical gear');
+  tacticalRow.appendChild(el('span', 'loadout-label', zhSeed ? '戰術' : 'TACTICAL'));
   var tacticalChoices = el('div', 'loadout-choices loadout-choices--tactical');
   for (i = 0; i < TACTICALS.length; i += 1) {
     (function (tac) {
@@ -874,16 +875,16 @@ export function initLoadoutPanel() {
   // 4. Heat Row
   heatRow = el('div', 'loadout-row');
   heatRow.setAttribute('data-loadout-row', 'heat');
-  heatRow.setAttribute('aria-label', 'Dust Heat');
-  heatRow.appendChild(el('span', 'loadout-label', 'HEAT'));
+  heatRow.setAttribute('aria-label', zhSeed ? '沙塵熱度' : 'Dust Heat');
+  heatRow.appendChild(el('span', 'loadout-label', zhSeed ? '熱度' : 'HEAT'));
   var heatChoices = el('div', 'loadout-heat');
   heatDown = el('button', 'loadout-step', '−');
   heatDown.type = 'button';
-  heatDown.setAttribute('aria-label', 'Lower Heat');
+  heatDown.setAttribute('aria-label', zhSeed ? '降低熱度' : 'Lower Heat');
   heatUp = el('button', 'loadout-step', '+');
   heatUp.type = 'button';
-  heatUp.setAttribute('aria-label', 'Raise Heat');
-  heatValue = el('button', 'loadout-heat-value', 'HEAT 0');
+  heatUp.setAttribute('aria-label', zhSeed ? '提高熱度' : 'Raise Heat');
+  heatValue = el('button', 'loadout-heat-value', zhSeed ? '熱度 0' : 'HEAT 0');
   heatValue.type = 'button';
   on(heatDown, 'click', function (event) {
     event.preventDefault();
@@ -912,26 +913,26 @@ export function initLoadoutPanel() {
   modeRow = el('div', 'loadout-row');
   modeRow.setAttribute('data-loadout-row', 'mode');
   modeRow.setAttribute('role', 'radiogroup');
-  modeRow.setAttribute('aria-label', 'Run mode');
-  modeRow.appendChild(el('span', 'loadout-label', 'MODE'));
+  modeRow.setAttribute('aria-label', zhSeed ? '出擊模式' : 'Run mode');
+  modeRow.appendChild(el('span', 'loadout-label', zhSeed ? '模式' : 'MODE'));
   var modeChoices = el('div', 'loadout-choices loadout-choices--mode');
 
-  modeStandard = el('button', 'loadout-card loadout-mode mode-tab', 'STANDARD');
+  modeStandard = el('button', 'loadout-card loadout-mode mode-tab', zhSeed ? '標準出擊' : 'STANDARD');
   modeStandard.type = 'button';
   modeStandard.setAttribute('role', 'radio');
   modeStandard.setAttribute('data-mode', 'standard');
 
-  modeCampaign = el('button', 'loadout-card loadout-mode mode-tab', 'CAMPAIGN');
+  modeCampaign = el('button', 'loadout-card loadout-mode mode-tab', zhSeed ? '戰役' : 'CAMPAIGN');
   modeCampaign.type = 'button';
   modeCampaign.setAttribute('role', 'radio');
   modeCampaign.setAttribute('data-mode', 'campaign');
 
-  modeHardcore = el('button', 'loadout-card loadout-mode mode-tab', 'HARDCORE');
+  modeHardcore = el('button', 'loadout-card loadout-mode mode-tab', zhSeed ? '極限作戰' : 'HARDCORE');
   modeHardcore.type = 'button';
   modeHardcore.setAttribute('role', 'radio');
   modeHardcore.setAttribute('data-mode', 'hardcore');
 
-  modeDaily = el('button', 'loadout-card loadout-mode mode-tab', 'DAILY');
+  modeDaily = el('button', 'loadout-card loadout-mode mode-tab', zhSeed ? '每日挑戰' : 'DAILY');
   modeDaily.type = 'button';
   modeDaily.setAttribute('role', 'radio');
   modeDaily.setAttribute('data-mode', 'daily');
@@ -984,7 +985,7 @@ export function initLoadoutPanel() {
   stageInfo.appendChild(metaDiv);
   stageInfo.appendChild(campaignStageName);
 
-  campaignSelectStageBtn = el('button', 'campaign-stage-btn', 'SELECT STAGE ⊞');
+  campaignSelectStageBtn = el('button', 'campaign-stage-btn', zhSeed ? '選擇關卡 ⊞' : 'SELECT STAGE ⊞');
   campaignSelectStageBtn.type = 'button';
   campaignSelectStageBtn.id = 'campaignSelectStageBtn';
   on(campaignSelectStageBtn, 'click', function (e) {
@@ -1010,12 +1011,12 @@ export function initLoadoutPanel() {
   scoreNode = el('p', 'loadout-legacy', '');
   tabPanelLoadout.appendChild(ruleNode);
   tabPanelLoadout.appendChild(scoreNode);
-  tabPanelLoadout.appendChild(el('p', 'loadout-hint', 'ARROWS SELECT · TAB MOVES · ENTER DEPLOYS'));
+  tabPanelLoadout.appendChild(el('p', 'loadout-hint', zhSeed ? '方向鍵 選擇 · TAB 切換 · ENTER 出擊' : 'ARROWS SELECT · TAB MOVES · ENTER DEPLOYS'));
 
-  codexBtn = el('button', 'loadout-codex', 'CODEX');
+  codexBtn = el('button', 'loadout-codex', zhSeed ? '檔案庫' : 'CODEX');
   codexBtn.type = 'button';
   codexBtn.id = 'codexOpenBtn';
-  codexBtn.setAttribute('aria-label', 'Open codex');
+  codexBtn.setAttribute('aria-label', zhSeed ? '開啟檔案庫' : 'Open codex');
   on(codexBtn, 'click', function (event) {
     event.preventDefault();
     event.stopPropagation();

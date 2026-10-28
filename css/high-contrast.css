@@ -42,15 +42,17 @@
 
 .game-root.is-high-contrast .run-telemetry-grid > div {
   background: #000000 !important;
-  border: 1px solid #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
 }
 
 .game-root.is-high-contrast .run-telemetry-grid span {
   color: #ffffff !important;
+  text-shadow: none !important;
 }
 
 .game-root.is-high-contrast .run-telemetry-grid strong {
-  color: #ffffff !important;
+  color: #ffcc33 !important;
   text-shadow: none !important;
 }
 
