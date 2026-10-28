@@ -145,7 +145,7 @@ export function breacherSpread(count, scale) {
 }
 
 export function arcChainProfile(p) {
-  var profile = { targets: 2, range: 110, ratio: 0.7 };
+  var profile = { targets: 2, range: 120, ratio: 0.78 };
   if (!p || (p.weaponMode || 'standard') !== 'arc-welder') return profile;
   if ((p.mastery || 0) >= 1) profile.targets = 3;
   if ((p.mastery || 0) >= 2) profile.range = 150;
