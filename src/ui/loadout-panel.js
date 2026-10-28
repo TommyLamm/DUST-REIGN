@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange, tCampaignStageName, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tUnlockLabel, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tCampaignStageName, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tRouteName, tUnlockLabel, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 import { getCampaignStore, readBestScoreV2, readDaily, readLegacyBestScore, readMeta, writeMeta } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
@@ -91,11 +91,17 @@ function routeText(rule) {
   var parts = [];
   var i;
   var step;
+  var zh = isChinese();
   if (!rule || !rule.routePlan) return '';
   for (i = 0; i < rule.routePlan.length; i += 1) {
     step = rule.routePlan[i];
-    if (step.routeId) parts.push('ACT ' + step.act + ' ' + String(step.routeId).toUpperCase());
-    else if (step.sector) parts.push('ACT ' + step.act + ' ' + String(step.sector).toUpperCase());
+    var actLabel = zh ? ('第 ' + step.act + ' 幕') : ('ACT ' + step.act);
+    if (step.routeId) {
+      var routeName = zh ? (tRouteName(step.routeId) || String(step.routeId).toUpperCase()) : String(step.routeId).toUpperCase();
+      parts.push(actLabel + ' ' + routeName);
+    } else if (step.sector) {
+      parts.push(actLabel + ' ' + String(step.sector).toUpperCase());
+    }
   }
   return parts.join(' · ');
 }
@@ -208,9 +214,19 @@ function refresh() {
     if (wLine) {
       if (lockedHardcore) {
         wLine.textContent = wSelected ? (zh ? '🔒 極限專屬主武' : '🔒 HARDCORE LOCKED') : (zh ? '作戰禁用' : 'RESTRICTED');
+      } else if (lockedDaily && wSelected) {
+        wLine.textContent = zh ? '🔒 每日鎖定主武' : '🔒 DAILY LOCK';
       } else {
         wLine.textContent = zh ? tWeaponLine(weapon.id) : weapon.line;
       }
+    }
+    var wName = zh ? tWeaponName(weapon.id) : weapon.name;
+    if (lockedHardcore || (lockedDaily && wSelected)) {
+      weaponButtons[i].setAttribute('aria-label', wName + ' — ' + (wLine ? wLine.textContent : (zh ? '已鎖定' : 'LOCKED')));
+      weaponButtons[i].title = wLine ? wLine.textContent : '';
+    } else {
+      weaponButtons[i].setAttribute('aria-label', wName + (wLine && wLine.textContent ? (' — ' + wLine.textContent) : ''));
+      weaponButtons[i].removeAttribute('title');
     }
   }
 
@@ -227,7 +243,23 @@ function refresh() {
     var tCd = tacticalButtons[i].querySelector('small:not(.loadout-line)');
     if (tCd) tCd.textContent = tac.icon + ' ' + (zh ? ('冷卻 ' + tac.cd) : ('CD ' + tac.cd));
     var tTacLine = tacticalButtons[i].querySelector('.loadout-line');
-    if (tTacLine) tTacLine.textContent = tac.line;
+    if (tTacLine) {
+      if (lockedHardcore && !tSelected) {
+        tTacLine.textContent = zh ? '作戰禁用' : 'RESTRICTED';
+      } else if (lockedHardcore && tSelected) {
+        tTacLine.textContent = zh ? '🔒 極限鎖定戰術' : '🔒 HARDCORE LOCKED';
+      } else {
+        tTacLine.textContent = tac.line;
+      }
+    }
+    var tName = zh ? tac.zhName : tac.name;
+    if (lockedHardcore) {
+      tacticalButtons[i].setAttribute('aria-label', tName + ' — ' + (tTacLine ? tTacLine.textContent : (zh ? '已鎖定' : 'LOCKED')));
+      tacticalButtons[i].title = tTacLine ? tTacLine.textContent : '';
+    } else {
+      tacticalButtons[i].setAttribute('aria-label', tName);
+      tacticalButtons[i].removeAttribute('title');
+    }
   }
 
   // Heat Controls Refresh
@@ -305,6 +337,10 @@ function refresh() {
     ruleText = zh ? '標準出擊 — 自由選配機體與主武器，深入荒原長程生存' : 'STANDARD RUN — FREE LOADOUT, ADAPTIVE ROGUELIKE WASTELAND DRIFT';
   }
   if (ruleNode.textContent !== ruleText) ruleNode.textContent = ruleText;
+  if (ruleNode) {
+    ruleNode.setAttribute('role', 'status');
+    ruleNode.setAttribute('aria-label', (zh ? '模式規則' : 'Mode rules') + ' — ' + ruleText);
+  }
 
   var scores = (zh ? '最佳分數 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '歷史最佳 ' : 'LEGACY BEST ') + padScore(readLegacyBestScore());
   if (scoreNode.textContent !== scores) scoreNode.textContent = scores;
