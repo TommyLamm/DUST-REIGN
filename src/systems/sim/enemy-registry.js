@@ -524,11 +524,11 @@ registerEnemyStrategy('dreadnought', {
     if (broken) {
       amount *= 1.02;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
-      amount *= 1.06;
+      amount *= 1.00;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
       if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) {
-        amount *= 1.18; // stacked ~1.25 with baseline
+        amount *= 1.18; // stacked ~1.18 with baseline (intact flat)
       }
     }
     return amount;
