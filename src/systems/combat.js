@@ -102,6 +102,7 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'unknown') return '不明傷害';
     return s;
   }
+  if (s === 'contact:dreadnought') return 'DREAD CHARGE';
   if (s.indexOf('contact:') === 0) return 'CONTACT · ' + s.slice(8).toUpperCase();
   if (s === 'bullet:projectile') return 'HOSTILE ROUND';
   if (s === 'bullet:mortar') return 'MORTAR';
