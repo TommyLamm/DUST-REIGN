@@ -1,5 +1,6 @@
 import { TAU } from '../config.js';
 import { drainFxEvents } from '../core/fx-events.js';
+import { tCombatFloater } from '../core/i18n.js';
 import { rt } from '../core/runtime.js';
 import { isHighContrast, isReducedMotion } from '../core/settings.js';
 import { fxRand, fxRandSigned } from './fx-rand.js';
@@ -517,7 +518,7 @@ export function spawnCombatText(x, y, text, isCrit) {
   n.maxLife = n.life;
   n.value = 0;
   n.crit = Boolean(isCrit);
-  n.text = text;
+  n.text = tCombatFloater(text);
 }
 
 /** Optional world-space score popup. Skips tiny ticks; reduced-motion keeps text static. */

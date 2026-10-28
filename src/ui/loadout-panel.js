@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange, tCampaignStageName, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tCampaignStageName, tDailySummary, tDailyTitle, tRigBlurb, tRigName, tRigReq, tUnlockLabel, tWeaponLine, tWeaponName, tWeaponPattern } from '../core/i18n.js';
 import { getCampaignStore, readBestScoreV2, readDaily, readLegacyBestScore, readMeta, writeMeta } from '../core/meta-store.js';
 import { rt } from '../core/runtime.js';
 import { on } from '../core/utils.js';
@@ -640,7 +640,7 @@ function syncUnlockBanner() {
   host.hidden = false;
   while (host.firstChild) host.removeChild(host.firstChild);
   host.appendChild(el('p', 'run-unlocks-kicker', isChinese() ? '已解鎖' : 'UNLOCKED'));
-  for (i = 0; i < list.length; i += 1) host.appendChild(el('p', 'run-unlocks-line', list[i].label));
+  for (i = 0; i < list.length; i += 1) host.appendChild(el('p', 'run-unlocks-line', tUnlockLabel(list[i]) || list[i].label));
 }
 
 function switchNavTab(tabId) {

@@ -355,11 +355,20 @@
   touch-action: manipulation;
 }
 
+.stage-card:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 .stage-card:hover:not(.is-locked) {
   border-color: var(--bone);
   background: var(--slate);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+html.reduced-motion .stage-card:hover:not(.is-locked) {
+  transform: none;
 }
 
 .stage-card.is-selected {

@@ -1438,6 +1438,7 @@ export function tTip(id, kind) {
     if (id === 'route') return 'PICK A ROUTE · THEN AN ARMORY UPGRADE FOR THE NEXT ACT';
     if (id === 'contrast') return 'HARD TO SEE SHOTS? PAUSE → CONTRAST: HIGH · BRIGHTENS HOSTILES';
     if (id === 'language') return 'NEED 繁中 / ENG? PAUSE → SYSTEM → LANGUAGE · SWITCHES MENUS & TIPS';
+    if (id === 'first-upgrade') return 'PICK 1 CARD · KEYS 1–3 · R REROLLS · B BANISHES · X SKIPS (HEAL + SCORE)';
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'warden-bubble') return 'WARDEN BUBBLES ALLIES · BREAK THE SHIELD OR KITE PAST — DO NOT DUMP INTO THE BUBBLE';
@@ -1479,6 +1480,7 @@ export function tTip(id, kind) {
   if (id === 'route') return '挑選行進路線 · 並為下個章節挑選軍械庫升級';
   if (id === 'contrast') return '敵彈看不清？暫停選單 → 對比度: 高 · 可加強敵方與彈體可讀性';
   if (id === 'language') return '需要切換 繁中／ENG？暫停 → 系統設定 → 語言 · 介面與 tip 同步切換';
+  if (id === 'first-upgrade') return '挑選 1 張卡片 · 數字鍵 1–3 · R 重骰 · B 放逐 · X 跳過（回血＋分數）';
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'warden-bubble') return '守衛者為友軍上盾 · 先破盾或繞過 — 別把火力砸進護盾';
@@ -1503,6 +1505,46 @@ export function tTip(id, kind) {
   if (id === 'bulwark-face') return '堡壘體正面護盾擋彈 · 破盾或繞側 — 光環會強化附近敵軍';
   if (id === 'behemoth-parts') return '巨獸部位 · 角=正面減傷 · 腺=酸液迫擊 · 尾=機動 — 拆部位才能廢其能力';
   return '';
+}
+
+export function tCombatFloater(text) {
+  if (currentLang !== 'zh' || !text) return text;
+  if (text === 'THERMAL NOVA') return '熱能新星';
+  if (text.indexOf('DASH OVERDRIVE') === 0) return text.replace('DASH OVERDRIVE', '衝刺超頻');
+  if (text.indexOf('STATIC OVERCLOCK') === 0) return text.replace('STATIC OVERCLOCK', '靜電超頻');
+  if (text.indexOf('THERMAL FRACTURE') === 0) return text.replace('THERMAL FRACTURE', '熱能裂傷');
+  if (text.indexOf('EXECUTE ') === 0) return text.replace('EXECUTE ', '處決 ');
+  if (text.indexOf('THERMAL EXPLODE') === 0) return text.replace('THERMAL EXPLODE', '熱能爆裂');
+  if (text === 'OVERDRIVE ORB') return '超頻寶珠';
+  if (text.indexOf('+CRIT ') === 0) return text.replace('+CRIT ', '+暴擊 ');
+  if (text.indexOf('BOSS +') === 0) return text.replace('BOSS +', '首領 +');
+  if (text.indexOf('BOUNTY +') === 0) return text.replace('BOUNTY +', '懸賞 +');
+  if (text.indexOf('STYLE +') === 0) return text.replace('STYLE +', '風格 +');
+  return text;
+}
+
+export function tUnlockLabel(item) {
+  if (!item) return '';
+  var zh = currentLang === 'zh';
+  var id = item.id || '';
+  var kind = item.kind || '';
+  var raw = item.label || '';
+  if (!zh) return raw || id;
+  if (kind === 'achievement') {
+    var title = tAchievementTitle(id);
+    return title ? ('已解鎖 // ' + title) : (raw.indexOf('UNLOCKED // ') === 0 ? ('已解鎖 // ' + raw.slice(12)) : raw);
+  }
+  if (kind === 'rig') {
+    var rig = tRigName(id);
+    return (rig || id.toUpperCase()) + ' 已解鎖';
+  }
+  if (kind === 'heat') {
+    var hm = id.match(/heat-(\d+)/);
+    return hm ? ('熱度 ' + hm[1] + ' 已解鎖') : raw.replace('HEAT ', '熱度 ').replace(' UNLOCKED', ' 已解鎖');
+  }
+  if (raw.indexOf('UNLOCKED // ') === 0) return '已解鎖 // ' + raw.slice(12);
+  if (raw.indexOf(' UNLOCKED') !== -1) return raw.replace(' UNLOCKED', ' 已解鎖').replace('HEAT ', '熱度 ');
+  return raw;
 }
 
 export function tBanner(text) {
