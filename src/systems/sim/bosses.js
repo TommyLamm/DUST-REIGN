@@ -497,7 +497,7 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(6, 95, true);
+  var shot = scaledShot(4, 95, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
