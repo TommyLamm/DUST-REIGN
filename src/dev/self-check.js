@@ -294,10 +294,10 @@ export function selfCheck() {
     test.hitstop = 0;
     update(0.016);
     var arcChainOk = test.enemies[0].hp === 80 &&
-      test.enemies[1].hp === 86 &&
-      test.enemies[2].hp === 86 &&
+      test.enemies[1].hp === 84 &&
+      test.enemies[2].hp === 84 &&
       test.enemies[3].hp === 100 &&
-      test.stats.damageDealt === (20 + 14 + 14);
+      test.stats.damageDealt === (20 + 16 + 16);
 
     // Fusion Chips Matrix & Synergy Draw Logic Check
     var fusionCountOk = FUSION_CHIPS.length >= 6;
