@@ -33,7 +33,7 @@ function getStageTypeLabel(type, zh) {
     case 'vip_hunt': return zh ? 'VIP 斬首' : 'VIP HUNT';
     case 'beacon_defense': return zh ? '陣地堅守' : 'DEFENSE';
     case 'boss_duel': return zh ? '首領單挑' : 'BOSS DUEL';
-    default: return type ? type.toUpperCase() : 'MISSION';
+    default: return type ? type.toUpperCase() : (zh ? '任務' : 'MISSION');
   }
 }
 

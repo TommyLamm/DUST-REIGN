@@ -1111,6 +1111,7 @@ export function tTip(id, kind) {
     if (id === 'acid') return 'GREEN SPIT LEAVES ACID POOLS · STEP OUT OR THEY MELT HULL';
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'warden-bubble') return 'WARDEN BUBBLES ALLIES · BREAK THE SHIELD OR KITE PAST — DO NOT DUMP INTO THE BUBBLE';
+    if (id === 'artillery-lob') return 'ARTILLERY LOBS MARKED SHELLS · STEP OUT OF THE RED RING BEFORE IMPACT';
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     if (id === 'scurrier') return 'SCURRIER ARMING · KILL OR FLEE BEFORE THE POP — DO NOT DASH INTO THE BLAST';
     if (id === 'elite-weave') return 'ELITE ROUNDS TRACK HARD · STRAFE AND PRIORITIZE THEM BEFORE THE PACK';
@@ -1147,6 +1148,7 @@ export function tTip(id, kind) {
   if (id === 'acid') return '綠色酸液彈會留下酸池 · 快離開，否則持續腐蝕裝甲';
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'warden-bubble') return '守衛者為友軍上盾 · 先破盾或繞過 — 別把火力砸進護盾';
+  if (id === 'artillery-lob') return '火砲者拋射有標記的砲彈 · 撞擊前離開紅圈';
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   if (id === 'scurrier') return '疾走幼體正在引爆 · 擊殺或逃離，別衝進爆炸';
   if (id === 'elite-weave') return '菁英彈道難躲 · 側移並優先清掉菁英再打群';

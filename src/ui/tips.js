@@ -287,6 +287,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyOfKind('warden') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
+  if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && (enemyNearKind('artillery', 280) || enemyOfKind('artillery'))) offer('artillery-lob');
   if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyOfKind('elite') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offer('molten');
