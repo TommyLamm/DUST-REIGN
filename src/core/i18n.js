@@ -1066,6 +1066,7 @@ export function tTip(id, kind) {
     if (id === 'contract') return 'CONTRACTS ARE OPTIONAL · THE REWARD PAYS ON COMPLETION';
     if (id === 'fusion') return 'COMPLETES A FUSION · THAT CHIP JOINS THE RIG';
     if (id === 'route') return 'PICK A ROUTE · THEN AN ARMORY UPGRADE FOR THE NEXT ACT';
+    if (id === 'contrast') return 'HARD TO SEE SHOTS? PAUSE → CONTRAST: HIGH · BRIGHTENS HOSTILES';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1081,6 +1082,7 @@ export function tTip(id, kind) {
   if (id === 'contract') return '合約為選填任務 · 完成後立即發放獎勵';
   if (id === 'fusion') return '完成晶片融合 · 核心晶片將永久融入機體';
   if (id === 'route') return '挑選行進路線 · 並為下個章節挑選軍械庫升級';
+  if (id === 'contrast') return '敵彈看不清？暫停選單 → 對比度: 高 · 可加強敵方與彈體可讀性';
   return '';
 }
 
