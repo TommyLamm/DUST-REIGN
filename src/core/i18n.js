@@ -1025,7 +1025,7 @@ export function tTip(id, kind) {
     if (id === 'just-dash') return 'JUST DASH · HUG A THREAT TO REFUND COOLDOWN AND GUARANTEE CRITS';
     if (id === 'graze') return 'GRAZE SCORES AND CHARGES · 5 GRAZES TRIGGER OVERDRIVE';
     if (id === 'barrel') return 'SHOOT A BARREL OR DASH-KICK IT INTO THE PACK';
-    if (id === 'emp') return 'EMP CLEARS SHOTS AND STUNS · A SPIRE IN THE BLAST RESONATES';
+    if (id === 'emp') return 'Q OR RMB EMP CLEARS SHOTS AND STUNS · E/F DEPLOYS TACTICAL AUX';
     if (id === 'core-boss') return 'CORE BLASTS HIT A BOSS FOR 350';
     if (id === 'contract') return 'CONTRACTS ARE OPTIONAL · THE REWARD PAYS ON COMPLETION';
     if (id === 'fusion') return 'COMPLETES A FUSION · THAT CHIP JOINS THE RIG';
@@ -1040,7 +1040,7 @@ export function tTip(id, kind) {
   if (id === 'just-dash') return '精準衝刺 · 緊貼威脅擦身而過可重置冷卻並必定暴擊';
   if (id === 'graze') return '擦彈可得分與蓄能 · 累積 5 次擦彈觸發超頻';
   if (id === 'barrel') return '射擊炸藥桶或衝刺將其踢入敵群';
-  if (id === 'emp') return 'EMP 可消除子彈並擊暈敵人 · 衝擊波中的尖塔將產生共鳴';
+  if (id === 'emp') return 'Q 或右鍵 EMP 可消彈擊暈 · E/F 部署戰術副裝備';
   if (id === 'core-boss') return '核心引爆可對首領造成 350 點重創';
   if (id === 'contract') return '合約為選填任務 · 完成後立即發放獎勵';
   if (id === 'fusion') return '完成晶片融合 · 核心晶片將永久融入機體';
@@ -1319,7 +1319,7 @@ export function syncStaticHtml(lang) {
       matrixHead[2].textContent = zh ? '手把' : 'GAMEPAD';
     }
     var matrixRows = pauseModal.querySelectorAll('.controls-matrix-row');
-    if (matrixRows && matrixRows.length >= 7) {
+    if (matrixRows && matrixRows.length >= 8) {
       var r0 = matrixRows[0].querySelectorAll('span');
       if (r0.length >= 3) { r0[0].textContent = zh ? '移動機體' : 'MOVE RIG'; r0[1].textContent = zh ? 'W A S D / 方向鍵' : 'W A S D / ARROWS'; r0[2].textContent = zh ? '左搖桿 / 十字鍵' : 'L-STICK / D-PAD'; }
       var r1 = matrixRows[1].querySelectorAll('span');
@@ -1327,12 +1327,14 @@ export function syncStaticHtml(lang) {
       var r2 = matrixRows[2].querySelectorAll('span');
       if (r2.length >= 3) { r2[0].textContent = zh ? '開火射擊' : 'FIRE WEAPON'; r2[1].textContent = zh ? '滑鼠左鍵 (長按)' : 'LMB (HOLD)'; r2[2].textContent = 'RT / RB'; }
       var r3 = matrixRows[3].querySelectorAll('span');
-      if (r3.length >= 3) { r3[0].textContent = zh ? 'EMP 衝擊' : 'EMP BLAST'; r3[1].textContent = zh ? 'Q / E / 滑鼠右鍵' : 'Q / E / RMB'; r3[2].textContent = zh ? 'LB / B 鍵' : 'LB / B BUTTON'; }
-      var r4 = matrixRows[4].querySelectorAll('span');
+      if (r3.length >= 3) { r3[0].textContent = zh ? 'EMP 衝擊' : 'EMP BLAST'; r3[1].textContent = zh ? 'Q / 滑鼠右鍵' : 'Q / RMB'; r3[2].textContent = zh ? 'B 鍵' : 'B BUTTON'; }
+      var rTac = matrixRows[4].querySelectorAll('span');
+      if (rTac.length >= 3) { rTac[0].textContent = zh ? '戰術副裝備' : 'TACTICAL AUX'; rTac[1].textContent = 'E / F'; rTac[2].textContent = zh ? 'X / LB' : 'X / LB'; }
+      var r4 = matrixRows[5].querySelectorAll('span');
       if (r4.length >= 3) { r4[0].textContent = zh ? '推進器衝刺' : 'THRUSTER DASH'; r4[1].textContent = zh ? '空白鍵 / SHIFT' : 'SPACEBAR / SHIFT'; r4[2].textContent = zh ? 'LT / A 鍵' : 'LT / A BUTTON'; }
-      var r5 = matrixRows[5].querySelectorAll('span');
+      var r5 = matrixRows[6].querySelectorAll('span');
       if (r5.length >= 3) { r5[0].textContent = zh ? '暫停 / 繼續' : 'PAUSE / RESUME'; r5[1].textContent = 'ESC / P'; r5[2].textContent = zh ? 'START / 選單鍵' : 'START / MENU'; }
-      var r6 = matrixRows[6].querySelectorAll('span');
+      var r6 = matrixRows[7].querySelectorAll('span');
       if (r6.length >= 3) { r6[0].textContent = zh ? '選擇強化' : 'SELECT UPGRADE'; r6[1].textContent = zh ? '數字鍵 1, 2, 3' : 'KEYS 1, 2, 3'; r6[2].textContent = 'X / Y / B (OR A)'; }
     }
 
@@ -1368,11 +1370,12 @@ export function syncStaticHtml(lang) {
     if (rCode3) rCode3.textContent = zh ? '就緒' : 'READY';
 
     var keyCaps = rail.querySelectorAll('.key-caption');
-    if (keyCaps && keyCaps.length >= 4) {
+    if (keyCaps && keyCaps.length >= 5) {
       keyCaps[0].textContent = zh ? '移動' : 'MOVE';
       keyCaps[1].textContent = zh ? '瞄準 / 開火' : 'AIM / FIRE';
       keyCaps[2].textContent = zh ? 'EMP 衝擊' : 'EMP BLAST';
-      keyCaps[3].textContent = zh ? '衝刺' : 'DASH';
+      keyCaps[3].textContent = zh ? '戰術副裝備' : 'TACTICAL AUX';
+      keyCaps[4].textContent = zh ? '衝刺' : 'DASH';
     }
     var ctrlNote = rail.querySelector('.controls-note');
     if (ctrlNote) ctrlNote.textContent = zh

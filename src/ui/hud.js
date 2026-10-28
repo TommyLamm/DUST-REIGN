@@ -423,6 +423,12 @@ function animateTelemetry(accPct, combo, grazes, dmg) {
 
 var breakdownRoll = { key: '', busy: false, raf: 0 };
 
+export function scoreBreakdownLabels(zh) {
+  return zh
+    ? ['擊殺得分', '波次得分', '首領得分', '戰法得分', '合約得分', '撤離得分']
+    : ['KILL SCORE', 'WAVE SCORE', 'BOSS SCORE', 'STYLE SCORE', 'CONTRACT SCORE', 'EXTRACT SCORE'];
+}
+
 function breakdownBuckets(breakdown) {
   var b = breakdown || {};
   function n(key) { return typeof b[key] === 'number' ? b[key] : 0; }
@@ -447,9 +453,7 @@ function writeBreakdown(values) {
 function ensureBreakdown() {
   if (typeof document === 'undefined' || !rt.ui || !rt.ui.gameOver) return null;
   var host = document.getElementById('scoreBreakdown');
-  var labels = isChinese()
-    ? ['擊殺', '波次', '首領', '戰法', '合約', '撤離']
-    : ['KILLS', 'WAVES', 'BOSSES', 'STYLE', 'CONTRACTS', 'EXTRACTION'];
+  var labels = scoreBreakdownLabels(isChinese());
   if (host) {
     var spans = host.querySelectorAll('span');
     for (var j = 0; j < spans.length && j < labels.length; j += 1) spans[j].textContent = labels[j];
