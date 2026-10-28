@@ -5,6 +5,7 @@ import { getDailyRule } from '../../data/daily.js';
 import { routeById } from '../../data/routes.js';
 import { noteContractEvent } from '../../systems/contracts.js';
 import { designScales, evaluateStageStars, evaluateStarCondition, onBossDefeated, onWaveStart, planWave } from '../../systems/director.js';
+import { computeThreatTier } from '../../systems/flow.js';
 import { getCampaignStage } from '../../data/campaign-stages.js';
 import { getSectorOfStage, getSectorReqStars, getStageChain } from '../../core/meta-store.js';
 import { spawnCrate } from '../../systems/drops.js';
@@ -397,6 +398,13 @@ export function run() {
     if (!stars32.star2) throw new Error('stage_3_2 star2 must accept spire_chains');
     evalState.stats.spireChains = 0;
     if (evaluateStageStars(evalState, stage32).star2) throw new Error('stage_3_2 star2 must not fall back to time_under');
+
+    var quiet = { wave: 1, waveTime: 0, enemies: [], recipe: { cap: 40 }, wolfPackSurge: false, boss: null };
+    if (computeThreatTier(quiet) !== 0) throw new Error('quiet field should be LOW threat');
+    var surge = { wave: 2, waveTime: 0, enemies: [{ hp: 10, kind: 'crawler' }, { hp: 10, kind: 'rusher' }], recipe: { cap: 40 }, wolfPackSurge: true, boss: null };
+    if (computeThreatTier(surge) < 1) throw new Error('wolf pack surge should raise threat');
+    var bossField = { wave: 5, waveTime: 0, enemies: [{ hp: 100, kind: 'titan', isBoss: true }], recipe: { cap: 40 }, wolfPackSurge: false, boss: { hp: 100, kind: 'titan' } };
+    if (computeThreatTier(bossField) < 2) throw new Error('living boss should be CRITICAL threat');
   } finally {
     clearSeed();
     rt.state = saved;

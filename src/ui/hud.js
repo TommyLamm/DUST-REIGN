@@ -5,7 +5,7 @@ import { isReducedMotion } from '../core/settings.js';
 import { clamp, setText } from '../core/utils.js';
 import { sectorForWave } from '../render/palette.js';
 import { getQuality } from '../render/quality.js';
-import { calculateCombatRank, isStormFront } from '../systems/flow.js';
+import { calculateCombatRank, computeThreatTier, isStormFront } from '../systems/flow.js';
 import { getComboWindow } from '../systems/combat.js';
 import { updateCodexPanel } from './codex-panel.js';
 import { updateContractsHud } from './contracts-hud.js';
@@ -663,7 +663,7 @@ export function updateDomUi() {
     }
   }
   if (rt.ui.threatIndex) {
-    var threatTier = rt.state.wave >= 5 ? 2 : rt.state.wave >= 3 ? 1 : 0;
+    var threatTier = computeThreatTier(rt.state);
     var threatKey = threatTier + ':' + (zh ? 'zh' : 'en');
     if (rt.ui.threatIndex._lastThreatKey !== threatKey) {
       rt.ui.threatIndex._lastThreatKey = threatKey;
