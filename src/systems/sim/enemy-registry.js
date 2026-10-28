@@ -534,7 +534,7 @@ registerEnemyStrategy('dreadnought', {
     }
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
-      amount *= 1.00; // revert #201 — ×0.90 tanked p50 to 29; charge DR untouched
+      amount *= 0.95; // mild break soft — 0.90 overshot p50; charge DR untouched
     } else if ((e.mode === 'idle' || !e.mode) && info && info.source === 'bullet') {
       // Idle bullet-only intact bump: shortens slow kite tails; barrels/EMP keep own curves.
       amount *= 1.00; // revert idle 1.03/1.04 — shortened mid not slow tail; tele trim instead
