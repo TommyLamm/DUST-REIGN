@@ -1786,6 +1786,8 @@ export function syncStaticHtml(lang) {
       matrixHead[1].textContent = zh ? '鍵盤 / 滑鼠' : 'KEYBOARD / MOUSE';
       matrixHead[2].textContent = zh ? '手把' : 'GAMEPAD';
     }
+    var upgradeSub = pauseModal.querySelector('#controlsUpgradeSubhead span') || pauseModal.querySelector('.controls-matrix-subhead span');
+    if (upgradeSub) upgradeSub.textContent = zh ? '升級選卡時' : 'DURING UPGRADE PICK';
     var matrixRows = pauseModal.querySelectorAll('.controls-matrix-row');
     if (matrixRows && matrixRows.length >= 11) {
       var r0 = matrixRows[0].querySelectorAll('span');
