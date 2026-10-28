@@ -272,16 +272,16 @@ function endCharge(e, frame) {
   if (e.bossPhase >= 2) dropMines(e);
   e.chargesQueued = (e.chargesQueued || 1) - 1;
   if (e.chargesQueued > 0) {
-    // Mid-ram breach: shorter window so fast deletes do not snowball (slow already OK).
-    e.mode = 'stun';
-    e.stunT = 0.40;
-    e.empTimer = Math.max(e.empTimer || 0, 0.40);
-    e.armorBreakTimer = 0.40;
-    e._dreadMidCombo = true;
-    rt.state.shake = Math.max(rt.state.shake, 6);
+    // Structural anti-bimodal: NO mid-ram armor break — free DPS between rams was the fast cluster.
+    // Chain straight into a longer telegraph; final wall-slam still opens the 2.0s break.
+    e._dreadMidCombo = false;
+    var pMid = frame && frame.p;
+    if (pMid) startTelegraph(e, pMid, 0.95);
+    else { e.mode = 'idle'; e.attackCd = 0.15; }
+    rt.state.shake = Math.max(rt.state.shake, 5);
     if (rt.state) {
-      rt.state.banner = Math.max(rt.state.banner || 0, 1.15);
-      rt.state.bannerText = 'DOUBLE RAM BEAT // BRIEF ARMOR BREAK';
+      rt.state.banner = Math.max(rt.state.banner || 0, 1.05);
+      rt.state.bannerText = 'DOUBLE RAM // NO MID BREACH';
     }
     return;
   }
@@ -395,7 +395,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     if (e.stunT <= 0) {
       if (e._dreadMidCombo && (e.chargesQueued || 0) > 0) {
         e._dreadMidCombo = false;
-        startTelegraph(e, p, 0.70);
+        startTelegraph(e, p, 0.95);
         return { dx: 0, dy: 1, d: 1, speed: 0 };
       }
       e._dreadMidCombo = false;
@@ -427,7 +427,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.attackCd -= dt;
     if (e.attackCd <= 0) {
       e.chargesQueued = e.bossPhase >= 2 ? 2 : 1;
-      startTelegraph(e, p, 1.05);
+      startTelegraph(e, p, 1.40);
     }
   }
   aimAtPlayer(e, p);

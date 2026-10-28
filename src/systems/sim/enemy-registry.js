@@ -528,6 +528,10 @@ registerEnemyStrategy('dreadnought', {
     // Break window owned here (defense skips dread global x1.4). Intact bullet
     // hits get a mild baseline so no-break kites do not crawl past 150s; rear
     // stays the skill read. Barrels/EMP keep their own curves.
+    // Charge/telegraph DR: dump-DPS during commit was feeding the fast cluster.
+    if (e.mode === 'charge' || e.mode === 'telegraph') {
+      amount *= 0.55;
+    }
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
       amount *= 1.00;
