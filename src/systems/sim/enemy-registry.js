@@ -537,7 +537,7 @@ registerEnemyStrategy('dreadnought', {
       amount *= 1.00;
     } else if ((e.mode === 'idle' || !e.mode) && info && info.source === 'bullet') {
       // Idle bullet-only intact bump: shortens slow kite tails; barrels/EMP keep own curves.
-      amount *= 1.22; // idle bullet — fill slow gap; DR stays 0.70 (no thrash)
+      amount *= 1.14; // was 1.22 — p50~50; hold near #188 idle while DR 0.70 keeps slow in check
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       amount *= 1.00;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
