@@ -97,6 +97,19 @@ function burrowerWarnNear() {
   return false;
 }
 
+function bossAddClearThreat() {
+  var boss = rt.state && rt.state.boss;
+  if (!boss || !(boss.hp > 0)) return false;
+  var list = rt.state.enemies || [];
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || !(e.hp > 0) || e === boss) continue;
+    if (e.kind === 'elite' || e.kind === 'artillery' || e.kind === 'warden' || e.kind === 'spitter') return true;
+  }
+  return false;
+}
+
 function dreadArmorBreakThreat() {
   var boss = rt.state && rt.state.boss;
   if (!boss || boss.kind !== 'dreadnought' || !(boss.hp > 0)) return false;
@@ -213,6 +226,7 @@ function scanTriggers() {
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
   if (sovereignEyeThreat()) offer('storm-eye');
   if (dreadArmorBreakThreat()) offer('dread-break');
+  if (bossAddClearThreat()) offer('boss-clear');
   if (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0 && (rt.state.enemyBullets || []).length >= 6) offer('storm-weave');
 }
 
