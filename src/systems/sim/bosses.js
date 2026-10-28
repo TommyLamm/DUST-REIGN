@@ -402,7 +402,7 @@ function windPower(phase) {
 function queueBolts(frame, gap) {
   if (!rt.state.lightningStrikes) rt.state.lightningStrikes = [];
   var box = boxOf(frame);
-  var dmg = scaledShot(26, 0, true).damage;
+  var dmg = scaledShot(20, 0, true).damage;
   var i;
   for (i = 0; i < 3; i += 1) {
     var horizontal = rng('combat') < 0.5;
@@ -422,7 +422,7 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(14, 120, true);
+  var shot = scaledShot(11, 120, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
@@ -543,8 +543,8 @@ function stepSovereign(e, dt, frame, empFrozen) {
   if (!empFrozen) {
     e.boltCd -= dt;
     if (e.boltCd <= 0) {
-      e.boltCd = phase >= 3 ? 2.2 : 3;
-      queueBolts(frame, phase >= 3 ? 2.2 : 3);
+      e.boltCd = phase >= 3 ? 2.6 : 3.4;
+      queueBolts(frame, phase >= 3 ? 2.6 : 3.4);
     }
     if (phase === 1) {
       e.spiralCd -= dt;

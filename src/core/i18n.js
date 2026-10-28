@@ -1106,6 +1106,7 @@ export function tTip(id, kind) {
     if (id === 'overtime') return 'OVERTIME · DEATH BANKS ONLY HALF THE EXTRACT BONUS';
     if (id === 'storm-eye') return 'STAY INSIDE THE STORM EYE · OUTSIDE MELTS HULL';
     if (id === 'dread-break') return 'BAIT THE CHARGE INTO CRAGS · ARMOR BREAK OPENS ALL SIDES';
+    if (id === 'storm-weave') return 'WEAVE THE STORM SHOTS · BULLETS END MORE RUNS THAN THE EYE';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1130,6 +1131,7 @@ export function tTip(id, kind) {
   if (id === 'overtime') return '加時戰區 · 陣亡僅結算一半撤離獎勵';
   if (id === 'storm-eye') return '留在風暴之眼內 · 離開會持續腐蝕裝甲';
   if (id === 'dread-break') return '把衝撞引向岩障 · 破甲硬直時四面皆可輸出';
+  if (id === 'storm-weave') return '穿梭風暴彈幕 · 敵彈比風暴之眼更能終結一局';
   return '';
 }
 

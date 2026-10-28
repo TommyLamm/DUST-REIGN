@@ -213,6 +213,7 @@ function scanTriggers() {
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
   if (sovereignEyeThreat()) offer('storm-eye');
   if (dreadArmorBreakThreat()) offer('dread-break');
+  if (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0 && (rt.state.enemyBullets || []).length >= 6) offer('storm-weave');
 }
 
 function showTip(toast, id) {
