@@ -17,11 +17,11 @@ var ACT_TITLES = {
 };
 
 var WEAPON_COPY = {
-  standard: { name: 'STANDARD', detail: 'Steady rifle. The dryline default.' },
-  breacher: { name: 'BREACHER', detail: 'Five-round burst. Close and loud.' },
-  vanguard: { name: 'VANGUARD', detail: 'Charge a lance. Slow while you hold it.' },
-  'arc-welder': { name: 'ARC-WELDER', detail: 'Chain lightning between hulls.' },
-  colossus: { name: 'COLOSSUS', detail: 'Dual-stage rail lance. Devastating charge blast.' }
+  standard: { name: 'STANDARD', detail: 'Steady rifle. Stay mobile.' },
+  breacher: { name: 'BREACHER', detail: 'Close spread. Commit to the pocket.' },
+  vanguard: { name: 'VANGUARD', detail: 'Hold to fire a heavy slug.' },
+  'arc-welder': { name: 'ARC-WELDER', detail: 'Lightning that jumps targets.' },
+  colossus: { name: 'COLOSSUS', detail: 'Dual-stage rail lance. Devastating recoil.' }
 };
 
 function cloneRoute(route) {

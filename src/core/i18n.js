@@ -1835,7 +1835,7 @@ export function syncStaticHtml(lang) {
     var upgTitle = document.getElementById('upgradeTitle');
     if (upgTitle) upgTitle.innerHTML = zh ? '強化機體，<span>兇悍進化。</span>' : 'MAKE THE RIG <span>MEANER.</span>';
     var upgHint = upgPanel.querySelector('.upgrade-hint');
-    if (upgHint) upgHint.textContent = zh ? '戰鬥已暫停 — 按 1–3 挑選 · R 重骰 · B 放逐 · X 跳過' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP';
+    if (upgHint) upgHint.textContent = zh ? '戰鬥已暫停 — 1–3 挑選 · R 重骰 · B 放逐 · X 跳過（修 10 / +100 分）' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP (HEAL 10 / +100)';
     var upgCountSpan = upgPanel.querySelector('.upgrade-count span');
     if (upgCountSpan) upgCountSpan.textContent = zh ? '決策窗口' : 'DECISION WINDOW';
     setTextById('upgradeTimer', zh ? '戰鬥已暫停 — 挑選一張' : 'COMBAT PAUSED — PICK ONE');

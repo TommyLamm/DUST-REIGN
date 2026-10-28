@@ -23,10 +23,10 @@ var WEAPONS = [
 ];
 var MODES = ['standard', 'campaign', 'hardcore', 'daily'];
 var TACTICALS = [
-  { id: 'sentry-turret', name: 'SENTRY TURRET', zhName: '定點機槍塔', cd: '16s', icon: '⛨', line: '120HP auto-turret with aura' },
-  { id: 'thermal-decoy', name: 'THERMAL DECOY', zhName: '熱誘餌干擾彈', cd: '14s', icon: '✦', line: '3 flares distorting enemy fire' },
-  { id: 'singularity-grenade', name: 'SINGULARITY', zhName: '微型奇點手雷', cd: '18s', icon: '◎', line: 'Vortex pulls foes then collapses' },
-  { id: 'aegis-barrier', name: 'AEGIS BARRIER', zhName: '硬光防禦屏障', cd: '15s', icon: '⛊', line: '240HP frontal barrier amplifies friendly fire' }
+  { id: 'sentry-turret', name: 'SENTRY TURRET', zhName: '定點機槍塔', cd: '16s', icon: '⛨', line: '120HP auto-turret with aura', zhLine: '120 HP 自動機槍塔，附帶光環' },
+  { id: 'thermal-decoy', name: 'THERMAL DECOY', zhName: '熱誘餌干擾彈', cd: '14s', icon: '✦', line: '3 flares distorting enemy fire', zhLine: '3 枚熱誘餌，擾亂敵方射擊' },
+  { id: 'singularity-grenade', name: 'SINGULARITY', zhName: '微型奇點手雷', cd: '18s', icon: '◎', line: 'Vortex pulls foes then collapses', zhLine: '渦流拉扯敵軍後坍縮爆炸' },
+  { id: 'aegis-barrier', name: 'AEGIS BARRIER', zhName: '硬光防禦屏障', cd: '15s', icon: '⛊', line: '240HP frontal barrier amplifies friendly fire', zhLine: '240 HP 正面硬光屏障，強化友軍火力' }
 ];
 var ROWS = ['rig', 'weapon', 'tactical', 'heat', 'mode'];
 
@@ -249,7 +249,7 @@ function refresh() {
       } else if (lockedHardcore && tSelected) {
         tTacLine.textContent = zh ? '🔒 極限鎖定戰術' : '🔒 HARDCORE LOCKED';
       } else {
-        tTacLine.textContent = tac.line;
+        tTacLine.textContent = zh ? (tac.zhLine || tac.line) : tac.line;
       }
     }
     var tName = zh ? tac.zhName : tac.name;
