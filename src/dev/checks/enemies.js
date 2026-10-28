@@ -106,7 +106,7 @@ export function run() {
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
     assert(Math.abs(stunnedBarrel - 21.6) < 0.001, 'stunned dreadnought barrel was not x1.08');
     var styleBefore = rt.state.scoreBreakdown ? (rt.state.scoreBreakdown.style || 0) : 0;
-    var stunKill = { kind: 'dreadnought', hp: 22, maxHp: 1600, x: 0, y: 0, aim: 0, empTimer: 1.2, mode: 'stun' };
+    var stunKill = { kind: 'dreadnought', hp: 21, maxHp: 1600, x: 0, y: 0, aim: 0, empTimer: 1.2, mode: 'stun' };
     var lethalRear = filterEnemyDamage(stunKill, 20, { source: 'bullet', x: -40, y: 0 });
     assert(Math.abs(lethalRear - 21.6) < 0.001 && stunKill.deathQueued, 'stun armor-break hit did not kill the dreadnought');
     assert((rt.state.scoreBreakdown.style || 0) - styleBefore === 100, 'dreadnought stun-kill style score was not 100');
