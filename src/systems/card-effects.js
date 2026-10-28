@@ -702,7 +702,7 @@ export function stepCardEffects(dt) {
   if (!rt.state || !rt.state.player) return;
   var state = rt.state;
   var player = state.player;
-  if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && state.xpNext === 100) state.xpNext = 80;
+  if ((state.level || 1) <= 1 && (state.xp || 0) === 0 && (state.xpNext === 100 || state.xpNext === 80)) state.xpNext = 55;
   if (!player.resonances) evaluateArchetypes(state);
   var res = player.resonances;
 

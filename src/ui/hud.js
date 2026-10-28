@@ -632,8 +632,13 @@ export function updateDomUi() {
   }
   setText(rt.ui.health, Math.ceil(rt.state.player.hp));
   pulse(rt.ui.health, 'hp', Math.ceil(rt.state.player.hp));
-  setText(rt.ui.xp, rt.state.xp);
-  setText(rt.ui.xpMax, rt.state.xpNext);
+  // Combined SCRAP MEMORY label when #hudXp is the only XP node ("current / next").
+  if (rt.ui.xpMax) {
+    setText(rt.ui.xp, rt.state.xp);
+    setText(rt.ui.xpMax, rt.state.xpNext);
+  } else {
+    setText(rt.ui.xp, String(rt.state.xp) + ' / ' + String(rt.state.xpNext));
+  }
   setText(rt.ui.level, String(rt.state.level).padStart(2, '0'));
   pulse(rt.ui.level, 'level', rt.state.level);
   setText(rt.ui.wave, zh ? ('第 ' + actRoman(rt.state.act || 1) + ' 幕 · 第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('ACT ' + actRoman(rt.state.act || 1) + ' · WAVE ' + String(rt.state.wave).padStart(2, '0')));
