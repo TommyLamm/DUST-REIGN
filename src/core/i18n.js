@@ -1128,7 +1128,15 @@ var ARMORY_OPTIONS_I18N = {
   },
   smuggler: {
     name: { zh: '黑市超頻', en: 'BLACK-MARKET OVERCLOCK' },
-    detail: { zh: '犧牲 25% HP，換取精通 +1、+2 重骰、+1 放逐、6 秒超頻與 +800 分。', en: 'Sacrifice 25% HP for Mastery +1, +2 Rerolls, +1 Banish, 6s Overdrive & +800 Score.' }
+    detail: { zh: '犧牲 25% 生命，換取精通 +1、+2 重骰、+1 放逐、6 秒超頻與 +800 分。', en: 'Sacrifice 25% HP for Mastery +1, +2 Rerolls, +1 Banish, 6s Overdrive & +800 Score.' }
+  },
+  extract: {
+    name: { zh: '立即撤離', en: 'EXTRACT' },
+    detail: { zh: '結算本次出擊並登錄成績。', en: 'Bank the run and file the score.' }
+  },
+  push: {
+    name: { zh: '深入戰區', en: 'PUSH DEEPER' },
+    detail: { zh: '進入加時。若陣亡僅發放一半撤離獎勵。', en: 'Overtime. Death pays half the extract bonus.' }
   }
 };
 

@@ -66,7 +66,7 @@ function fillCards(parent, options, selected, onPick) {
       if (option.sector) {
         var sec = String(option.sector).toLowerCase();
         var secLabel = zh
-          ? (sec === 'night' ? '夜境' : sec === 'rust' ? '鏽域' : sec === 'dusk' ? '暮沙' : sec.toUpperCase())
+          ? (sec === 'night' ? '夜境' : sec === 'rust' ? '鏽域' : sec === 'dusk' ? '暮沙' : sec === 'crystal' ? '晶脈' : sec)
           : (sec === 'night' ? 'NIGHT' : sec === 'rust' ? 'RUST' : sec === 'dusk' ? 'DUSK' : sec.toUpperCase());
         card.appendChild(el('i', 'interlude-sector interlude-sector--' + sec, secLabel));
       }
