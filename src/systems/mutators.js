@@ -34,7 +34,7 @@ function spawnMeteor() {
   var x = margin + rng('director') * Math.max(20, box.w - margin * 2);
   var y = margin + rng('director') * Math.max(20, box.h - margin * 2);
   if (!rt.state.meteors) rt.state.meteors = [];
-  rt.state.meteors.push({ x: x, y: y, r: 34, timer: 0.8, maxTimer: 0.8 });
+  rt.state.meteors.push({ x: x, y: y, r: 34, timer: 1.15, maxTimer: 1.15 });
 }
 
 function landMeteor(m) {

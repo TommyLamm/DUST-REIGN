@@ -411,7 +411,7 @@ var MUTATORS_I18N = {
   'scrap-rain': {
     name: { zh: '廢料之雨', en: 'SCRAP RAIN' },
     blurb: { zh: '天降滾燙殘骸。', en: 'The sky drops hot salvage.' },
-    detail: { zh: '每 3 秒有一顆隕石預警 0.8 秒 (半徑 34)，造成 12 傷害並留下 4 份廢料。', en: 'Every 3s a meteor warns for 0.8s (r 34), hits for 12, and leaves 4 scrap.' }
+    detail: { zh: '每 3 秒有一顆隕石預警 1.15 秒 (半徑 34)，造成 12 傷害並留下 4 份廢料。', en: 'Every 3s a meteor warns for 1.15s (r 34), hits for 12, and leaves 4 scrap.' }
   },
   barrage: {
     name: { zh: '火砲齊射', en: 'ARTILLERY BARRAGE' },
@@ -1078,6 +1078,7 @@ export function tTip(id, kind) {
     if (id === 'burrower') return 'BURROWER WARNING CIRCLE · MOVE OFF THE MARK BEFORE IT ERUPTS';
     if (id === 'mine') return 'PROXIMITY MINE ARMING · BACK OFF BEFORE THE BEEP ENDS';
     if (id === 'extract') return 'WAVE 15 GATE · EXTRACT TO BANK OR PUSH DEEPER FOR OVERTIME';
+    if (id === 'meteor') return 'RED CIRCLES ARE METEORS · STEP OUT BEFORE IMPACT';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1098,6 +1099,7 @@ export function tTip(id, kind) {
   if (id === 'burrower') return '鑽地蟲預警圈 · 在它鑽出前離開標記範圍';
   if (id === 'mine') return '感應地雷正在引信 · 在哔聲結束前快離開';
   if (id === 'extract') return '第 15 波撤離閘門 · 可結算撤離或深入加時戰區';
+  if (id === 'meteor') return '紅色預警圈是隕石 · 撞擊前快離開落點';
   return '';
 }
 
