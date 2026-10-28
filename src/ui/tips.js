@@ -310,6 +310,7 @@ function scanTriggers() {
   offer('move-shoot');
   // First-run readability nudge: pause menu has Contrast: High.
   if ((rt.state.wave || 1) === 1 && (rt.state.waveTime || 0) >= 2) offer('contrast');
+  if ((rt.state.wave || 1) === 1 && (rt.state.waveTime || 0) >= 8) offer('language');
   if (enemyWithin(THREAT_PX)) offer('dash');
   if (rt.state.stats && (rt.state.stats.justDashes || 0) > 0) offer('just-dash');
   // Teach graze when shots are near — do not wait for a successful graze first.
