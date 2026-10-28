@@ -63,7 +63,7 @@ export function renderHardcoreBriefing(container, onSelect) {
   // 1. Operation Switcher Nav (Pills)
   var nav = el('div', 'hardcore-op-nav');
   nav.setAttribute('role', 'tablist');
-  nav.setAttribute('aria-label', 'Hardcore Operations');
+  nav.setAttribute('aria-label', zh ? '硬核行動' : 'Hardcore Operations');
 
   for (var i = 0; i < HARDCORE_OPERATIONS.length; i += 1) {
     (function (item) {

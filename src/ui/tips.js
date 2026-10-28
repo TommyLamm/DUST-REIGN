@@ -306,7 +306,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
   if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
   if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offer('mine');
-  if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyOfKind('elite') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
+  if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offer('molten');
   if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
