@@ -734,7 +734,7 @@ export function stepTitanHarpoon(e, dt, frame) {
     e.harpoonTimer -= dt;
     if (e.harpoonTimer <= 0) {
       e.harpoonTimer = 9.0;
-      e.harpoonTelegraph = 1.10;
+      e.harpoonTelegraph = 1.20;
       AudioFX.mortarLaunch();
       logEvent('WARNING // SEISMIC HARPOON LOCK');
       rt.state.banner = 1.5;
