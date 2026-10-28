@@ -272,7 +272,20 @@ function endCharge(e, frame) {
   if (e.bossPhase >= 2) dropMines(e);
   e.chargesQueued = (e.chargesQueued || 1) - 1;
   if (e.chargesQueued > 0) {
-    startTelegraph(e, frame.p, 0.7);
+    // Double-ram used to stay armored for two full charges — slow-tail driver.
+    // Insert a brief breach beat so lane bait / rear DPS can land between rams.
+    e.mode = 'stun';
+    e.stunT = 1.0;
+    e.empTimer = Math.max(e.empTimer || 0, 1.0);
+    e.armorBreakTimer = 1.0;
+    e._dreadMidCombo = true;
+    fireRing(e);
+    rt.state.shake = Math.max(rt.state.shake, 10);
+    AudioFX.blast();
+    if (rt.state) {
+      rt.state.banner = Math.max(rt.state.banner || 0, 1.15);
+      rt.state.bannerText = 'DOUBLE RAM BEAT // BRIEF ARMOR BREAK';
+    }
     return;
   }
   e.mode = 'stun';
@@ -308,7 +321,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
 
   if (!e.mode) {
     e.mode = 'idle';
-    e.attackCd = 2.2;
+    e.attackCd = 1.85;
     e.fanCd = 1.5;
     e.summonCd = 8;
   }
@@ -381,8 +394,14 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.stunT -= dt;
     e.empTimer = Math.max(e.empTimer || 0, e.stunT > 0 ? e.stunT : 0);
     if (e.stunT <= 0) {
+      if (e._dreadMidCombo && (e.chargesQueued || 0) > 0) {
+        e._dreadMidCombo = false;
+        startTelegraph(e, p, 0.55);
+        return { dx: 0, dy: 1, d: 1, speed: 0 };
+      }
+      e._dreadMidCombo = false;
       e.mode = 'idle';
-      e.attackCd = 2.2;
+      e.attackCd = 1.65;
       e.fanCd = 1.2;
       if (e.bossPhase >= 2 && (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2)) {
         spawnMonolithCrags(e, frame);
@@ -831,7 +850,7 @@ export function createDreadnought(wave, frameW, frameH) {
     phase: 0,
     aim: Math.PI / 2,
     mode: 'idle',
-    attackCd: 2.4,
+    attackCd: 2.0,
     fanCd: 1.5,
     summonCd: 8,
     bossPhase: 1,
