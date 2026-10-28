@@ -1104,6 +1104,7 @@ export function tTip(id, kind) {
     if (id === 'barrel') return 'SHOOT A BARREL OR DASH-KICK IT INTO THE PACK';
     if (id === 'emp') return 'Q OR RMB EMP CLEARS SHOTS AND STUNS · E/F DEPLOYS TACTICAL AUX';
     if (id === 'core-boss') return 'CORE BLASTS HIT A BOSS FOR 350';
+    if (id === 'titan-parts') return 'TITAN PARTS · LEFT CANNON / RIGHT POD DROP STUN WINDOWS — HARPOON TUG IS A DPS WINDOW';
     if (id === 'contract') return 'CONTRACTS ARE OPTIONAL · THE REWARD PAYS ON COMPLETION';
     if (id === 'fusion') return 'COMPLETES A FUSION · THAT CHIP JOINS THE RIG';
     if (id === 'route') return 'PICK A ROUTE · THEN AN ARMORY UPGRADE FOR THE NEXT ACT';
@@ -1141,6 +1142,7 @@ export function tTip(id, kind) {
   if (id === 'barrel') return '射擊炸藥桶或衝刺將其踢入敵群';
   if (id === 'emp') return 'Q 或右鍵 EMP 可消彈擊暈 · E/F 部署戰術副裝備';
   if (id === 'core-boss') return '核心引爆可對首領造成 350 點重創';
+  if (id === 'titan-parts') return '泰坦部位 · 左主砲／右發射槽破毀有硬直窗 — 魚叉拉扯是輸出窗';
   if (id === 'contract') return '合約為選填任務 · 完成後立即發放獎勵';
   if (id === 'fusion') return '完成晶片融合 · 核心晶片將永久融入機體';
   if (id === 'route') return '挑選行進路線 · 並為下個章節挑選軍械庫升級';

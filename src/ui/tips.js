@@ -216,6 +216,22 @@ function scurrierArmingNear() {
   return false;
 }
 
+function mineArmingNear() {
+  var list = rt.state && rt.state.enemies;
+  var p = rt.state && rt.state.player;
+  if (!list || !p) return false;
+  var lim = 220 * 220;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || e.kind !== 'mine' || !(e.hp > 0)) continue;
+    var dx = e.x - p.x;
+    var dy = e.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function acidHazardNear() {
   var pools = rt.state && rt.state.acidPools;
   if (pools && pools.length) return true;
@@ -282,13 +298,14 @@ function scanTriggers() {
   if (rt.state.barrels && rt.state.barrels.length > 0) offer('barrel');
   if ((rt.state.player.energy || 0) >= 50) offer('emp');
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
+  if (rt.state.boss && rt.state.boss.kind === 'titan' && rt.state.boss.hp > 0) offer('titan-parts');
   if (rt.state.contract) offer('contract');
   if (acidHazardNear() || ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter'))) offer('acid');
-  if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyOfKind('warden') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
+  if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyNearKind('warden', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 7 && (enemyOfKind('scurrier') || scurrierArmingNear())) offer('scurrier');
-  if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && (enemyNearKind('artillery', 280) || enemyOfKind('artillery'))) offer('artillery-lob');
-  if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
+  if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
+  if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offer('mine');
   if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyOfKind('elite') && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
   if (moltenHazardNear()) offer('molten');
   if (((rt.state.wave || 1) >= 4 && meteorHazardNear()) || (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain'))) offer('meteor');
