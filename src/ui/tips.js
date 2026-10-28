@@ -294,6 +294,7 @@ function scanTriggers() {
   if (rt.state.overtime && !rt.state.extracted) offer('overtime');
   if (((rt.state.wave || 1) >= 16 || rt.state.overtime) && enemyNearKind('prowler', 220)) offer('prowler-lunge');
   if (((rt.state.wave || 1) >= 16 || rt.state.overtime) && enemyNearKind('bulwark', 240)) offer('bulwark-face');
+  if (((rt.state.wave || 1) >= 19 || (rt.state.boss && rt.state.boss.kind === 'behemoth')) && (enemyNearKind('behemoth', 420) || (rt.state.boss && rt.state.boss.kind === 'behemoth' && rt.state.boss.hp > 0))) offer('behemoth-parts');
   if (sovereignEyeThreat()) offer('storm-eye');
   if (dreadArmorBreakThreat()) offer('dread-break');
   if (dreadLongFightThreat()) offer('dread-fatigue');

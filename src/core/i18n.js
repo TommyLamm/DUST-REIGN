@@ -1126,6 +1126,7 @@ export function tTip(id, kind) {
     if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
     if (id === 'prowler-lunge') return 'PROWLER TELEGRAPHS THEN LUNGES · SIDE-STEP THE FLASH — STALK PHASE TAKES REDUCED DAMAGE';
     if (id === 'bulwark-face') return 'BULWARK FACE-SHIELD BLOCKS FRONTAL FIRE · BREAK IT OR FLANK — AURA BUFFS NEARBY FOES';
+    if (id === 'behemoth-parts') return 'BEHEMOTH PARTS · HORN = FRONT DR · GLAND = ACID MORTAR · TAIL = SPEED — BREAK PARTS TO CRIPPLE';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1160,6 +1161,7 @@ export function tTip(id, kind) {
   if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
   if (id === 'prowler-lunge') return '潛行者先預警再突進 · 閃過閃光 — 潛行態減傷，別硬打';
   if (id === 'bulwark-face') return '堡壘體正面護盾擋彈 · 破盾或繞側 — 光環會強化附近敵軍';
+  if (id === 'behemoth-parts') return '巨獸部位 · 角=正面減傷 · 腺=酸液迫擊 · 尾=機動 — 拆部位才能廢其能力';
   return '';
 }
 
