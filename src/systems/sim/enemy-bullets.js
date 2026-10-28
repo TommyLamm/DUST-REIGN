@@ -81,6 +81,11 @@ export function stepEnemyBullets(dt, frame) {
   var boundH = frame.boundH;
   for (var ebi = rt.state.enemyBullets.length - 1; ebi >= 0; ebi -= 1) {
     var eb = rt.state.enemyBullets[ebi];
+    // Wave 15+: drop in-flight elite rounds (life up to 6s from prior wave).
+    if (((rt.state.wave | 0) >= 15) && eb && eb.ownerKind === 'elite') {
+      fastUnorderedRemove(rt.state.enemyBullets, ebi);
+      continue;
+    }
     if (eb.type === 'acid') {
       eb.age = (eb.age || 0) + dt;
       var flight = eb.flight > 0 ? eb.flight : 0.7;
