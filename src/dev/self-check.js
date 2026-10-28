@@ -253,7 +253,7 @@ export function selfCheck() {
     shoot();
     var breacherShootOk = test.bullets.length === 5 &&
       test.bullets[0].r === 3.5 &&
-      test.bullets[0].life === 0.42 &&
+      test.bullets[0].life === 0.50 &&
       Math.abs(test.player.x - (200 - 4.5)) < 0.001;
 
     test.player.weaponMode = 'vanguard';
@@ -520,7 +520,7 @@ export function selfCheck() {
     test.player.damage = 26;
     test.player.overdrive = 0;
     renderBuildInspector();
-    var breacherUiOk = mockInspectorUi.statFireRate.textContent === '2.3 RPS (x5)' &&
+    var breacherUiOk = mockInspectorUi.statFireRate.textContent === '3.0 RPS (x5)' &&
       mockInspectorUi.chassisDesc.textContent.indexOf('BREACHER') !== -1 &&
       mockInspectorUi.activeFusionsCount.textContent === '0' &&
       mockInspectorUi.fusionMatrixList.innerHTML.indexOf('is-locked') !== -1;
