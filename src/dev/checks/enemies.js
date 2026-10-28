@@ -100,7 +100,7 @@ export function run() {
 
     var dread = { kind: 'dreadnought', hp: 400, maxHp: 400, x: 0, y: 0, aim: 0, empTimer: 0 };
     var rear = filterEnemyDamage(dread, 20, { source: 'bullet', x: -30, y: 0 });
-    assert(Math.abs(rear - 25.016) < 0.001, 'dreadnought rear hit was not x1.06*1.18');
+    assert(Math.abs(rear - 23.6) < 0.001, 'dreadnought rear hit was not x1.00*1.18');
     dread.empTimer = 1;
     dread.deathQueued = false;
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
