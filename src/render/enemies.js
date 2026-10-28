@@ -1732,29 +1732,29 @@ function drawMineBody(ctx, e, flashing, reduced) {
 function warnRing(ctx, x, y, radius, remain, color, reduced) {
   if (!(radius > 1)) return;
   var pulse = reduced ? 0.9 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * (reduced ? 0 : 16)));
-  var alpha = reduced ? 0.9 : (0.45 + (1 - remain) * 0.5);
+  var alpha = reduced ? 0.95 : (0.58 + (1 - remain) * 0.4);
   ctx.save();
-  // Contrast backing dark rim
+  // Contrast backing dark rim (thicker — visual only)
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, TAU);
-  ctx.strokeStyle = 'rgba(6, 6, 8, 0.85)';
-  ctx.lineWidth = isHighContrast() ? 4.8 : 3.6;
+  ctx.strokeStyle = 'rgba(6, 6, 8, 0.92)';
+  ctx.lineWidth = isHighContrast() ? 5.6 : 4.4;
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, TAU);
-  ctx.setLineDash(reduced ? NO_DASH : [5, 4]);
+  ctx.setLineDash(reduced ? NO_DASH : [6, 4]);
   ctx.strokeStyle = color;
   ctx.globalAlpha = alpha;
-  ctx.lineWidth = isHighContrast() ? 2.8 : 2;
+  ctx.lineWidth = isHighContrast() ? 3.2 : 2.5;
   ctx.stroke();
   ctx.setLineDash(NO_DASH);
-  ctx.globalAlpha = (reduced ? 0.28 : 0.16) + (1 - remain) * 0.2;
+  ctx.globalAlpha = (reduced ? 0.32 : 0.2) + (1 - remain) * 0.22;
   ctx.fillStyle = color;
   ctx.fill();
   ctx.globalAlpha = pulse;
   ctx.beginPath();
-  ctx.arc(x, y, 3.5, 0, TAU);
+  ctx.arc(x, y, 3.8, 0, TAU);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.restore();
@@ -1775,9 +1775,9 @@ function drawFieldTelegraphs(ctx) {
         warnRing(ctx, e.x, e.y, 70, armLeft, '#ff8a3d', reduced);
         if (!reduced) {
           ctx.save();
-          ctx.globalAlpha = 0.35 + 0.4 * Math.abs(Math.sin((rt.renderTime || 0) * 22));
+          ctx.globalAlpha = 0.45 + 0.45 * Math.abs(Math.sin((rt.renderTime || 0) * 22));
           ctx.strokeStyle = '#fff6e8';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.6;
           ctx.beginPath();
           ctx.arc(e.x, e.y, 70, 0, TAU);
           ctx.stroke();
@@ -1790,9 +1790,9 @@ function drawFieldTelegraphs(ctx) {
         warnRing(ctx, e.x, e.y, 80, mineLeft, '#ff3814', reduced);
         if (!reduced) {
           ctx.save();
-          ctx.globalAlpha = 0.4 + 0.45 * Math.abs(Math.sin((rt.renderTime || 0) * 28));
+          ctx.globalAlpha = 0.5 + 0.48 * Math.abs(Math.sin((rt.renderTime || 0) * 28));
           ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2.2;
+          ctx.lineWidth = 2.8;
           ctx.beginPath();
           ctx.arc(e.x, e.y, 80, 0, TAU);
           ctx.stroke();
@@ -1809,12 +1809,20 @@ function drawFieldTelegraphs(ctx) {
         ctx.save();
         ctx.translate(e.x, e.y);
         ctx.rotate(e.aim || 0);
-        ctx.globalAlpha = reduced ? 0.55 : (0.35 + (1 - left) * 0.45);
-        ctx.fillStyle = 'rgba(255, 106, 61, 0.35)';
-        ctx.fillRect(0, -30, len, 60);
-        ctx.strokeStyle = '#fff1c4';
-        ctx.lineWidth = 2;
+        // Dark corridor backing (stroke/alpha only — length & duration unchanged)
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(6, 4, 2, 0.9)';
+        ctx.lineWidth = 5.5;
         ctx.strokeRect(0, -30, len, 60);
+        ctx.globalAlpha = reduced ? 0.62 : (0.42 + (1 - left) * 0.4);
+        ctx.fillStyle = 'rgba(255, 106, 61, 0.42)';
+        ctx.fillRect(0, -30, len, 60);
+        ctx.globalAlpha = reduced ? 0.95 : (0.75 + (1 - left) * 0.25);
+        ctx.strokeStyle = '#fff8d6';
+        ctx.lineWidth = 2.6;
+        ctx.setLineDash(reduced ? NO_DASH : [10, 6]);
+        ctx.strokeRect(0, -30, len, 60);
+        ctx.setLineDash(NO_DASH);
         ctx.restore();
       }
       if (e.kind === 'sovereign') {
@@ -2751,27 +2759,27 @@ function drawRusherTelegraph(ctx, e) {
     ctx.save();
     ctx.lineCap = 'round';
 
-    // 1. 底層 6.5px 深黑底帶 (#030204)
+    // 1. 底層 7.5px 深黑底帶 (#030204) — contrast only
     ctx.beginPath();
     ctx.moveTo(e.x, e.y);
     ctx.lineTo(x1, y1);
     ctx.strokeStyle = '#030204';
-    ctx.lineWidth = 6.5;
+    ctx.lineWidth = 7.5;
     ctx.stroke();
 
-    // 2. 中層 4.0px 鮮橙帶 (#ff5500)
+    // 2. 中層 4.4px 鮮橙帶
     ctx.beginPath();
     ctx.moveTo(e.x, e.y);
     ctx.lineTo(x1, y1);
-    ctx.strokeStyle = 'rgba(255, 90, 0, ' + (0.75 + chargeRatio * 0.25) + ')';
-    ctx.lineWidth = 4.0;
+    ctx.strokeStyle = 'rgba(255, 90, 0, ' + (0.82 + chargeRatio * 0.18) + ')';
+    ctx.lineWidth = 4.4;
     ctx.stroke();
 
-    // 3. 頂層 2.2px 動態向前流動的斑馬虛線
+    // 3. 頂層 2.4px 動態向前流動的斑馬虛線
     ctx.setLineDash(DASH_6);
     ctx.lineDashOffset = offset;
-    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.85 + chargeRatio * 0.15) + ')';
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.9 + chargeRatio * 0.1) + ')';
+    ctx.lineWidth = 2.4;
     ctx.stroke();
     ctx.setLineDash(NO_DASH);
     ctx.lineDashOffset = 0;
