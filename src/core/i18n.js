@@ -1435,6 +1435,9 @@ export function tStatus(text) {
   if (text.indexOf('SUPERNOVA COLLAPSE') === 0) return text.replace('SUPERNOVA COLLAPSE!', '超新星坍縮！').replace('BONUS DMG', '額外傷害');
   if (text.indexOf('READY') !== -1 && text.indexOf(' // READY') !== -1) return text.replace(' // READY', ' // 就緒');
   if (text.indexOf('GRAVITON BURST') === 0) return '重力爆轟 // 彈幕消解';
+  // Share POI / boss banner maps so status line matches on-canvas banner.
+  var viaBanner = tBanner(text);
+  if (viaBanner !== text) return viaBanner;
   return text;
 }
 
