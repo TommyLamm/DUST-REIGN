@@ -97,6 +97,11 @@ function burrowerWarnNear() {
   return false;
 }
 
+function meteorHazardNear() {
+  var list = rt.state && rt.state.meteors;
+  return !!(list && list.length);
+}
+
 function enemyOfKind(kind) {
   var list = rt.state && rt.state.enemies;
   if (!list) return false;
@@ -177,6 +182,7 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
   if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if ((rt.state.wave || 1) >= 10 && enemyOfKind('mine')) offer('mine');
+  if (meteorHazardNear() || (rt.state.mutator && (rt.state.mutator.id === 'meteor-shower' || rt.state.mutator.id === 'meteors'))) offer('meteor');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   var ci;
