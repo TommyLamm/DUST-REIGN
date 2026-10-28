@@ -160,10 +160,13 @@ export function renderHardcoreBriefing(container, onSelect) {
   // 6. Boss Mutation Intel
   if (op.bossOverride) {
     var bossBlock = el('div', 'hardcore-intel-block');
-    var bossLabel = el('strong', '', (zh ? '【首領異變】' : '[BOSS MUTATION]') + ' ' + (op.bossOverride.name || ''));
-    var bossText = el('span', '', op.bossOverride.modifier || '');
+    var bossName = tHardcoreOpField(op.id, 'bossName', op.bossOverride.name) || op.bossOverride.name || '';
+    var bossMod = tHardcoreOpField(op.id, 'bossModifier', op.bossOverride.modifier) || op.bossOverride.modifier || '';
+    var bossLabel = el('strong', '', (zh ? '【首領異變】' : '[BOSS MUTATION]') + (bossName ? (' ' + bossName) : ''));
+    var bossText = el('span', '', bossMod);
     bossBlock.appendChild(bossLabel);
     bossBlock.appendChild(bossText);
+    bossBlock.setAttribute('aria-label', (zh ? '首領異變' : 'BOSS MUTATION') + (bossName ? (' — ' + bossName) : '') + (bossMod ? (' — ' + bossMod) : ''));
     card.appendChild(bossBlock);
   }
 
