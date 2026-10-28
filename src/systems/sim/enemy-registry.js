@@ -537,7 +537,7 @@ registerEnemyStrategy('dreadnought', {
       amount *= 1.00; // revert #201 — ×0.90 tanked p50 to 29; charge DR untouched
     } else if ((e.mode === 'idle' || !e.mode) && info && info.source === 'bullet') {
       // Idle bullet-only intact bump: shortens slow kite tails; barrels/EMP keep own curves.
-      amount *= 1.04; // was 1.03 — one more click on idle intact for slow tail; DR/dist untouched
+      amount *= 1.00; // revert idle 1.03/1.04 — shortened mid not slow tail; tele trim instead
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       amount *= 1.00;
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);

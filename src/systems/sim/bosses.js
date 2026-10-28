@@ -427,7 +427,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.attackCd -= dt;
     if (e.attackCd <= 0) {
       e.chargesQueued = e.bossPhase >= 2 ? 2 : 1;
-      startTelegraph(e, p, 1.40);
+      startTelegraph(e, p, 1.28); // was 1.40 — less DR-padded tele on long cycles; DR mult/dist untouched
     }
   }
   aimAtPlayer(e, p);
