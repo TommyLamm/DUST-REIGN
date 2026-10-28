@@ -805,6 +805,14 @@ html.reduced-motion .cosmetic-card {
   line-height: 1.35;
 }
 
+.workshop-empty-hint {
+  margin: 8px 0 0;
+  color: rgba(232, 224, 198, 0.72);
+  font: 700 11px var(--mono);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
 .milestone-card.is-locked {
   opacity: 0.88;
   border-style: dashed;
