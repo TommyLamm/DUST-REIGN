@@ -904,7 +904,7 @@ export function tLog(msg) {
   if (msg === 'OVERCHARGE RETALIATION // RETALIATORY SPIKE FIRED') return '超載反擊 // 復仇尖刺發射';
   if (msg === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';
   if (msg === 'BOUNTY SECURED // SURGE ONLINE') return '懸賞已完成 // 湧浪超頻上線';
-  if (msg === 'TITAN ARMOR BREACH // CORE STRIKE -350 HP') return '泰坦裝甲破防 // 核心重創 -350 HP';
+  if (msg === 'TITAN ARMOR BREACH // CORE STRIKE') return '泰坦裝甲破防 // 核心重創 -350 HP';
   if (msg === 'VOLATILE CORE DETONATED') return '不穩定核心引爆';
   if (msg.indexOf('TITAN STRUCK BY KICKED BARREL') === 0) return '踢出的炸藥桶命中泰坦 // -240 HP';
   if (msg === 'BARREL DETONATED // SUPERCRIT') return '炸藥桶引爆 // 致命超暴擊';
