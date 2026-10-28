@@ -379,36 +379,47 @@ export function run() {
     onKill({ kind: 'crawler', x: 12, y: 12, hp: 0 }, { cause: 'bullet' });
     assert(state.orbs.some(function (orb) { return orb.kind === 'repair'; }), 'salvage drops repair scrap');
 
+    function mockEl() {
+      var attrs = {};
+      return {
+        textContent: '',
+        innerHTML: '',
+        title: '',
+        disabled: false,
+        hidden: false,
+        getAttribute: function (k) { return Object.prototype.hasOwnProperty.call(attrs, k) ? attrs[k] : null; },
+        setAttribute: function (k, v) { attrs[k] = String(v); },
+        removeAttribute: function (k) { delete attrs[k]; }
+      };
+    }
     var mock = {
       chassisSelector: {
         buttons: [],
         querySelectorAll: function () { return this.buttons; }
       },
-      chassisDesc: { textContent: '' },
-      statFireRate: { textContent: '' },
-      statDamage: { textContent: '' },
-      statCrit: { textContent: '' },
-      statBallistics: { textContent: '' },
-      statSpeed: { textContent: '' },
-      statMagnet: { textContent: '' },
-      buildPassiveTags: { innerHTML: '' },
-      installedChipsCount: { textContent: '' },
-      installedChipsList: { innerHTML: '' },
-      activeFusionsCount: { textContent: '' },
-      fusionMatrixList: { innerHTML: '' }
+      chassisDesc: mockEl(),
+      statFireRate: mockEl(),
+      statDamage: mockEl(),
+      statCrit: mockEl(),
+      statBallistics: mockEl(),
+      statSpeed: mockEl(),
+      statMagnet: mockEl(),
+      buildPassiveTags: mockEl(),
+      installedChipsCount: mockEl(),
+      installedChipsList: mockEl(),
+      activeFusionsCount: mockEl(),
+      fusionMatrixList: mockEl()
     };
     ['standard', 'breacher', 'vanguard', 'arc-welder'].forEach(function (mode) {
       var classes = [];
-      mock.chassisSelector.buttons.push({
-        disabled: false,
-        getAttribute: function (key) { return key === 'data-mode' ? mode : null; },
-        setAttribute: function () {},
-        classList: { toggle: function (cls, on) {
-          var idx = classes.indexOf(cls);
-          if (on && idx === -1) classes.push(cls);
-          else if (!on && idx !== -1) classes.splice(idx, 1);
-        } }
-      });
+      var btn = mockEl();
+      btn.getAttribute = function (key) { return key === 'data-mode' ? mode : null; };
+      btn.classList = { toggle: function (cls, on) {
+        var idx = classes.indexOf(cls);
+        if (on && idx === -1) classes.push(cls);
+        else if (!on && idx !== -1) classes.splice(idx, 1);
+      } };
+      mock.chassisSelector.buttons.push(btn);
     });
     state.player.weaponMode = 'standard';
     state.player.mastery = 0;
