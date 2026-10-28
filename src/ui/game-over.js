@@ -82,13 +82,22 @@ function renderVictoryStars(state) {
 
   for (var s = 0; s < starDefs.length; s += 1) {
     var def = starDefs[s];
-    var slot = el('div', 'victory-star-slot' + (def.lit ? ' is-lit' : ''));
+    var slot = el('div', 'victory-star-slot' + (def.lit ? ' is-lit' : ' is-missed'));
     slot.setAttribute('data-star', String(def.num));
+    var numLabel = zh ? ('第 ' + def.num + ' 星') : ('STAR ' + def.num);
+    var statusLabel = def.lit ? (zh ? '已達成' : 'EARNED') : (zh ? '未達成' : 'MISSED');
+    slot.setAttribute('aria-label', numLabel + ' — ' + statusLabel + ' — ' + def.label);
+    slot.title = numLabel + ' · ' + statusLabel;
 
+    var num = el('div', 'victory-star-num', numLabel);
     var glyph = el('div', 'victory-star-glyph', def.lit ? '★' : '☆');
+    glyph.setAttribute('aria-hidden', 'true');
+    var status = el('div', 'victory-star-status', statusLabel);
     var desc = el('div', 'victory-star-desc', def.label);
 
+    slot.appendChild(num);
     slot.appendChild(glyph);
+    slot.appendChild(status);
     slot.appendChild(desc);
     victoryStarsContainer.appendChild(slot);
   }

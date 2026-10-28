@@ -705,6 +705,27 @@ html.reduced-motion .cosmetic-card {
   color: #fff;
 }
 
+.milestone-lock-reason {
+  margin: 6px 0 0;
+  color: rgba(255, 178, 154, 0.9);
+  font: 700 10px var(--mono);
+  letter-spacing: 0.06em;
+}
+
+.milestone-card.is-locked {
+  opacity: 0.88;
+  border-style: dashed;
+}
+
+.cosmetic-card.is-locked {
+  opacity: 0.78;
+  border-style: dashed;
+}
+
+.cosmetic-card.is-locked .cosmetic-desc {
+  color: rgba(232, 224, 198, 0.7);
+}
+
 .milestone-desc {
   margin: 0;
   font-size: 9px;

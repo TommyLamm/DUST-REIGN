@@ -78,13 +78,19 @@ export function updateContractsHud() {
   }
   if (cId) {
     var card = el('div', 'contract-card' + (contract.done ? ' is-complete' : '') + (isDoubled ? ' is-doubled' : '') + (contract.resets ? ' is-reset' : ''));
-    card.appendChild(el('span', 'contract-kicker', zh ? '作戰合約' : 'CONTRACT'));
-    card.appendChild(el('strong', null, progressText(contract)));
+    var kicker = zh ? '作戰合約' : 'CONTRACT';
+    if (isDoubled) kicker = zh ? '作戰合約 · 超頻' : 'CONTRACT · OVERCLOCKED';
+    card.appendChild(el('span', 'contract-kicker', kicker));
+    var prog = progressText(contract);
+    card.appendChild(el('strong', null, prog));
     var rewText = (zh ? tRewardLabel(contract.reward) : null) || (contract.reward && contract.reward.label) || '';
     var reward = el('em', 'contract-reward', rewText);
     reward.setAttribute('aria-hidden', 'true');
     reward.dataset.mark = rewardMark(contract.reward);
     card.appendChild(reward);
+    if (contract.resets && !contract.done) {
+      card.appendChild(el('span', 'contract-reset-badge', zh ? '進度已重置' : 'PROGRESS RESET'));
+    }
     if (contract.done) {
       card.appendChild(el('span', 'contract-check', zh ? '已達成' : 'SEALED'));
     } else if (canDouble) {
@@ -106,6 +112,11 @@ export function updateContractsHud() {
     } else if (isDoubled) {
       card.appendChild(el('span', 'contract-doubled-badge', tDoubleDownHint(true)));
     }
+    var ariaBits = [kicker, prog];
+    if (rewText) ariaBits.push(rewText);
+    if (contract.done) ariaBits.push(zh ? '已達成' : 'SEALED');
+    else if (contract.resets) ariaBits.push(zh ? '進度已重置' : 'PROGRESS RESET');
+    card.setAttribute('aria-label', ariaBits.join(' — '));
     root.appendChild(card);
   }
 }
