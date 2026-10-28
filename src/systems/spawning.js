@@ -425,6 +425,7 @@ function createTitan(boundW) {
         hp: leftPartHp,
         maxHp: leftPartHp,
         destroyed: false,
+        // LEFT-TAIL FALSIFIED (#238): absorb 0.76 + harpoon 1.2s flat under40, dumped clear15.
         coreAbsorption: 0.72,
         rewardKind: 'repair'
       },
