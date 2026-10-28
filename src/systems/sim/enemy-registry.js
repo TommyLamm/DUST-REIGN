@@ -519,12 +519,12 @@ registerEnemyStrategy('dreadnought', {
     if (broken) {
       // Breach window is position-independent; barrels no longer get an extra mult
       // (barrel chains during armor-break were a top driver of <30s deletes).
-      amount *= 1.22;
+      amount *= 1.45;
     } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
       if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) {
-        amount *= 1.25;
+        amount *= 1.32;
       }
     }
     return amount;
