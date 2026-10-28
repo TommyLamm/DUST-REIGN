@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#10110e" />
   <meta name="description" content="DUST//REIGN — a wasteland roguelike shooter" />
-  <title>DUST//REIGN — Wasteland Run</title>
+  <title>DUST//REIGN — 廢土征途</title>
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/hud.css" />
   <link rel="stylesheet" href="css/overlays.css" />
@@ -32,14 +32,14 @@
         <div class="brand-lockup">
           <span class="brand-rail" aria-hidden="true"></span>
           <div>
-            <p class="eyebrow">WASTELAND SHOOTER <span>/</span> RUN 001</p>
+            <p class="eyebrow">廢土射擊 <span>/</span> 第 001 次出擊</p>
             <h1>DUST<span>//</span>REIGN</h1>
           </div>
         </div>
         <div class="topbar-meta" aria-label="Signal status">
           <div class="signal-readout">
             <span class="meta-label">通訊</span>
-            <strong id="commsStatus">OPEN</strong>
+            <strong id="commsStatus">開放</strong>
           </div>
           <div class="signal-readout">
             <span class="meta-label">風向</span>
@@ -49,17 +49,17 @@
             <span class="meta-label">最高</span>
             <strong id="hudBest">000000</strong>
           </div>
-          <button id="audioBtn" class="pause-button" type="button" aria-label="切換音效 / Toggle audio">AUDIO [ON]</button>
+          <button id="audioBtn" class="pause-button" type="button" aria-label="切換音效 / Toggle audio">音效 [開啟]</button>
           <button id="langBtn" class="pause-button lang-button" type="button" aria-label="切換語言 / Toggle Language"><span class="lang-opt is-inactive">ENG</span> / <span class="lang-opt is-active">繁中</span></button>
-          <button id="pauseBtn" class="pause-button" type="button" aria-label="暫停遊戲 / Pause game" disabled>PAUSE</button>
+          <button id="pauseBtn" class="pause-button" type="button" aria-label="暫停遊戲 / Pause game" disabled>暫停</button>
         </div>
       </header>
 
       <main class="game-layout">
         <section class="arena-card" aria-label="Wasteland arena">
           <div class="arena-header">
-            <span>SECTOR 09 <b aria-hidden="true">//</b> THE DRYLINE</span>
-            <span class="arena-state"><i aria-hidden="true"></i><span id="runState">STANDBY</span></span>
+            <span>第 09 區段 <b aria-hidden="true">//</b> 乾線邊境</span>
+            <span class="arena-state"><i aria-hidden="true"></i><span id="runState">待命</span></span>
           </div>
 
           <div id="canvasStage" class="canvas-stage" data-sector="dusk" data-storm="0" data-quality="auto">
@@ -94,25 +94,25 @@
               <div id="hudResonances" class="hud-resonances" aria-label="Archetype Resonances">
                 <div class="resonance-pill" data-archetype="kinetic" data-tier="0" data-count="0" title="Kinetic Ballistics">
                   <span class="res-icon">⚡</span>
-                  <span class="res-name">KIN</span>
+                  <span class="res-name">動能</span>
                   <span class="res-count">0</span>
                   <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
                 </div>
                 <div class="resonance-pill" data-archetype="plasma" data-tier="0" data-count="0" title="Thermal Plasma">
                   <span class="res-icon">🔥</span>
-                  <span class="res-name">PLA</span>
+                  <span class="res-name">電漿</span>
                   <span class="res-count">0</span>
                   <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
                 </div>
                 <div class="resonance-pill" data-archetype="static" data-tier="0" data-count="0" title="Electromagnetic Static">
                   <span class="res-icon">✦</span>
-                  <span class="res-name">STA</span>
+                  <span class="res-name">靜電</span>
                   <span class="res-count">0</span>
                   <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
                 </div>
                 <div class="resonance-pill" data-archetype="tactical" data-tier="0" data-count="0" title="Tactical Defense">
                   <span class="res-icon">⛨</span>
-                  <span class="res-name">TAC</span>
+                  <span class="res-name">戰術</span>
                   <span class="res-count">0</span>
                   <span class="res-dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>
                 </div>
@@ -165,9 +165,9 @@
                       <span id="hudTacticalKey" class="tactical-key-hint">[E]</span>
                     </div>
                     <div class="tactical-info">
-                      <span class="tactical-label">AUX</span>
-                      <strong><span id="hudTacticalName">TURRET</span></strong>
-                      <span id="hudTacticalCdText" class="tactical-cd-text">RDY</span>
+                      <span class="tactical-label">副裝</span>
+                      <strong><span id="hudTacticalName">砲塔</span></strong>
+                      <span id="hudTacticalCdText" class="tactical-cd-text">就緒</span>
                     </div>
                   </div>
                 </div>
@@ -182,20 +182,20 @@
             <div id="startScreen" class="overlay overlay--start" role="dialog" aria-modal="true"
               aria-labelledby="startTitle">
               <div class="overlay-inner">
-                <div class="overlay-stamp">ARCHIVE 09 <span>//</span> ACTIVE</div>
-                <p class="overlay-kicker">THE LAST LIGHT IS A MUZZLE FLASH</p>
-                <h2 id="startTitle">MAKE YOUR<br /><span>OWN COVER.</span></h2>
+                <div class="overlay-stamp">檔案庫 09 <span>//</span> 啟用中</div>
+                <p class="overlay-kicker">廢土最後的光芒，是槍口的火光</p>
+                <h2 id="startTitle">自闢掩體，<br /><span>絕境求生。</span></h2>
                 <p class="overlay-copy">
-                  Outrun the dust. Outshoot the things that live in it.<br />
-                  Every run writes a new map in the bones of the old world.
+                  甩開漫天塵暴。擊潰潛伏其中的異怪。<br />
+                  每一次出擊，都在舊世界的殘骸上刻下新的地圖。
                 </p>
                 <div id="loadoutPanel" hidden></div>
                 <button id="startBtn" class="action-button action-button--primary" data-start type="button">
                   <span>出擊</span><b aria-hidden="true">↗</b>
                 </button>
                 <div class="overlay-foot">
-                  <span class="overlay-foot-controls">DESKTOP: WASD + LMB / SPACE · GAMEPAD: ANALOG + RT / A</span>
-                  <span>RUNS ARE CHEAP <i aria-hidden="true">/</i> AMMO IS NOT</span>
+                  <span class="overlay-foot-controls">鍵鼠: WASD + 滑鼠左鍵 / 空白鍵 · 手把: 類比搖桿 + RT / A</span>
+                  <span>殘命易逝 <i aria-hidden="true">/</i> 彈藥難尋</span>
                   <span>BUILD 0.1.2</span>
                 </div>
               </div>
@@ -204,52 +204,52 @@
             <div id="gameOverScreen" class="overlay overlay--gameover" data-game-over role="dialog" aria-modal="true"
               aria-labelledby="gameOverTitle" hidden>
               <div class="overlay-inner">
-                <div class="overlay-stamp overlay-stamp--danger">SIGNAL LOST <span>//</span> RUN ENDED</div>
-                <p class="overlay-kicker">THE DRYLINE ALWAYS COLLECTS</p>
-                <h2 id="gameOverTitle">THE DUST<br /><span>TAKES ALL.</span></h2>
+                <div class="overlay-stamp overlay-stamp--danger">訊號中斷 <span>//</span> 出擊結束</div>
+                <p class="overlay-kicker">乾線邊境，終將吞噬一切</p>
+                <h2 id="gameOverTitle">塵埃之境<br /><span>吞噬萬物</span></h2>
                 <div class="result-grid">
-                  <div><span>WAVE REACHED</span><strong id="finalWave">--</strong></div>
-                  <div><span>SCRAP SCORE</span><strong id="finalScore">000000</strong></div>
-                  <div><span>BEST RUN</span><strong id="finalBest">000000</strong></div>
+                  <div><span>抵達波次</span><strong id="finalWave">--</strong></div>
+                  <div><span>廢料評分</span><strong id="finalScore">000000</strong></div>
+                  <div><span>歷史最佳</span><strong id="finalBest">000000</strong></div>
                 </div>
                 <div class="run-telemetry-grid">
-                  <div><span>ACCURACY</span><strong id="telAccuracy">0%</strong></div>
-                  <div><span>MAX COMBO</span><strong id="telMaxCombo">x0</strong></div>
-                  <div><span>GRAZES</span><strong id="telGrazes">0</strong></div>
-                  <div><span>TOTAL DMG</span><strong id="telDamage">0</strong></div>
+                  <div><span>命中率</span><strong id="telAccuracy">0%</strong></div>
+                  <div><span>最高連擊</span><strong id="telMaxCombo">x0</strong></div>
+                  <div><span>擦彈次數</span><strong id="telGrazes">0</strong></div>
+                  <div><span>總傷害量</span><strong id="telDamage">0</strong></div>
                 </div>
                 <div id="combatRankStamp" class="combat-rank-stamp">
                   <div class="rank-stamp-box">
-                    <span class="rank-stamp-kicker">SECTOR EVALUATION</span>
+                    <span class="rank-stamp-kicker">區段評級</span>
                     <strong id="combatRankLetter" class="rank-letter rank-letter--s">S</strong>
-                    <span id="combatRankTitle" class="rank-title">APEX SCAVENGER</span>
+                    <span id="combatRankTitle" class="rank-title">頂級拾荒者</span>
                   </div>
                 </div>
                 <div id="newRecordStamp" class="new-record-stamp" hidden>
-                  <span>NEW RECORD</span> <small>//</small> <span>SECTOR TOP</span>
+                  <span>新紀錄</span> <small>//</small> <span>區段之冠</span>
                 </div>
                 <div id="accountSaveBadge" class="save-badge" hidden>
                   <span aria-hidden="true">✓</span>
-                  <span>RECORDED TO PLAYROOM</span>
+                  <span>已記錄至 PLAYROOM</span>
                 </div>
                 <div id="victoryStarsContainer" class="victory-stars-container" hidden></div>
                 <button id="restartBtn" class="action-button action-button--primary" data-restart type="button">
-                  <span>RUN IT BACK</span><b aria-hidden="true">↻</b>
+                  <span>再次出擊</span><b aria-hidden="true">↻</b>
                 </button>
                 <div id="dualExitGroup" class="dual-exit-group" hidden>
                   <button id="nextSectorBtn" class="action-button action-button--primary action-button--next" type="button">
-                    <span>NEXT SECTOR</span><b aria-hidden="true">➔</b>
+                    <span>下一區域出擊</span><b aria-hidden="true">➔</b>
                   </button>
                   <div class="dual-exit-row">
                     <button id="replayBtn" class="action-button action-button--replay" type="button">
-                      <span>REPLAY</span><b aria-hidden="true">↻</b>
+                      <span>原關重試</span><b aria-hidden="true">↻</b>
                     </button>
                     <button id="stageSelectBtn" class="action-button action-button--stage-select" type="button">
-                      <span>STAGE SELECT</span><b aria-hidden="true">⊞</b>
+                      <span>關卡選擇</span><b aria-hidden="true">⊞</b>
                     </button>
                   </div>
                 </div>
-                <div class="overlay-foot"><span>NOTHING OUT THERE STAYS DEAD</span><span>PRESS R OR CLICK RUN IT BACK</span></div>
+                <div class="overlay-foot"><span>廢土之中，死者亦不沉眠</span><span>按 R 或點擊再次出擊</span></div>
               </div>
             </div>
 
@@ -257,11 +257,11 @@
               aria-labelledby="upgradeTitle" hidden>
               <div class="upgrade-head">
                 <div>
-                  <p class="overlay-kicker">SALVAGE CACHE / CHOOSE ONE</p>
-                  <h2 id="upgradeTitle">MAKE THE RIG <span>MEANER.</span></h2>
-                  <p class="upgrade-hint">COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP (HEAL 10 / +100)</p>
+                  <p class="overlay-kicker">搜刮貯藏箱 // 選擇一項</p>
+                  <h2 id="upgradeTitle">強化機體，<span>兇悍進化。</span></h2>
+                  <p class="upgrade-hint">戰鬥已暫停 — 1–3 挑選 · R 重骰 · B 放逐 · X 跳過（修 10 / +100 分）</p>
                 </div>
-                <div class="upgrade-count"><span>DECISION WINDOW</span><strong id="upgradeTimer">COMBAT PAUSED — PICK ONE</strong></div>
+                <div class="upgrade-count"><span>決策窗口</span><strong id="upgradeTimer">戰鬥已暫停 — 挑選一張</strong></div>
               </div>
               <div id="upgradeChoices" class="upgrade-choices" data-upgrade-options></div>
               <div id="upgradeControlRow" class="upgrade-control-row"></div>
@@ -276,7 +276,7 @@
               <div class="overlay-inner campaign-modal-inner">
                 <div class="campaign-modal-header">
                   <div class="overlay-stamp">戰役作戰 <span>//</span> 區段網格</div>
-                  <h2 id="campaignModalTitle">SECTOR <span>CAMPAIGN</span></h2>
+                  <h2 id="campaignModalTitle">區段 <span>戰役</span></h2>
                   <p class="overlay-kicker">選擇目標並部署進入廢土</p>
                   <button id="campaignCloseBtn" class="modal-close-button" type="button" aria-label="Close stage select">✕</button>
                 </div>
@@ -317,18 +317,18 @@
               aria-labelledby="pauseTitle" hidden>
               <div class="overlay-inner pause-modal-inner">
                 <div class="pause-head">
-                  <div class="overlay-stamp">RIG DIAGNOSTICS <span>//</span> STANDBY</div>
-                  <h2 id="pauseTitle">RIG DIAGNOSTICS<br /><span>// STANDBY</span></h2>
-                  <p class="overlay-kicker">COMBAT SIGNAL SUSPENDED · SYSTEM TERMINAL ACTIVE</p>
+                  <div class="overlay-stamp">機體診斷 <span>//</span> 待命中</div>
+                  <h2 id="pauseTitle">機體診斷<br /><span>// 待命中</span></h2>
+                  <p class="overlay-kicker">戰鬥訊號掛起 · 系統終端運作中</p>
                 </div>
 
-                <nav class="pause-tabs" data-tab="system" role="tablist" aria-label="Pause Menu Categories">
+                <nav class="pause-tabs" data-tab="system" role="tablist" aria-label="暫停選單分類">
                   <button id="tabBtnSystem" class="pause-tab is-active" type="button" role="tab" aria-selected="true"
-                    aria-controls="panelSystem">SYSTEM</button>
+                    aria-controls="panelSystem">系統設定</button>
                   <button id="tabBtnBuild" class="pause-tab" type="button" role="tab" aria-selected="false"
-                    aria-controls="panelBuild">RIG BUILD</button>
+                    aria-controls="panelBuild">機體構築</button>
                   <button id="tabBtnControls" class="pause-tab" type="button" role="tab" aria-selected="false"
-                    aria-controls="panelControls">CONTROLS</button>
+                    aria-controls="panelControls">操作設定</button>
                 </nav>
 
                 <div class="pause-tab-content">
@@ -338,80 +338,80 @@
                     <div class="settings-list">
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">MASTER AUDIO VOLUME</span>
-                          <small class="setting-desc">COMBAT / HAZARD CUES, WEAPON FIRE & UI BEEPS</small>
+                          <span class="setting-label">主音訊音量</span>
+                          <small class="setting-desc">戰鬥／危險預警提示音、開火與介面音效</small>
                         </div>
                         <div class="setting-controls">
                           <input type="range" id="settingMasterVolume" class="setting-slider" min="0" max="100"
-                            value="80" aria-label="Master volume" />
+                            value="80" aria-label="主音量" />
                           <span id="volumeValue" class="setting-value">80%</span>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">AUDIO STATUS</span>
-                          <small class="setting-desc">MUTE COMBAT, HAZARD TELEGRAPH CUES & UI</small>
+                          <span class="setting-label">音訊狀態</span>
+                          <small class="setting-desc">靜音戰鬥、危險預警提示音與介面音</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="toggleAudioMute" class="pause-setting-btn">MUTE: OFF</button>
+                          <button type="button" id="toggleAudioMute" class="pause-setting-btn">靜音: 關閉</button>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">HAPTIC FEEDBACK</span>
-                          <small class="setting-desc">DEVICE VIBRATION ON DASH, HITS & DETONATIONS</small>
+                          <span class="setting-label">觸覺回饋</span>
+                          <small class="setting-desc">衝刺、受擊與爆炸時震動</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="toggleHaptics" class="pause-setting-btn">HAPTICS: ENABLED</button>
+                          <button type="button" id="toggleHaptics" class="pause-setting-btn">觸覺回饋: 已啟用</button>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">REDUCED MOTION</span>
-                          <small class="setting-desc">DISABLE SHAKE, HITSTOP & HIGH CONTRAST FLASHES</small>
+                          <span class="setting-label">減少動態效果</span>
+                          <small class="setting-desc">關閉畫面震動、受擊定格與強光閃爍</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="toggleMotionReduction" class="pause-setting-btn">MOTION: STANDARD</button>
+                          <button type="button" id="toggleMotionReduction" class="pause-setting-btn">動態效果: 標準</button>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">HIGH CONTRAST / GLYPHS</span>
-                          <small class="setting-desc">DUAL-LAYER OUTLINES & GEOMETRIC HOSTILE IDENTIFIERS</small>
+                          <span class="setting-label">高對比度 / 敵標符號</span>
+                          <small class="setting-desc">雙層高亮輪廓與幾何識別符號</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="toggleHighContrast" class="pause-setting-btn">CONTRAST: STANDARD</button>
+                          <button type="button" id="toggleHighContrast" class="pause-setting-btn">對比度: 標準</button>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">VISUAL QUALITY</span>
-                          <small class="setting-desc">RENDER TIER, LIGHTING AND EFFECT BUDGET</small>
+                          <span class="setting-label">視覺畫質</span>
+                          <small class="setting-desc">渲染等級、光影與特效預算</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="settingVisualQuality" class="pause-setting-btn">QUALITY: AUTO</button>
+                          <button type="button" id="settingVisualQuality" class="pause-setting-btn">畫質: 自動</button>
                         </div>
                       </div>
 
                       <div class="setting-row">
                         <div class="setting-meta">
-                          <span class="setting-label">FIELD TIPS</span>
-                          <small class="setting-desc">SITUATIONAL HINTS DURING A RUN</small>
+                          <span class="setting-label">戰場提示</span>
+                          <small class="setting-desc">戰鬥中的即時情境操作提醒</small>
                         </div>
                         <div class="setting-controls">
-                          <button type="button" id="toggleTips" class="pause-setting-btn">TIPS: ON</button>
-                          <button type="button" id="resetTips" class="pause-setting-btn">RESET TIPS</button>
+                          <button type="button" id="toggleTips" class="pause-setting-btn">戰場提示: 開啟</button>
+                          <button type="button" id="resetTips" class="pause-setting-btn">重設提示</button>
                         </div>
                       </div>
 
                       <div class="setting-row" id="settingLanguageRow">
                         <div class="setting-meta">
-                          <span class="setting-label" id="settingLanguageLabel">LANGUAGE</span>
+                          <span class="setting-label" id="settingLanguageLabel">介面語言</span>
                           <small class="setting-desc" id="settingLanguageDesc">INTERFACE LANGUAGE / 介面語言</small>
                         </div>
                         <div class="setting-controls">
@@ -425,7 +425,7 @@
                   <div id="panelBuild" class="pause-tab-panel" role="tabpanel" aria-labelledby="tabBtnBuild" hidden>
                     <div class="build-inspector">
                       <div class="build-stats-col">
-                        <div class="build-col-title">WEAPON CHASSIS (LOCKED MID-RUN)</div>
+                        <div class="build-col-title">武器機底（出擊中鎖定）</div>
                         <div class="chassis-selector" id="chassisSelector">
                           <button type="button" class="chassis-btn is-active" data-mode="standard" disabled>STANDARD</button>
                           <button type="button" class="chassis-btn" data-mode="breacher" disabled>BREACHER</button>
@@ -433,49 +433,49 @@
                           <button type="button" class="chassis-btn" data-mode="arc-welder" disabled>ARC-WELDER</button>
                           <button type="button" class="chassis-btn" data-mode="colossus" disabled>COLOSSUS</button>
                         </div>
-                        <div id="chassisDesc" class="chassis-desc">STANDARD PATTERN AUTO-RIFLE // BALANCED RAPID DPS</div>
+                        <div id="chassisDesc" class="chassis-desc">標準制式自動步槍 // 均衡速射火力</div>
 
-                        <div class="build-col-title">CORE SPECS TELEMETRY</div>
+                        <div class="build-col-title">核心規格數據</div>
                         <div class="build-stats-grid">
                           <div class="build-stat-card">
-                            <span class="stat-name">FIRE RATE</span>
+                            <span class="stat-name">射擊速率</span>
                             <strong id="statFireRate">5.6 RPS</strong>
                           </div>
                           <div class="build-stat-card">
-                            <span class="stat-name">BULLET DAMAGE</span>
+                            <span class="stat-name">子彈傷害</span>
                             <strong id="statDamage">26 DMG</strong>
                           </div>
                           <div class="build-stat-card">
-                            <span class="stat-name">CRIT PROTOCOL</span>
+                            <span class="stat-name">暴擊機制</span>
                             <strong id="statCrit">1.75x AMBUSH</strong>
                           </div>
                           <div class="build-stat-card">
-                            <span class="stat-name">BALLISTICS</span>
+                            <span class="stat-name">彈道特性</span>
                             <strong id="statBallistics">PIERCE 0 / RICO 0</strong>
                           </div>
                           <div class="build-stat-card">
-                            <span class="stat-name">RIG THRUST</span>
+                            <span class="stat-name">機體推進</span>
                             <strong id="statSpeed">235 PX/S</strong>
                           </div>
                           <div class="build-stat-card">
-                            <span class="stat-name">MAGNET REACH</span>
+                            <span class="stat-name">磁吸範圍</span>
                             <strong id="statMagnet">165 PX</strong>
                           </div>
                         </div>
 
-                        <div class="build-col-title">DYNAMIC PASSIVE TRAITS</div>
+                        <div class="build-col-title">動態被動特徵</div>
                         <div class="build-tags" id="buildPassiveTags">
                           <!-- dynamic passive badges -->
                         </div>
                       </div>
 
                       <div class="build-chips-col">
-                        <div class="build-col-title">INSTALLED MOD CHIPS (<span id="installedChipsCount">0</span>)</div>
+                        <div class="build-col-title">已安裝改裝晶片 (<span id="installedChipsCount">0</span>)</div>
                         <div id="installedChipsList" class="installed-chips-list">
                           <!-- dynamic chip cards -->
                         </div>
 
-                        <div class="build-col-title" style="margin-top: 14px;">FUSION RESONANCE MATRIX (<span id="activeFusionsCount">0</span>/6 ONLINE)</div>
+                        <div class="build-col-title" style="margin-top: 14px;">融合共鳴矩陣 (<span id="activeFusionsCount">0</span>/6 上線)</div>
                         <div id="fusionMatrixList" class="fusion-matrix-list">
                           <!-- dynamic fusion cards -->
                         </div>
@@ -487,68 +487,68 @@
                   <div id="panelControls" class="pause-tab-panel" role="tabpanel" aria-labelledby="tabBtnControls" hidden>
                     <div class="controls-matrix">
                       <div class="controls-matrix-head">
-                        <span>ACTION</span>
-                        <span>KEYBOARD / MOUSE</span>
-                        <span>GAMEPAD</span>
+                        <span>動作</span>
+                        <span>鍵盤 / 滑鼠</span>
+                        <span>手把</span>
                       </div>
                       <div class="controls-matrix-body">
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">MOVE RIG</span>
-                          <span class="matrix-key">W A S D / ARROWS</span>
-                          <span class="matrix-key">L-STICK / D-PAD</span>
+                          <span class="matrix-action">移動機體</span>
+                          <span class="matrix-key">W A S D / 方向鍵</span>
+                          <span class="matrix-key">左搖桿 / 十字鍵</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">AIM / LOOK</span>
-                          <span class="matrix-key">MOUSE POINTER</span>
-                          <span class="matrix-key">R-STICK (360°)</span>
+                          <span class="matrix-action">瞄準 / 轉向</span>
+                          <span class="matrix-key">滑鼠游標</span>
+                          <span class="matrix-key">右搖桿 (360°)</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">FIRE WEAPON</span>
-                          <span class="matrix-key">LMB (HOLD)</span>
+                          <span class="matrix-action">開火射擊</span>
+                          <span class="matrix-key">滑鼠左鍵 (長按)</span>
                           <span class="matrix-key">RT / RB</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">EMP BLAST</span>
-                          <span class="matrix-key">Q / RMB</span>
-                          <span class="matrix-key">B BUTTON</span>
+                          <span class="matrix-action">EMP 衝擊</span>
+                          <span class="matrix-key">Q / 滑鼠右鍵</span>
+                          <span class="matrix-key">B 鍵</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">TACTICAL AUX</span>
+                          <span class="matrix-action">戰術副裝備</span>
                           <span class="matrix-key">E / F</span>
                           <span class="matrix-key">X / LB</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">THRUSTER DASH</span>
-                          <span class="matrix-key">SPACEBAR / SHIFT</span>
-                          <span class="matrix-key">LT / A BUTTON</span>
+                          <span class="matrix-action">推進器衝刺</span>
+                          <span class="matrix-key">空白鍵 / SHIFT</span>
+                          <span class="matrix-key">LT / A 鍵</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">PAUSE / RESUME</span>
+                          <span class="matrix-action">暫停 / 繼續</span>
                           <span class="matrix-key">ESC / P</span>
-                          <span class="matrix-key">START / MENU</span>
+                          <span class="matrix-key">START / 選單鍵</span>
                         </div>
                         <div class="controls-matrix-subhead" id="controlsUpgradeSubhead">
-                          <span>DURING UPGRADE PICK</span>
+                          <span>升級選卡時</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">SELECT UPGRADE</span>
-                          <span class="matrix-key">KEYS 1, 2, 3</span>
-                          <span class="matrix-key">D-PAD / STICK · A CONFIRM</span>
+                          <span class="matrix-action">選擇強化</span>
+                          <span class="matrix-key">數字鍵 1, 2, 3</span>
+                          <span class="matrix-key">十字鍵／搖桿 · A 確認</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">REROLL CARDS</span>
+                          <span class="matrix-action">重骰卡片</span>
                           <span class="matrix-key">R</span>
-                          <span class="matrix-key">X BUTTON</span>
+                          <span class="matrix-key">X 鍵</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">BANISH CARD</span>
+                          <span class="matrix-action">放逐卡片</span>
                           <span class="matrix-key">B</span>
-                          <span class="matrix-key">Y BUTTON</span>
+                          <span class="matrix-key">Y 鍵</span>
                         </div>
                         <div class="controls-matrix-row">
-                          <span class="matrix-action">SKIP UPGRADE</span>
+                          <span class="matrix-action">跳過強化</span>
                           <span class="matrix-key">X</span>
-                          <span class="matrix-key">B BUTTON</span>
+                          <span class="matrix-key">B 鍵</span>
                         </div>
                       </div>
                     </div>
@@ -557,10 +557,10 @@
 
                 <div class="pause-actions">
                   <button id="pauseResumeBtn" class="action-button action-button--primary" type="button">
-                    <span>RESUME COMBAT</span><b aria-hidden="true">▶</b>
+                    <span>繼續戰鬥</span><b aria-hidden="true">▶</b>
                   </button>
                   <button id="pauseAbandonBtn" class="action-button action-button--danger" type="button">
-                    <span>ABANDON RUN</span><b aria-hidden="true">⚠</b>
+                    <span>放棄出擊</span><b aria-hidden="true">⚠</b>
                   </button>
                 </div>
               </div>
@@ -576,44 +576,43 @@
 
         <aside class="mission-rail" aria-label="Run details and controls">
           <section class="rail-card rail-card--objective">
-            <div class="rail-heading"><span>FIELD NOTE 01</span><span class="rail-code">[A]</span></div>
-            <p class="rail-title">STAY ALIVE.<br /><span>GET LOUD.</span></p>
-            <p id="objectiveText" class="rail-copy">Clear each wave before the storm swallows the signal. Elite signals
-              breach after wave 3.</p>
+            <div class="rail-heading"><span>戰場筆記 01</span><span class="rail-code">[甲]</span></div>
+            <p class="rail-title">活下去。<br /><span>掀起風暴。</span></p>
+            <p id="objectiveText" class="rail-copy">在沙暴吞沒訊號前清除每一波敵軍。波次 3 後將有菁英訊號入侵。</p>
             <div class="objective-rule"><span id="objectiveProgress" style="width: 12%"></span></div>
-            <div class="objective-meta"><span>THREAT INDEX</span><strong id="threatIndex">LOW</strong></div>
-            <div class="objective-meta"><span>STORM CLOCK</span><strong id="waveTimer" class="wave-timer">NEXT FRONT
+            <div class="objective-meta"><span>威脅指數</span><strong id="threatIndex">LOW</strong></div>
+            <div class="objective-meta"><span>沙暴時鐘</span><strong id="waveTimer" class="wave-timer">NEXT FRONT
                 30s</strong></div>
           </section>
 
           <section class="rail-card rail-card--log">
-            <div class="rail-heading"><span>SCAV RADIO</span><span class="rail-code">LIVE</span></div>
+            <div class="rail-heading"><span>拾荒廣播</span><span class="rail-code">即時</span></div>
             <ul id="runLog" class="run-log" aria-live="polite">
-              <li><time>00:00</time><span>Signal found under the salt.</span></li>
-              <li><time>00:04</time><span>Something heard the engine.</span></li>
-              <li><time>00:09</time><span>Keep the barrel warm.</span></li>
+              <li><time>00:00</time><span>鹽層下找到訊號。</span></li>
+              <li><time>00:04</time><span>有東西聽見了引擎聲。</span></li>
+              <li><time>00:09</time><span>保持槍管溫熱。</span></li>
             </ul>
           </section>
 
           <section class="rail-card controls-card">
-            <div class="rail-heading"><span>HAND CONTROL</span><span class="rail-code">READY</span></div>
+            <div class="rail-heading"><span>手動操作</span><span class="rail-code">就緒</span></div>
             <div class="key-row"><span class="key key--wide">W</span><span class="key">A</span><span
-                class="key">S</span><span class="key">D</span><span class="key-caption">MOVE</span></div>
-            <div class="key-row"><span class="key key--mouse">LMB</span><span class="key-caption">AIM / FIRE</span>
+                class="key">S</span><span class="key">D</span><span class="key-caption">移動</span></div>
+            <div class="key-row"><span class="key key--mouse">LMB</span><span class="key-caption">瞄準 / 開火</span>
             </div>
             <div class="key-row"><span class="key">Q</span><span
-                class="key key--mouse">RMB</span><span class="key-caption">EMP BLAST</span></div>
-            <div class="key-row"><span class="key">E</span><span class="key">F</span><span class="key-caption">TACTICAL AUX</span></div>
-            <div class="key-row"><span class="key key--wide">SPACE</span><span class="key-caption">DASH</span></div>
-            <p class="controls-note">Tip: keep moving when the red dust starts to climb.</p>
+                class="key key--mouse">RMB</span><span class="key-caption">EMP 衝擊</span></div>
+            <div class="key-row"><span class="key">E</span><span class="key">F</span><span class="key-caption">戰術副裝備</span></div>
+            <div class="key-row"><span class="key key--wide">SPACE</span><span class="key-caption">衝刺</span></div>
+            <p class="controls-note">提示: 紅色沙塵逼近時保持移動。</p>
           </section>
 
-          <div class="rail-signoff"><span>NO GODS</span><i aria-hidden="true">×</i><span>NO MAPS</span></div>
+          <div class="rail-signoff"><span>無神明</span><i aria-hidden="true">×</i><span>無地圖</span></div>
         </aside>
       </main>
 
       <footer class="system-footer">
-        <span>© TommyLam / ALL SIGNALS UNVERIFIED</span>
+        <span>© TommyLam / 訊號未經證實</span>
       </footer>
     </div>
   </div>
