@@ -604,6 +604,9 @@ var ENEMIES_I18N = {
   sovereign: { zh: '風暴主宰', en: 'STORM SOVEREIGN' },
   stormTower: { zh: '風暴尖塔', en: 'STORM TOWER' },
   mine: { zh: '懸浮地雷', en: 'MINE' },
+  prowler: { zh: '潛行者', en: 'PROWLER' },
+  bulwark: { zh: '堡壘體', en: 'BULWARK' },
+  behemoth: { zh: '巨獸', en: 'BEHEMOTH' },
   spire: { zh: '傳導尖塔', en: 'CONDUCTION SPIRE' }
 };
 
@@ -1119,6 +1122,8 @@ export function tTip(id, kind) {
     if (id === 'dread-fatigue') return 'LONG DREAD FIGHT · FORCE A CRAG BREAK — KITING FOREVER LOSES THE CLOCK';
     if (id === 'storm-weave') return 'WEAVE ELITE + SPIRAL ROUNDS · BULLETS END MORE RUNS THAN THE EYE';
     if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
+    if (id === 'prowler-lunge') return 'PROWLER TELEGRAPHS THEN LUNGES · SIDE-STEP THE FLASH — STALK PHASE TAKES REDUCED DAMAGE';
+    if (id === 'bulwark-face') return 'BULWARK FACE-SHIELD BLOCKS FRONTAL FIRE · BREAK IT OR FLANK — AURA BUFFS NEARBY FOES';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1150,6 +1155,8 @@ export function tTip(id, kind) {
   if (id === 'dread-fatigue') return '無畏戰拖太久 · 快逼岩障破甲 — 風箏到死會來不及清第 15 波';
   if (id === 'storm-weave') return '穿梭菁英彈與螺旋彈 · 敵彈比風暴之眼更能終結一局';
   if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
+  if (id === 'prowler-lunge') return '潛行者先預警再突進 · 閃過閃光 — 潛行態減傷，別硬打';
+  if (id === 'bulwark-face') return '堡壘體正面護盾擋彈 · 破盾或繞側 — 光環會強化附近敵軍';
   return '';
 }
 
