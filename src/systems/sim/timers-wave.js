@@ -138,6 +138,42 @@ export function commitWaveAdvance(early) {
   for (wi = 0; wi < burst; wi += 1) spawning.spawnEnemy();
 }
 
+// Wolf Pack surge windows: mid-wave pulse at 10–13.5s.
+// Late pulse (if any) must end ≥4s before the storm front.
+// Wave 1–2 at Heat ≤1: single surge only (no double opener).
+// Heat ≥4: cancel the late surge (storm starts earlier).
+export function wolfPackWindowsFor(wave, heat, stormSec) {
+  var SURGE_DUR = 3.5;
+  var STORM_GAP = 4;
+  var earlyStart = 10;
+  var earlyEnd = earlyStart + SURGE_DUR;
+  var h = heat | 0;
+  var w = wave | 0;
+  var storm = (typeof stormSec === 'number' && stormSec > 0) ? stormSec : STORM_FRONT_SECONDS;
+  var stormStart = WAVE_LENGTH - storm;
+  var windows = [{ start: earlyStart, end: earlyEnd }];
+
+  if (h >= 4 || (w <= 2 && h <= 1)) return windows;
+
+  var lateEnd = stormStart - STORM_GAP;
+  var lateStart = lateEnd - SURGE_DUR;
+  if (lateStart >= earlyEnd + 1) {
+    windows.push({ start: lateStart, end: lateEnd });
+  }
+  return windows;
+}
+
+function wolfPackActiveAt(wTime) {
+  var heat = (rt.state && rt.state.heat) | 0;
+  var wave = (rt.state && rt.state.wave) | 0;
+  var windows = wolfPackWindowsFor(wave, heat, stormSeconds());
+  var i;
+  for (i = 0; i < windows.length; i += 1) {
+    if (wTime >= windows[i].start && wTime < windows[i].end) return true;
+  }
+  return false;
+}
+
 export function stepWaveClock(dt, frame) {
   var p = frame.p;
   rt.state.simDt = dt;
@@ -213,7 +249,7 @@ export function stepWaveClock(dt, frame) {
     rt.state.pacingPhase = 4; // Storm Harvest
   }
 
-  if ((wTime >= 12 && wTime < 15.5) || (wTime >= 24 && wTime < 27.5)) {
+  if (wolfPackActiveAt(wTime)) {
     if (!rt.state.wolfPackSurge) {
       rt.state.wolfPackSurge = true;
       AudioFX.stormSiren();
