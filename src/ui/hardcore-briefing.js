@@ -1,4 +1,4 @@
-import { isChinese, onLanguageChange, tRigName, tWeaponName } from '../core/i18n.js';
+import { isChinese, onLanguageChange, tHardcoreOpField, tRigName, tWeaponName } from '../core/i18n.js';
 import { getHardcoreStore, isHardcoreUnlocked, saveHardcoreStore } from '../core/meta-store.js';
 import { HARDCORE_OPERATIONS, getHardcoreOperation } from '../data/hardcore-operations.js';
 import { rt } from '../core/runtime.js';
@@ -98,8 +98,8 @@ export function renderHardcoreBriefing(container, onSelect) {
   // 2. Header: Code, Name, Title, and Badge
   var header = el('div', 'hardcore-briefing-header');
   var titleBox = el('div', 'hardcore-title-box');
-  var codeSpan = el('span', 'hardcore-code', op.code + ' ' + (zh ? op.name : op.name));
-  var titleH3 = el('h3', 'hardcore-name', op.title || '');
+  var codeSpan = el('span', 'hardcore-code', op.code + ' ' + tHardcoreOpField(op.id, 'name', op.name));
+  var titleH3 = el('h3', 'hardcore-name', tHardcoreOpField(op.id, 'title', op.title || ''));
   titleBox.appendChild(codeSpan);
   titleBox.appendChild(titleH3);
   header.appendChild(titleBox);
@@ -145,7 +145,7 @@ export function renderHardcoreBriefing(container, onSelect) {
   // 5. Threat Intel
   var intelBlock = el('div', 'hardcore-intel-block');
   var intelLabel = el('strong', '', zh ? '【天敵怪潮情資】' : '[COUNTER THREAT INTEL]');
-  var intelText = el('span', '', op.briefing || '');
+  var intelText = el('span', '', tHardcoreOpField(op.id, 'briefing', op.briefing) || '');
   intelBlock.appendChild(intelLabel);
   intelBlock.appendChild(intelText);
   card.appendChild(intelBlock);
@@ -161,22 +161,22 @@ export function renderHardcoreBriefing(container, onSelect) {
   }
 
   // 7. Tactical Hint
-  if (op.tacticalHint) {
+  if (tHardcoreOpField(op.id, 'tacticalHint', op.tacticalHint)) {
     var hintBlock = el('div', 'hardcore-intel-block hardcore-hint-block');
     var hintLabel = el('strong', '', zh ? '【破題戰術建議】' : '[TACTICAL ADVISORY]');
-    var hintText = el('span', '', op.tacticalHint);
+    var hintText = el('span', '', tHardcoreOpField(op.id, 'tacticalHint', op.tacticalHint));
     hintBlock.appendChild(hintLabel);
     hintBlock.appendChild(hintText);
     card.appendChild(hintBlock);
   }
 
   // 8. Honor Badge Preview
-  if (op.badgeTitle) {
+  if (tHardcoreOpField(op.id, 'badgeTitle', op.badgeTitle)) {
     var badgeRow = el('div', 'hardcore-locked-item');
     badgeRow.style.borderColor = 'var(--line-strong)';
     badgeRow.style.width = '100%';
     badgeRow.style.justifyContent = 'space-between';
-    badgeRow.innerHTML = '<span>' + (zh ? '榮譽徽章: ' : 'HONOR BADGE: ') + '<strong style="color: #ffd700;">' + op.badgeTitle + '</strong></span>' +
+    badgeRow.innerHTML = '<span>' + (zh ? '榮譽徽章: ' : 'HONOR BADGE: ') + '<strong style="color: #ffd700;">' + tHardcoreOpField(op.id, 'badgeTitle', op.badgeTitle) + '</strong></span>' +
       '<small style="color: ' + (opRecord.cleared ? '#7cf0c8' : 'var(--muted)') + ';">' + (opRecord.cleared ? (zh ? '已獲取' : 'UNLOCKED') : (zh ? '待挑戰' : 'LOCKED')) + '</small>';
     card.appendChild(badgeRow);
   }

@@ -615,6 +615,52 @@ var CAMPAIGN_THREAT_I18N = {
   APEX: { zh: '巔峰', en: 'APEX' }
 };
 
+
+var HARDCORE_OPS_I18N = {
+  op_01: {
+    name: { zh: '鋼鐵斷頭台', en: 'IRON GUILLOTINE' },
+    title: { zh: '【剃刀之舞】', en: '[RAZOR WALTZ]' },
+    badgeTitle: { zh: '[血染雙刃合金標記]', en: '[BLOOD-EDGED ALLOY MARK]' },
+    briefing: { zh: 'HP 鎖定 35；戰場常駐 2 台無敵重砲轟炸；Scurrier 死亡必自爆。同屏 55 隻迫擊砲+自爆+酸液天敵群。', en: 'HP capped at 35; two invuln heavy guns always bombard; scurriers always pop on death. Cap 55 mortar/pop/acid counters.' },
+    tacticalHint: { zh: '利用 Dash 撞殺不觸發自爆底層代碼，滑步貼臉破防。', en: 'Dash-bump kills skip the pop path — slide in close to break defense.' }
+  },
+  op_02: {
+    name: { zh: '折光禁區', en: 'REFRACTION ZONE' },
+    title: { zh: '【破鏡者】', en: '[MIRROR BREAKER]' },
+    badgeTitle: { zh: '[折光稜鏡破碎之眼]', en: '[SHATTERED PRISM EYE]' },
+    briefing: { zh: '40% 精英帶 mirror 反射盾（反彈 100% 殺傷）；空槍反噬扣 6 HP；HP 鎖定 45。同屏 60 隻散開怪潮。', en: '40% elites carry mirror shields (100% reflect); dry-fire backlash −6 HP; HP cap 45. Cap 60 spread pack.' },
+    tacticalHint: { zh: 'EMP 破盾聚怪，創造直線貫穿視窗；切勿盲目對鏡面射擊。', en: 'EMP to break mirrors, clump, then pierce — never dump into the face shield.' }
+  },
+  op_03: {
+    name: { zh: '超導熔毀', en: 'SUPERCONDUCT MELT' },
+    title: { zh: '【雷霆制約者】', en: '[THUNDER BINDER]' },
+    badgeTitle: { zh: '[高壓紫電球形禁錮鎖]', en: '[VIOLET ARC CAGE LOCK]' },
+    briefing: { zh: 'Brute 獲 70% 電弧抗性且免疫麻痺；Warden 護盾吸收電弧；HP 鎖定 50；維修廢料為 0。同屏 55 隻。', en: 'Brutes resist arc 70% and ignore stun; warden bubbles eat arcs; HP cap 50; zero repair scrap. Cap 55.' },
+    tacticalHint: { zh: '切角繞後死鎖 Warden，引爆環境炸藥造成真實傷害。', en: 'Flank wardens first; use barrels for true damage.' }
+  },
+  op_04: {
+    name: { zh: '暴雨殘彈', en: 'HAIL OF SPENT SHELLS' },
+    title: { zh: '【狂瀾獨挽】', en: '[LONE HOLD AGAINST THE SURGE]' },
+    badgeTitle: { zh: '[黑色雙聯彈殼交錯之印]', en: '[CROSSED BLACK SHELL SIGIL]' },
+    briefing: { zh: '同屏實體強制鎖定 65 隻；連續開火超過 1.8s 散布擴大 250%（強迫點射）；HP 鎖定 40。', en: 'Hard cap 65 on-screen; continuous fire >1.8s blooms spread +250% (tap-fire only). HP cap 40.' },
+    tacticalHint: { zh: '嚴格 3 連發控槍點射，走長蛇陣拉扯並結合 Just Dash 衝擊波。', en: 'Strict 3-tap bursts, snake-kite, and Just Dash shockwaves.' }
+  },
+  op_05: {
+    name: { zh: '奇點深淵', en: 'SINGULARITY ABYSS' },
+    title: { zh: '【奇點獵手】', en: '[SINGULARITY HUNTER]' },
+    badgeTitle: { zh: '[深空坍縮黑洞紫金徽印]', en: '[VOID COLLAPSE SEAL]' },
+    briefing: { zh: '戰場徘徊 2 個移動引力奇點（扭曲彈道）；可視半徑縮小至 280px；HP 鎖定 30（兩擊必殺）。固定 blink + volatile 瞬移自爆暗殺隊。', en: 'Two wandering gravity wells bend shots; vision 280px; HP cap 30 (two-hit). Blink + volatile assassin packs.' },
+    tacticalHint: { zh: '精準預判奇點引力引導彈道，優先狙殺瞬移暗殺者。', en: 'Aim through wells; delete blink assassins first.' }
+  },
+  op_06: {
+    name: { zh: '諸神黃昏風暴', en: 'RAGNAROK STORM' },
+    title: { zh: '【沙海霸主】', en: '[WASTELAND SOVEREIGN]' },
+    badgeTitle: { zh: '[終焉風暴皇冠黃金神聖徽章]', en: '[ENDSTORM CROWN BADGE]' },
+    briefing: { zh: '永久 8 級黑風暴（風速 110px/s，散彈射程縮減 35%）；單次受擊扣 50% HP；零掉落。全天敵混編（同屏 65 隻，精英 35%）。', en: 'Permanent rank-8 black storm (wind 110px/s, pellet range −35%); any hit −50% HP; zero drops. Mixed counters (cap 65, 35% elite).' },
+    tacticalHint: { zh: '順應強風走位，利用重裝推進與 EMP 創造破局契機。', en: 'Ride the wind; use bulwark shove + EMP to open windows.' }
+  }
+};
+
 var DAILY_I18N = {
   'all-elites-early': {
     title: { zh: '菁英先行', en: 'ALL ELITES EARLY' },
@@ -1016,6 +1062,13 @@ export function tCampaignThreat(level) {
   var item = CAMPAIGN_THREAT_I18N[level];
   if (item) return currentLang === 'zh' ? item.zh : item.en;
   return level || '';
+}
+
+
+export function tHardcoreOpField(id, field, fallback) {
+  var item = HARDCORE_OPS_I18N[id];
+  if (item && item[field]) return currentLang === 'zh' ? item[field].zh : item[field].en;
+  return fallback || '';
 }
 
 export function tDailyTitle(id) {
