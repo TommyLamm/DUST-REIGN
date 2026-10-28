@@ -292,7 +292,7 @@ function stepDreadnought(e, dt, frame, empFrozen) {
           triggerHaptic([60, 50, 100]);
           logEvent('CRAG SHATTERED // DREADNOUGHT STUNNED');
           rt.state.banner = 2.5;
-          rt.state.bannerText = 'CRAG SHATTERED // DREADNOUGHT STUNNED (3.2s)';
+          rt.state.bannerText = 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN';
           e.mode = 'stun';
           e.stunT = 3.2; // 3.2s forced armor-break stun
           e.empTimer = Math.max(e.empTimer || 0, 3.2);
