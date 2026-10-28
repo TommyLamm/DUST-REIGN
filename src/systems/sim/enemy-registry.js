@@ -289,12 +289,14 @@ registerEnemyStrategy('elite', {
       e.shootCd = (e.shootCd || 3.5) - dt;
       if (e.shootCd <= 0) {
         var bossLive = rt.state && rt.state.boss && rt.state.boss.hp > 0;
-        e.shootCd = bossLive ? 5.2 : 3.5;
+        e.shootCd = bossLive ? 6.8 : 3.5;
         var baseAngle = Math.atan2(p.y - e.y, p.x - e.x);
-        var spread = [-0.26, 0, 0.26];
+        // Boss fights: single marker shot. Open field keeps the 3-spread volley.
+        var spread = bossLive ? [0] : [-0.26, 0, 0.26];
+        var shotBase = bossLive ? 10 : 14;
         for (var si = 0; si < spread.length; si += 1) {
           var sa = baseAngle + spread[si];
-          var eliteShot = scaledShot(14, 115, true);
+          var eliteShot = scaledShot(shotBase, bossLive ? 100 : 115, true);
           pushEnemyBullet({
             type: 'basic',
             ownerKind: e.kind || 'elite',
