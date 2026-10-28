@@ -96,9 +96,9 @@ function dropLava(e) {
   rt.state.artilleryTargets.push({
     x: e.x,
     y: e.y,
-    r: 30,
-    timer: 2,
-    maxTimer: 2,
+    r: 28,
+    timer: 1.55,
+    maxTimer: 1.55,
     wave: rt.state.wave || 1,
     state: 'molten',
     damageTickTimer: 0
@@ -130,8 +130,8 @@ function makeMine(x, y) {
 function dropMines(e) {
   var back = (e.aim || 0) + Math.PI;
   var i;
-  for (i = 0; i < 2; i += 1) {
-    var side = i === 0 ? -0.7 : 0.7;
+  for (i = 0; i < 1; i += 1) { // was 2 — one mine; less lane denial on long kites
+    var side = -0.55;
     var a = back + side;
     rt.state.enemies.push(makeMine(
       e.x + Math.cos(a) * (e.r + 18),
@@ -328,9 +328,9 @@ function stepDreadnought(e, dt, frame, empFrozen) {
     e.x += Math.cos(e.aim) * step;
     e.y += Math.sin(e.aim) * step;
     e.chargeCarry = (e.chargeCarry || 0) + step;
-    if (e.chargeCarry >= 42) {
+    if (e.chargeCarry >= 56) {
       e.chargeCarry = 0;
-      dropLava(e);
+      dropLava(e); // was 42 — fewer molten lanes on long charges
     }
 
     // Check collision with orbital monolith crag pillars
