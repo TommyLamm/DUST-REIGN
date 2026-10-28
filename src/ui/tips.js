@@ -95,6 +95,8 @@ function tipText(id) {
   else if (id === 'barrel-fuse') copyId = 'barrel-fuse';
   else if (id === 'acid-pool') copyId = 'acid';
   else if (id === 'meteor-fall') copyId = 'meteor';
+  else if (id === 'warden-shield') copyId = 'warden-bubble';
+  else if (id === 'elite-rounds') copyId = 'elite-weave';
   return tTip(copyId, inputKind());
 }
 
@@ -270,6 +272,35 @@ function mineArmingNear() {
   return false;
 }
 
+function wardenShieldActive() {
+  var list = rt.state && rt.state.enemies;
+  if (!list) return false;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (!e || !(e.hp > 0)) continue;
+    if ((e.shieldHp || 0) > 0 && e.shieldOwner) return true;
+  }
+  return false;
+}
+
+function eliteRoundsNear() {
+  var p = rt.state && rt.state.player;
+  var bullets = rt.state && rt.state.enemyBullets;
+  if (!p || !bullets) return false;
+  var lim = 200 * 200;
+  var i;
+  for (i = 0; i < bullets.length; i += 1) {
+    var b = bullets[i];
+    if (!b) continue;
+    if (!(b.ownerKind === 'elite' || b.source === 'elite' || b.kind === 'elite')) continue;
+    var dx = b.x - p.x;
+    var dy = b.y - p.y;
+    if (dx * dx + dy * dy <= lim) return true;
+  }
+  return false;
+}
+
 function acidHazardNear() {
   var pools = rt.state && rt.state.acidPools;
   if (pools && pools.length) return true;
@@ -359,7 +390,10 @@ function scanTriggers() {
   if (rt.state.contract) offer('contract');
   if (acidHazardNear()) offerUrgent('acid-pool');
   else if ((rt.state.wave || 1) >= 6 && enemyOfKind('spitter')) offer('acid');
-  if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && enemyNearKind('warden', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('warden-bubble');
+  if ((rt.state.wave || 1) >= 11 && (rt.state.wave || 1) <= 14 && !(rt.state.boss && rt.state.boss.hp > 0)) {
+    if (wardenShieldActive()) offerUrgent('warden-shield');
+    else if (enemyNearKind('warden', 240) || enemyOfKind('warden')) offer('warden-bubble');
+  }
   if ((rt.state.wave || 1) >= 12 && burrowerWarnNear()) offerUrgent('burrower-warn');
   else if ((rt.state.wave || 1) >= 12 && enemyOfKind('burrower')) offer('burrower');
   if ((rt.state.wave || 1) >= 7 && scurrierArmingNear()) offerUrgent('scurrier-arming');
@@ -369,7 +403,10 @@ function scanTriggers() {
   if ((rt.state.wave || 1) >= 2 && (rt.state.wave || 1) <= 8 && enemyNearKind('artillery', 280)) offer('artillery-lob');
   if ((rt.state.wave || 1) >= 8 && mineArmingNear()) offerUrgent('mine-arming');
   else if ((rt.state.wave || 1) >= 8 && enemyOfKind('mine')) offer('mine');
-  if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && enemyNearKind('elite', 240) && !(rt.state.boss && rt.state.boss.hp > 0)) offer('elite-weave');
+  if ((rt.state.wave || 1) >= 3 && (rt.state.wave || 1) <= 12 && !(rt.state.boss && rt.state.boss.hp > 0)) {
+    if (eliteRoundsNear()) offerUrgent('elite-rounds');
+    else if (enemyNearKind('elite', 240) || enemyOfKind('elite')) offer('elite-weave');
+  }
   if (moltenHazardNear()) offerUrgent('molten');
   if ((rt.state.wave || 1) >= 4 && meteorHazardNear()) offerUrgent('meteor-fall');
   else if (rt.state.mutator && (rt.state.mutator.id === 'scrap-rain')) offer('meteor');

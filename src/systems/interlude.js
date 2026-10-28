@@ -236,7 +236,7 @@ export function chooseRepair() {
   }
   applyRepair(state);
   state.interlude = null;
-  focusCombatCanvas();
+  leaveInterludeInput();
   if (routeId) assignRoute(state, routeId, false);
   commitWaveAdvance(true);
 }
@@ -264,7 +264,7 @@ function finishTitle(state) {
   if (!state || !state.interlude || state.interlude.step !== 'title') return;
   var routeId = state.interlude.routeId;
   state.interlude = null;
-  focusCombatCanvas();
+  leaveInterludeInput();
   if (routeId) assignRoute(state, routeId, false);
   commitWaveAdvance(true);
 }
@@ -280,6 +280,19 @@ function focusCombatCanvas() {
   if (rt.ui && rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
 }
 
+function clearResidualFire() {
+  if (rt.firePointers && typeof rt.firePointers.clear === 'function') rt.firePointers.clear();
+  if (rt.input) {
+    if (rt.input.mouse) rt.input.mouse.down = false;
+    rt.input.gamepadFiring = false;
+  }
+}
+
+function leaveInterludeInput() {
+  clearResidualFire();
+  focusCombatCanvas();
+}
+
 export function confirmExtract() {
   var state = rt.state;
   if (!state || state.over || state.extracted) return;
@@ -288,7 +301,7 @@ export function confirmExtract() {
   state.extractPaid = true;
   state.extractDeferred = false;
   state.interlude = null;
-  focusCombatCanvas();
+  leaveInterludeInput();
   extractRun();
 }
 
@@ -301,7 +314,7 @@ export function confirmPushDeeper() {
   state.extractDeferredAmount = bonus;
   state.extractPaid = false;
   state.interlude = null;
-  focusCombatCanvas();
+  leaveInterludeInput();
   state.banner = Math.max(state.banner || 0, 2.4);
   state.bannerText = 'OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING';
   setStatusText('OVERTIME // HALF EXTRACT ON DEATH · KEEP PUSHING');
