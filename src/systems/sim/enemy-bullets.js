@@ -146,8 +146,10 @@ export function stepEnemyBullets(dt, frame) {
       if (p.invulnerable <= 0) {
         var bulletSrc = 'bullet';
         if (eb.fromBoss) {
-          // Prefer owner so dread flak cannot be mistaken for a Sovereign lethal.
-          bulletSrc = 'boss:' + (eb.ownerKind || eb.type || 'shot');
+          // Dread fan/ring is the only flak source — name it so wave-15 audits never say "Sovereign flak".
+          // Other boss shots keep their type (spiral / basic) for density tuning.
+          if (eb.type === 'flak' || eb.ownerKind === 'dreadnought') bulletSrc = 'boss:dreadnought';
+          else bulletSrc = 'boss:' + (eb.type || eb.ownerKind || 'shot');
         } else if (eb.ownerKind) bulletSrc = 'bullet:' + eb.ownerKind;
         var bulletHit = damagePlayer(eb.damage, bulletSrc, eb.x, eb.y);
         if (bulletHit > 0) {
