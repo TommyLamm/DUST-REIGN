@@ -231,8 +231,25 @@ export function run() {
     chain._barrelSnap = [{ x: gone.x, y: gone.y, r: 14, ref: gone }];
     stepHazards(0.016, frameFor(chain));
     if (!(nearA.chainFuse > 0) || !(nearB.chainFuse > 0)) throw new Error('barrel chain fuse did not arm');
-    stepHazards(0.25, frameFor(chain));
+    if (!(nearA.chainFuse >= 0.4)) throw new Error('barrel chain fuse telegraph too short');
+    stepHazards(0.55, frameFor(chain));
     if (chain.barrels.length !== 0 || (chain.stats.barrelChainMax || 0) < 2) throw new Error('barrel chain did not resolve');
+
+    // Same chain may only wound the player once inside the guard window.
+    var guard = fresh();
+    guard.player.x = 100;
+    guard.player.y = 100;
+    guard.player.hp = 100;
+    guard.player.maxHp = 100;
+    guard.player.invulnerable = 0;
+    guard.barrels = [{ x: 100, y: 100, r: 14, hp: 20, maxHp: 20, state: 'idle' }];
+    explodeBarrel(guard.barrels[0], 0, false);
+    var hpAfterFirst = guard.player.hp;
+    if (!(hpAfterFirst < 100) || !(guard._barrelChainGuard > 0)) throw new Error('barrel player hit did not arm chain guard');
+    guard.barrels = [{ x: 100, y: 100, r: 14, hp: 20, maxHp: 20, state: 'idle' }];
+    guard.player.invulnerable = 0;
+    explodeBarrel(guard.barrels[0], 0, true);
+    if (guard.player.hp !== hpAfterFirst) throw new Error('barrel chain guard failed to block second player hit');
 
     var crateState = fresh();
     crateState.player.x = 240;

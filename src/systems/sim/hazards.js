@@ -18,7 +18,7 @@ function armBarrelChain(x, y, radius, depth) {
     if (!barrel || barrel.chainFuse > 0) continue;
     var reach = radius + (barrel.r || 14);
     if (Math.hypot(barrel.x - x, barrel.y - y) <= reach) {
-      barrel.chainFuse = 0.18;
+      barrel.chainFuse = 0.42;
       barrel.chainDepth = (depth || 1) + 1;
     }
   }
@@ -77,6 +77,9 @@ export function stepHazards(dt, frame) {
   var p = frame.p;
   var boundW = frame.boundW;
   var boundH = frame.boundH;
+  if ((rt.state._barrelChainGuard || 0) > 0) {
+    rt.state._barrelChainGuard = Math.max(0, rt.state._barrelChainGuard - dt);
+  }
   detectChainedBarrels();
   // Core spawn check
   if (!rt.state.coreSpawned && rt.state.waveTime >= rt.state.coreSpawnTime) {
