@@ -217,6 +217,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
   if (!(remaining > 0)) return 0;
   var tagged = normalizeDamageSource(source);
   rt.state.lastDamageSource = tagged;
+  if (tagged !== 'bullet:elite' && tagged !== 'contact:elite') rt.state.lastNonEliteDamageSource = tagged;
   var applied = remaining;
   var saved = false;
   if (p.phoenix && p.hp - remaining <= 0) {
