@@ -988,6 +988,7 @@ export function tLog(msg) {
   if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型 EMP 引爆';
   if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return 'VIP 已擊殺 // EMP 震波觸發';
   if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED' || msg === 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN') return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
+  if (msg.indexOf('BOSS-WAVE CLEAR') === 0) return msg.replace('BOSS-WAVE CLEAR //', '首領戰清場 //');
   if (msg === 'TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED') return '泰坦 // 拔河反制！散熱器暴露';
   if (msg === 'TITAN // HARPOON TETHER REELED') return '泰坦 // 魚叉繫繩收回';
   if (msg === 'WARNING // SEISMIC HARPOON LOCK') return '警告 // 震盪魚叉鎖定';
