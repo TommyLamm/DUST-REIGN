@@ -186,7 +186,8 @@ function scanTriggers() {
       break;
     }
   }
-  if (rt.state.interlude) offer('route');
+  if (rt.state.interlude && rt.state.interlude.step === 'extract') offer('extract');
+  else if (rt.state.interlude) offer('route');
 }
 
 function showTip(toast, id) {
