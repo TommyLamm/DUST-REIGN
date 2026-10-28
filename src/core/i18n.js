@@ -1147,6 +1147,20 @@ export function tBanner(text) {
   if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';
   if (text.indexOf('WOLF PACK SURGE') === 0) return '狼群湧浪 // 向心壓迫';
 
+  if (text.indexOf('SILO OVERCHARGE DEFENSE') === 0) return '發射井超載防禦：危地封鎖 20 秒！';
+  if (text.indexOf('EXTRACTION COMPLETE') === 0) return '撤離完成：+80 精煉廢料 & 600px 真空吸力！';
+  if (text.indexOf('ORBITAL POD OPENED') === 0) return '軌道艙開啟：全面超頻 & 電池過充！';
+  if (text.indexOf('FIELD RIG OVERCLOCK') === 0) return '野戰機體超頻：射速 +35% & 強化底盤！';
+  if (text.indexOf('XENO NEST DESTROYED') === 0) return '異種巢穴摧毀：衝擊波已引爆！';
+  if (text.indexOf('EMP SPIRE OVERLOAD') === 0) return 'EMP 尖塔過載：全域癱瘓 3.5 秒 & 護盾粉碎！';
+  if (text.indexOf('BUNKER BREACHED') === 0) return '掩體突破：緊急全修 & 30 發穿甲暴擊彈！';
+  if (text.indexOf('RESONANCE PYLON DISCHARGED') === 0) return '共鳴塔放電：480px 衝擊波、+2 穿透 & 超頻！';
+  if (text.indexOf('CRYSTAL SIPHON MELTDOWN') === 0) return '晶體虹吸熔毀：過熱臨界！抽出 60 廢料！';
+  if (text.indexOf('CRYSTAL SIPHON: OVERHEAT ALARM') === 0) {
+    var heat = text.match(/\((\d+%)\)/);
+    return '晶體虹吸：過熱警報 (' + (heat ? heat[1] : '') + ')！吸引敵潮！';
+  }
+
   return tLog(text);
 }
 
