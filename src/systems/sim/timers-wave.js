@@ -21,6 +21,16 @@ function frontActive() {
   return !!rt.state && rt.state.waveTime >= WAVE_LENGTH - stormSeconds();
 }
 
+/** Wave-clock spawn rate for pacingPhase (doc: 0.8 / 1.2 / 1.0 / 1.4). */
+export function pacingSpawnRate(phase) {
+  var ph = phase != null ? phase : (rt.state && rt.state.pacingPhase);
+  if (ph === 1) return 0.8;
+  if (ph === 2) return 1.2;
+  if (ph === 3) return 1.0;
+  if (ph === 4) return 1.4;
+  return 1;
+}
+
 function fieldSize() {
   return {
     w: (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960,
@@ -382,6 +392,8 @@ export function stepEnemySpawner(dt, frame) {
     spawning.spawnEnemy();
     var baseInterval = recipe && typeof recipe.spawnInterval === 'number' ? recipe.spawnInterval : Math.max(0.24, 1.08 - rt.state.wave * 0.045);
     var slots = Math.max(1, rt.state.lastSpawnSlots || 1);
-    rt.state.spawnTimer = baseInterval * slots * (0.78 + rng('spawn') * 0.38) * (frontActive() ? STORM_SPAWN_FACTOR : 1);
+    var pace = pacingSpawnRate(rt.state.pacingPhase);
+    if (!(pace > 0)) pace = 1;
+    rt.state.spawnTimer = baseInterval * slots * (0.78 + rng('spawn') * 0.38) * (frontActive() ? STORM_SPAWN_FACTOR : 1) / pace;
   }
 }

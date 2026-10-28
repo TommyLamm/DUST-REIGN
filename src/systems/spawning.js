@@ -230,6 +230,9 @@ export function spawnEnemy() {
   var y = pt.y;
 
   var eliteChance = typeof recipe.eliteChance === 'number' ? recipe.eliteChance : 0;
+  var pacingPhase = rt.state.pacingPhase || 0;
+  // Phase 3 Elite Peak: denser elites without changing the wave recipe permanently.
+  if (pacingPhase === 3) eliteChance = Math.min(0.6, eliteChance * 1.35);
   var weights = recipe.weights || null;
   var useWeights = !!(weights && (
     (weights.spitter > 0) || (weights.scurrier > 0) || (weights.warden > 0) || (weights.burrower > 0)
@@ -252,6 +255,14 @@ export function spawnEnemy() {
     kind = 'artillery';
   } else {
     kind = legacyRoll < recipe.rusherCut ? 'rusher' : legacyRoll > recipe.bruteCut ? 'brute' : 'crawler';
+  }
+  // Phase 1 Infiltration: keep early spawns light (Rusher/Crawler scouts).
+  if (pacingPhase === 1 && kind !== 'elite' && kind !== 'scurrier') {
+    if (kind === 'brute' || kind === 'artillery' || kind === 'warden' || kind === 'burrower' || kind === 'spitter') {
+      kind = rng('spawn') < 0.6 ? 'rusher' : 'crawler';
+      affix = null;
+      affix2 = null;
+    }
   }
   var spawned = placeEnemy(kind, x, y, recipe, affix, affix2);
   var bodies = spawned ? 1 : 0;
