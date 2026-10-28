@@ -288,6 +288,7 @@ export function updateInterludePanel() {
   pollPad();
   var showExtract = il.step === 'extract';
   if (!showExtract) resetPushConfirm();
+  else if ((il.selected || 0) !== 1 && pushConfirmArmed()) resetPushConfirm();
   var sig = panelSig();
   if (interlude) interlude.hidden = showExtract;
   if (extract) extract.hidden = !showExtract;
