@@ -469,7 +469,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
     if (empFrozen) scurSpeed *= 0.3;
     if (!e.arming && dist <= 70 && !empFrozen) {
       e.arming = true;
-      e.armTimer = 0.45;
+      e.armTimer = 0.7;
     }
     if (e.arming) {
       if (empFrozen) {
