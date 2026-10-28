@@ -9,8 +9,9 @@ import { damagePlayer } from '../combat.js';
 
 export function initHardcoreOperation(state, operationConfig) {
   if (!state) return;
-  var boundW = (rt.ui && rt.ui.width) || state.width || 960;
-  var boundH = (rt.ui && rt.ui.height) || state.height || 640;
+  // Prefer world/map size over viewport so the storm epicenter sits on the big-world mid-point.
+  var boundW = state.width || (rt.ui && rt.ui.width) || 3520;
+  var boundH = state.height || (rt.ui && rt.ui.height) || 2640;
   var centerX = boundW * 0.5;
   var centerY = boundH * 0.5;
 
@@ -30,8 +31,8 @@ export function stepHardcoreMode(dt, frame) {
   if (!p) return;
 
   var elapsed = state.stageElapsed || 0;
-  var boundW = frame.boundW || 960;
-  var boundH = frame.boundH || 640;
+  var boundW = frame.boundW || state.width || 3520;
+  var boundH = frame.boundH || state.height || 2640;
   var cx = boundW * 0.5;
   var cy = boundH * 0.5;
 
