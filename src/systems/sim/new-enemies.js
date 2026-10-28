@@ -368,7 +368,7 @@ function emergeBurrower(e, frame, fireSpikes) {
   var hitR = 50 + (p ? p.r : 0);
   if (p && Math.hypot(p.x - e.x, p.y - e.y) <= hitR) {
     var dmg = Math.round(28 * dmgScale());
-    var hit = damagePlayer(dmg, 'contact');
+    var hit = damagePlayer(dmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
     if (hit > 0) {
       p.invulnerable = 0.35;
       AudioFX.hurt();

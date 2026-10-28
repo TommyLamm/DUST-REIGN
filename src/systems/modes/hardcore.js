@@ -59,7 +59,7 @@ export function stepHardcoreMode(dt, frame) {
     if (state.toxicTick >= 0.5) {
       state.toxicTick -= 0.5;
       var corrosionDmg = Math.max(1, Math.round((p.maxHp || 100) * 0.06));
-      damagePlayer(corrosionDmg, 'zone');
+      damagePlayer(corrosionDmg, 'corrosion');
       rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.3);
     }
   } else {

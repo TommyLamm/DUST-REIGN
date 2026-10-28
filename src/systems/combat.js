@@ -25,6 +25,46 @@ function playerHitOpts(source) {
   return source ? { source: source } : null;
 }
 
+/** Canonical death/hit labels for balance reports and game-over. */
+export function normalizeDamageSource(source) {
+  var s = String(source || 'unknown');
+  if (!s) return 'unknown';
+  if (s === 'zone') return 'zone:hazard';
+  if (s === 'bullet') return 'bullet:projectile';
+  if (s === 'contact') return 'contact:enemy';
+  if (s === 'acid') return 'dot:acid';
+  if (s === 'molten') return 'dot:molten';
+  if (s === 'meteor') return 'env:meteor';
+  if (s === 'mortar') return 'bullet:mortar';
+  if (s === 'core') return 'friendly:core';
+  if (s === 'barrel') return 'friendly:barrel';
+  if (s === 'lightning') return 'boss:lightning';
+  if (s === 'storm-eye') return 'boss:storm-eye';
+  if (s === 'corrosion') return 'hardcore:corrosion';
+  if (s.indexOf('contact:') === 0) return s;
+  return s;
+}
+
+export function formatDamageSourceLabel(source, zh) {
+  var s = normalizeDamageSource(source);
+  if (zh) {
+    if (s.indexOf('contact:') === 0) return '接觸 · ' + s.slice(8);
+    if (s === 'bullet:projectile') return '敵彈';
+    if (s === 'bullet:mortar') return '迫擊砲';
+    if (s === 'dot:acid') return '酸液';
+    if (s === 'dot:molten') return '熔岩';
+    if (s === 'env:meteor') return '隕石';
+    if (s === 'zone:hazard') return '範圍危害';
+    if (s === 'boss:lightning') return '首領雷擊';
+    if (s === 'boss:storm-eye') return '風暴之眼';
+    if (s === 'friendly:core') return '不穩定核心';
+    if (s === 'friendly:barrel') return '炸藥桶';
+    if (s === 'hardcore:corrosion') return '硬核腐蝕';
+    return s;
+  }
+  return s;
+}
+
 // Boss payout lives in onBossDefeated. A second kill award double-counts Titan's 800.
 function killBaseScore(e) {
   if (!e || e.isBoss) return 0;
@@ -98,7 +138,8 @@ export function damagePlayer(amount, source, threatX, threatY) {
   // Ablative mesh never lets a connecting hit land for less than 1.
   if ((p.ablativeStacks || 0) > 0 && remaining > 0 && remaining < 1) remaining = 1;
   if (!(remaining > 0)) return 0;
-  rt.state.lastDamageSource = source || '';
+  var tagged = normalizeDamageSource(source);
+  rt.state.lastDamageSource = tagged;
   var applied = remaining;
   var saved = false;
   if (p.phoenix && p.hp - remaining <= 0) {
@@ -188,7 +229,7 @@ export function damagePlayer(amount, source, threatX, threatY) {
   onPlayerDamaged(p, info);
   noteContractEvent('player-damaged', info);
   noteMetaEvent('player-damaged', info);
-  pushFxEvent('playerHit', p.x, p.y, playerHitOpts(source));
+  pushFxEvent('playerHit', p.x, p.y, playerHitOpts(tagged));
   if (saved || p.hp <= 0) onLethal(p, info);
   if (!saved && p.hp <= 0) triggerGameOver();
   return applied;

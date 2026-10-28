@@ -27,7 +27,7 @@ export var HOOKS = [
   },
   {
     id: 'damage-source',
-    need: '致死時把 source 寫進 state.lastDamageSource（contact / bullet / mortar / molten / core / barrel）。',
+    need: '致死時把正規化 source 寫進 state.lastDamageSource（contact:kind / bullet:* / boss:* / env:* / friendly:*）。',
     status: 'damagePlayer 在實際扣血時寫入 state.lastDamageSource。'
   },
   {
