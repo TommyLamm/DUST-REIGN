@@ -286,9 +286,9 @@ function endCharge(e, frame) {
     return;
   }
   e.mode = 'stun';
-  e.stunT = 1.75; // shorter final break — cuts fast-cluster deletes
-  e.empTimer = Math.max(e.empTimer || 0, 1.75);
-  e.armorBreakTimer = 1.75;
+  e.stunT = 2.0; // restore near-2.1 — 1.75 raised slow%; rear floor carries fast nerf
+  e.empTimer = Math.max(e.empTimer || 0, 2.0);
+  e.armorBreakTimer = 2.0;
   fireRing(e);
   rt.state.shake = Math.max(rt.state.shake, 14);
   AudioFX.blast();
@@ -780,11 +780,11 @@ export function stepBossArena(dt, frame) {
 
       boss.eyeTick = (boss.eyeTick || 0) + dt;
       // Soft cadence/damage: post-#147 still saw boss:storm-eye kills on wave 15.
-      if (boss.eyeTick >= 1.0) {
-        boss.eyeTick -= 1.0;
+      if (boss.eyeTick >= 1.25) {
+        boss.eyeTick -= 1.25;
         var eyeHit = 0;
         if (p.invulnerable <= 0) {
-          eyeHit = damagePlayer(scaledShot(4, 0, true).damage, 'storm-eye');
+          eyeHit = damagePlayer(scaledShot(3, 0, true).damage, 'storm-eye');
         }
         if (eyeHit > 0) {
           p.invulnerable = 0.12;
