@@ -63,7 +63,17 @@ export function refreshBountiesPanel(container) {
     var card = el('div', 'bounty-card' + (isClaimed ? ' is-claimed' : (isDone ? ' is-ready' : '')));
 
     var top = el('div', 'bounty-card-top');
-    top.appendChild(el('span', 'bounty-category-tag', String(b.category || 'MISSION').toUpperCase()));
+    top.appendChild(el('span', 'bounty-category-tag', (function () {
+      var cat = String(b.category || 'mission').toLowerCase();
+      if (zh) {
+        if (cat === 'agility') return '身法';
+        if (cat === 'weapon') return '武器';
+        if (cat === 'hazard') return '極限';
+        if (cat === 'mission') return '任務';
+        return cat.toUpperCase();
+      }
+      return cat.toUpperCase();
+    })()));
     top.appendChild(el('span', 'bounty-reward-tag', '+' + b.reward + ' ⚙'));
     card.appendChild(top);
 
