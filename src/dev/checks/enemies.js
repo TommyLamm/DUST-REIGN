@@ -34,7 +34,7 @@ export function run() {
   assert(bossHp('dreadnought', 10) === 19500 && bossHp('sovereign', 15) === 740000, 'story boss hp drifted');
   assert(bossHp('titan', 20) === 7600 && bossHp('titan', 25) === Math.round(7600 * 1.35), 'overtime titan cycle drifted');
   assert(bossHp('titan', 5, { bossHpScale: 1.2 }) === Math.round(7600 * 1.2), 'wave 5 boss hp ignored bossHpScale');
-  assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(18800 * 1.25), 'wave 10 boss hp ignored bossHpScale');
+  assert(bossHp('dreadnought', 10, { bossHpScale: 1.25 }) === Math.round(19500 * 1.25), 'wave 10 boss hp ignored bossHpScale');
 
   var grown = enemyProfile('rusher', 5, { hpScale: 1.48, dmgScale: 1.2 });
   var legacyRusher = 26 + 5 * 5;
