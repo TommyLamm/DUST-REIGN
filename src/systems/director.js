@@ -529,6 +529,18 @@ export function onWaveStart(state) {
   recipe.contract = contract ? contract.id : null;
   recipe.sector = sectorFor(state, recipe);
   state.recipe = recipe;
+  // Carryover elites from prior waves wiped skilled bots in the pre-boss window.
+  if (recipe.boss === 'sovereign' && state.enemies && state.enemies.length) {
+    for (var cei = state.enemies.length - 1; cei >= 0; cei -= 1) {
+      if (state.enemies[cei] && state.enemies[cei].kind === 'elite') state.enemies.splice(cei, 1);
+    }
+  }
+  if (recipe.boss === 'sovereign' && state.enemyBullets && state.enemyBullets.length) {
+    for (var cbi = state.enemyBullets.length - 1; cbi >= 0; cbi -= 1) {
+      var ceb = state.enemyBullets[cbi];
+      if (ceb && ceb.ownerKind === 'elite') state.enemyBullets.splice(cbi, 1);
+    }
+  }
   state.act = recipe.act;
   state.sector = recipe.sector;
   state.overheat = recipe.overheat || 0;
