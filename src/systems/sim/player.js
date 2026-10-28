@@ -8,6 +8,7 @@ import { stormWind } from '../flow.js';
 import { dispatchCardHook } from '../card-effects.js';
 import { getWeaponStrategy } from '../weapon-registry.js';
 import { shoot, vanguardChargeNeed } from '../weapons.js';
+import { applyPlayerEdgeRepulsion } from './world-edge.js';
 
 export function stepPlayer(dt, frame) {
   var p = frame.p;
@@ -103,6 +104,8 @@ export function stepPlayer(dt, frame) {
       p.y = clamp(p.y + Math.sin(wind.angle) * wind.power * dt, p.r, boundH - p.r);
     }
   }
+  // Soft spring off the hatch stripe — keeps the hard wall fantasy, frees pin traps.
+  applyPlayerEdgeRepulsion(p, dt, boundW, boundH);
   var aimDx = rt.input.mouse.x - p.x;
   var aimDy = rt.input.mouse.y - p.y;
   if (aimDx || aimDy) p.aim = Math.atan2(aimDy, aimDx);
