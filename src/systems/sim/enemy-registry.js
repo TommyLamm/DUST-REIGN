@@ -536,7 +536,7 @@ registerEnemyStrategy('dreadnought', {
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
       if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) {
-        amount *= 1.12; // stacked ~1.12 with intact flat
+        amount *= 1.00; // floor: no rear bonus (bimodal fast)
       }
     }
     return amount;
