@@ -98,6 +98,10 @@ function applyDeathEvent(ev) {
 
 function spawnSplit(ev) {
   if (!rt.state.enemies) return;
+  // No elite children during Sovereign wave — splitter was a backdoor past eliteChance=0.
+  var rec = rt.state.recipe;
+  if (rec && rec.boss === 'sovereign') return;
+  if (rt.state.boss && rt.state.boss.kind === 'sovereign' && rt.state.boss.hp > 0) return;
   var hp = Math.max(1, Math.round((ev.maxHp || 40) * 0.4));
   var i;
   for (i = 0; i < 2; i += 1) {
