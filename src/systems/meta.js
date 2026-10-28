@@ -20,6 +20,7 @@ import { getHeatModifiers } from '../data/heat.js';
 import { applyRig, getRig } from '../data/rigs.js';
 import { FUSION_CHIPS, toPropName } from '../data/upgrades.js';
 import { initPlayerTactical } from './tactical.js';
+import { isChinese, tAchievementDetail, tAchievementReward, tAchievementTitle } from '../core/i18n.js';
 
 var WEAPONS = { standard: 1, breacher: 1, vanguard: 1, 'arc-welder': 1 };
 var BASE_DAMAGE = 26;
@@ -626,8 +627,15 @@ export function listAchievements(meta) {
   var out = [];
   var i;
   var row;
+  var zh = isChinese();
   for (i = 0; i < defs.length; i += 1) {
     row = defs[i];
+    if (zh) {
+      row.title = tAchievementTitle(row.id) || row.title;
+      row.detail = tAchievementDetail(row.id) || row.detail;
+      var rewardZh = tAchievementReward(row.id);
+      if (rewardZh) row.reward = rewardZh;
+    }
     row.unlocked = !!m.achievements[row.id];
     row.unlockedAt = m.achievements[row.id] || '';
     if (row.unlocked && row.progress < row.goal) row.progress = row.goal;
