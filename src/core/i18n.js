@@ -900,7 +900,7 @@ export function tLog(msg) {
   if (msg === 'BARREL KICK-LAUNCHED') return '炸藥桶已踢出';
   if (msg === 'STATIC TEMPEST // 6-WAY CHAIN DISCHARGE') return '靜電風暴 // 6向連鎖放電';
   if (msg === 'EMP BLAST // SECTOR DISRUPTED') return 'EMP 衝擊 // 區段訊號干擾';
-  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級 EMP 260PX 引爆';
+  if (msg.indexOf('CONDUCTION SPIRE // MEGA EMP DETONATED') === 0) return '傳導尖塔 // 超級 EMP 280PX 引爆';
   if (msg === 'OVERCHARGE RETALIATION // RETALIATORY SPIKE FIRED') return '超載反擊 // 復仇尖刺發射';
   if (msg === 'TITAN NEUTRALIZED // SECTOR SECURED') return '泰坦已被擊毀 // 區段安全';
   if (msg === 'BOUNTY SECURED // SURGE ONLINE') return '懸賞已完成 // 湧浪超頻上線';
@@ -1044,13 +1044,13 @@ export function tStatus(text) {
   if (text.indexOf('SCRAP BULKHEAD //') === 0) return text.replace('SCRAP BULKHEAD //', '廢料隔艙 // ');
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP 280PX [眩暈 3.0s]';
   if (text.indexOf('AEGIS PROTOCOL ACTIVATED') === 0) return '神盾協議啟動 // 緊急護盾已展開';
 
   if (text.indexOf('PERFECT DASH') === 0) return '精準衝刺 // 時間膨脹 (冷卻返還)';
   if (text.indexOf('BARREL LAUNCHED') === 0) return '炸藥桶已踢出 // 即將撞擊';
   if (text.indexOf('EMP BLAST DISCHARGED') === 0) return 'EMP 衝擊釋放 // 區段訊號干擾';
-  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP 260PX [眩暈 3.0s]';
+  if (text.indexOf('CONDUCTION SPIRE RESONANCE') === 0) return '傳導尖塔共鳴 // 超級 EMP 280PX [眩暈 3.0s]';
   if (text.indexOf('TITAN NEUTRALIZED') === 0) return '泰坦已被擊毀 // 區段安全';
   if (text.indexOf('BOUNTY CLEAR') === 0) {
     return text.replace('BOUNTY CLEAR +', '懸賞完成 +').replace('SCORE // SURGE', '分數 // 湧浪');

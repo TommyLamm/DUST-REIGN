@@ -9,6 +9,7 @@ import { onEnemyEmp } from './sim/enemy-defense.js';
 import { dispatchCardHook, launchMicroMissiles } from './card-effects.js';
 import { spawnParticles } from '../core/pools.js';
 import { addCameraTrauma } from '../core/camera.js';
+import { isChinese } from '../core/i18n.js';
 
 function pushBullet(b) {
   if (!rt.state) return;
@@ -244,7 +245,9 @@ export function stepTactical(dt, frame) {
       }
       if (rt.ui && rt.ui.statusText) {
         var readyGear = getTacticalGear(tac.id);
-        var readyGearName = (readyGear && readyGear.enName) || 'TACTICAL GEAR';
+        var readyGearName = isChinese()
+          ? ((readyGear && readyGear.name) || '戰術裝備')
+          : ((readyGear && readyGear.enName) || 'TACTICAL GEAR');
         setStatusText(readyGearName + ' // READY');
       }
     }
