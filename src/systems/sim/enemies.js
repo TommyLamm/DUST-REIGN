@@ -67,6 +67,16 @@ function dominoCallback(otherId) {
   }
 }
 
+
+/** Pure move-speed multiplier stack (excludes kind wobble / buffs / EMP). */
+export function enemyChaseSpeedMult(distToPlayer, hyperCatchup, wolfPack) {
+  var mult = 1.08;
+  if (hyperCatchup) mult *= 2.2;
+  else if (distToPlayer > 550) mult *= 1.35;
+  if (wolfPack) mult *= 1.15;
+  return mult;
+}
+
 export function stepEnemies(dt, frame) {
   var p = frame.p;
   var boundW = frame.boundW;
@@ -89,7 +99,7 @@ export function stepEnemies(dt, frame) {
     if (!e || e.hp <= 0) continue;
     var isCulled = (e.x < -120 || e.x > boundW + 120 || e.y < -120 || e.y > boundH + 120);
 
-    // Zone 3 check (> 1.85 x Viewport): silent cull normal mobs after 3s with token recycling; hyper-catchup (3.5x speed) for elite/boss after 2.5s until within 750px
+    // Zone 3 check (> 1.85 x Viewport): silent cull normal mobs after 3s with token recycling; hyper-catchup (2.2x speed) for elite/boss after 2.5s until within 750px
     var distToCam = Math.hypot(e.x - cx, e.y - cy);
     if (distToCam > zone3Dist) {
       if (!e.isBoss && e.kind !== 'elite') {
@@ -127,11 +137,9 @@ export function stepEnemies(dt, frame) {
     var dy = p.y - e.y;
     var d = Math.hypot(dx, dy) || 1;
 
-    // +20% base mobility compensation, long-distance catchup (>550px: x1.35), hyper-catchup (x3.5), Wolf Pack surge (x1.15)
-    var speed = e.speed * 1.20 * (e.kind === 'rusher' ? 1 + Math.sin(rt.state.waveTime * 5 + e.phase) * 0.08 : e.kind === 'elite' ? 1 + Math.sin(rt.state.waveTime * 3 + e.phase) * 0.12 : 1);
-    if (d > 550) speed *= 1.35;
-    if (e.hyperCatchup) speed *= 3.5;
-    if (rt.state.wolfPackSurge && (e.kind === 'crawler' || e.kind === 'rusher')) speed *= 1.15;
+    // +8% base mobility compensation; far-range catchup (>550px: x1.35) OR hyper-catchup (x2.2), never both; Wolf Pack surge (x1.15)
+    var wolfBoost = !!(rt.state.wolfPackSurge && (e.kind === 'crawler' || e.kind === 'rusher'));
+    var speed = e.speed * enemyChaseSpeedMult(d, !!e.hyperCatchup, wolfBoost) * (e.kind === 'rusher' ? 1 + Math.sin(rt.state.waveTime * 5 + e.phase) * 0.08 : e.kind === 'elite' ? 1 + Math.sin(rt.state.waveTime * 3 + e.phase) * 0.12 : 1);
 
     if (e.commandBuffTimer > 0) {
       e.commandBuffTimer -= dt;

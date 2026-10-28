@@ -5,7 +5,7 @@ import { spawnBoss, spawnEnemy } from '../../systems/spawning.js';
 import { filterEnemyDamage, clearEnemyShields, takeDeathEvents } from '../../systems/sim/enemy-defense.js';
 import { pushEnemyBullet, scaledShot } from '../../systems/sim/enemy-bullets.js';
 import { resolveDeathEvents } from '../../systems/sim/new-enemies.js';
-import { stepEnemies } from '../../systems/sim/enemies.js';
+import { enemyChaseSpeedMult, stepEnemies } from '../../systems/sim/enemies.js';
 
 function assert(cond, message) {
   if (!cond) throw new Error(message);
@@ -286,4 +286,10 @@ export function run() {
     if (rt.state.scoreBreakdown) rt.state.scoreBreakdown.style = saved.style;
     clearSeed();
   }
+
+  // Chase speed stack: hyper and far-range must not multiply together.
+  if (Math.abs(enemyChaseSpeedMult(200, false, false) - 1.08) > 0.001) throw new Error('base chase mult drifted');
+  if (Math.abs(enemyChaseSpeedMult(600, false, false) - 1.08 * 1.35) > 0.001) throw new Error('far-range chase mult drifted');
+  if (Math.abs(enemyChaseSpeedMult(600, true, false) - 1.08 * 2.2) > 0.001) throw new Error('hyper chase must replace far-range, not stack');
+  if (Math.abs(enemyChaseSpeedMult(200, false, true) - 1.08 * 1.15) > 0.001) throw new Error('wolf chase mult drifted');
 }

@@ -118,7 +118,7 @@ function sampleRingSpawnPoint(player, camera, worldW, worldH) {
 2. **高威脅/菁英怪（Elite / Warden / Titan 部件）— 地底疾行追擊（Burrow Glide Hyper-Catchup）**：
    - 菁英怪絕不輕易銷毀回收！
    - 當距離玩家 $> 1.85 \times \text{Viewport}$ 超過 2.5 秒時，菁英怪獲得 `e.hyperCatchup = true`：
-     - 移動速度提升至 **$2.5 \times \text{BaseSpeed}$**。
+     - 移動速度提升至 **$2.2 \times \text{BaseSpeed}$**（不與遠距 $1.35\times$ 同時疊加）。
      - 暫時關閉與普通怪物的阻擋碰撞，以流線型沙塵殘影（Burrowing Trail）高速縮短距離。
      - 一旦重新進入 $R_{mid}$（視野邊緣外 100px），解除追趕模式，恢復正常速度與戰術姿態。
 
@@ -275,7 +275,7 @@ $$\vec{F}_{sep} = \sum_{j \in \text{Neighbors}, j \ne i} \frac{\vec{r}_i - \vec{
 
 $$V_{world\_enemy} = V_{base} \times (1 + \alpha_{large\_world}) \times M_{aggro\_boost}$$
 
-其中 $\alpha_{large\_world} \approx 0.20 \sim 0.28$，當距離玩家 $d > 550\text{px}$ 時 $M_{aggro\_boost} = 1.35$（遠距縮圈加速）：
+其中 $\alpha_{large\_world} \approx 0.08$，當距離玩家 $d > 550\text{px}$ 且**未**進入 hyper-catchup 時 $M_{aggro\_boost} = 1.35$（遠距縮圈加速）；hyper-catchup 啟用時改乘 $2.2$，兩者互斥以免瞬移貼臉：
 
 | 敵型代號 | 舊版基準速度 | 大世界代償後基準速度 | 突進/狂暴瞬時極速 | 數值代償設計意圖 |
 | :--- | :--- | :--- | :--- | :--- |
