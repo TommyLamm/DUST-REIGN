@@ -15,9 +15,15 @@ import { logEvent, setStatusText } from '../ui/hud.js';
 function currentRecipe() {
   var wave = (rt.state && rt.state.wave) || 1;
   if (!rt.state.recipe || rt.state.recipe.wave !== wave) {
+    // planWave is the bare curve — do NOT use it to replace an onWaveStart recipe
+    // mid-fight (that wiped sovereign eliteCut=0 and re-opened bullet:elite).
     rt.state.recipe = planWave(wave);
     rt.state.act = rt.state.recipe.act;
     rt.state.sector = rt.state.recipe.sector;
+    if (rt.state.recipe.boss === 'sovereign') rt.state.recipe.eliteChance = 0;
+    else if (rt.state.recipe.boss) {
+      rt.state.recipe.eliteChance = Math.round(((rt.state.recipe.eliteChance || 0) * 0.40) * 100) / 100;
+    }
   }
   return rt.state.recipe;
 }
