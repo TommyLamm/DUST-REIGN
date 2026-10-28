@@ -507,7 +507,7 @@ export function onWaveStart(state) {
   applyMutatorMods(recipe, mut);
   if (recipe.boss) {
     // Wave-15 deaths were mostly add/elite rounds under the old 1.6x throttle.
-    var bossGap = recipe.boss === 'sovereign' ? 2.35 : recipe.boss === 'dreadnought' ? 2.0 : 1.75;
+    var bossGap = recipe.boss === 'sovereign' ? 2.35 : recipe.boss === 'dreadnought' ? 2.0 : recipe.boss === 'titan' ? 2.15 : 1.75;
     recipe.spawnInterval = round2(recipe.spawnInterval * bossGap);
     if (recipe.boss === 'sovereign' && typeof recipe.cap === 'number') {
       recipe.cap = Math.max(28, Math.round(recipe.cap * 0.72));
