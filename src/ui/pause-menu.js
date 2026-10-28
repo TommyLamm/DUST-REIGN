@@ -194,7 +194,7 @@ export function renderBuildInspector() {
       var pellets = breacherPelletCount(p);
       rt.ui.statFireRate.textContent = pellets === 5 ? ('3.0 RPS (x5)' + surge) : ('3.0 RPS (x' + pellets + ')' + surge);
     } else if (mode === 'vanguard') {
-      rt.ui.statFireRate.textContent = (zh ? '1.8 RPS (充能)' : '1.8 RPS (CHARGE)') + surge;
+      rt.ui.statFireRate.textContent = (zh ? '2.4 RPS (充能)' : '2.4 RPS (CHARGE)') + surge;
     } else if (mode === 'arc-welder') {
       rt.ui.statFireRate.textContent = '12.5 RPS' + surge;
     } else {
@@ -213,7 +213,7 @@ export function renderBuildInspector() {
       var bDmg = Math.max(1, Math.round(p.damage * 0.58 * odDmgMult));
       rt.ui.statDamage.textContent = bDmg + 'x' + pelletCount + dmgSuffix + odLabel;
     } else if (mode === 'vanguard') {
-      var vDmg = Math.round(p.damage * 3.4 * odDmgMult);
+      var vDmg = Math.round(p.damage * 4.2 * odDmgMult);
       rt.ui.statDamage.textContent = vDmg + (zh ? ' 傷害 [軌道貫穿]' : ' DMG [RAIL]') + odLabel;
     } else if (mode === 'arc-welder') {
       var aDmg = Math.max(1, Math.round(p.damage * 0.32 * odDmgMult));
