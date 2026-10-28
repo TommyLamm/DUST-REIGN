@@ -93,6 +93,10 @@ export function refreshWorkshopPanel(container) {
     noticeText = zh ? '★ 戰役闖關: 改裝模組全面運作，無限制發揮戰術潛能' : '★ CAMPAIGN MODE: Chassis modules fully operational';
     noticeClass += ' is-campaign';
   }
+  var hardcoreLock = (mode === 'hardcore');
+  var hardcoreReason = zh
+    ? '極限作戰硬體鎖定 — 改裝模組全面下線，無法安裝／卸下／升級'
+    : 'Hardcore hardware lock — chassis modules offline (cannot install / detach / upgrade)';
   header.appendChild(el('p', noticeClass, noticeText));
   container.appendChild(header);
 
@@ -129,17 +133,26 @@ export function refreshWorkshopPanel(container) {
 
       var detachBtn = el('button', 'workshop-detach-btn', zh ? '卸下模組' : 'DETACH');
       detachBtn.type = 'button';
-      on(detachBtn, 'click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        unequipModule(br.id);
-        refreshWorkshopPanel(container);
-      });
+      if (hardcoreLock) {
+        detachBtn.disabled = true;
+        detachBtn.textContent = zh ? '🔒 硬核鎖定' : '🔒 HARDCORE LOCK';
+        detachBtn.title = hardcoreReason;
+        detachBtn.setAttribute('aria-label', hardcoreReason);
+      } else {
+        on(detachBtn, 'click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          unequipModule(br.id);
+          refreshWorkshopPanel(container);
+        });
+      }
       socketCard.appendChild(sBody);
       socketCard.appendChild(detachBtn);
     } else {
       sBody.appendChild(el('span', 'socket-empty-text', zh ? '[ 插槽空置 ]' : '[ EMPTY SOCKET ]'));
-      sBody.appendChild(el('span', 'socket-empty-hint', zh ? '從下方模組庫點選裝備' : 'Equip from the catalog below'));
+      sBody.appendChild(el('span', 'socket-empty-hint', hardcoreLock
+        ? (zh ? '極限作戰中模組插槽鎖定' : 'Sockets locked in Hardcore')
+        : (zh ? '從下方模組庫點選裝備' : 'Equip from the catalog below')));
       socketCard.setAttribute('aria-label', br.name + ' — ' + (zh ? '插槽空置' : 'EMPTY SOCKET'));
       socketCard.appendChild(sBody);
     }
@@ -203,7 +216,12 @@ export function refreshWorkshopPanel(container) {
     // Equip / Detach
     var equipBtn = el('button', 'module-action-btn' + (isEquipped ? ' is-detach' : ' is-equip'));
     equipBtn.type = 'button';
-    if (isEquipped) {
+    if (hardcoreLock) {
+      equipBtn.textContent = zh ? '🔒 硬核鎖定' : '🔒 HARDCORE LOCK';
+      equipBtn.disabled = true;
+      equipBtn.title = hardcoreReason;
+      equipBtn.setAttribute('aria-label', hardcoreReason);
+    } else if (isEquipped) {
       equipBtn.textContent = zh ? '已安裝 (卸下)' : 'INSTALLED (DETACH)';
       on(equipBtn, 'click', function (e) {
         e.preventDefault();
@@ -236,7 +254,13 @@ export function refreshWorkshopPanel(container) {
     // Upgrade / Overclock
     var upgradeBtn = el('button', 'module-action-btn is-upgrade');
     upgradeBtn.type = 'button';
-    if (currentTier < 3) {
+    if (hardcoreLock) {
+      upgradeBtn.textContent = zh ? '🔒 硬核鎖定' : '🔒 HARDCORE LOCK';
+      upgradeBtn.disabled = true;
+      upgradeBtn.classList.add('is-disabled');
+      upgradeBtn.title = hardcoreReason;
+      upgradeBtn.setAttribute('aria-label', hardcoreReason);
+    } else if (currentTier < 3) {
       var cost = getModuleCost(mod.id, currentTier);
       var canAfford = (scrap >= cost);
       upgradeBtn.textContent = (zh ? '升至 T' : 'UPGRADE T') + (currentTier + 1) + ' (' + cost + '⚙)';
