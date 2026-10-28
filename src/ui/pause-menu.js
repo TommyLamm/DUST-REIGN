@@ -216,7 +216,7 @@ export function renderBuildInspector() {
       var vDmg = Math.round(p.damage * 4.2 * odDmgMult);
       rt.ui.statDamage.textContent = vDmg + (zh ? ' 傷害 [軌道貫穿]' : ' DMG [RAIL]') + odLabel;
     } else if (mode === 'arc-welder') {
-      var aDmg = Math.max(1, Math.round(p.damage * 0.32 * odDmgMult));
+      var aDmg = Math.max(1, Math.round(p.damage * 0.44 * odDmgMult));
       rt.ui.statDamage.textContent = aDmg + (zh ? ' 傷害 [電弧光束]' : ' DMG [BEAM]') + odLabel;
     } else {
       var dmg = p.damage;
