@@ -182,6 +182,10 @@ function startTelegraph(e, p, seconds) {
   e.mode = 'telegraph';
   e.telegraphT = seconds;
   e.telegraphMax = seconds;
+  // Keep orbital pillars stocked for voluntary bait without per-telegraph lane plants.
+  if (!rt.state.monolithCrags || rt.state.monolithCrags.length < 2) {
+    spawnMonolithCrags(e, { boundW: (rt.state && rt.state.width) || 960, boundH: (rt.state && rt.state.height) || 640 });
+  }
   ensureChargeLaneCrag(e, p, { boundW: (rt.state && rt.state.width) || 960, boundH: (rt.state && rt.state.height) || 640 });
   if (rt.state) {
     rt.state.banner = Math.max(rt.state.banner || 0, 1.2);
@@ -255,7 +259,7 @@ function beginCharge(e) {
   e.chargeCarry = 0;
   e.chargeDist = 0;
   // Soft arena charges end in ~1.5s; big-world diagonals used to run 5–8s with no armor-break.
-  e.chargeMaxDist = e.bossPhase >= 3 ? 1120 : 980;
+  e.chargeMaxDist = e.bossPhase >= 3 ? 1000 : 860;
   var ratio = e.maxHp > 0 ? e.hp / e.maxHp : 1;
   e.bossPhase = dreadPhase(ratio);
   e.chargeSpeed = e.bossPhase >= 3 ? 624 : 520;
