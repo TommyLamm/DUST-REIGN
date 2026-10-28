@@ -508,15 +508,19 @@ registerEnemyStrategy('dreadnought', {
     return stepBoss(e, dt, frame, empFrozen);
   },
   filterDamage: function (e, amount, info) {
-    if (info && info.source === 'bullet' && info.x != null && info.y != null) {
+    // Armor-break / stun windows used to stack rear×2 + barrel×2 (up to ×4),
+    // while front-only DPS during the same fight crawled — huge kill-time swing.
+    // Make the break window position-independent; keep a mild rear bonus only when intact.
+    var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
+    if (broken) {
+      amount *= 1.4;
+      if (info && info.source === 'barrel') amount *= 1.2;
+    } else if (info && info.source === 'bullet' && info.x != null && info.y != null) {
       var hitAng = Math.atan2(info.y - e.y, info.x - e.x);
       var rear = (e.aim || 0) + Math.PI;
       if (Math.abs(angDiff(hitAng, rear)) <= Math.PI / 3) {
-        amount *= (e.empTimer > 0 ? 2 : 1.5);
+        amount *= 1.25;
       }
-    }
-    if (info && info.source === 'barrel' && e.empTimer > 0) {
-      amount *= 2;
     }
     return amount;
   },
