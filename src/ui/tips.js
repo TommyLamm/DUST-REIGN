@@ -322,6 +322,7 @@ function choiceCompletesFusion(choice) {
 }
 
 function scanTriggers() {
+  if (!readTipsEnabled()) return;
   if (!canScan() || !rt.state.player) return;
   offer('move-shoot');
   // First-run readability nudge: pause menu has Contrast: High.
