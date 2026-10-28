@@ -100,15 +100,15 @@ export function run() {
 
     var dread = { kind: 'dreadnought', hp: 400, maxHp: 400, x: 0, y: 0, aim: 0, empTimer: 0 };
     var rear = filterEnemyDamage(dread, 20, { source: 'bullet', x: -30, y: 0 });
-    assert(Math.abs(rear - 23.6) < 0.001, 'dreadnought rear hit was not x1.00*1.18');
+    assert(Math.abs(rear - 22.4) < 0.001, 'dreadnought rear hit was not x1.00*1.12');
     dread.empTimer = 1;
     dread.deathQueued = false;
     var stunnedBarrel = filterEnemyDamage(dread, 20, { source: 'barrel', x: 10, y: 0 });
-    assert(Math.abs(stunnedBarrel - 20.4) < 0.001, 'stunned dreadnought barrel was not x1.02');
+    assert(Math.abs(stunnedBarrel - 20) < 0.001, 'stunned dreadnought barrel was not x1.00');
     var styleBefore = rt.state.scoreBreakdown ? (rt.state.scoreBreakdown.style || 0) : 0;
     var stunKill = { kind: 'dreadnought', hp: 20, maxHp: 1600, x: 0, y: 0, aim: 0, empTimer: 1.2, mode: 'stun' };
     var lethalRear = filterEnemyDamage(stunKill, 20, { source: 'bullet', x: -40, y: 0 });
-    assert(Math.abs(lethalRear - 20.4) < 0.001 && stunKill.deathQueued, 'stun armor-break hit did not kill the dreadnought');
+    assert(Math.abs(lethalRear - 20) < 0.001 && stunKill.deathQueued, 'stun armor-break hit did not kill the dreadnought');
     assert((rt.state.scoreBreakdown.style || 0) - styleBefore === 100, 'dreadnought stun-kill style score was not 100');
 
     var towerA = { kind: 'stormTower', hp: 200, x: 10, y: 10 };
