@@ -247,6 +247,18 @@ export function triggerGameOver(options) {
   var isVictory = Boolean(options && options.victory);
   if (!isVictory) {
     rt.state.player.hp = 0;
+    // Ensure deathCause is always authored — enemies.js may call us after hp<=0
+    // without going through damagePlayer's lethal branch (left sim as unknown).
+    if (!rt.state.deathCause) {
+      var sticky = rt.state.lastDamageSource || '';
+      var nonElite = rt.state.lastNonEliteDamageSource || '';
+      var wave15 = ((rt.state.wave | 0) >= 15);
+      if (wave15 && (sticky === 'bullet:elite' || sticky === 'contact:elite')) {
+        rt.state.deathCause = nonElite || 'unknown';
+      } else {
+        rt.state.deathCause = sticky || nonElite || 'unknown';
+      }
+    }
   } else {
     rt.state.stageCleared = true;
     rt.state.stageVictory = true;
