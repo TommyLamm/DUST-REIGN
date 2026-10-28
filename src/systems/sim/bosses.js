@@ -497,13 +497,13 @@ function queueBolts(frame, gap) {
 }
 
 function fireSpiral(e) {
-  var shot = scaledShot(2, 95, true);
+  var shot = scaledShot(1, 95, true);
   var spin = e.spiralAngle || 0;
   e.spiralAngle = spin + 0.22;
   var i;
-  // 5-spoke spiral — post-#178 spiral×4 again.
-  for (i = 0; i < 5; i += 1) {
-    var a = spin + (i / 5) * TAU;
+  // 4-spoke spiral — still spiral×4 after 5-spoke soft.
+  for (i = 0; i < 4; i += 1) {
+    var a = spin + (i / 4) * TAU;
     pushEnemyBullet({
       type: 'spiral',
       fromBoss: true,
@@ -514,7 +514,7 @@ function fireSpiral(e) {
       vy: Math.sin(a) * shot.speed,
       r: 3.8,
       damage: shot.damage,
-      life: 2.4,
+      life: 2.0,
       glow: true,
       color: '#9ec0ea',
       glowColor: '#d5e8ff'
@@ -626,7 +626,7 @@ function stepSovereign(e, dt, frame, empFrozen) {
     if (phase === 1) {
       e.spiralCd -= dt;
       if (e.spiralCd <= 0) {
-        e.spiralCd = 10.0;
+        e.spiralCd = 11.0;
         fireSpiral(e);
       }
     }

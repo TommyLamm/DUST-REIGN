@@ -530,7 +530,7 @@ registerEnemyStrategy('dreadnought', {
     // stays the skill read. Barrels/EMP keep their own curves.
     // Charge/telegraph DR: dump-DPS during commit was feeding the fast cluster.
     if (e.mode === 'charge' || e.mode === 'telegraph') {
-      amount *= 0.55;
+      amount *= 0.70; // was 0.55 — eased so slow tails do not stall past 180s
     }
     var broken = (e.empTimer > 0) || (e.armorBreakTimer > 0) || e.mode === 'stun';
     if (broken) {
