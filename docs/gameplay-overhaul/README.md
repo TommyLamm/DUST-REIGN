@@ -30,6 +30,7 @@
 | [11-phases-and-work-packages.md](11-phases-and-work-packages.md) | 分階段與子代理並行工作包、檔案所有權 |
 | [12-acceptance.md](12-acceptance.md) | 驗收清單 |
 | [13-risks.md](13-risks.md) | 風險與對策 |
+| [15-balance-hold-freeze.md](15-balance-hold-freeze.md) | HOLD 帶、證偽槓桿、雙驗證規則（post-#251 FREEZE） |
 | [14-p0-hook-contract.md](14-p0-hook-contract.md) | P0 完成後的實際掛鉤契約（P1 工作包依此實作） |
 
 ## 關鍵決策
