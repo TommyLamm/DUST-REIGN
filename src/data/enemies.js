@@ -25,7 +25,7 @@ var BASE = {
   burrower: { hp: 95, speed: 40, damage: 18, r: 17, score: 120, xp: 32, repair: 0.25, firstWave: 12, color: '#c4a574' },
   elite: { hp: 214, speed: 45, damage: 21, r: 19, score: 180, xp: 40, repair: 1, firstWave: 3, color: '#75d1b0' },
   titan: { hp: 7600, speed: 36, damage: 28, r: 32, score: 800, xp: 60, repair: 1, firstWave: 5, color: '#e69535' },
-  dreadnought: { hp: 13500, speed: 30, damage: 34, r: 38, score: 1500, xp: 60, repair: 1, firstWave: 10, color: '#d4654a' },
+  dreadnought: { hp: 15000, speed: 30, damage: 34, r: 38, score: 1500, xp: 60, repair: 1, firstWave: 10, color: '#d4654a' },
   sovereign: { hp: 100000, speed: 24, damage: 30, r: 34, score: 3000, xp: 60, repair: 1, firstWave: 15, color: '#9ec0ea' },
   behemoth: { hp: 8800, speed: 32, damage: 32, r: 44, score: 3500, xp: 80, repair: 1, firstWave: 19, color: '#a855f7' },
   prowler: { hp: 48, speed: 105, damage: 24, r: 12, score: 75, xp: 22, repair: 0.1, firstWave: 16, color: '#c084fc' },
@@ -52,7 +52,7 @@ function bossMult(wave, scales) {
 
 var TITAN_HULL = 7600;
 var TITAN_STEP = 780;
-var DREADNOUGHT_HULL = 13500;
+var DREADNOUGHT_HULL = 15000;
 var SOVEREIGN_HULL = 100000;
 var BEHEMOTH_HULL = 8800;
 
