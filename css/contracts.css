@@ -14,9 +14,11 @@
 .contract-card {
   padding: 6px 8px;
   color: var(--bone);
-  background: rgba(10, 11, 9, 0.66);
-  border: 1px solid var(--line-strong);
+  background: rgba(8, 9, 7, 0.88);
+  border: 1px solid rgba(232, 224, 198, 0.32);
   border-left: 3px solid var(--amber);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
 
 .contract-card {
@@ -26,7 +28,7 @@
 .mutator-kicker,
 .contract-kicker {
   display: block;
-  color: var(--muted);
+  color: rgba(232, 224, 198, 0.75);
   font: 10px var(--mono);
   letter-spacing: 0.14em;
 }

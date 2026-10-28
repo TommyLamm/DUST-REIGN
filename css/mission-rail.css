@@ -151,12 +151,15 @@
   min-width: 25px;
   height: 23px;
   place-items: center;
-  color: var(--bone);
-  border: 1px solid var(--line-strong);
+  color: #f4eedc;
+  border: 1px solid rgba(232, 224, 198, 0.4);
   border-bottom: 2px solid var(--rust);
-  background: var(--slate);
+  background: rgba(16, 17, 14, 0.95);
   font-family: var(--mono);
   font-size: 10px;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
 }
 
 .key--wide {
@@ -170,8 +173,9 @@
 
 .key-caption {
   margin-left: 7px;
-  color: var(--muted);
+  color: rgba(232, 224, 198, 0.78);
   font-size: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
 }
 
 .controls-note {

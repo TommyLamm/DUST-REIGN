@@ -60,10 +60,16 @@ function card(title, detail, extra) {
   return node;
 }
 
-function unknownCard() {
+function unknownCard(kind) {
+  var zh = isChinese();
   var node = el('article', 'codex-card is-unknown');
   node.appendChild(el('span', 'codex-silhouette', ''));
-  node.appendChild(el('strong', 'codex-card-title', isChinese() ? '未知' : 'UNKNOWN'));
+  node.appendChild(el('strong', 'codex-card-title', zh ? '未知條目' : 'UNKNOWN ENTRY'));
+  var hint = zh ? '出擊遭遇後解鎖' : 'UNLOCKS AFTER ENCOUNTER';
+  if (kind === 'fusion') hint = zh ? '完成融合後解鎖' : 'UNLOCKS AFTER FUSION';
+  else if (kind === 'enemy') hint = zh ? '戰場遭遇後解鎖' : 'UNLOCKS AFTER SIGHTING';
+  node.appendChild(el('p', 'codex-card-detail', hint));
+  node.setAttribute('aria-label', (zh ? '未知條目' : 'UNKNOWN ENTRY') + ' — ' + hint);
   return node;
 }
 
@@ -73,14 +79,23 @@ function paintAchievements(body, meta) {
   var i;
   var row;
   var extra;
+  if (!rows.length) {
+    body.appendChild(card(zh ? '尚無成就資料' : 'NO ACHIEVEMENTS', zh ? '完成出擊後將出現進度' : 'Progress appears after runs', ''));
+    return;
+  }
   for (i = 0; i < rows.length; i += 1) {
     row = rows[i];
-    extra = row.unlocked ? shortTime(row.unlockedAt) : (row.progress + ' / ' + row.goal);
+    extra = row.unlocked
+      ? shortTime(row.unlockedAt)
+      : ((zh ? '未解鎖 · ' : 'LOCKED · ') + row.progress + ' / ' + row.goal);
     var rew = zh ? tAchievementReward(row.id) : row.reward;
     if (rew && !row.unlocked) extra += ' · ' + rew;
     var t = zh ? tAchievementTitle(row.id) : row.title;
     var d = zh ? tAchievementDetail(row.id) : row.detail;
-    body.appendChild(card(t, d, extra));
+    var node = card(t, d, extra);
+    if (!row.unlocked) node.classList.add('is-locked');
+    else node.classList.add('is-unlocked');
+    body.appendChild(node);
   }
 }
 
@@ -96,7 +111,7 @@ function paintEnemies(body, meta) {
     entry = ENEMIES[i];
     known[entry.id] = true;
     if (seen.indexOf(entry.id) === -1) {
-      body.appendChild(unknownCard());
+      body.appendChild(unknownCard('enemy'));
       continue;
     }
     detail = entry.boss ? (zh ? '首領' : 'BOSS') : (zh ? '敵機' : 'HOSTILE');
@@ -119,7 +134,7 @@ function paintFusions(body, meta) {
   for (i = 0; i < FUSION_CHIPS.length; i += 1) {
     chip = FUSION_CHIPS[i];
     if (seen.indexOf(chip.id) === -1) {
-      body.appendChild(unknownCard());
+      body.appendChild(unknownCard('fusion'));
       continue;
     }
     var reqs = (chip.required || []).map(function (rid) { return tUpgradeTitle(rid); }).join(' + ');
