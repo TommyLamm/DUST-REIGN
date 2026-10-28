@@ -99,7 +99,7 @@ export function colossusChargeNeed(p) {
   if (strategy && typeof strategy.chargeNeed === 'function') {
     return strategy.chargeNeed(p);
   }
-  var need = 0.85;
+  var need = 0.70;
   if (!p) return need;
   if ((p.mastery || 0) >= 1) need *= 0.8;
   if (p.chargeTimeMult) need *= p.chargeTimeMult;

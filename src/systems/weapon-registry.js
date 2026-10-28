@@ -718,9 +718,9 @@ registerWeaponStrategy({
   name: 'COLOSSUS',
   category: 'energy',
   chargeNeed: function (p) {
-    var need = 0.85;
+    var need = 0.70;
     if (!p) return need;
-    if ((p.mastery || 0) >= 1) need *= 0.8; // superconducting: 蓄力時間 -20% (0.68s)
+    if ((p.mastery || 0) >= 1) need *= 0.8; // superconducting: 蓄力時間 -20% (0.56s)
     if (p.chargeTimeMult) need *= p.chargeTimeMult;
     return need;
   },
@@ -766,13 +766,13 @@ registerWeaponStrategy({
     var isPlasma = !!(p.plasmaMeltdown && (p.overdrive > 0));
     var extraPierce = isVulcan ? 1 : 0;
     var mastery = p.mastery || 0;
-    var isCharged = (forceCharged !== undefined) ? forceCharged : ((p.chargeTime || 0) >= (p.chargeNeed || 0.85));
+    var isCharged = (forceCharged !== undefined) ? forceCharged : ((p.chargeTime || 0) >= (p.chargeNeed || 0.70));
 
     if (rt.state.stats) rt.state.stats.shotsFired += 1;
 
     if (isCharged) {
       // 蓄滿釋放穿透 99 的重型軌道電漿束
-      var cDmg = Math.round(p.damage * 4.2 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+      var cDmg = Math.round(p.damage * 6.0 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
       var cSpeed = 1550 * (p.bulletSpeedMult || 1);
       var cR = 8.5 + (isPlasma ? 3 : 0);
       var cTrail = isPlasma ? 'rgba(255, 77, 46, 0.65)' : (isVulcan ? 'rgba(255, 69, 0, 0.55)' : 'rgba(0, 243, 255, 0.65)');
@@ -807,7 +807,7 @@ registerWeaponStrategy({
         isEventHorizon: Boolean(p.eventHorizon)
       });
 
-      p.cooldown = shotCooldown(p, 0.75 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+      p.cooldown = shotCooldown(p, 0.55 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
       p.recoil = 1.0;
       var recoilPush = (p.recoilMult || 1);
       var recoilDist = 7.0 * (mastery >= 1 ? 1.25 : 1.0) * recoilPush;
@@ -843,7 +843,7 @@ registerWeaponStrategy({
       addCameraTrauma(0.22);
     } else {
       // 未滿蓄發射等離子球
-      var orbDmg = Math.round(p.damage * 1.4 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
+      var orbDmg = Math.round(p.damage * 1.8 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1));
       var orbSpeed = 680 * (p.bulletSpeedMult || 1);
       var orbR = 7.0 + (isPlasma ? 3 : 0);
       var orbTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(0, 243, 255, 0.45)');
@@ -875,7 +875,7 @@ registerWeaponStrategy({
         isPlasmaMeltdown: isPlasma
       });
 
-      p.cooldown = shotCooldown(p, 0.38 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
+      p.cooldown = shotCooldown(p, 0.32 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
       p.recoil = 0.75;
       var recoilPushOrb = (p.recoilMult || 1);
       p.x -= Math.cos(p.aim) * 2.5 * recoilPushOrb;
@@ -914,7 +914,7 @@ registerWeaponStrategy({
     var PALETTE = helpers && helpers.PALETTE;
     var keyGlowsOnly = (helpers && helpers.keyGlowsOnly) ? helpers.keyGlowsOnly : function () { return false; };
 
-    var chargeNeed = (typeof p.chargeNeed === 'number' && p.chargeNeed > 0) ? p.chargeNeed : 0.85;
+    var chargeNeed = (typeof p.chargeNeed === 'number' && p.chargeNeed > 0) ? p.chargeNeed : 0.70;
     var charge = clamp((p.chargeTime || 0) / chargeNeed, 0, 1);
 
     var cx = r * 0.1 - kick;
