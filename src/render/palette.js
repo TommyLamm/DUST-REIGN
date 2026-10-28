@@ -10,7 +10,7 @@ export var PALETTE = {
     night: { r: 10, g: 16, b: 23 },
     crystal: { r: 14, g: 18, b: 32 }
   },
-  emissive: { player: '#7cf0c8', hostile: '#ff552e', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
+  emissive: { player: '#7cf0c8', hostile: '#ff6a3c', tech: '#5be7ff', gold: '#ffd36b', void: '#b55fe6' },
   hud: { bone: '#e8e0c6', rust: '#ed6842', amber: '#e8b94e', mint: '#96baa0' }
 };
 

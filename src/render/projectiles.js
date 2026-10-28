@@ -450,7 +450,7 @@ export function drawEnemyBullets(ctx) {
   for (i = 0; i < n; i += 1) {
     var dark = list[i];
     if (!dark) continue;
-    disc(ctx, dark.x, dark.y, (dark.r || 4) + (view.contrast ? 3.8 : 2.6));
+    disc(ctx, dark.x, dark.y, (dark.r || 4) + (view.contrast ? 3.8 : 3.2));
   }
   ctx.fill();
 
@@ -564,10 +564,11 @@ export function drawEnemyBullets(ctx) {
   for (i = 0; i < n; i += 1) {
     var ring = list[i];
     if (!ring) continue;
-    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 2.6));
+    disc(ctx, ring.x, ring.y, (ring.r || 4) + (view.contrast ? 4.2 : 3.4));
   }
-  ctx.strokeStyle = view.contrast ? PURE_WHITE : DARK_HALO_BULLET;
-  ctx.lineWidth = view.contrast ? 3.2 : 2.2;
+  // Default mode gets a light rim so dusk/rust grounds do not swallow shots.
+  ctx.strokeStyle = view.contrast ? PURE_WHITE : '#f2ebe0';
+  ctx.lineWidth = view.contrast ? 3.2 : 2.6;
   ctx.stroke();
   ctx.restore();
 }
