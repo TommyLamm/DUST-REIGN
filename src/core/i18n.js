@@ -987,7 +987,7 @@ export function tLog(msg) {
   if (msg === 'AEGIS PROTOCOL // FATAL BLOW PREVENTED') return '神盾協議 // 致命一擊已攔截';
   if (msg === 'REACTIVE PLASMA // MICRO-EMP DETONATED') return '反應電漿 // 微型 EMP 引爆';
   if (msg === 'VIP ELIMINATED // EMP SHOCKWAVE TRIGGERED') return 'VIP 已擊殺 // EMP 震波觸發';
-  if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED' || msg === 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN') return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
+  if (msg === 'CRAG SHATTERED // DREADNOUGHT STUNNED' || msg === 'CRAG SHATTERED // ARMOR BREAK 3.2s · ALL SIDES OPEN') return '岩障粉碎 // 破甲硬直 · 四面可打';
   if (msg.indexOf('BOSS-WAVE CLEAR') === 0) return msg.replace('BOSS-WAVE CLEAR //', '首領戰清場 //');
   if (msg === 'TITAN // TUG-OF-WAR COUNTER! RADIATOR EXPOSED') return '泰坦 // 拔河反制！散熱器暴露';
   if (msg === 'TITAN // HARPOON TETHER REELED') return '泰坦 // 魚叉繫繩收回';
@@ -1108,6 +1108,7 @@ export function tTip(id, kind) {
     if (id === 'storm-eye') return 'STAY INSIDE THE STORM EYE · OUTSIDE MELTS HULL';
     if (id === 'dread-break') return 'BAIT CHARGE INTO THE LANE CRAG · BREAK WINDOWS OPEN ALL SIDES';
     if (id === 'storm-weave') return 'WEAVE THE STORM SHOTS · BULLETS END MORE RUNS THAN THE EYE';
+    if (id === 'boss-clear') return 'CLEAR ELITES FIRST · THEIR ROUNDS STEAL THE BOSS FIGHT';
     return '';
   }
   if (id === 'move-shoot') {
@@ -1133,6 +1134,7 @@ export function tTip(id, kind) {
   if (id === 'storm-eye') return '留在風暴之眼內 · 離開會持續腐蝕裝甲';
   if (id === 'dread-break') return '把衝撞引向航道岩障 · 破甲窗四面皆可輸出';
   if (id === 'storm-weave') return '穿梭風暴彈幕 · 敵彈比風暴之眼更能終結一局';
+  if (id === 'boss-clear') return '先清菁英 · 它們的彈幕會偷走首領戰';
   return '';
 }
 
@@ -1190,7 +1192,7 @@ export function tBanner(text) {
   if (text === 'SECTOR SECURED // MISSION COMPLETE') return '區段安全 // 任務完成';
   if (text.indexOf('CHARGE TELEGRAPH') === 0) return '衝撞預兆 // 引向岩障破甲';
   if (text.indexOf('CHARGE SPENT') === 0) return '衝撞力竭 // 破甲輸出窗';
-  if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 3.2s · 四面可打';
+  if (text.indexOf('CRAG SHATTERED') === 0) return '岩障粉碎 // 破甲硬直 · 四面可打';
   if (text.indexOf('TUG-OF-WAR COUNTER') === 0) return '拔河反制 // 散熱器暴露 2.5S';
   if (text.indexOf('TITAN HARPOON') === 0) return '泰坦魚叉 // 已繫繩並緩速';
   if (text === 'WARNING // TITAN HARPOON LOCK') return '警告 // 泰坦魚叉鎖定';
