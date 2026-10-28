@@ -100,6 +100,7 @@ function tipText(id) {
   else if (id === 'artillery-mark') copyId = 'artillery-lob';
   else if (id === 'prowler-flash') copyId = 'prowler-lunge';
   else if (id === 'bulwark-shield') copyId = 'bulwark-face';
+  else if (id === 'storm-shield') copyId = 'storm-tower';
   return tTip(copyId, inputKind());
 }
 
@@ -488,7 +489,9 @@ function scanTriggers() {
   // behemoth-parts: lore tip IS the part-break teach when Behemoth is live — no separate telegraph window to burn.
   if (((rt.state.wave || 1) >= 19 || (rt.state.boss && rt.state.boss.kind === 'behemoth')) && (enemyNearKind('behemoth', 420) || (rt.state.boss && rt.state.boss.kind === 'behemoth' && rt.state.boss.hp > 0))) offer('behemoth-parts');
   if (sovereignEyeThreat()) offer('storm-eye');
-  if (sovereignShieldedThreat() || stormTowerNear()) offer('storm-tower');
+  // Storm tower presence vs sovereign-shielded urgent: shield feed is the critical window.
+  if (sovereignShieldedThreat()) offerUrgent('storm-shield');
+  else if (stormTowerNear()) offer('storm-tower');
   if (dreadArmorBreakThreat()) offer('dread-break');
   if (dreadLongFightThreat()) offer('dread-fatigue');
   if (dreadExtremeClockThreat()) {

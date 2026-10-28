@@ -2,6 +2,7 @@ import { isChinese } from '../core/i18n.js';
 import { equipModule, getEquippedWattage, getWorkshopLoadout, getWorkshopState, readMeta, readScrap, unequipModule, upgradeModule } from '../core/meta-store.js';
 import { MAX_WATTAGE, MODULES, getModule, getModuleCost, getModuleTierData } from '../data/modules.js';
 import { on } from '../core/utils.js';
+import { setStatusText } from './hud.js';
 
 function el(tag, className, text) {
   var node = document.createElement(tag);
@@ -25,6 +26,20 @@ function moduleCodeLabel(code, zh) {
   if (raw.indexOf('B-') === 0) return '甲-' + raw.slice(2);
   if (raw.indexOf('C-') === 0) return '戰-' + raw.slice(2);
   return raw;
+}
+
+function reportWorkshopLock(zh) {
+  setStatusText(zh
+    ? 'HARDCORE LOCK // 極限作戰硬體鎖定 — 無法安裝／卸下／升級模組'
+    : 'HARDCORE LOCK // CHASSIS MODULES OFFLINE — CANNOT INSTALL / DETACH / UPGRADE');
+}
+
+function applyWorkshopResult(res, zh) {
+  if (res && res.ok === false && res.reason === 'HARDCORE_LOCK') {
+    reportWorkshopLock(zh);
+    return false;
+  }
+  return true;
 }
 
 export function createWorkshopPanel() {
@@ -142,7 +157,7 @@ export function refreshWorkshopPanel(container) {
         on(detachBtn, 'click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          unequipModule(br.id);
+          if (!applyWorkshopResult(unequipModule(br.id), zh)) return;
           refreshWorkshopPanel(container);
         });
       }
@@ -226,7 +241,7 @@ export function refreshWorkshopPanel(container) {
       on(equipBtn, 'click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        unequipModule(mod.branch);
+        if (!applyWorkshopResult(unequipModule(mod.branch), zh)) return;
         refreshWorkshopPanel(container);
       });
     } else {
@@ -239,7 +254,7 @@ export function refreshWorkshopPanel(container) {
         on(equipBtn, 'click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          equipModule(mod.id);
+          if (!applyWorkshopResult(equipModule(mod.id), zh)) return;
           refreshWorkshopPanel(container);
         });
       } else {
@@ -268,7 +283,7 @@ export function refreshWorkshopPanel(container) {
         on(upgradeBtn, 'click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          upgradeModule(mod.id);
+          if (!applyWorkshopResult(upgradeModule(mod.id), zh)) return;
           refreshWorkshopPanel(container);
         });
       } else {
@@ -285,7 +300,7 @@ export function refreshWorkshopPanel(container) {
         on(upgradeBtn, 'click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          upgradeModule(mod.id);
+          if (!applyWorkshopResult(upgradeModule(mod.id), zh)) return;
           refreshWorkshopPanel(container);
         });
       } else {
