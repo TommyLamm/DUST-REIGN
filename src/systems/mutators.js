@@ -112,8 +112,10 @@ function pullInto(entity, devil, dt, clampIt, box) {
   var dist = Math.hypot(dx, dy);
   var reach = (devil.r || 60) + (entity.r || 0);
   if (!(dist > 0.001) || dist > reach) return;
-  entity.x += (dx / dist) * 40 * dt;
-  entity.y += (dy / dist) * 40 * dt;
+  // Softer suck on the player so env mutator pressure stays readable.
+  var pull = clampIt ? 28 : 40;
+  entity.x += (dx / dist) * pull * dt;
+  entity.y += (dy / dist) * pull * dt;
   if (clampIt && box) {
     var r = entity.r || 15;
     entity.x = clamp(entity.x, r, box.w - r);
@@ -136,7 +138,7 @@ function yawBullets(devil) {
     if (Math.hypot(dx, dy) > (devil.r || 60) + (b.r || 4)) continue;
     var ang = Math.atan2(b.vy || 0, b.vx || 0);
     var sign = b.x < devil.x ? -1 : 1;
-    ang += sign * (15 * Math.PI / 180);
+    ang += sign * (8 * Math.PI / 180);
     var spd = Math.hypot(b.vx || 0, b.vy || 0);
     if (spd < 1) continue;
     b.vx = Math.cos(ang) * spd;
