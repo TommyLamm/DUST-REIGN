@@ -575,7 +575,7 @@ export function stepNewEnemy(e, dt, frame, empFrozen) {
       }
       if (e.burrowT <= 0) {
         e.state = 'warn';
-        e.warnT = 0.8;
+        e.warnT = 1.05;
         e.warnX = p.x;
         e.warnY = p.y;
       }

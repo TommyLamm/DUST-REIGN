@@ -86,6 +86,17 @@ function canScan() {
   return true;
 }
 
+function burrowerWarnNear() {
+  var list = rt.state && rt.state.enemies;
+  if (!list) return false;
+  var i;
+  for (i = 0; i < list.length; i += 1) {
+    var e = list[i];
+    if (e && e.kind === 'burrower' && e.state === 'warn') return true;
+  }
+  return false;
+}
+
 function enemyOfKind(kind) {
   var list = rt.state && rt.state.enemies;
   if (!list) return false;
@@ -164,6 +175,7 @@ function scanTriggers() {
   if (rt.state.boss && rt.state.boss.hp > 0) offer('core-boss');
   if (rt.state.contract) offer('contract');
   if ((rt.state.wave || 1) >= 6 && (enemyOfKind('spitter') || acidHazardNear())) offer('acid');
+  if ((rt.state.wave || 1) >= 12 && (enemyOfKind('burrower') || burrowerWarnNear())) offer('burrower');
   if (rt.state.mutator) offer('mutator');
   var choices = rt.state.upgradeChoices || [];
   var ci;
