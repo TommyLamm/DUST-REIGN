@@ -214,6 +214,7 @@ export function drawBossHealthBar(ctx, boss) {
     else if (rawName === 'STORM SOVEREIGN') bName = '風暴領主';
 
     if (rawSub === 'ENRAGED') bSub = '暴怒';
+    else if (rawSub === 'ARMOR BREAK') bSub = '破甲輸出';
     else if (rawSub === 'APEX THREAT') bSub = '終極威脅';
     else if (rawSub === 'OVERDRIVE') bSub = '超載運轉';
     else if (rawSub === 'DOUBLE RAM') bSub = '雙重衝撞';
