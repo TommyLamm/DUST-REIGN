@@ -88,12 +88,7 @@ export var CAMPAIGN_STAGES = [
       star3: {
         all: [
           { type: 'hp_ratio', ratio: 0.8 },
-          {
-            any: [
-              { type: 'damage_taken_under', maxDamage: 20 },
-              { type: 'barrel_kill' }
-            ]
-          }
+          { type: 'barrel_kill' }
         ]
       }
     },
@@ -117,7 +112,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '收集 100 廢料',
       star2: '50 秒內提前達成',
-      star3: '未被流星命中且 HP ≥ 75%'
+      star3: '剩餘 HP ≥ 75% 且承受傷害 ≤ 25'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -148,8 +143,8 @@ export var CAMPAIGN_STAGES = [
     recommended: { rig: 'bulwark', weapon: 'vanguard' },
     starCriteria: {
       star1: '擊殺 2 隻精英 Brute',
-      star2: '剩餘時間 ≥ 30 秒',
-      star3: '重砲一擊同時命中兩隻目標'
+      star2: '60 秒內通關',
+      star3: '剩餘 HP ≥ 70%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -176,13 +171,13 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊敗 Titan 首領',
       star2: '90 秒內擊破',
-      star3: '達成 3 次 Just Dash 且 P3 無傷'
+      star3: '達成 3 次 Just Dash 且剩餘 HP ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
       star2: { type: 'time_under', seconds: 90 },
       star3: {
-        any: [
+        all: [
           { type: 'just_dashes', count: 3 },
           { type: 'hp_ratio', ratio: 0.8 }
         ]
@@ -210,7 +205,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊破 4 波敵潮',
       star2: '全程未踩入熔岩池',
-      star3: '剩餘 HP ≥ 70% 且全殲火砲蟲'
+      star3: '剩餘 HP ≥ 70%'
     },
     starRules: {
       star1: { type: 'waves_cleared', count: 4 },
@@ -236,8 +231,8 @@ export var CAMPAIGN_STAGES = [
     recommended: { rig: 'salvager', weapon: 'breacher' },
     starCriteria: {
       star1: '摧毀裝甲護送車',
-      star2: '車輛行駛過半前擊毀',
-      star3: '收集車輛掉落的全數物資箱'
+      star2: '36 秒內擊毀',
+      star3: '剩餘 HP ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -291,7 +286,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊沉 Dreadnought',
       star2: '100 秒內完成擊殺',
-      star3: '全程未受到水雷傷害'
+      star3: '剩餘 HP ≥ 70%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -351,12 +346,7 @@ export var CAMPAIGN_STAGES = [
     },
     starRules: {
       star1: { type: 'primary_clear' },
-      star2: {
-        any: [
-          { type: 'spire_chains', count: 3 },
-          { type: 'time_under', seconds: 70 }
-        ]
-      },
+      star2: { type: 'spire_chains', count: 3 },
       star3: {
         all: [
           { type: 'hp_ratio', ratio: 0.70 },
@@ -383,8 +373,8 @@ export var CAMPAIGN_STAGES = [
     recommended: { rig: 'bulwark', weapon: 'breacher' },
     starCriteria: {
       star1: '擊殺 3 隻潛地巨蟲',
-      star2: '破盾後 3 秒內擊斃守衛',
-      star3: '剩餘 HP ≥ 80% 且 P2 無傷'
+      star2: '75 秒內通關',
+      star3: '剩餘 HP ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -411,7 +401,7 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊敗 Storm Sovereign',
       star2: '110 秒內擊破神君',
-      star3: '神君護盾無敵期間無傷'
+      star3: '剩餘 HP ≥ 75%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
@@ -504,13 +494,13 @@ export var CAMPAIGN_STAGES = [
     starCriteria: {
       star1: '擊潰終極暴風神君',
       star2: '120 秒內完成擊殺',
-      star3: '神君狂暴階段無傷且達成 5 次 Just Dash'
+      star3: '達成 5 次 Just Dash 且剩餘 HP ≥ 80%'
     },
     starRules: {
       star1: { type: 'primary_clear' },
       star2: { type: 'time_under', seconds: 120 },
       star3: {
-        any: [
+        all: [
           { type: 'just_dashes', count: 5 },
           { type: 'hp_ratio', ratio: 0.80 }
         ]

@@ -373,10 +373,30 @@ export function run() {
     evalState.player.hp = 85;
     evalState.player.maxHp = 100;
     evalState.damageTakenInStage = 10;
+    evalState.barrelKill = true;
     var starsRes = evaluateStageStars(evalState, stage11);
     if (!starsRes.star1 || !starsRes.star2 || !starsRes.star3) {
       throw new Error('stage_1_1 star evaluation failed: ' + JSON.stringify(starsRes));
     }
+    evalState.barrelKill = false;
+    var starsNoBarrel = evaluateStageStars(evalState, stage11);
+    if (starsNoBarrel.star3) throw new Error('stage_1_1 star3 must require barrel_kill');
+    var stage14 = getCampaignStage('stage_1_4');
+    evalState.stats = { justDashes: 3 };
+    evalState.player.hp = 85;
+    var stars14 = evaluateStageStars(evalState, stage14);
+    if (!stars14.star3) throw new Error('stage_1_4 star3 should need just dashes AND hp');
+    evalState.stats.justDashes = 2;
+    if (evaluateStageStars(evalState, stage14).star3) throw new Error('stage_1_4 star3 must not pass on OR hp alone');
+    var stage32 = getCampaignStage('stage_3_2');
+    evalState.stats = { spireChains: 3 };
+    evalState.stageElapsed = 90;
+    evalState.empUsed = false;
+    evalState.player.hp = 80;
+    var stars32 = evaluateStageStars(evalState, stage32);
+    if (!stars32.star2) throw new Error('stage_3_2 star2 must accept spire_chains');
+    evalState.stats.spireChains = 0;
+    if (evaluateStageStars(evalState, stage32).star2) throw new Error('stage_3_2 star2 must not fall back to time_under');
   } finally {
     clearSeed();
     rt.state = saved;
