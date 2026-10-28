@@ -223,7 +223,7 @@ function ensureChargeLaneCrag(e, p, frame) {
   if (!rt.state || !e || !p) return;
   if (!rt.state.monolithCrags) rt.state.monolithCrags = [];
   var list = rt.state.monolithCrags;
-  // Lane bait on 28s CD when empty (was once/fight) — extreme kites starved of pillars.
+  // Lane bait on 28s CD when empty (was once/fight). #218: more pillars did not cut extreme tails.
   var alive = 0;
   var i;
   for (i = 0; i < list.length; i += 1) {
@@ -256,7 +256,9 @@ function ensureChargeLaneCrag(e, p, frame) {
 }
 
 function dreadAttackCd(e) {
-  // Late-fight denser charge cycles cut 280–480s kite tails without touching p50 (~60s) band.
+  // Late-fight denser charge cycles (fightT 100/180 → 1.75/1.45). Kept for mid-band pacing.
+  // ACCEPT BIMODAL (#218 verify): extreme≥280 stayed 14/36; tails lengthened (max 481→498).
+  // denser cycles + lane-bait CD help skilled kite, not break windows. Do not retry for slow-tail.
   // Does NOT change charge DR or chargeMaxDist.
   var t = e && e.fightT != null ? e.fightT : 0;
   if (t >= 180) return 1.45;
