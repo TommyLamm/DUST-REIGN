@@ -332,15 +332,17 @@ export function drawHud(ctx) {
     ctx.fillText('KEEP THE SIGNAL HOT', 20, 155);
   }
   if (p.overdrive > 0) {
+    var zhOd = isChinese();
     ctx.textAlign = 'left';
     ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = '#f0cf88';
-    ctx.fillText('OVERCLOCK ' + p.overdrive.toFixed(1) + 's', 20, 176);
+    // Locale bug fix: canvas fallback chrome was EN-only under zh (I18N-FREEZE allows).
+    ctx.fillText((zhOd ? '超頻 ' : 'OVERCLOCK ') + p.overdrive.toFixed(1) + 's', 20, 176);
     ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, 197, 148, 4);
     ctx.fillStyle = '#f0cf88'; ctx.fillRect(20, 197, 148 * p.overdrive / OVERDRIVE_DURATION, 4);
     ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = 'rgba(233,217,185,.75)';
-    ctx.fillText('DAMAGE +50% / COOLDOWN -38%', 20, 207);
+    ctx.fillText(zhOd ? '傷害 +50% / 冷卻 -38%' : 'DAMAGE +50% / COOLDOWN -38%', 20, 207);
   }
   // The page HUD shows wave progress under the wave pill; only fallback hosts get the canvas bar.
   if (!rt.ui.wave) {
