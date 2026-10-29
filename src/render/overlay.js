@@ -392,23 +392,31 @@ function drawLowHpVignette(ctx) {
   var w = rt.ui ? rt.ui.width : (rt.state ? rt.state.width : 960);
   var h = rt.ui ? rt.ui.height : (rt.state ? rt.state.height : 640);
   var now = rt.renderTime || 0;
-  var pulse = 0.35 + 0.25 * Math.sin(now * 7.5);
+  var pulse = 0.55 + 0.45 * Math.sin(now * 7.5);
   var hpRatio = p.hp / p.maxHp;
   var intensity = clamp((0.25 - hpRatio) / 0.25, 0, 1);
-  var alpha = clamp(pulse * (0.6 + 0.4 * intensity), 0.1, 0.75);
+  // Edge-only: keep center clear so mortar marks / crawlers stay readable.
+  var edgeAlpha = clamp(0.22 + intensity * 0.38 * pulse, 0.12, 0.62);
+  var inset = Math.max(28, Math.min(w, h) * 0.045);
 
   ctx.save();
-  var grad = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.35, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+  // Soft ring: transparent through most of the arena, red only near the frame.
+  var cx = w * 0.5;
+  var cy = h * 0.5;
+  var inner = Math.min(w, h) * 0.42;
+  var outer = Math.max(w, h) * 0.78;
+  var grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
   grad.addColorStop(0, 'rgba(255, 0, 20, 0)');
-  grad.addColorStop(0.7, 'rgba(180, 10, 15, ' + (alpha * 0.4).toFixed(3) + ')');
-  grad.addColorStop(1, 'rgba(120, 0, 10, ' + alpha.toFixed(3) + ')');
-
+  grad.addColorStop(0.72, 'rgba(180, 10, 15, 0)');
+  grad.addColorStop(0.9, 'rgba(160, 8, 14, ' + (edgeAlpha * 0.35).toFixed(3) + ')');
+  grad.addColorStop(1, 'rgba(120, 0, 10, ' + edgeAlpha.toFixed(3) + ')');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = 'rgba(255, 30, 40, ' + (alpha * 0.8).toFixed(3) + ')';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(1.5, 1.5, w - 3, h - 3);
+  // Thin pulsing frame — no world/terrain color multiply.
+  ctx.strokeStyle = 'rgba(255, 48, 56, ' + (edgeAlpha * 0.95).toFixed(3) + ')';
+  ctx.lineWidth = 2 + intensity * 2.5;
+  ctx.strokeRect(inset * 0.35, inset * 0.35, w - inset * 0.7, h - inset * 0.7);
 
   ctx.restore();
 }
