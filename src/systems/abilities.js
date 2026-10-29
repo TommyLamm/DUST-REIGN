@@ -503,24 +503,24 @@ export function triggerEmp() {
 
   AudioFX.emp();
   triggerHaptic([45, 30, 70, 20, 55]);
-  rt.state.shake = Math.max(rt.state.shake, 20);
-  // Stronger on-screen EMP punch (visual only — radius/damage/cost unchanged).
-  rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.55);
-  addCameraTrauma(0.28);
-  rt.state.banner = Math.max(rt.state.banner || 0, 1.35);
+  rt.state.shake = Math.max(rt.state.shake, 26);
+  // Stronger fullscreen EMP punch (visual only — radius/damage/cost unchanged).
+  rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.85);
+  addCameraTrauma(0.38);
+  rt.state.banner = Math.max(rt.state.banner || 0, 1.65);
   rt.state.bannerText = 'EMP DISCHARGE // FIELD CLEARED';
   setStatusText('EMP DISCHARGE // FIELD CLEARED');
   pushFxEvent('emp', empX, empY, { radius: empR });
-  pushFxEvent('burst', empX, empY, { preset: 'emp', scale: Math.max(0.9, empR / 120) });
+  pushFxEvent('burst', empX, empY, { preset: 'emp', scale: Math.max(1.15, empR / 100) });
 
-  // Lingering field disc + expanding shock lattice
+  // Lingering field disc + expanding shock lattice (longer readable pulse).
   rt.state.shockRings.push({
     x: empX,
     y: empY,
     r: 22,
     maxR: empR,
-    life: 0.95,
-    maxLife: 0.95,
+    life: 1.25,
+    maxLife: 1.25,
     color: '#5be7ff'
   });
   rt.state.shockRings.push({
@@ -528,46 +528,66 @@ export function triggerEmp() {
     y: empY,
     r: 14,
     maxR: empR * 0.82,
-    life: 0.75,
-    maxLife: 0.75,
+    life: 1.05,
+    maxLife: 1.05,
     color: '#ffffff'
   });
   rt.state.shockRings.push({
     x: empX,
     y: empY,
     r: 8,
-    maxR: empR * 1.2,
-    life: 0.55,
-    maxLife: 0.55,
+    maxR: empR * 1.35,
+    life: 0.85,
+    maxLife: 0.85,
     color: 'rgba(189, 244, 255, 0.95)'
   });
   rt.state.shockRings.push({
     x: empX,
     y: empY,
     r: empR * 0.35,
-    maxR: empR * 1.05,
-    life: 1.15,
-    maxLife: 1.15,
-    color: 'rgba(91, 231, 255, 0.55)'
+    maxR: empR * 1.2,
+    life: 1.45,
+    maxLife: 1.45,
+    color: 'rgba(91, 231, 255, 0.65)'
+  });
+  // Fullscreen wash ring — visual only, does not change empR damage radius.
+  rt.state.shockRings.push({
+    x: empX,
+    y: empY,
+    r: empR * 0.5,
+    maxR: Math.max(empR * 2.4, Math.min(boundW, boundH) * 0.55),
+    life: 0.7,
+    maxLife: 0.7,
+    color: 'rgba(91, 231, 255, 0.35)'
   });
 
   if (rt.state.opticalFlashes) {
     rt.state.opticalFlashes.push({
       x: empX,
       y: empY,
-      r: Math.max(28, empR * 0.22),
-      life: 0.45,
-      maxLife: 0.45,
+      r: Math.max(48, empR * 0.4),
+      life: 0.7,
+      maxLife: 0.7,
       color: '#bdf4ff',
       nx: 1,
       ny: 0
     });
+    rt.state.opticalFlashes.push({
+      x: empX,
+      y: empY,
+      r: Math.max(72, empR * 0.7),
+      life: 0.45,
+      maxLife: 0.45,
+      color: '#ffffff',
+      nx: 0,
+      ny: 1
+    });
   }
 
-  spawnParticles(empX, empY, '#5be7ff', 64, 340, 5.0);
-  spawnParticles(empX, empY, '#ffffff', 40, 260, 3.8);
-  spawnParticles(empX, empY, '#bdf4ff', 32, 200, 3.0);
-  spawnParticles(empX, empY, '#7adfff', 20, 160, 2.4);
+  spawnParticles(empX, empY, '#5be7ff', 84, 380, 5.4);
+  spawnParticles(empX, empY, '#ffffff', 52, 300, 4.2);
+  spawnParticles(empX, empY, '#bdf4ff', 40, 240, 3.4);
+  spawnParticles(empX, empY, '#7adfff', 28, 190, 2.8);
 
   for (var bi = rt.state.enemyBullets.length - 1; bi >= 0; bi -= 1) {
     var eb = rt.state.enemyBullets[bi];
