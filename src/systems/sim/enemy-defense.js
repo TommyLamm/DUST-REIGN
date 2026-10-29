@@ -196,6 +196,7 @@ export function filterEnemyDamage(e, amount, info) {
     var absorb = e.shieldHp < left ? e.shieldHp : left;
     e.shieldHp -= absorb;
     left -= absorb;
+    if (absorb > 0 && info) info._absorbed = (Number(info._absorbed) || 0) + absorb;
     if (e.shieldHp <= 0) {
       clearEnemyShields(e);
       if (rt.state) {

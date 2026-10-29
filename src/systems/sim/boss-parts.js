@@ -234,6 +234,9 @@ export function checkMultiPartBulletHit(enemy, bullet) {
     closestPart.hp = closestPart.maxHp || Math.round((enemy.maxHp || enemy.hp) * 0.22);
   }
   closestPart.hp -= partDmg;
+  if (rt.state && rt.state.stats && partDmg > 0) {
+    rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + partDmg;
+  }
   syncLegacyPartHp(enemy, closestPart);
   if (p) {
     p.hitmarkerTime = rt.renderTime || 0;

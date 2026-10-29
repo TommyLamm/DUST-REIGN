@@ -436,7 +436,7 @@ export function stepBullets(dt, frame) {
         cTarget.hp -= b.damage;
         if (rt.state.stats) {
           rt.state.stats.shotsHit += 1;
-          rt.state.stats.damageDealt += b.damage;
+          rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + (Number(b.damage) || 0);
         }
         spawnParticles(b.x, b.y, '#f5a623', 4, 80, 2);
         AudioFX.hit();
@@ -463,7 +463,7 @@ export function stepBullets(dt, frame) {
           bBarrel.hp -= b.damage;
           if (rt.state.stats) {
             rt.state.stats.shotsHit += 1;
-            rt.state.stats.damageDealt += b.damage;
+            rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + (Number(b.damage) || 0);
           }
           spawnParticles(b.x, b.y, '#ff8833', 5, 90, 2);
           AudioFX.hit();
