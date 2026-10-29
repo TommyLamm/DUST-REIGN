@@ -1735,8 +1735,8 @@ function warnRing(ctx, x, y, radius, remain, color, reduced) {
   var alpha = reduced ? 0.95 : (0.58 + (1 - remain) * 0.4);
   // Modal / upgrade dim washes center rings — boost stroke+fill (visual only).
   var uiDim = !!(rt.state && (rt.state.paused || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)));
-  var thickBoost = uiDim ? 1.55 : 1;
-  var alphaBoost = uiDim ? 1.4 : 1;
+  var thickBoost = uiDim ? 1.85 : 1;
+  var alphaBoost = uiDim ? 1.65 : 1;
   alpha = Math.min(1, alpha * alphaBoost);
   ctx.save();
   // Contrast backing dark rim (thicker — visual only)

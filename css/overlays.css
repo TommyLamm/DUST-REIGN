@@ -12,7 +12,7 @@
   padding: clamp(8px, 3cqh, 28px);
   /* Radial punch so center-screen mortar rings under the player stay readable. */
   background:
-    radial-gradient(ellipse 52% 48% at 50% 52%, rgba(10, 11, 9, 0.04) 0%, rgba(10, 11, 9, 0.28) 58%, rgba(10, 11, 9, 0.50) 100%);
+    radial-gradient(ellipse 60% 54% at 50% 52%, rgba(10, 11, 9, 0.00) 0%, rgba(10, 11, 9, 0.16) 55%, rgba(10, 11, 9, 0.40) 100%);
   backdrop-filter: blur(1px);
 }
 
@@ -34,7 +34,7 @@
   border: 1px solid var(--line-strong);
   border-left: 4px solid var(--rust);
   /* Translucent body — mortar impact under player center must read through. */
-  background: linear-gradient(135deg, rgba(36, 39, 31, 0.58), rgba(16, 17, 14, 0.64));
+  background: linear-gradient(135deg, rgba(36, 39, 31, 0.42), rgba(16, 17, 14, 0.48));
   box-shadow: 20px 20px 0 rgba(16, 17, 14, 0.35);
   clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
 }
