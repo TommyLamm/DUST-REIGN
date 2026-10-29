@@ -375,6 +375,13 @@ function emergeBurrower(e, frame, fireSpikes) {
     var hit = damagePlayer(dmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
     if (hit > 0) {
       p.invulnerable = 0.35;
+      if (!e.knockbackImmune) {
+        var bdx = e.x - p.x;
+        var bdy = e.y - p.y;
+        var bd = Math.hypot(bdx, bdy) || 1;
+        e.x += (bdx / bd) * 20;
+        e.y += (bdy / bd) * 20;
+      }
       AudioFX.hurt();
       triggerHaptic([40]);
       rt.state.shake = Math.max(rt.state.shake, 8);
