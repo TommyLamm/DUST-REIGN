@@ -666,63 +666,75 @@ export function drawArtilleryTelegraphs(ctx) {
     var remain = at.timer > 0 ? at.timer / maxT : 0;
     if (remain < 0) remain = 0;
     if (remain > 1) remain = 1;
-    var urgent = at.timer <= 0.2;
+    var progress = 1 - remain;
+    var urgent = at.timer <= 0.35;
     var isFlashWhite = view.reduced ? true : (Math.floor((rt.renderTime || 0) * 20) % 2 === 0);
     var flashColor = isFlashWhite ? '#ffffff' : '#ff0033';
+    // Early phase: bone/amber so sand + low-HP red cannot hide the mark.
+    var earlyRing = urgent ? flashColor : (isFlashWhite ? '#fff4d6' : '#ffb347');
     ctx.save();
 
-    // 1. 外圈深黑阻光底圈（5.4px 黑底）— contrast only
+    // 0. Soft outer pulse halo — readable from spawn, not only last frames
+    var haloR = at.r + 6 + Math.sin((rt.renderTime || 0) * 9 + i) * 2.5;
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, haloR, 0, TAU);
+    ctx.strokeStyle = 'rgba(255, 210, 120, ' + (0.28 + progress * 0.35).toFixed(3) + ')';
+    ctx.lineWidth = (urgent ? 3.2 : 2.4) + (view.contrast ? 1.2 : 0);
+    ctx.stroke();
+
+    // 1. Outer dark contrast halo
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
     ctx.strokeStyle = DARK_HALO_BULLET;
-    ctx.lineWidth = (urgent ? 6.0 : 5.4) + (view.contrast ? 1.6 : 0);
+    ctx.lineWidth = (urgent ? 7.0 : 6.2) + (view.contrast ? 1.6 : 0);
     ctx.stroke();
 
-    // 2. 外圈黑白/紅白反相斑馬警戒圈（3.0px 白/紅斑馬虛線 [7, 6]）
+    // 2. Zebra warning ring — bright from first frame
     ctx.beginPath();
     ctx.arc(at.x, at.y, at.r, 0, TAU);
     ctx.setLineDash(ZEBRA_DASH);
-    ctx.strokeStyle = urgent ? flashColor : 'rgba(255, 70, 90, 0.98)';
-    ctx.lineWidth = (urgent ? 3.4 : 3.0) + (view.contrast ? 1.2 : 0);
+    ctx.strokeStyle = earlyRing;
+    ctx.lineWidth = (urgent ? 4.0 : 3.4) + (view.contrast ? 1.2 : 0);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // 3. 倒數收縮圓：半徑從 at.r 縮向 0，透明度嚴格維持在 alpha <= 0.22（透光不遮怪）
-    var fillR = Math.max(3, at.r * remain);
-    var fillAlpha = (0.08 + (1 - remain) * 0.14).toFixed(3);
+    // 3. Countdown fill — brighter early so impact site is obvious on sand
+    var fillR = Math.max(4, at.r * Math.max(0.22, remain));
+    var fillAlpha = (0.18 + progress * 0.22).toFixed(3);
     ctx.beginPath();
     ctx.arc(at.x, at.y, fillR, 0, TAU);
-    ctx.fillStyle = 'rgba(235, 60, 36, ' + fillAlpha + ')';
+    ctx.fillStyle = 'rgba(255, 120, 48, ' + fillAlpha + ')';
     ctx.fill();
 
-    // 4. Crosshair dark contrast backing (4.2px)
+    // 4. Crosshair dark backing
+    var arm = urgent ? 14 : 12;
     ctx.beginPath();
-    ctx.moveTo(at.x - 10, at.y);
-    ctx.lineTo(at.x + 10, at.y);
-    ctx.moveTo(at.x, at.y - 10);
-    ctx.lineTo(at.x, at.y + 10);
+    ctx.moveTo(at.x - arm, at.y);
+    ctx.lineTo(at.x + arm, at.y);
+    ctx.moveTo(at.x, at.y - arm);
+    ctx.lineTo(at.x, at.y + arm);
     ctx.strokeStyle = 'rgba(4, 3, 6, 0.95)';
-    ctx.lineWidth = 4.2;
+    ctx.lineWidth = 5.0;
     ctx.stroke();
 
-    // 5. Crosshair targeting line (pure white / 20Hz flash)
+    // 5. Crosshair targeting line
     ctx.beginPath();
-    ctx.moveTo(at.x - 9, at.y);
-    ctx.lineTo(at.x + 9, at.y);
-    ctx.moveTo(at.x, at.y - 9);
-    ctx.lineTo(at.x, at.y + 9);
+    ctx.moveTo(at.x - (arm - 1), at.y);
+    ctx.lineTo(at.x + (arm - 1), at.y);
+    ctx.moveTo(at.x, at.y - (arm - 1));
+    ctx.lineTo(at.x, at.y + (arm - 1));
     ctx.strokeStyle = urgent ? flashColor : PURE_WHITE;
-    ctx.lineWidth = view.contrast ? 2.4 : 1.8;
+    ctx.lineWidth = view.contrast ? 2.8 : 2.2;
     ctx.stroke();
 
     // 6. Bullseye core
     ctx.beginPath();
-    ctx.arc(at.x, at.y, 4.4, 0, TAU);
+    ctx.arc(at.x, at.y, 5.2, 0, TAU);
     ctx.fillStyle = DARK_HALO_BULLET;
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(at.x, at.y, 3.0, 0, TAU);
-    ctx.fillStyle = urgent ? flashColor : PURE_WHITE;
+    ctx.arc(at.x, at.y, 3.4, 0, TAU);
+    ctx.fillStyle = urgent ? flashColor : '#ffe9a8';
     ctx.fill();
 
     ctx.restore();
