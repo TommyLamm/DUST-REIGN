@@ -15,7 +15,7 @@ import { assignRoute, chooseInterlude, chooseRepair, confirmExtract, confirmPush
 import { stepHazards } from '../../systems/sim/hazards.js';
 import { stepOrbs } from '../../systems/sim/orbs.js';
 import { pacingSpawnRate, wolfPackWindowsFor } from '../../systems/sim/timers-wave.js';
-import { EDGE_BAND, EDGE_PIN, edgeAwareSpawnMargin, edgePressure } from '../../systems/sim/world-edge.js';
+import { EDGE_BAND, EDGE_PIN, biasSpawnAngleAwayFromRim, edgeAwareSpawnMargin, edgePressure } from '../../systems/sim/world-edge.js';
 import { camera, initCamera, updateCamera } from '../../core/camera.js';
 
 function near(actual, expected) {
@@ -390,6 +390,14 @@ export function run() {
       throw new Error('center spawn margin should stay at base');
     }
     if (!(EDGE_BAND > EDGE_PIN)) throw new Error('EDGE_BAND must exceed EDGE_PIN');
+
+    // Rim spawn bias: wall-side angles flip into the open half-plane.
+    var northEdge = edgePressure(480, EDGE_PIN, 16, 960, 640);
+    var biased = biasSpawnAngleAwayFromRim(-Math.PI / 2, northEdge); // due north (into rim)
+    var intoOpen = Math.cos(biased) * northEdge.nx + Math.sin(biased) * northEdge.ny;
+    if (!(intoOpen >= 0.2)) throw new Error('rim spawn bias should open away from hatch');
+    var freeAng = biasSpawnAngleAwayFromRim(1.2, centerFree);
+    if (Math.abs(freeAng - 1.2) > 1e-9) throw new Error('center spawn angle must stay untouched');
 
     // Soft camera clamp: north rim must keep playable ground under the view.
     initCamera(camera, 3520, 2640, 960, 640);

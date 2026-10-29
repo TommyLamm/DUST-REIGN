@@ -280,7 +280,9 @@ export function stepEnemies(dt, frame) {
     // Keep swarm bodies from wedging the hull against the hatch stripe.
     if (playerEdge.pressed && !isCulled && !e.burrowed && !e.isBoss && e.kind !== 'mine' && e.kind !== 'stormTower') {
       var nearPin = touchD2 <= (touchR + 36) * (touchR + 36);
-      if (nearPin) shoveEnemyOffEdge(e, playerEdge, 95 * dt, boundW, boundH, false);
+      // Wolf-pack rim pincer relief: shove harder off the hatch (spacing only, no DPS retune).
+      var shoveAmt = (rt.state.wolfPackSurge ? 130 : 95) * dt;
+      if (nearPin) shoveEnemyOffEdge(e, playerEdge, shoveAmt, boundW, boundH, false);
     }
     // Melee proximity flare (VFX only — no damage/timing retune).
     e.meleeProximityWarn = 0;
