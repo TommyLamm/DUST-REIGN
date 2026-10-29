@@ -46,36 +46,6 @@ function fillDeathNoise(ctx) {
     ctx.fillStyle = i % 3 === 0 ? '#ff6a3d' : '#e8e0c6';
     ctx.fillRect(x, y, i % 4 === 0 ? 3 : 2, 1);
   }
-  // 4. Storm Core Indicators (青金色箭頭附 CORE 標記)
-  var orbs = rt.state.orbs;
-  if (orbs && orbs.length > 0) {
-    for (var oi = 0; oi < orbs.length; oi += 1) {
-      var scOrb = orbs[oi];
-      if (scOrb && scOrb.kind === 'storm_core') {
-        var scRes = computeEdgeIntersection(scOrb.x, scOrb.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
-        if (scRes) {
-          var scDistM = Math.round(Math.hypot(scOrb.x - p.x, scOrb.y - p.y) / 16);
-          ctx.save();
-          ctx.translate(scRes.x, scRes.y);
-          ctx.rotate(scRes.angle);
-
-          ctx.fillStyle = '#00f3ff';
-          ctx.beginPath();
-          ctx.moveTo(8, 0); ctx.lineTo(-3, -5); ctx.lineTo(-1, 0); ctx.lineTo(-3, 5); ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-
-          ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
-          ctx.fillStyle = '#00f3ff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          var scxOffset = clamp(scRes.x - Math.cos(scRes.angle) * 14, 32, viewW - 32);
-          var scyOffset = clamp(scRes.y - Math.sin(scRes.angle) * 14, 18, viewH - 18);
-          ctx.fillText('CORE ' + scDistM + 'm', scxOffset, scyOffset);
-        }
-      }
-    }
-  }
 
   ctx.restore();
 }
