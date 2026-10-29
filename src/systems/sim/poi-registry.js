@@ -458,7 +458,7 @@ export var POI_REGISTRY = {
             poi.hp -= spB.damage || 25;
             spB.life = 0;
             poi.capacitors = Math.max(0, Math.ceil(poi.hp / 80));
-            spawnParticles(spB.x, spB.y, '#7950f2', 5, 110, 2);
+            spawnParticles(spB.x, spB.y, '#00f3ff', 5, 110, 2);
 
             if (poi.hp <= 0) {
               poi.hp = 0;
@@ -473,7 +473,7 @@ export var POI_REGISTRY = {
                 se.shield = 0;
               }
               if (rt.state.shockRings) {
-                rt.state.shockRings.push({ x: poi.x, y: poi.y, r: 10, maxR: 350, life: 0.6, maxLife: 0.6, color: '#7950f2' });
+                rt.state.shockRings.push({ x: poi.x, y: poi.y, r: 10, maxR: 350, life: 0.6, maxLife: 0.6, color: '#00f3ff' });
               }
               if (rt.state.lightningArcs) {
                 for (var lai = 0; lai < 3; lai += 1) {
@@ -484,7 +484,7 @@ export var POI_REGISTRY = {
                     y1: poi.y + (rng('visual') - 0.5) * 500,
                     life: 0.35,
                     maxLife: 0.35,
-                    color: '#e599f7'
+                    color: '#e8fbff'
                   });
                 }
               }
@@ -504,12 +504,24 @@ export var POI_REGISTRY = {
       var pr = poi.r || 80;
       var spireDone = poi.status === 'completed';
 
-      // Ring
+      // Ring (cyan/white dashed telegraph — distinct from violet melee warn)
       ctx.beginPath();
       ctx.arc(px, py, pr, 0, TAU);
-      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : 'rgba(121, 80, 242, 0.8)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : 'rgba(0, 243, 255, 0.92)';
+      ctx.lineWidth = 2.4;
+      if (!spireDone) ctx.setLineDash([6, 5]);
       ctx.stroke();
+      ctx.setLineDash([]);
+      // Soft white outer halo for contrast on sand
+      if (!spireDone) {
+        ctx.beginPath();
+        ctx.arc(px, py, pr + 3, 0, TAU);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 7]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
 
       // Triangular Base
       ctx.save();
@@ -525,7 +537,7 @@ export var POI_REGISTRY = {
       ctx.closePath();
       ctx.fillStyle = spireDone ? '#212529' : '#343a40';
       ctx.fill();
-      ctx.strokeStyle = spireDone ? '#495057' : '#7950f2';
+      ctx.strokeStyle = spireDone ? '#495057' : '#00f3ff';
       ctx.lineWidth = 3;
       ctx.stroke();
 
@@ -537,7 +549,7 @@ export var POI_REGISTRY = {
           var cy = Math.sin(cAng) * 28;
           ctx.beginPath();
           ctx.arc(cx, cy, 7 * pulse, 0, TAU);
-          ctx.fillStyle = '#e599f7';
+          ctx.fillStyle = '#e8fbff';
           ctx.fill();
         }
       }
@@ -545,13 +557,13 @@ export var POI_REGISTRY = {
       // Central Spire Core
       ctx.beginPath();
       ctx.arc(0, 0, 10, 0, TAU);
-      ctx.fillStyle = spireDone ? '#495057' : '#7950f2';
+      ctx.fillStyle = spireDone ? '#495057' : '#00f3ff';
       ctx.fill();
       ctx.restore();
     },
     getLight: function (poi) {
       if (poi.status !== 'completed') {
-        return { radius: 130, color: '#7950f2', intensity: 0.7 };
+        return { radius: 130, color: '#00f3ff', intensity: 0.7 };
       }
       return null;
     }
