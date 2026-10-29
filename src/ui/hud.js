@@ -151,10 +151,14 @@ function syncCooldowns() {
   var p = rt.state.player;
   if (!p) return;
   var energy = p.energy || 0;
-  var ready = energy >= 50;
+  var empCost = (typeof p.empCost === 'number') ? p.empCost : 50;
+  var ready = energy >= empCost;
   if (rt.ui.meterEnergy && rt.ui.meterEnergy.classList) rt.ui.meterEnergy.classList.toggle('is-ready', ready);
   var badge = rt.ui.empReady || byId('empReady');
-  if (badge) badge.hidden = !ready;
+  if (badge) {
+    badge.hidden = !ready;
+    if (badge.classList) badge.classList.toggle('is-ready', ready);
+  }
   if (rt.ui && badge) rt.ui.empReady = badge;
 
   var tac = p.tacticalSlot;
@@ -617,9 +621,15 @@ export function tickHudPresentation() {
   syncQualityTier(stage);
 }
 
-export function setStatusText(message) {
+export function setStatusText(message, holdSeconds) {
   if (!rt.ui || !rt.ui.statusText) return;
   rt.ui.statusText.textContent = tStatus(message);
+  if (!rt.state) return;
+  if (typeof holdSeconds === 'number' && holdSeconds > 0) {
+    rt.state.statusHold = holdSeconds;
+  } else {
+    rt.state.statusHold = 0;
+  }
 }
 
 export function logEvent(message) {
@@ -748,7 +758,6 @@ export function updateDomUi() {
       xpParent.setAttribute('aria-valuemax', xpNextStr);
     }
   }
-  var empCost = (typeof rt.state.player.empCost === 'number') ? rt.state.player.empCost : 50;
   var batteryCap = (typeof rt.state.player.batteryMax === 'number') ? rt.state.player.batteryMax : (rt.state.player.maxEnergy || 100);
   var energyVal = Math.floor(rt.state.player.energy || 0);
   var energyStr = String(energyVal);
@@ -841,7 +850,16 @@ export function updateDomUi() {
     else if (rt.state.paused) rt.ui.runState.textContent = zh ? '暫停' : 'PAUSED';
     else rt.ui.runState.textContent = zh ? '即時' : 'LIVE';
   }
-  if (rt.ui.statusText && rt.state.over) rt.ui.statusText.textContent = zh ? '訊號中斷 — 按 R 重新部署' : 'SIGNAL LOST — PRESS R TO REDEPLOY';
+  if (rt.ui.statusText && rt.state.over) {
+    rt.ui.statusText.textContent = zh ? '訊號中斷 — 按 R 重新部署' : 'SIGNAL LOST — PRESS R TO REDEPLOY';
+    rt.state.statusHold = 0;
+  } else if (rt.state.statusHold > 0) {
+    var holdDt = rt.renderDt || 0;
+    rt.state.statusHold = Math.max(0, rt.state.statusHold - holdDt);
+    if (rt.state.statusHold === 0 && rt.ui.statusText && !rt.state.paused && !rt.state.interlude) {
+      rt.ui.statusText.textContent = tStatus('SIGNAL LIVE — KEEP MOVING');
+    }
+  }
 }
 
 if (typeof onLanguageChange === 'function') {
