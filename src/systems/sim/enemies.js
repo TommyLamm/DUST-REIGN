@@ -1,3 +1,4 @@
+  if (p) p.contactLock = Math.max(0, (p.contactLock || 0) - dt);
 import { AudioFX } from '../../audio/audio-fx.js';
 import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
@@ -289,7 +290,7 @@ export function stepEnemies(dt, frame) {
         e.meleeProximityWarn = Math.max(0.12, 1 - warnDist / warnR);
       }
     }
-    if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
+    if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0 && !(p.contactLock > 0)) {
       var contactDmg = e.damage;
       if (e.kind === 'burrower') {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.25));
@@ -328,9 +329,11 @@ export function stepEnemies(dt, frame) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.55));
       }
       var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
-      e.touchCooldown = firstTitan ? 1.15 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier || e._burrowTeach) ? 1.05 : (e.kind === 'dreadnought' ? 1.05 : 0.85));
+      // Slightly longer per-target touch CD + short player-side contact lock (fairness vs stack melt; no DPS retune).
+      e.touchCooldown = firstTitan ? 1.25 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier || e._burrowTeach) ? 1.15 : (e.kind === 'dreadnought' ? 1.15 : 1.05));
       if (touched > 0) {
         p.invulnerable = playerEdge.pressed ? 1.05 : (e.kind === 'dreadnought' ? 1.0 : 0.7);
+        p.contactLock = Math.max(p.contactLock || 0, playerEdge.pressed ? 0.55 : 0.42);
         if (playerEdge.pressed) {
           shoveEnemyOffEdge(e, playerEdge, 34, boundW, boundH, true);
           p.x = clamp(p.x + playerEdge.nx * 16, p.r, boundW - p.r);
