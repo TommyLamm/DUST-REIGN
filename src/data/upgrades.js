@@ -192,6 +192,7 @@ export var UPGRADES = [
     apply: function (s) {
       var p = s.player;
       p.batteryMax = (p.batteryMax || 100) + 25;
+      p.maxEnergy = p.batteryMax;
       p.batteryRegen = (p.batteryRegen || 2) + 0.5;
     }
   },
