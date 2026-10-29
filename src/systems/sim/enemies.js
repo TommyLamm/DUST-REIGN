@@ -342,7 +342,7 @@ export function stepEnemies(dt, frame) {
           e.y -= (tdy / push) * 28;
           e.x = clamp(e.x, e.r || 12, boundW - (e.r || 12));
           e.y = clamp(e.y, e.r || 12, boundH - (e.r || 12));
-          spawnParticles(e.x, e.y, '#7ef9ff', 6, 120, 2.2);
+          spawnParticles(e.x, e.y, '#d889ff', 6, 120, 2.2);
         }
         AudioFX.hurt();
         triggerHaptic([45]);
