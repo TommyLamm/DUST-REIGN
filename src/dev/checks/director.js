@@ -5,7 +5,7 @@ import { getDailyRule } from '../../data/daily.js';
 import { routeById } from '../../data/routes.js';
 import { noteContractEvent } from '../../systems/contracts.js';
 import { designScales, evaluateStageStars, evaluateStarCondition, onBossDefeated, onWaveStart, planWave } from '../../systems/director.js';
-import { computeThreatTier, triggerGameOver, wavePressureSubtitle } from '../../systems/flow.js';
+import { beginRun, computeThreatTier, triggerGameOver, wavePressureSubtitle } from '../../systems/flow.js';
 import { getCampaignStage } from '../../data/campaign-stages.js';
 import { getSectorOfStage, getSectorReqStars, getStageChain } from '../../core/meta-store.js';
 import { spawnCrate } from '../../systems/drops.js';
@@ -325,6 +325,33 @@ export function run() {
     for (var di = 0; di < 20; di += 1) update(0.05);
     if (stuck.deathSequenceTimer !== 0) throw new Error('deathSequenceTimer did not drain under former pause');
     if (rt.ui.gameOver.hidden !== false) throw new Error('results card stayed hidden after death sequence');
+
+    // Regression: redeploy/beginRun must snap hull+camera to world spawn, not viewport half.
+    var redeployState = fresh();
+    redeployState.width = 3520;
+    redeployState.height = 2640;
+    redeployState.player.x = 100;
+    redeployState.player.y = 100;
+    rt.state = redeployState;
+    rt.ui = rt.ui || {};
+    rt.ui.width = 960;
+    rt.ui.height = 640;
+    rt.ui.startScreen = { hidden: false };
+    rt.ui.gameOver = { hidden: true };
+    rt.ui.overlay = { hidden: true };
+    rt.ui.pauseModal = { hidden: true };
+    rt.ui.canvas = { focus: function () {} };
+    rt.camera = camera;
+    initCamera(camera, 3520, 2640, 960, 640);
+    camera.x = 200; camera.y = 200;
+    beginRun();
+    if (Math.abs(rt.state.player.x - 1760) > 1 || Math.abs(rt.state.player.y - 1320) > 1) {
+      throw new Error('beginRun did not snap player to SPAWN_CENTER, got ' + rt.state.player.x + ',' + rt.state.player.y);
+    }
+    if (Math.abs(camera.x - 1760) > 1 || Math.abs(camera.y - 1320) > 1) {
+      throw new Error('beginRun did not snap camera to SPAWN_CENTER, got ' + camera.x + ',' + camera.y);
+    }
+    if (rt.ui.startScreen.hidden !== true) throw new Error("beginRun left startScreen visible");
 
     var immune = fresh();
     immune.player.invulnerable = 5;

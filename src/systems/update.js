@@ -52,12 +52,13 @@ export function update(dt) {
     if (rt.state.paused) rt.state.paused = false;
     if (rt.state.deathSequenceTimer > 0) {
       rt.state.deathSequenceTimer = Math.max(0, rt.state.deathSequenceTimer - dt);
-      if (rt.state.deathSequenceTimer === 0) {
-        if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = false;
-        if (rt.ui && rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.isNewRecord;
-        if (rt.ui && rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = false;
-        updateDomUi();
-      }
+    }
+    // Always reveal results once the timer is done (or never armed) — avoids a stuck death frame.
+    if (!(rt.state.deathSequenceTimer > 0)) {
+      if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = false;
+      if (rt.ui && rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.isNewRecord;
+      if (rt.ui && rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = false;
+      updateDomUi();
     }
     return;
   }
