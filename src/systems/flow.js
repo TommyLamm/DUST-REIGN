@@ -172,6 +172,8 @@ function resetRunCombatStats(state) {
     barrelChainMax: 0,
     fusionsUnlocked: 0
   };
+  state._accVolleyHit = Object.create(null);
+  state._accVolleySeq = 0;
 }
 
 
