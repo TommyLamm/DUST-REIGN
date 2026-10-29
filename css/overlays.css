@@ -10,8 +10,8 @@
   place-items: center;
   overflow: hidden;
   padding: clamp(8px, 3cqh, 28px);
-  background: rgba(10, 11, 9, 0.76);
-  backdrop-filter: blur(3px);
+  background: rgba(10, 11, 9, 0.52);
+  backdrop-filter: blur(1.5px);
 }
 
 .overlay::before {
