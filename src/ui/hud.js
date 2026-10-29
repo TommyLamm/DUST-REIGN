@@ -893,7 +893,8 @@ export function updateDomUi() {
     var stats = rt.state.stats;
     var rank = rt.state.evalRank || calculateCombatRank(rt.state.wave, rt.state.score, stats);
     rt.state.evalRank = rank;
-    var acc = (stats.shotsFired > 0 ? (stats.shotsHit / stats.shotsFired) : 0);
+    var fired = Math.max(Number(stats.shotsFired) || 0, Number(stats.shotsHit) || 0);
+    var acc = (fired > 0 ? ((Number(stats.shotsHit) || 0) / fired) : 0);
     syncTelemetry(acc, stats);
     syncSlam();
 
