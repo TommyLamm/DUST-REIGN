@@ -228,6 +228,13 @@ function finishPick(index) {
   rt.state.paused = false;
   rt.state.banishPicking = false;
   clearResidualCombatInput();
+  var p = rt.state.player;
+  if (p) {
+    // Brief post-unpause contact grace so closing upgrade/pause into a wolf-pack is not instant death.
+    p.invulnerable = Math.max(p.invulnerable || 0, 0.85);
+    p.contactLock = Math.max(p.contactLock || 0, 0.95);
+    p.postUnpauseGrace = 0.95;
+  }
   if (rt.ui && rt.ui.canvas && typeof rt.ui.canvas.focus === 'function') rt.ui.canvas.focus();
   if (rt.ui && rt.ui.overlay) presentUpgradePick(index);
 }

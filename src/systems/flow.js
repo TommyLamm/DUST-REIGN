@@ -269,7 +269,14 @@ export function beginRun() {
 
 export function togglePause() {
   if (!rt.state || rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length) || (rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden)) return;
+  var wasPaused = !!rt.state.paused;
   rt.state.paused = !rt.state.paused;
+  if (wasPaused && !rt.state.paused && rt.state.player) {
+    var p = rt.state.player;
+    p.invulnerable = Math.max(p.invulnerable || 0, 0.85);
+    p.contactLock = Math.max(p.contactLock || 0, 0.95);
+    p.postUnpauseGrace = 0.95;
+  }
   if (rt.ui) {
     if (rt.ui.runState) rt.ui.runState.textContent = rt.state.paused ? 'PAUSED' : 'LIVE';
     setStatusText(rt.state.paused ? 'SIGNAL PAUSED — PRESS P OR ESC TO RESUME' : 'SIGNAL LIVE — KEEP MOVING');
