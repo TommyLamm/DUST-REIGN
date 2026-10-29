@@ -53,6 +53,12 @@ export function update(dt) {
     if (rt.state.deathSequenceTimer > 0) {
       rt.state.deathSequenceTimer = Math.max(0, rt.state.deathSequenceTimer - dt);
     }
+    // Wall-clock failsafe: draw throws must not leave the result card hidden forever.
+    var revealAt = rt.state.deathRevealAtMs || 0;
+    if (revealAt > 0) {
+      var nowR = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      if (nowR >= revealAt) rt.state.deathSequenceTimer = 0;
+    }
     // Always reveal results once the timer is done (or never armed) — avoids a stuck death frame.
     if (!(rt.state.deathSequenceTimer > 0)) {
       if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = false;

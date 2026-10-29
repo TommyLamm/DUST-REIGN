@@ -188,10 +188,24 @@ function recoverCombatView() {
 export function healStaleLive() {
   if (!rt.state || !rt.ui) return false;
   var onStart = !!(rt.ui.startScreen && !rt.ui.startScreen.hidden);
-  if (onStart || rt.state.over) {
+  if (onStart) {
     recoverCombatView();
     if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eK0) {}
     return false;
+  }
+  if (rt.state.over) {
+    // Storm / draw-throw death freeze: always surface the result card.
+    rt.state.paused = false;
+    rt.state.deathSequenceTimer = 0;
+    if (rt.ui.overlay) rt.ui.overlay.hidden = true;
+    if (rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
+    if (rt.ui.gameOver) rt.ui.gameOver.hidden = false;
+    if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.isNewRecord;
+    if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = false;
+    recoverCombatView();
+    if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eK0b) {}
+    try { updateDomUi(); } catch (eUi0) {}
+    return true;
   }
   // Desynced start flag / leftover upgrade gate can freeze score+energy and kill pause.
   if (rt.ui.startScreen) rt.ui.startScreen.hidden = true;
@@ -520,6 +534,7 @@ export function triggerGameOver(options) {
   rt.state.over = true;
   // Arm reveal timer before side effects so a throw cannot leave over without a timer.
   rt.state.deathSequenceTimer = 0.55;
+  rt.state.deathRevealAtMs = ((typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now()) + 1200;
   // Level-up / pause must not freeze the death sequence: upgrade pick sets paused=true
   // mid-frame, which would otherwise stall deathSequenceTimer and ignore R forever.
   rt.state.paused = false;

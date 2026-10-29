@@ -83,7 +83,9 @@ function frame(timestamp) {
     }
   } catch (err) {
     try { if (typeof console !== "undefined" && console.warn) console.warn("[DUST-REIGN] frame error", err); } catch (e1) {}
-    rt.lastTime = 0;
+    // Keep lastTime advancing so deathSequenceTimer can finish even if draw throws every frame.
+    if (timestamp) rt.lastTime = timestamp;
+    else rt.lastTime = 0;
   }
 }
 
@@ -119,9 +121,16 @@ function init(options) {
   draw();
   rt.raf = window.requestAnimationFrame(frame);
 
+  var visibilityAutoPaused = false;
   var onVisibilityChange = function () {
     if (document.hidden) {
-      pause();
+      // Silent auto-pause only when LIVE (not already paused / dead).
+      if (rt.state && !rt.state.over && !rt.state.paused) {
+        visibilityAutoPaused = true;
+        pause();
+      } else {
+        visibilityAutoPaused = false;
+      }
       return;
     }
     // Browser may drop/zero the canvas while backgrounded; rebuild size + ground and redraw.
@@ -129,6 +138,26 @@ function init(options) {
     try { invalidateTerrainPatterns(); } catch (e1) {}
     rt.lastTime = 0;
     try { draw(); } catch (e2) {}
+    if (rt.state && rt.state.over) {
+      // Death hard-freeze: force result card without needing R / full reload.
+      rt.state.paused = false;
+      rt.state.deathSequenceTimer = 0;
+      if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = false;
+      if (rt.ui && rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.isNewRecord;
+      if (rt.ui && rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = false;
+      try { updateDomUi(); } catch (eOver) {}
+    } else if (visibilityAutoPaused) {
+      visibilityAutoPaused = false;
+      try { resume(); } catch (eRes) {}
+    } else if (rt.state && rt.state.paused) {
+      // Second-tab silent pause left paused=true with no pause modal — return to LIVE.
+      var modal = rt.ui && rt.ui.pauseModal;
+      var upgrading = rt.state.upgradeChoices && rt.state.upgradeChoices.length;
+      var modalOpen = modal && !modal.hidden;
+      if (!upgrading && !modalOpen) {
+        try { resume(); } catch (eRes2) {}
+      }
+    }
     // Multi-tab unclean return: RAF or LIVE chrome can be wedged until hard reload.
     try { if (typeof healStaleLive === "function") healStaleLive(); } catch (e3) {}
     try { kickFrame(); } catch (e4) {}
