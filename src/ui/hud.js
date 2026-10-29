@@ -738,7 +738,15 @@ function syncRunEyebrow() {
   if (!el) return;
   var meta = readMeta();
   var completed = (meta && meta.stats && meta.stats.runs) || 0;
-  var display = (rt.state && rt.state.over && rt.state.metaAccounted) ? Math.max(1, completed) : Math.max(1, completed + 1);
+  var display;
+  if (rt.state && (rt.state.runAttemptNumber | 0) > 0 && (!rt.state.over || rt.state.phantomRun || !rt.state.metaAccounted)) {
+    // Keep the live attempt number through phantom GO so the counter does not flicker backward.
+    display = Math.max(1, rt.state.runAttemptNumber | 0);
+  } else if (rt.state && rt.state.over && rt.state.metaAccounted) {
+    display = Math.max(1, completed);
+  } else {
+    display = Math.max(1, completed + 1);
+  }
   var pad = String(display).padStart(3, '0');
   el.setAttribute('data-run', String(display));
   var zh = isChinese();
