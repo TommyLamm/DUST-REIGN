@@ -964,32 +964,51 @@ export function drawOffscreenChevrons(ctx) {
     }
   }
 
-  // 2. Key POI Indicators (POI 綠色箭頭) - Priority P1
+  // 2. Key POI Indicators (SPIRE threat chevrons) - Priority P1
   var spires = rt.state.spires;
   if (spires && spires.length > 0) {
+    var lowHull = p && p.maxHp > 0 && (p.hp / p.maxHp) <= 0.35;
     for (var si = 0; si < spires.length; si += 1) {
       var sp = spires[si];
       var sRes = computeEdgeIntersection(sp.x, sp.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
       if (sRes) {
-        var sDistM = Math.round(Math.hypot(sp.x - p.x, sp.y - p.y) / 16);
+        var sDistPx = Math.hypot(sp.x - p.x, sp.y - p.y);
+        var sDistM = Math.round(sDistPx / 16);
+        var resonating = (sp.resonanceTimer || 0) > 0;
+        var hot = resonating || lowHull || sDistPx < 720;
+        var col = hot ? '#ffb020' : '#00e5a3';
+        var scale = hot ? 1.45 : 1;
         ctx.save();
         ctx.translate(sRes.x, sRes.y);
         ctx.rotate(sRes.angle);
-
-        // 綠色箭頭
-        ctx.fillStyle = '#00e5a3';
+        ctx.scale(scale, scale);
+        // Double chevron when dangerous so direction still reads at low HP / haze.
+        ctx.fillStyle = col;
         ctx.beginPath();
-        ctx.moveTo(8, 0); ctx.lineTo(-3, -5.5); ctx.lineTo(-1, 0); ctx.lineTo(-3, 5.5); ctx.closePath();
+        ctx.moveTo(9, 0); ctx.lineTo(-4, -6.5); ctx.lineTo(-1.5, 0); ctx.lineTo(-4, 6.5); ctx.closePath();
         ctx.fill();
+        if (hot) {
+          ctx.beginPath();
+          ctx.moveTo(16, 0); ctx.lineTo(3, -6.5); ctx.lineTo(5.5, 0); ctx.lineTo(3, 6.5); ctx.closePath();
+          ctx.fill();
+        }
         ctx.restore();
 
-        ctx.font = '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
-        ctx.fillStyle = '#00e5a3';
+        ctx.font = hot ? '800 10px ui-monospace, SFMono-Regular, Consolas, monospace' : '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+        ctx.fillStyle = col;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * 14, 32, viewW - 32);
-        var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * 14, 18, viewH - 18);
-        ctx.fillText('SPIRE ' + sDistM + 'm', sxOffset, syOffset);
+        var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * (hot ? 20 : 14), 36, viewW - 36);
+        var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * (hot ? 20 : 14), 18, viewH - 18);
+        var label = (resonating ? 'SPIRE!' : 'SPIRE') + ' ' + sDistM + 'm';
+        // Tiny plate behind label when hot so sand/haze cannot wash it out.
+        if (hot) {
+          var tw = ctx.measureText(label).width;
+          ctx.fillStyle = 'rgba(10, 8, 4, 0.72)';
+          ctx.fillRect(sxOffset - tw * 0.5 - 4, syOffset - 7, tw + 8, 14);
+          ctx.fillStyle = col;
+        }
+        ctx.fillText(label, sxOffset, syOffset);
       }
     }
   }
