@@ -1801,7 +1801,7 @@ function drawFieldTelegraphs(ctx) {
       }
       if (e.meleeProximityWarn > 0) {
         var meleeR = (e.r || 12) + 30;
-        warnRing(ctx, e.x, e.y, meleeR, 1 - Math.min(1, e.meleeProximityWarn), '#ff6b4a', reduced);
+        warnRing(ctx, e.x, e.y, meleeR, 1 - Math.min(1, e.meleeProximityWarn), '#7ef9ff', reduced);
       }
       if (e.kind === 'burrower' && e.state === 'warn') {
         var warnLeft = e.warnT > 0 ? e.warnT / 0.8 : 0;

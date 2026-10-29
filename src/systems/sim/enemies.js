@@ -338,10 +338,11 @@ export function stepEnemies(dt, frame) {
         } else if (!e.knockbackImmune) {
           // Modest separation shove so point-blank contact does not stick (feel only).
           var push = Math.hypot(tdx, tdy) || 1;
-          e.x -= (tdx / push) * 24;
-          e.y -= (tdy / push) * 24;
+          e.x -= (tdx / push) * 28;
+          e.y -= (tdy / push) * 28;
           e.x = clamp(e.x, e.r || 12, boundW - (e.r || 12));
           e.y = clamp(e.y, e.r || 12, boundH - (e.r || 12));
+          spawnParticles(e.x, e.y, '#7ef9ff', 6, 120, 2.2);
         }
         AudioFX.hurt();
         triggerHaptic([45]);
