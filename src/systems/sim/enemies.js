@@ -1,4 +1,3 @@
-  if (p) p.contactLock = Math.max(0, (p.contactLock || 0) - dt);
 import { AudioFX } from '../../audio/audio-fx.js';
 import { spawnParticles } from '../../core/pools.js';
 import { rng } from '../../core/rng.js';
@@ -95,6 +94,8 @@ export function stepEnemies(dt, frame) {
   var zone3Dist = Math.hypot(vpW, vpH) * 0.5 * 1.85;
 
   var playerEdge = edgePressure(p.x, p.y, p.r, boundW, boundH);
+  // contactLock decay (once per frame) — blocks only contact, not bullets.
+  if (p) p.contactLock = Math.max(0, (p.contactLock || 0) - dt);
   for (var j = rt.state.enemies.length - 1; j >= 0; j -= 1) {
     var e = rt.state.enemies[j];
     if (!e || e.hp <= 0) continue;
