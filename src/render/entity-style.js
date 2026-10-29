@@ -96,7 +96,7 @@ export function drawDustRing(ctx, r, dust) {
 
 // Specular Rimlight Color Constants (0-GC static strings)
 var RIM_DEFAULT = '#d8c8b4';
-var RIM_CRAWLER = 'rgba(216, 200, 180, 0.75)';
+var RIM_CRAWLER = 'rgba(236, 220, 196, 0.92)';
 var RIM_RUSHER = '#ff8c42';
 var RIM_BRUTE = '#93c5fd';
 var RIM_ELITE_MIRROR = '#38bdf8';
