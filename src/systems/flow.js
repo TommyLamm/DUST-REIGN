@@ -371,7 +371,35 @@ export function restart() {
 }
 
 // True same-loadout redeploy: results R / 再次出擊 skip the loadout screen.
+function nowMs() {
+  return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+}
+
+/** Block R / 再次出擊 until death card has been readable (clears residual combat click). */
+export function armRedeployGate(extraSec) {
+  if (!rt.state) return;
+  clearResidualCombatInput();
+  var seq = (rt.state.deathSequenceTimer > 0) ? rt.state.deathSequenceTimer : 0;
+  var hold = seq + (typeof extraSec === 'number' ? extraSec : 0.55);
+  rt.state.redeployGateUntilMs = nowMs() + Math.max(0.35, hold) * 1000;
+  if (rt.ui && rt.ui.restart) {
+    try { rt.ui.restart.disabled = true; } catch (e) {}
+  }
+}
+
+export function canAcceptRedeploy() {
+  if (!rt.state || !rt.state.over) return false;
+  var until = rt.state.redeployGateUntilMs || 0;
+  if (!(until > 0)) return true;
+  return nowMs() >= until;
+}
+
 export function redeploy() {
+  if (rt.state && rt.state.over && !canAcceptRedeploy()) return;
+  if (rt.state) rt.state.redeployGateUntilMs = 0;
+  if (rt.ui && rt.ui.restart) {
+    try { rt.ui.restart.disabled = false; } catch (e0) {}
+  }
   restart();
   beginRun();
   // beginRun already recovers; second pass after LIVE CSS settles (death→R blank grid).
@@ -485,6 +513,8 @@ export function triggerGameOver(options) {
   rt.state.evalRank = calculateCombatRank(rt.state.wave, rt.state.score, rt.state.stats);
   // Keep timer armed even if later code paths touched it.
   if (!(rt.state.deathSequenceTimer > 0)) rt.state.deathSequenceTimer = 0.55;
+  clearResidualCombatInput();
+  armRedeployGate(0.55);
   saveAccountCheckpoint();
 }
 

@@ -846,6 +846,12 @@ export function updateDomUi() {
   updateCodexPanel();
   if (!rt.state.over) resetTelemetry();
   if (rt.ui.gameOver) rt.ui.gameOver.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
+  if (rt.ui.restart) {
+    var gateUntil = rt.state.redeployGateUntilMs || 0;
+    var nowG = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    var gated = Boolean(rt.state.over && gateUntil > 0 && nowG < gateUntil);
+    try { rt.ui.restart.disabled = gated; } catch (eGate) {}
+  }
   if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0) || !rt.state.isNewRecord;
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
   if (rt.ui.finalWave) rt.ui.finalWave.textContent = String(rt.state.wave).padStart(2, '0');
