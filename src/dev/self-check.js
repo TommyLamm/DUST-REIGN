@@ -44,6 +44,8 @@ export function selfCheck() {
   var secondBountyScore;
   var bountyClaimed;
   var bountySurge;
+  var bountyStatusHold;
+  var bountyStatusKind;
   var retainedSurge;
   var waveReset;
   var stormClock;
@@ -112,6 +114,8 @@ export function selfCheck() {
     bountyScore = test.score;
     bountySurge = test.player.overdrive;
     bountyClaimed = test.bountyClaimed;
+    bountyStatusHold = test.statusHold;
+    bountyStatusKind = test.statusHoldKind;
     test.enemies.push({ kind: 'crawler', x: 0, y: 0, r: 14, color: '#8d7861' });
     killEnemy(0);
     secondBountyScore = test.score;
@@ -989,6 +993,8 @@ export function selfCheck() {
   if (secondBountyScore !== 82) failures.push('secondBountyScore');
   if (!bountyClaimed) failures.push('bountyClaimed');
   if (bountySurge !== BOUNTY_SURGE_DURATION) failures.push('bountySurge');
+  if (!(bountyStatusHold > 0)) failures.push('bountyStatusHold');
+  if (bountyStatusKind !== 'bountySurge') failures.push('bountyStatusKind');
   if (retainedSurge !== 5) failures.push('retainedSurge');
   if (!stormClock) failures.push('stormClock');
   if (!waveReset) failures.push('waveReset');

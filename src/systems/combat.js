@@ -503,7 +503,9 @@ export function killEnemy(enemyOrIndex, cause) {
       var surgeDuration = Math.max(rt.state.player.overdrive, BOUNTY_SURGE_DURATION);
       rt.state.player.overdrive = surgeDuration;
       rt.state.banner = Math.max(rt.state.banner, 2.1);
-      setStatusText('BOUNTY CLEAR +' + rt.state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's');
+      setStatusText('BOUNTY CLEAR +' + rt.state.bountyReward + ' SCORE // SURGE ' + surgeDuration.toFixed(1) + 's', surgeDuration);
+      rt.state.statusHoldKind = 'bountySurge';
+      rt.state.statusHoldBountyReward = rt.state.bountyReward;
       logEvent('BOUNTY SECURED // SURGE ONLINE');
       spawnParticles(e.x, e.y, '#f0cf88', 12, 180, 3);
       pushFxEvent('bounty', e.x, e.y, null);

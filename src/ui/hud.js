@@ -625,6 +625,8 @@ export function setStatusText(message, holdSeconds) {
   if (!rt.ui || !rt.ui.statusText) return;
   rt.ui.statusText.textContent = tStatus(message);
   if (!rt.state) return;
+  rt.state.statusHoldKind = '';
+  rt.state.statusHoldBountyReward = 0;
   if (typeof holdSeconds === 'number' && holdSeconds > 0) {
     rt.state.statusHold = holdSeconds;
   } else {
@@ -871,10 +873,18 @@ export function updateDomUi() {
   if (rt.ui.statusText && rt.state.over) {
     rt.ui.statusText.textContent = zh ? '訊號中斷 — 按 R 重新部署' : 'SIGNAL LOST — PRESS R TO REDEPLOY';
     rt.state.statusHold = 0;
+    rt.state.statusHoldKind = '';
+    rt.state.statusHoldBountyReward = 0;
   } else if (rt.state.statusHold > 0) {
     var holdDt = rt.renderDt || 0;
     rt.state.statusHold = Math.max(0, rt.state.statusHold - holdDt);
+    if (rt.state.statusHoldKind === 'bountySurge' && rt.ui.statusText) {
+      var holdReward = rt.state.statusHoldBountyReward || 0;
+      rt.ui.statusText.textContent = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+    }
     if (rt.state.statusHold === 0 && rt.ui.statusText && !rt.state.paused && !rt.state.interlude) {
+      rt.state.statusHoldKind = '';
+      rt.state.statusHoldBountyReward = 0;
       rt.ui.statusText.textContent = tStatus('SIGNAL LIVE — KEEP MOVING');
     }
   }
