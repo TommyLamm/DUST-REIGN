@@ -250,24 +250,25 @@ export function stepArtilleryTargets(dt, frame) {
           rt.state.shockRings.push({
             x: at.x,
             y: at.y,
-            r: 10,
-            maxR: Math.max(at.r * 1.15, at.r + 18),
-            life: 0.32,
-            maxLife: 0.32,
-            color: '#ffd090'
+            r: 12,
+            maxR: Math.max(at.r * 1.35, at.r + 28),
+            life: 0.42,
+            maxLife: 0.42,
+            color: '#ffe0a8'
           });
           rt.state.shockRings.push({
             x: at.x,
             y: at.y,
-            r: 6,
-            maxR: at.r * 0.72,
-            life: 0.18,
-            maxLife: 0.18,
-            color: '#fff8e8'
+            r: 8,
+            maxR: at.r * 0.85,
+            life: 0.26,
+            maxLife: 0.26,
+            color: '#fffaf0'
           });
-          spawnParticles(at.x, at.y, '#fff0c8', 10, 160, 3);
-          spawnParticles(at.x, at.y, '#f5a623', 18, 180, 3);
-          spawnParticles(at.x, at.y, '#df4028', 12, 140, 3);
+          spawnParticles(at.x, at.y, '#fffaf0', 14, 200, 3.5);
+          spawnParticles(at.x, at.y, '#fff0c8', 12, 170, 3);
+          spawnParticles(at.x, at.y, '#f5a623', 20, 200, 3);
+          spawnParticles(at.x, at.y, '#df4028', 14, 150, 3);
           addDecal(at.x, at.y, at.r * 0.85, 14, 0.42, '#1b1715');
           pushFxEvent('mortar', at.x, at.y, { r: at.r });
 
