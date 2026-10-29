@@ -279,7 +279,7 @@ export function drawTitanBar(ctx, titan) {
 function drawWaveBanner(ctx) {
   var zh = isChinese();
   var text = rt.state.bannerText ? tBanner(rt.state.bannerText) : (zh ? ('第 ' + String(rt.state.wave).padStart(2, '0') + ' 波') : ('WAVE ' + String(rt.state.wave).padStart(2, '0')));
-  var alpha = clamp(Math.min(rt.state.banner, 0.85), 0, 1);
+  var alpha = clamp(Math.min(rt.state.banner, 0.92), 0, 1);
   var cx = rt.ui.width / 2;
   var y = Math.max(96, Math.min(rt.ui.height * 0.36, rt.ui.height * 0.28 + 36));
   var fontSize = Math.max(12, Math.min(rt.state.bannerText ? 20 : 28, rt.ui.width / 16));
@@ -288,14 +288,15 @@ function drawWaveBanner(ctx) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = '700 ' + fontSize + 'px ui-monospace, SFMono-Regular, Consolas, "PingFang TC", "Microsoft JhengHei", monospace';
-  var textW = Math.min(rt.ui.width - 40, ctx.measureText(text).width + 56);
-  var boxH = fontSize + 22;
+  var textW = Math.min(rt.ui.width - 40, ctx.measureText(text).width + 64);
+  var boxH = fontSize + 26;
   var boxX = cx - textW / 2;
   var boxY = y - boxH / 2;
-  ctx.fillStyle = 'rgba(16, 17, 14, 0.78)';
+  // Short dark plate under text — readable on sand without new chrome strings.
+  ctx.fillStyle = 'rgba(8, 9, 7, 0.88)';
   ctx.fillRect(boxX, boxY, textW, boxH);
-  ctx.strokeStyle = rt.state.bannerText ? PALETTE.hud.mint : PALETTE.hud.amber;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = rt.state.bannerText ? '#e8b94e' : PALETTE.hud.amber;
+  ctx.lineWidth = 1.2;
   ctx.strokeRect(boxX, boxY, textW, boxH);
   ctx.fillStyle = ctx.strokeStyle;
   ctx.fillRect(boxX, boxY, 10, 2);
@@ -305,12 +306,13 @@ function drawWaveBanner(ctx) {
     var frame = Math.floor((rt.renderTime || 0) * 30);
     var slot = frame % 48;
     if (slot === 0 || slot === 1) glitch = slot === 0 ? -1.5 : 1.5;
-    ctx.fillStyle = 'rgba(255, 80, 60, 0.55)';
+    ctx.fillStyle = 'rgba(255, 80, 60, 0.35)';
     ctx.fillText(text, cx - Math.abs(glitch) - 1, y);
-    ctx.fillStyle = 'rgba(80, 220, 255, 0.45)';
+    ctx.fillStyle = 'rgba(80, 220, 255, 0.28)';
     ctx.fillText(text, cx + Math.abs(glitch) + 1, y);
   }
-  ctx.fillStyle = rt.state.bannerText ? '#96baa0' : '#e8b94e';
+  // Bone / amber body (was mint-gray on sand).
+  ctx.fillStyle = rt.state.bannerText ? '#f2e6c9' : '#e8b94e';
   ctx.fillText(text, cx + glitch, y);
   ctx.restore();
 }
