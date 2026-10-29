@@ -18,7 +18,7 @@ import { initMode } from './modes/mode-adapter.js';
 import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
 import { setStatusText, updateDomUi } from '../ui/hud.js';
-import { syncCombatLayout } from '../ui/dom.js';
+import { resize, syncCombatLayout } from '../ui/dom.js';
 import { evaluateArchetypes } from './progression.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
@@ -184,9 +184,12 @@ export function beginRun() {
   setStatusText('SIGNAL LIVE — KEEP MOVING');
   if (rt.ui && rt.ui.canvas && rt.ui.canvas.focus) rt.ui.canvas.focus();
   syncCombatLayout();
+  // Force canvas measure after is-in-combat CSS reflow (sync may have sampled a stale rect).
+  if (typeof window !== "undefined") resize();
   clearResidualCombatInput();
   // World spawn (not viewport half) — ui.width/2 left the hull on the map rim after redeploy.
-  if (rt.state && rt.state.player) {
+  function snapDeploySpawn() {
+    if (!rt.state || !rt.state.player) return;
     var spawnX = (typeof SPAWN_CENTER_X === "number") ? SPAWN_CENTER_X : (rt.state.width / 2);
     var spawnY = (typeof SPAWN_CENTER_Y === "number") ? SPAWN_CENTER_Y : (rt.state.height / 2);
     rt.state.player.x = spawnX;
@@ -195,9 +198,17 @@ export function beginRun() {
       rt.input.mouse.x = spawnX + 100;
       rt.input.mouse.y = spawnY;
     }
+    if (rt.camera && rt.state) {
+      initCamera(rt.camera, rt.state.width, rt.state.height, (rt.ui && rt.ui.width) || 960, (rt.ui && rt.ui.height) || 640);
+    }
   }
-  if (rt.camera && rt.state) {
-    initCamera(rt.camera, rt.state.width, rt.state.height, (rt.ui && rt.ui.width) || 960, (rt.ui && rt.ui.height) || 640);
+  snapDeploySpawn();
+  // Second pass after browser paints LIVE layout so aim/camera use post-deploy canvas size.
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(function () {
+      if (typeof window !== "undefined") resize();
+      snapDeploySpawn();
+    });
   }
   spawnBarrels();
   spawnSpires();
