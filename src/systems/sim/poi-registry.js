@@ -173,7 +173,9 @@ export var POI_REGISTRY = {
             poi.status = 'completed';
             poi.progress = 1.0;
             if (p) {
-              p.energy = p.maxEnergy || 100;
+              var podCap = (typeof p.batteryMax === 'number') ? p.batteryMax : (p.maxEnergy || 100);
+              p.maxEnergy = podCap;
+              p.energy = podCap;
               p.hp = Math.min(p.maxHp || 100, p.hp + 50);
               p.overdrive = Math.max(p.overdrive || 0, 6.0);
             }

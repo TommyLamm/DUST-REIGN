@@ -792,17 +792,23 @@ export function updateDomUi() {
     }
   }
   var batteryCap = (typeof rt.state.player.batteryMax === 'number') ? rt.state.player.batteryMax : (rt.state.player.maxEnergy || 100);
+  if (!(batteryCap > 0)) batteryCap = 100;
+  // Soft clamp sim energy so overcharge / maxEnergy drift cannot leave the pool above cap.
+  if ((rt.state.player.energy || 0) > batteryCap) rt.state.player.energy = batteryCap;
   var energyVal = Math.floor(rt.state.player.energy || 0);
-  var energyStr = String(energyVal);
+  // HUD label is "NN%" — show fill ratio, never raw pool >100 (playtest: 107%).
+  var energyPctNum = Math.round(clamp(energyVal / batteryCap, 0, 1) * 100);
+  var energyStr = String(energyPctNum);
   if (rt.ui.hudEnergy) setText(rt.ui.hudEnergy, energyStr);
   if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) {
     if (rt.ui.meterEnergy._lastAriaVal !== energyStr) {
       rt.ui.meterEnergy._lastAriaVal = energyStr;
       rt.ui.meterEnergy.setAttribute('aria-valuenow', energyStr);
+      rt.ui.meterEnergy.setAttribute('aria-valuemax', '100');
     }
   }
   if (rt.ui.energyFill && rt.ui.energyFill.style) {
-    var energyPct = (clamp(energyVal / (batteryCap || 100), 0, 1) * 100) + '%';
+    var energyPct = energyPctNum + '%';
     if (rt.ui.energyFill._lastWidth !== energyPct) {
       rt.ui.energyFill._lastWidth = energyPct;
       rt.ui.energyFill.style.width = energyPct;
