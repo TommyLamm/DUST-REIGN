@@ -92,6 +92,18 @@ export function run() {
     var legacy = ['rapid-fire', 'scatter-shot', 'heavy-plating', 'overdrive-injector', 'magnet-core', 'hot-load', 'rail-slug', 'ricochet', 'shockwave-dash', 'tesla-coil', 'reactive-armor', 'high-caliber'];
     legacy.forEach(function (id) { assert(findUpgrade(id), 'missing legacy card ' + id); });
     assert(findUpgrade('rapid-fire').maxStacks === 5, 'rapid-fire cap');
+
+    // Charge rails should not be offered pure fire-rate commons.
+    state.player.weaponMode = 'vanguard';
+    state.weaponId = 'vanguard';
+    rt.state = state;
+    seedRun('build-vanguard-synergy');
+    var vanguardHand = randomUpgradeChoices();
+    assert(!vanguardHand.some(function (c) { return c && c.id === 'rapid-fire'; }), 'rapid-fire blocked for vanguard');
+    assert(vanguardHand.some(function (c) { return c && (c.weapon === 'vanguard' || c.weaponReq === 'vanguard'); }) || vanguardHand.length === 3, 'vanguard hand still draws');
+    state.player.weaponMode = 'standard';
+    state.weaponId = 'standard';
+
     assert(findUpgrade('servo-legs').category === 'MOBILITY', 'servo category');
     assert(findUpgrade('tracer-rounds').weapon === 'standard', 'tracer weapon lock');
 
