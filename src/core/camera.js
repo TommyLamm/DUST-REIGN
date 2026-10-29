@@ -3,7 +3,7 @@
  * Core Invariants:
  * 1. Player follow with soft world clamp: interior tracking stays player-centered;
  *    near map edges the camera biases inward so most of the view stays playable ground
- *    (avoids half-screen void + swarm pinch against the hatch).
+ *    while still keeping the hull inset in-frame (avoids mech vanishing at the rim).
  * 2. Player is hard-clamped by the simulation; void / barrier still drawn by render/boundary.js
  *    for the thin strip that can remain at extreme edges.
  * 3. Trauma-based Orthogonal Screen Shake (Prime non-resonant frequencies, decoupling for mouse aim)
@@ -131,10 +131,15 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
     cam.targetY = player.y;
     cam.followX = player.x;
     cam.followY = player.y;
-    var minCX = worldW > viewW ? halfW : worldW * 0.5;
-    var maxCX = worldW > viewW ? (worldW - halfW) : worldW * 0.5;
-    var minCY = worldH > viewH ? halfH : worldH * 0.5;
-    var maxCY = worldH > viewH ? (worldH - halfH) : worldH * 0.5;
+    // Keep hull inset when rim-clamped: allow a thin void strip instead of pinning
+    // the mech to the absolute screen edge (beam-only silhouette).
+    var keep = ((player.r || 16) + 40);
+    var maxVoidX = Math.max(0, halfW - keep);
+    var maxVoidY = Math.max(0, halfH - keep);
+    var minCX = worldW > viewW ? maxVoidX : worldW * 0.5;
+    var maxCX = worldW > viewW ? (worldW - maxVoidX) : worldW * 0.5;
+    var minCY = worldH > viewH ? maxVoidY : worldH * 0.5;
+    var maxCY = worldH > viewH ? (worldH - maxVoidY) : worldH * 0.5;
     cam.x = clamp(player.x, minCX, maxCX);
     cam.y = clamp(player.y, minCY, maxCY);
   }
