@@ -502,45 +502,72 @@ export function triggerEmp() {
   var decoySupernovaTriggered = false;
 
   AudioFX.emp();
-  triggerHaptic([35, 20, 50]);
-  rt.state.shake = Math.max(rt.state.shake, 16);
-  // Screen-readable EMP punch — tiny cyan flash was easy to miss vs HUD text.
-  rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.28);
-  addCameraTrauma(0.18);
-  rt.state.banner = Math.max(rt.state.banner || 0, 0.85);
+  triggerHaptic([45, 30, 70, 20, 55]);
+  rt.state.shake = Math.max(rt.state.shake, 20);
+  // Stronger on-screen EMP punch (visual only — radius/damage/cost unchanged).
+  rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.55);
+  addCameraTrauma(0.28);
+  rt.state.banner = Math.max(rt.state.banner || 0, 1.35);
   rt.state.bannerText = 'EMP DISCHARGE // FIELD CLEARED';
+  setStatusText('EMP DISCHARGE // FIELD CLEARED');
+  pushFxEvent('emp', empX, empY, { radius: empR });
+  pushFxEvent('burst', empX, empY, { preset: 'emp', scale: Math.max(0.9, empR / 120) });
 
+  // Lingering field disc + expanding shock lattice
   rt.state.shockRings.push({
     x: empX,
     y: empY,
-    r: 18,
+    r: 22,
     maxR: empR,
-    life: 0.55,
-    maxLife: 0.55,
+    life: 0.95,
+    maxLife: 0.95,
     color: '#5be7ff'
   });
   rt.state.shockRings.push({
     x: empX,
     y: empY,
-    r: 10,
-    maxR: empR * 0.75,
-    life: 0.4,
-    maxLife: 0.4,
+    r: 14,
+    maxR: empR * 0.82,
+    life: 0.75,
+    maxLife: 0.75,
     color: '#ffffff'
   });
   rt.state.shockRings.push({
     x: empX,
     y: empY,
-    r: 4,
-    maxR: empR * 1.15,
-    life: 0.28,
-    maxLife: 0.28,
-    color: 'rgba(189, 244, 255, 0.9)'
+    r: 8,
+    maxR: empR * 1.2,
+    life: 0.55,
+    maxLife: 0.55,
+    color: 'rgba(189, 244, 255, 0.95)'
+  });
+  rt.state.shockRings.push({
+    x: empX,
+    y: empY,
+    r: empR * 0.35,
+    maxR: empR * 1.05,
+    life: 1.15,
+    maxLife: 1.15,
+    color: 'rgba(91, 231, 255, 0.55)'
   });
 
-  spawnParticles(empX, empY, '#5be7ff', 42, 280, 4.2);
-  spawnParticles(empX, empY, '#ffffff', 28, 210, 3.2);
-  spawnParticles(empX, empY, '#bdf4ff', 18, 160, 2.4);
+  if (rt.state.opticalFlashes) {
+    rt.state.opticalFlashes.push({
+      x: empX,
+      y: empY,
+      r: Math.max(28, empR * 0.22),
+      life: 0.45,
+      maxLife: 0.45,
+      color: '#bdf4ff',
+      nx: 1,
+      ny: 0
+    });
+  }
+
+  spawnParticles(empX, empY, '#5be7ff', 64, 340, 5.0);
+  spawnParticles(empX, empY, '#ffffff', 40, 260, 3.8);
+  spawnParticles(empX, empY, '#bdf4ff', 32, 200, 3.0);
+  spawnParticles(empX, empY, '#7adfff', 20, 160, 2.4);
 
   for (var bi = rt.state.enemyBullets.length - 1; bi >= 0; bi -= 1) {
     var eb = rt.state.enemyBullets[bi];
