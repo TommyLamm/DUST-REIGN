@@ -20,8 +20,9 @@ function pushBullet(b) {
 export var TACTICAL_ITEMS = {
   'sentry-turret': {
     id: 'sentry-turret',
-    name: '定點自律機槍塔',
-    enName: 'DEPLOYABLE SENTRY TURRET',
+    // Keep zh/en in sync with loadout-panel TACTICALS (avoid HUD「砲塔」vs loadout mismatch).
+    name: '定點機槍塔',
+    enName: 'SENTRY TURRET',
     cooldown: 16,
     icon: '⛨',
     desc: '部署 120 HP 自動機槍哨塔 (持續 8s)，射速 9 發/秒，帶 90px 友方精準光環',
@@ -44,8 +45,10 @@ export var TACTICAL_ITEMS = {
         targetAngle: p.aim || 0
       });
       if (AudioFX && typeof AudioFX.levelUp === 'function') AudioFX.levelUp();
-      spawnParticles(tx, ty, '#5be7ff', 18, 140, 3);
-      spawnParticles(tx, ty, '#ffd27d', 10, 100, 2);
+      // Cyan-only burst — avoid gold POI vocabulary.
+      spawnParticles(tx, ty, '#5be7ff', 22, 140, 3);
+      spawnParticles(tx, ty, '#bdf4ff', 10, 100, 2);
+      setStatusText(isChinese() ? '機槍塔已部署 · 冷卻 16s' : 'SENTRY LIVE · CD 16s');
       return true;
     }
   },
@@ -193,6 +196,10 @@ export function triggerTacticalAuxiliary() {
   var tac = p.tacticalSlot;
   if (tac.cooldown > 0) {
     if (AudioFX && typeof AudioFX.dryFire === 'function') AudioFX.dryFire();
+    var left = tac.cooldown > 9.9 ? Math.ceil(tac.cooldown) : tac.cooldown.toFixed(1);
+    setStatusText(isChinese()
+      ? ('副裝冷卻中 ' + left + 's — 先風箏或換位')
+      : ('TACTICAL CD ' + left + 's — KITE OR REPOSITION'));
     return false;
   }
 
@@ -581,17 +588,23 @@ export function drawTacticalEntities(ctx) {
     ctx.translate(ent.x, ent.y);
 
     if (ent.kind === 'sentry-turret') {
-      // 90px Aura ring
-      ctx.strokeStyle = 'rgba(91, 231, 255, 0.22)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 6]);
-      ctx.beginPath();
-      ctx.arc(0, 0, ent.auraR, 0, TAU);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      // Player-gear aura: solid cyan ticks (not POI dashed gold/amber rings).
+      ctx.strokeStyle = 'rgba(91, 231, 255, 0.55)';
+      ctx.lineWidth = 2.2;
+      for (var ti = 0; ti < 8; ti += 1) {
+        var ta0 = (ti / 8) * TAU + time * 0.4;
+        var ta1 = ta0 + 0.35;
+        ctx.beginPath();
+        ctx.arc(0, 0, ent.auraR, ta0, ta1);
+        ctx.stroke();
+      }
+      // Square chassis plate — reads as deployable gear, not SILO site.
+      ctx.strokeStyle = '#5be7ff';
+      ctx.lineWidth = 1.6;
+      ctx.strokeRect(-14, -14, 28, 28);
 
       // Tripod legs
-      ctx.strokeStyle = '#2d241c';
+      ctx.strokeStyle = '#1a2a2e';
       ctx.lineWidth = 3;
       for (var li = 0; li < 3; li += 1) {
         var la = (li / 3) * TAU + Math.PI / 6;
@@ -601,9 +614,25 @@ export function drawTacticalEntities(ctx) {
         ctx.stroke();
       }
 
+      // World label (cyan gear chrome — never amber SILO plate); draw before barrel rotate.
+      ctx.save();
+      var tag = isChinese() ? '機槍塔' : 'SENTRY';
+      ctx.font = 'bold 10px monospace';
+      var tw = ctx.measureText(tag).width;
+      ctx.fillStyle = 'rgba(8, 18, 22, 0.85)';
+      ctx.fillRect(-tw * 0.5 - 4, -28, tw + 8, 14);
+      ctx.strokeStyle = '#5be7ff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-tw * 0.5 - 4, -28, tw + 8, 14);
+      ctx.fillStyle = '#bdf4ff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tag, 0, -21);
+      ctx.restore();
+
       // Swivel Cannon Body
       ctx.rotate(ent.targetAngle || 0);
-      ctx.fillStyle = '#3f3126';
+      ctx.fillStyle = '#1e3036';
       ctx.fillRect(-6, -6, 12, 12);
       ctx.fillStyle = '#5be7ff';
       ctx.fillRect(4, -2, 12, 4);
