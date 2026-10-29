@@ -182,6 +182,29 @@ function recoverCombatView() {
   rt.lastTime = 0;
   try { draw(); } catch (e3) {}
 }
+
+/** Multi-tab / unclean reopen: restore LIVE chrome so sim + pause work without a hard reload. */
+export function healStaleLive() {
+  if (!rt.state || !rt.ui) return false;
+  var onStart = !!(rt.ui.startScreen && !rt.ui.startScreen.hidden);
+  if (onStart || rt.state.over) {
+    recoverCombatView();
+    if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eK0) {}
+    return false;
+  }
+  // Desynced start flag / leftover upgrade gate can freeze score+energy and kill pause.
+  if (rt.ui.startScreen) rt.ui.startScreen.hidden = true;
+  if (rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+  if (rt.ui.overlay && rt.state.upgradeChoices && rt.state.upgradeChoices.length && rt.ui.overlay.hidden) {
+    rt.state.upgradeChoices = [];
+  }
+  if (rt.state.hitstop > 0.5) rt.state.hitstop = 0;
+  if (rt.ui.runState) rt.ui.runState.textContent = rt.state.paused ? "PAUSED" : "LIVE";
+  recoverCombatView();
+  if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eK1) {}
+  try { updateDomUi(); } catch (eUi) {}
+  return true;
+}
 export function beginRun() {
   if (!rt.state) return;
   // Start-screen deploy must win over leftover over/upgrade residue (hard reload / half-reset).
@@ -275,7 +298,10 @@ export function beginRun() {
     requestAnimationFrame(function () {
       recoverCombatView();
       snapDeploySpawn();
+      if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eKick) {}
     });
+  } else if (typeof rt.kickFrame === "function") {
+    try { rt.kickFrame(); } catch (eKick2) {}
   }
 }
 

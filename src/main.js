@@ -21,7 +21,7 @@ import { draw } from './render/draw.js';
 import { invalidateTerrainPatterns } from './render/terrain.js';
 import { sampleFrame } from './render/quality.js';
 import { directorStartRun } from './systems/director.js';
-import { calculateCombatRank, restart, triggerGameOver } from './systems/flow.js';
+import { calculateCombatRank, healStaleLive, restart, triggerGameOver } from './systems/flow.js';
 import { applyLoadout } from './systems/meta.js';
 import { spawnEnemy } from './systems/spawning.js';
 import { update } from './systems/update.js';
@@ -30,18 +30,61 @@ import { resize, setupDom, syncCombatLayout } from './ui/dom.js';
 import { updateDomUi } from './ui/hud.js';
 import { renderBuildInspector, updateSettingsUi } from './ui/pause-menu.js';
 
+var liveStall = { waveTime: -1, sinceMs: 0, ticks: 0 };
+
+function kickFrame() {
+  if (!rt.started || typeof window === "undefined" || !window.requestAnimationFrame) return;
+  if (rt.raf) {
+    try { window.cancelAnimationFrame(rt.raf); } catch (e0) {}
+    rt.raf = 0;
+  }
+  rt.lastTime = 0;
+  rt.raf = window.requestAnimationFrame(frame);
+}
+rt.kickFrame = kickFrame;
+
 function frame(timestamp) {
   if (!rt.started) return;
-  var rawDt = rt.lastTime ? (timestamp - rt.lastTime) / 1000 : 0;
-  var dt = rawDt > 0 ? Math.min(0.05, rawDt) : 0;
-  rt.lastTime = timestamp;
-  rt.renderDt = dt;
-  rt.renderTime += dt;
-  sampleFrame(dt);
-  pollGamepad(dt);
-  update(dt);
-  draw();
+  // Always re-arm RAF first so a thrown update/draw cannot permanently freeze the tab.
   rt.raf = window.requestAnimationFrame(frame);
+  try {
+    var rawDt = rt.lastTime ? (timestamp - rt.lastTime) / 1000 : 0;
+    var dt = rawDt > 0 ? Math.min(0.05, rawDt) : 0;
+    rt.lastTime = timestamp;
+    rt.renderDt = dt;
+    rt.renderTime += dt;
+    sampleFrame(dt);
+    pollGamepad(dt);
+    update(dt);
+    draw();
+    // Multi-tab / unclean reopen: LIVE chrome can stall (score/energy stuck, pause dead).
+    if (rt.state && rt.ui && !(rt.ui.startScreen && !rt.ui.startScreen.hidden) && !rt.state.over && !rt.state.paused) {
+      var wt = rt.state.waveTime || 0;
+      var now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      if (Math.abs(wt - liveStall.waveTime) > 0.0001) {
+        liveStall.waveTime = wt;
+        liveStall.sinceMs = now;
+        liveStall.ticks = 0;
+      } else {
+        liveStall.ticks += 1;
+        if (!liveStall.sinceMs) liveStall.sinceMs = now;
+        if ((now - liveStall.sinceMs) > 2500 && liveStall.ticks > 30) {
+          liveStall.sinceMs = now;
+          liveStall.ticks = 0;
+          try {
+            if (typeof rt.healStaleLive === "function") rt.healStaleLive();
+          } catch (eHeal) {}
+        }
+      }
+    } else {
+      liveStall.waveTime = -1;
+      liveStall.sinceMs = 0;
+      liveStall.ticks = 0;
+    }
+  } catch (err) {
+    try { if (typeof console !== "undefined" && console.warn) console.warn("[DUST-REIGN] frame error", err); } catch (e1) {}
+    rt.lastTime = 0;
+  }
 }
 
 function init(options) {
@@ -69,6 +112,8 @@ function init(options) {
   rt.input.mouse.y = rt.state.player.y;
   bindInput();
   rt.started = true;
+  rt.healStaleLive = healStaleLive;
+  rt.kickFrame = kickFrame;
   for (var i = 0; i < 3; i += 1) spawnEnemy();
   updateDomUi();
   draw();
@@ -84,6 +129,9 @@ function init(options) {
     try { invalidateTerrainPatterns(); } catch (e1) {}
     rt.lastTime = 0;
     try { draw(); } catch (e2) {}
+    // Multi-tab unclean return: RAF or LIVE chrome can be wedged until hard reload.
+    try { if (typeof healStaleLive === "function") healStaleLive(); } catch (e3) {}
+    try { kickFrame(); } catch (e4) {}
   };
   document.addEventListener('visibilitychange', onVisibilityChange);
   rt.listeners.push(function () {
