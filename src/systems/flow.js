@@ -134,7 +134,11 @@ export function beginRun() {
   if (!rt.state) return;
   // Start-screen deploy must win over leftover over/upgrade residue (hard reload / half-reset).
   var fromStart = !!(rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden);
-  if (!fromStart && (rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length))) return;
+  if (!fromStart) {
+    if (rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)) return;
+    // Already deployed — ignore duplicate CTA / delegated / pointerup+click pairs.
+    if (rt.ui && rt.ui.startScreen && rt.ui.startScreen.hidden) return;
+  }
   if (fromStart) {
     rt.state.over = false;
     rt.state.deathSequenceTimer = 0;

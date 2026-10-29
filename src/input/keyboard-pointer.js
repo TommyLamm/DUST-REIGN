@@ -189,7 +189,29 @@ export function bindInput() {
     });
   }
   if (rt.ui.restart) on(rt.ui.restart, 'click', redeploy);
-  if (rt.ui.startButton) on(rt.ui.startButton, 'click', beginRun);
+  if (rt.ui.startButton) {
+    on(rt.ui.startButton, 'click', function (event) {
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      beginRun();
+    });
+    // pointerup backup — some hard-reload / focus races drop the click.
+    on(rt.ui.startButton, 'pointerup', function (event) {
+      if (!event || event.button !== 0) return;
+      if (!(rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden)) return;
+      beginRun();
+    });
+  }
+  // Capture-phase delegation: survives inner span/b remounts and late loadout paint.
+  if (rt.ui.startScreen) {
+    on(rt.ui.startScreen, 'click', function (event) {
+      var t = event && event.target;
+      if (!t) return;
+      var btn = (t.id === 'startBtn') ? t : (t.closest && t.closest('#startBtn'));
+      if (!btn) return;
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      beginRun();
+    }, true);
+  }
 
   if (rt.ui.tabBtnSystem) on(rt.ui.tabBtnSystem, 'click', function () { switchPauseTab('system'); });
   if (rt.ui.tabBtnBuild) on(rt.ui.tabBtnBuild, 'click', function () { switchPauseTab('build'); });
