@@ -71,22 +71,21 @@ assert.strictEqual(playerScreen.x, 480, 'Player must project to screen center x'
 assert.strictEqual(playerScreen.y, 320, 'Player must project to screen center y');
 console.log(' -> AC-03 Player projects to the exact view center.');
 
-// 5. AC-04: World edge does not clamp the camera
-console.log('[5/9] Verifying AC-04: View Stays Centered At The World Edge...');
-// Left boundary: player held at x = r by the simulation
+// 5. AC-04: Soft edge clamp keeps mech inset (thin void OK, no beam-only rim)
+console.log('[5/9] Verifying AC-04: Soft Edge Clamp Keeps Mech Visible...');
+// keep=(16)+40=56; maxVoidX=480-56=424; maxVoidY=320-56=264
 mockPlayer.x = 15;
 mockPlayer.y = 1320;
 mockPlayer.aimX = 15;
 mockPlayer.aimY = 1320;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-assert.strictEqual(camera.clampedX, 15, `Camera must stay on the player at the left edge, got ${camera.clampedX}`);
-// Bottom-right corner
+assert.strictEqual(camera.clampedX, 424, `Left-edge camera should inset-clamp, got ${camera.clampedX}`);
 mockPlayer.x = 3505;
 mockPlayer.y = 2625;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-assert.strictEqual(camera.clampedX, 3505, `Camera must stay on the player at the right edge, got ${camera.clampedX}`);
-assert.strictEqual(camera.clampedY, 2625, `Camera must stay on the player at the bottom edge, got ${camera.clampedY}`);
-console.log(' -> AC-04 Camera follows the player past the world edge.');
+assert.strictEqual(camera.clampedX, 3096, `Right-edge camera should inset-clamp, got ${camera.clampedX}`);
+assert.strictEqual(camera.clampedY, 2376, `Bottom-edge camera should inset-clamp, got ${camera.clampedY}`);
+console.log(' -> AC-04 Soft clamp keeps hull on-screen at the rim.');
 
 // 6. AC-05: Trauma Shake & Decoupled Inverse Coordinate Transform
 console.log('[6/9] Verifying AC-05: Trauma Shake Decoupling for Aiming...');
