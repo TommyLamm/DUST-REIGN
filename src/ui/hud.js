@@ -803,7 +803,26 @@ export function updateDomUi() {
       ? (rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 '))
       : (rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT '));
     // Use ASCII "s"; CSS forces text-transform:none so it never becomes "S".
-    setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
+    var clockText = prefix + String(seconds).padStart(2, '0') + 's';
+    setText(rt.ui.waveTimer, clockText);
+    // Diagnostic overlay hides mission rail — keep the same storm clock on pause UI.
+    if (rt.ui.pauseStormTimer) setText(rt.ui.pauseStormTimer, clockText);
+    else {
+      var pauseClock = byId('pauseStormTimer');
+      if (pauseClock) setText(pauseClock, clockText);
+    }
+  } else if (rt.state && rt.state.paused) {
+    // Still refresh diag clock if waveTimer node missing (rail culled).
+    var pauseOnly = rt.ui.pauseStormTimer || byId('pauseStormTimer');
+    if (pauseOnly) {
+      var remainP = Math.max(0, WAVE_LENGTH - (rt.state.waveTime || 0));
+      var secP = Math.min(WAVE_LENGTH, Math.max(0, Math.ceil(remainP - 1e-9)));
+      var stormP = isStormFront();
+      var prefixP = zh
+        ? (rt.state.overtime ? (stormP ? '加時暴風 ' : '加時推進 ') : (stormP ? '暴風逼近 ' : '下一波次 '))
+        : (rt.state.overtime ? (stormP ? 'OT STORM ' : 'OT FRONT ') : (stormP ? 'STORM FRONT ' : 'NEXT FRONT '));
+      setText(pauseOnly, prefixP + String(secP).padStart(2, '0') + 's');
+    }
   }
   syncWaveProgress();
   syncWaveSubtitle();
