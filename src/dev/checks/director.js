@@ -5,12 +5,11 @@ import { getDailyRule } from '../../data/daily.js';
 import { routeById } from '../../data/routes.js';
 import { noteContractEvent } from '../../systems/contracts.js';
 import { designScales, evaluateStageStars, evaluateStarCondition, onBossDefeated, onWaveStart, planWave } from '../../systems/director.js';
-import { computeThreatTier } from '../../systems/flow.js';
+import { computeThreatTier, triggerGameOver, wavePressureSubtitle } from '../../systems/flow.js';
 import { getCampaignStage } from '../../data/campaign-stages.js';
 import { getSectorOfStage, getSectorReqStars, getStageChain } from '../../core/meta-store.js';
 import { spawnCrate } from '../../systems/drops.js';
 import { explodeBarrel, killEnemy } from '../../systems/combat.js';
-import { triggerGameOver } from '../../systems/flow.js';
 import { update } from '../../systems/update.js';
 import { assignRoute, chooseInterlude, chooseRepair, confirmExtract, confirmPushDeeper, grantDeferredExtract } from '../../systems/interlude.js';
 import { stepHazards } from '../../systems/sim/hazards.js';
@@ -436,6 +435,20 @@ export function run() {
     if (computeThreatTier(surge) < 1) throw new Error('wolf pack surge should raise threat');
     var bossField = { wave: 5, waveTime: 0, enemies: [{ hp: 100, kind: 'titan', isBoss: true }], recipe: { cap: 40 }, wolfPackSurge: false, boss: { hp: 100, kind: 'titan' } };
     if (computeThreatTier(bossField) < 2) throw new Error('living boss should be CRITICAL threat');
+    if (wavePressureSubtitle(quiet, true) !== '拾荒時刻' || wavePressureSubtitle(quiet, false) !== 'SCAVENGER HOUR') {
+      throw new Error('quiet wave subtitle should stay scavenger hour');
+    }
+    if (wavePressureSubtitle(surge, true) !== '狼群湧浪' || wavePressureSubtitle(surge, false) !== 'WOLF PACK SURGE') {
+      throw new Error('wolfpack subtitle should reuse wolf pack surge chrome');
+    }
+    // WAVE_LENGTH=30; stormSeconds=10 => storm when waveTime >= 20
+    var stormField = { wave: 2, waveTime: 25, enemies: [], recipe: { cap: 40 }, wolfPackSurge: false, boss: null, stormSeconds: 10 };
+    if (wavePressureSubtitle(stormField, true) !== '暴風逼近' || wavePressureSubtitle(stormField, false) !== 'STORM FRONT') {
+      throw new Error('storm subtitle should reuse storm front chrome');
+    }
+    if (wavePressureSubtitle(bossField, true) !== '危急' || wavePressureSubtitle(bossField, false) !== 'CRITICAL') {
+      throw new Error('boss-field subtitle should reuse critical threat chrome');
+    }
     if (pacingSpawnRate(1) !== 0.8 || pacingSpawnRate(2) !== 1.2 || pacingSpawnRate(3) !== 1.0 || pacingSpawnRate(4) !== 1.4) {
       throw new Error('pacingSpawnRate phase table drifted');
     }

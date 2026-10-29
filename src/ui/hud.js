@@ -5,7 +5,7 @@ import { isReducedMotion } from '../core/settings.js';
 import { clamp, setText } from '../core/utils.js';
 import { sectorForWave } from '../render/palette.js';
 import { getQuality } from '../render/quality.js';
-import { calculateCombatRank, computeThreatTier, isStormFront } from '../systems/flow.js';
+import { calculateCombatRank, computeThreatTier, isStormFront, wavePressureSubtitle } from '../systems/flow.js';
 import { getComboWindow } from '../systems/combat.js';
 import { updateCodexPanel } from './codex-panel.js';
 import { updateContractsHud } from './contracts-hud.js';
@@ -669,6 +669,23 @@ function syncWaveProgress() {
   }
 }
 
+/** Switch #hudWaveLabel with live pressure; strings are existing HUD/log chrome only. */
+function syncWaveSubtitle() {
+  if (!rt.state || typeof document === 'undefined') return;
+  var label = rt.ui.waveLabel;
+  if (label === undefined) {
+    label = byId('hudWaveLabel');
+    if (rt.ui) rt.ui.waveLabel = label;
+  }
+  if (!label) return;
+  var zh = isChinese();
+  var text = wavePressureSubtitle(rt.state, zh);
+  var key = text + ':' + (zh ? 'zh' : 'en');
+  if (label._lastWaveSubKey === key) return;
+  label._lastWaveSubKey = key;
+  label.textContent = text;
+}
+
 export function updateDomUi() {
   if (!rt.state || !rt.ui) return;
   syncCombatLayout();
@@ -729,6 +746,7 @@ export function updateDomUi() {
     setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
   }
   syncWaveProgress();
+  syncWaveSubtitle();
   syncHealth();
   if (rt.ui.healthFill && rt.ui.healthFill.parentElement) {
     var hpStr = String(Math.ceil(rt.state.player.hp));

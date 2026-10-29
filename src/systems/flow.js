@@ -88,6 +88,34 @@ export function computeThreatTier(state) {
   return 0;
 }
 
+/**
+ * Live wave-pill subtitle. Reuses existing chrome/log fragments only
+ * (拾荒時刻 / 狼群湧浪 / 暴風逼近 / 危急 / 高度 — already in i18n/HUD).
+ */
+export function wavePressureSubtitle(state, zh) {
+  if (!state) state = rt.state;
+  var chinese = !!zh;
+  if (!state) return chinese ? '拾荒時刻' : 'SCAVENGER HOUR';
+  if (state.wolfPackSurge) return chinese ? '狼群湧浪' : 'WOLF PACK SURGE';
+  var stormSec = (typeof state.stormSeconds === 'number' && state.stormSeconds >= 0)
+    ? state.stormSeconds
+    : STORM_FRONT_SECONDS;
+  var sov = !!(state.boss && state.boss.kind === 'sovereign' && state.boss.hp > 0);
+  if (!sov && state.enemies) {
+    for (var si = 0; si < state.enemies.length; si += 1) {
+      var se = state.enemies[si];
+      if (se && se.kind === 'sovereign' && se.hp > 0) { sov = true; break; }
+    }
+  }
+  if (sov || (state.waveTime >= WAVE_LENGTH - stormSec)) {
+    return chinese ? '暴風逼近' : 'STORM FRONT';
+  }
+  var tier = computeThreatTier(state);
+  if (tier >= 2) return chinese ? '危急' : 'CRITICAL';
+  if (tier >= 1) return chinese ? '高度' : 'HIGH';
+  return chinese ? '拾荒時刻' : 'SCAVENGER HOUR';
+}
+
 
 export function stormWind() {
   if (!isStormFront()) return null;
