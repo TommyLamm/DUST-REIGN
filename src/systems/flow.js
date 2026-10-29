@@ -19,6 +19,8 @@ import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
 import { setStatusText, updateDomUi } from '../ui/hud.js';
 import { resize, syncCombatLayout } from '../ui/dom.js';
+import { draw } from '../render/draw.js';
+import { invalidateTerrainPatterns } from '../render/terrain.js';
 import { evaluateArchetypes } from './progression.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
@@ -171,6 +173,15 @@ function resetRunCombatStats(state) {
   };
 }
 
+
+function recoverCombatView() {
+  // Same self-heal as tab-return (#368): layout flip after death/R can blank the canvas until a visibility bounce.
+  try { syncCombatLayout(); } catch (e0) {}
+  try { resize(); } catch (e1) {}
+  try { invalidateTerrainPatterns(); } catch (e2) {}
+  rt.lastTime = 0;
+  try { draw(); } catch (e3) {}
+}
 export function beginRun() {
   if (!rt.state) return;
   // Start-screen deploy must win over leftover over/upgrade residue (hard reload / half-reset).
@@ -256,15 +267,16 @@ export function beginRun() {
       rt.state.player._capNextInvuln = undefined;
     }
   }
-  // Second pass after browser paints LIVE layout so aim/camera use post-deploy canvas size.
-  if (typeof requestAnimationFrame === "function") {
+  spawnBarrels();
+  spawnSpires();
+  recoverCombatView();
+  // Second pass after LIVE CSS settles — aim/camera + canvas self-heal (death→R blank grid).
+  if (typeof requestAnimationFrame === 'function') {
     requestAnimationFrame(function () {
-      if (typeof window !== "undefined") resize();
+      recoverCombatView();
       snapDeploySpawn();
     });
   }
-  spawnBarrels();
-  spawnSpires();
 }
 
 export function togglePause() {
@@ -362,6 +374,12 @@ export function restart() {
 export function redeploy() {
   restart();
   beginRun();
+  // beginRun already recovers; second pass after LIVE CSS settles (death→R blank grid).
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(function () { recoverCombatView(); });
+  } else {
+    recoverCombatView();
+  }
 }
 
 function recordBestScore() {
