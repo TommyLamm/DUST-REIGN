@@ -83,7 +83,7 @@ export var TACTICAL_ITEMS = {
   },
   'singularity-grenade': {
     id: 'singularity-grenade',
-    name: '微型奇點牽引手雷',
+    name: '微型奇點手雷',
     enName: 'SINGULARITY GRENADE',
     cooldown: 18,
     icon: '◎',
@@ -102,7 +102,13 @@ export var TACTICAL_ITEMS = {
         hp: 999
       });
       if (AudioFX && typeof AudioFX.emp === 'function') AudioFX.emp();
-      spawnParticles(gx, gy, '#bd5bff', 24, 200, 3.5);
+      spawnParticles(gx, gy, '#bd5bff', 36, 240, 4.2);
+      spawnParticles(gx, gy, '#ffffff', 12, 140, 2.2);
+      spawnParticles(gx, gy, '#7a2dff', 18, 180, 3.0);
+      if (rt.state.shockRings) {
+        rt.state.shockRings.push({ x: gx, y: gy, r: 8, maxR: 150, life: 0.45, maxLife: 0.45, color: '#bd5bff' });
+        rt.state.shockRings.push({ x: gx, y: gy, r: 4, maxR: 90, life: 0.28, maxLife: 0.28, color: '#ffffff' });
+      }
       return true;
     }
   },
@@ -275,9 +281,10 @@ export function stepTactical(dt, frame) {
       if (ent.kind === 'singularity-vortex') {
         // Expiry shockwave: 80 kinetic blast + absorbed damage supernova collapse
         if (AudioFX && typeof AudioFX.blast === 'function') AudioFX.blast();
-        rt.state.shake = Math.max(rt.state.shake || 0, 10);
-        spawnParticles(ent.x, ent.y, '#bd5bff', 28, 220, 4);
-        spawnParticles(ent.x, ent.y, '#ffffff', 14, 160, 2.5);
+        rt.state.shake = Math.max(rt.state.shake || 0, 14);
+        spawnParticles(ent.x, ent.y, '#bd5bff', 42, 280, 5);
+        spawnParticles(ent.x, ent.y, '#ffffff', 22, 200, 3.2);
+        spawnParticles(ent.x, ent.y, '#7a2dff', 18, 160, 2.8);
         var absorbed = Math.round(ent.absorbedDamage || 0);
         var collapseDmg = 80 + absorbed;
         var extraR = Math.min(45, Math.round(absorbed * 0.5));
@@ -291,9 +298,27 @@ export function stepTactical(dt, frame) {
             y: ent.y,
             r: 10,
             maxR: blastR,
-            life: 0.35,
-            maxLife: 0.35,
+            life: 0.55,
+            maxLife: 0.55,
             color: '#bd5bff'
+          });
+          rt.state.shockRings.push({
+            x: ent.x,
+            y: ent.y,
+            r: 6,
+            maxR: blastR * 0.7,
+            life: 0.4,
+            maxLife: 0.4,
+            color: '#ffffff'
+          });
+          rt.state.shockRings.push({
+            x: ent.x,
+            y: ent.y,
+            r: 4,
+            maxR: blastR * 1.15,
+            life: 0.7,
+            maxLife: 0.7,
+            color: 'rgba(189, 91, 255, 0.85)'
           });
         }
         for (var ei = enemies.length - 1; ei >= 0; ei -= 1) {
@@ -662,26 +687,76 @@ export function drawTacticalEntities(ctx) {
       ctx.arc(0, 0, ent.r * 0.25, 0, TAU);
       ctx.fill();
     } else if (ent.kind === 'singularity-vortex') {
-      // Swirling gravity well
-      var rot = time * 4;
-      ctx.rotate(rot);
-      ctx.strokeStyle = 'rgba(189, 91, 255, 0.4)';
-      ctx.lineWidth = 2.5;
-      for (var si = 0; si < 4; si += 1) {
-        var sa = (si / 4) * TAU;
+      // Pull well: outer pull rim + counter-spirals + collapsing core (visual only).
+      var lifeRatio = ent.maxLife > 0 ? clamp(ent.life / ent.maxLife, 0, 1) : 1;
+      var pullPulse = 0.55 + 0.45 * Math.sin(time * 9);
+      var rot = time * 5.5;
+
+      // Soft pull disc so the 150px field reads under chaos
+      ctx.fillStyle = 'rgba(90, 30, 140, ' + (0.10 + 0.08 * pullPulse).toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.arc(0, 0, ent.r, 0, TAU);
+      ctx.fill();
+
+      // Outer pull rim (dashed) — distinct from POI gold chrome
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = 'rgba(189, 91, 255, ' + (0.55 + 0.25 * pullPulse).toFixed(3) + ')';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, ent.r * (0.92 + 0.04 * Math.sin(time * 6)), 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Inward tick marks = pull direction
+      ctx.strokeStyle = 'rgba(255, 210, 255, ' + (0.35 + 0.25 * pullPulse).toFixed(3) + ')';
+      ctx.lineWidth = 1.5;
+      for (var tick = 0; tick < 8; tick += 1) {
+        var ta = rot * 0.35 + (tick / 8) * TAU;
+        var r0 = ent.r * 0.78;
+        var r1 = ent.r * 0.58;
         ctx.beginPath();
-        ctx.arc(0, 0, ent.r * 0.7, sa, sa + 1.1);
+        ctx.moveTo(Math.cos(ta) * r0, Math.sin(ta) * r0);
+        ctx.lineTo(Math.cos(ta) * r1, Math.sin(ta) * r1);
         ctx.stroke();
       }
 
-      ctx.fillStyle = '#0a0512';
-      ctx.beginPath();
-      ctx.arc(0, 0, 18, 0, TAU);
-      ctx.fill();
+      ctx.rotate(rot);
+      ctx.strokeStyle = 'rgba(189, 91, 255, 0.7)';
+      ctx.lineWidth = 3;
+      for (var si = 0; si < 5; si += 1) {
+        var sa = (si / 5) * TAU;
+        ctx.beginPath();
+        ctx.arc(0, 0, ent.r * (0.55 + 0.08 * si * 0.15), sa, sa + 1.25);
+        ctx.stroke();
+      }
 
-      ctx.strokeStyle = '#bd5bff';
-      ctx.lineWidth = 2;
+      // Counter-spiral
+      ctx.rotate(-rot * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1.6;
+      for (var sj = 0; sj < 3; sj += 1) {
+        var sb = (sj / 3) * TAU;
+        ctx.beginPath();
+        ctx.arc(0, 0, ent.r * 0.42, sb, sb + 0.9);
+        ctx.stroke();
+      }
+
+      // Core shrinks as collapse nears
+      var coreR = 12 + 10 * lifeRatio;
+      ctx.fillStyle = '#05020a';
+      ctx.beginPath();
+      ctx.arc(0, 0, coreR, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = lifeRatio < 0.35 ? '#ffffff' : '#bd5bff';
+      ctx.lineWidth = lifeRatio < 0.35 ? 3.2 : 2.4;
       ctx.stroke();
+      if (lifeRatio < 0.35) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (0.5 + 0.4 * pullPulse).toFixed(3) + ')';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, coreR + 6 + 4 * pullPulse, 0, TAU);
+        ctx.stroke();
+      }
     } else if (ent.kind === 'holo-mirage') {
       var pulse = Math.sin(time * 18) * 0.15;
       ctx.save();
