@@ -109,9 +109,12 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-/* Keep unit letter stable — parent .objective-meta uses uppercase. */
+/* Keep unit letter stable — parent .objective-meta / .upgrade-count use uppercase. */
 #waveTimer,
-.wave-timer {
+.wave-timer,
+.upgrade-count,
+.upgrade-count strong,
+#upgradeTimer {
   text-transform: none;
   letter-spacing: 0.08em;
 }
