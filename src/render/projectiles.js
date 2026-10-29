@@ -600,8 +600,9 @@ export function drawShockRings(ctx) {
   var list = rt.state.shockRings;
   // Pause / upgrade chrome dims the canvas — punch mortar impact rings brighter/thicker.
   var uiDim = !!(rt.state.paused || (rt.state.upgradeChoices && rt.state.upgradeChoices.length));
-  var thickMul = uiDim ? 1.85 : 1;
-  var alphaMul = uiDim ? 1.75 : 1;
+  // Follow-up #390: modal still washed center mortar — punch harder (visual only).
+  var thickMul = uiDim ? 2.45 : 1;
+  var alphaMul = uiDim ? 2.35 : 1;
   ctx.save();
   ctx.lineCap = 'round';
   for (var i = 0; i < list.length; i += 1) {

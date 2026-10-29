@@ -12,7 +12,7 @@
   overflow: hidden;
   padding: clamp(14px, 3.2cqh, 28px) clamp(16px, 4.2cqw, 36px);
   /* Translucent so center mortar rings under player remain readable. */
-  background: linear-gradient(135deg, rgba(36, 39, 31, 0.70), rgba(16, 17, 14, 0.76));
+  background: linear-gradient(135deg, rgba(36, 39, 31, 0.55), rgba(16, 17, 14, 0.62));
 }
 
 .pause-head {

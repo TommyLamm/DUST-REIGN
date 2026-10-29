@@ -685,11 +685,11 @@ html.reduced-motion .tip-toast {
 
 #gameCanvas.is-pause-blur {
   /* Soft dim only — keep mortar telegraph/impact rings readable under pause. */
-  filter: grayscale(0.35) brightness(0.90) blur(0.4px);
+  filter: grayscale(0.22) brightness(0.96) blur(0.2px);
 }
 
 .canvas-stage[data-quality="low"] #gameCanvas.is-pause-blur {
-  filter: grayscale(0.4) brightness(0.88);
+  filter: grayscale(0.28) brightness(0.94);
 }
 
 @supports (backdrop-filter: blur(4px)) {
