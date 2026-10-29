@@ -168,7 +168,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
   for (i = 0; i < 6; i += 1) drawCrawlerLeg(ctx, r, i, step, flashing, reduced);
 
   // Main abdominal segmented carapace: Outer base
-  ctx.fillStyle = flashing ? '#ffffff' : '#1a120c';
+  ctx.fillStyle = flashing ? '#ffffff' : '#2a1c14';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fill();
@@ -176,25 +176,25 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
 
   if (!flashing) {
     // Posterior dorsal plate
-    ctx.fillStyle = '#423022';
+    ctx.fillStyle = '#5a4330';
     ctx.beginPath();
     ctx.ellipse(-r * 0.28, 0, r * 0.58, r * 0.72, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = '#120c08';
+    ctx.strokeStyle = '#1c140c';
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Mid dorsal plate
-    ctx.fillStyle = '#644832';
+    ctx.fillStyle = '#7a5a3e';
     ctx.beginPath();
     ctx.ellipse(r * 0.05, 0, r * 0.62, r * 0.58, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = '#120c08';
+    ctx.strokeStyle = '#1c140c';
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Anterior thoracic crest / carapace ridge
-    ctx.fillStyle = '#8f6a4a';
+    ctx.fillStyle = '#a87e58';
     ctx.beginPath();
     ctx.ellipse(r * 0.25, 0, r * 0.44, r * 0.42, 0, 0, TAU);
     ctx.fill();
@@ -208,7 +208,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
     ctx.stroke();
 
     // Lateral segmental suture lines
-    ctx.strokeStyle = '#120a06';
+    ctx.strokeStyle = '#1c120a';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-r * 0.15, -r * 0.68);
@@ -220,7 +220,7 @@ function drawCrawlerBody(ctx, e, flashing, reduced) {
 
   // Cephalothorax head & curved mandibles
   var twitch = reduced ? 0 : Math.sin(step * 0.3) * 0.15;
-  ctx.fillStyle = flashing ? '#ffffff' : '#140e0a';
+  ctx.fillStyle = flashing ? '#ffffff' : '#241810';
   ctx.beginPath();
   ctx.moveTo(r * 0.45, -r * 0.35);
   ctx.lineTo(r * 0.95, -r * 0.18 + twitch * 2);
@@ -396,7 +396,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   var puff = reduced ? 0.4 : ((rt.renderTime || 0) * 1.6) % 1;
 
   // Main heavy armored hull base
-  ctx.fillStyle = flashing ? '#ffffff' : '#1c1614';
+  ctx.fillStyle = flashing ? '#ffffff' : '#2a201c';
   ctx.beginPath();
   ctx.moveTo(r * 0.18, -r * 0.95);
   ctx.lineTo(r * 0.76, -r * 0.5);
@@ -412,7 +412,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
 
   if (!flashing) {
     // Frontal ballistic battering ram shield (forged industrial alloy)
-    ctx.fillStyle = '#261e1a';
+    ctx.fillStyle = '#342820';
     ctx.beginPath();
     ctx.moveTo(r * 1.05, 0);
     ctx.lineTo(r * 0.74, -r * 0.5);
@@ -441,7 +441,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
     ctx.stroke();
 
     // Side armor skirt plates with amber hazard trim
-    ctx.fillStyle = '#2c201a';
+    ctx.fillStyle = '#3a2a22';
     ctx.beginPath();
     ctx.moveTo(r * 0.18, -r * 0.92);
     ctx.lineTo(-r * 0.82, -r * 0.78);
@@ -464,7 +464,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   }
 
   // Active hydraulic cylinders on flanks
-  ctx.fillStyle = flashing ? '#ffffff' : '#18120e';
+  ctx.fillStyle = flashing ? '#ffffff' : '#261c16';
   ctx.fillRect(-r * 0.22, -r * 0.58, r * 0.3, r * 0.32);
   ctx.fillRect(-r * 0.22, r * 0.26, r * 0.3, r * 0.32);
 
@@ -489,7 +489,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   }
 
   // Dual angled industrial diesel smokestacks
-  ctx.fillStyle = flashing ? '#ffffff' : '#1a100e';
+  ctx.fillStyle = flashing ? '#ffffff' : '#281816';
   ctx.fillRect(-r * 0.82, -r * 0.76, r * 0.32, r * 0.24);
   ctx.fillRect(-r * 0.82, r * 0.52, r * 0.32, r * 0.24);
   ctx.strokeStyle = '#0e0c09';
@@ -500,7 +500,7 @@ function drawBruteBody(ctx, e, flashing, reduced) {
   // Diesel exhaust smoke & embers (deterministic, no Math.random)
   ctx.save();
   ctx.globalAlpha = 0.35 * (1 - puff * 0.4);
-  ctx.fillStyle = '#1a1410';
+  ctx.fillStyle = '#281e18';
   ctx.beginPath();
   ctx.arc(-r * 0.95 - puff * r * 0.4, -r * 0.65, 3.5 + puff * 5, 0, TAU);
   ctx.arc(-r * 0.9 - puff * r * 0.35, r * 0.65, 3 + puff * 4.5, 0, TAU);
@@ -921,7 +921,7 @@ function drawTitanGun(ctx, y, alive, enraged, flashing, hp, maxHp, wreckSpark) {
 
   ctx.save();
   ctx.globalAlpha = 0.6;
-  ctx.fillStyle = '#1a1410';
+  ctx.fillStyle = '#281e18';
   ctx.beginPath();
   ctx.arc(6, y, 6, 0, TAU);
   ctx.fill();
@@ -1113,7 +1113,7 @@ function drawTitanBody(ctx, e, flashing, reduced) {
     var puff = reduced ? 0.3 : ((rt.renderTime || 0) * 1.4) % 1;
     ctx.save();
     ctx.globalAlpha = 0.45;
-    ctx.fillStyle = '#1a100e';
+    ctx.fillStyle = '#281816';
     ctx.beginPath();
     ctx.arc(-r * 0.25 - puff * 10, -r * 0.2, 6 + puff * 5, 0, TAU);
     ctx.fill();
@@ -1385,7 +1385,7 @@ function drawBurrowerBody(ctx, e, flashing) {
     ctx.fill();
 
     // Chitin shingle ridges with crisp highlight
-    ctx.strokeStyle = '#120a06';
+    ctx.strokeStyle = '#1c120a';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-r * 0.1, -r * 0.6);
