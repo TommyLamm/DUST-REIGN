@@ -6,6 +6,16 @@ import { spawnScoreFloater } from '../render/fx.js';
 // shotsFired. Empty-sand suppression fire does not tank the displayed hit rate.
 var ACCURACY_ENGAGE_R2 = 1100 * 1100;
 
+/** A landed shot always counts in the engagement denominator (avoids 0% with kills/damage). */
+export function noteAccuracyHit() {
+  if (!rt.state || !rt.state.stats) return;
+  var stats = rt.state.stats;
+  stats.shotsHit = (Number(stats.shotsHit) || 0) + 1;
+  var fired = Number(stats.shotsFired) || 0;
+  var hits = Number(stats.shotsHit) || 0;
+  if (fired < hits) stats.shotsFired = hits;
+}
+
 export function recordAccuracyShots(count) {
   if (!rt.state || !rt.state.stats) return;
   var n = Number(count) || 0;
