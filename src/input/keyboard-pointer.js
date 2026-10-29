@@ -106,9 +106,18 @@ export function bindInput() {
       if (!typingLoadout && !isCodexOpen()) beginRun();
     }
     if (rt.state && rt.state.over && key === 'r') { if (canAcceptRedeploy()) redeploy(); }
-    if (rt.state && rt.state.paused && (key === '1' || key === '2' || key === '3')) {
-      if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) {
-        chooseUpgrade(Number(key) - 1);
+    // Upgrade pick: prefer event.code so IME / layout / numpad still confirm.
+    if (rt.state && rt.state.paused && !event.repeat) {
+      var pickCode = event.code || '';
+      var pickIdx = -1;
+      if (key === '1' || key === '2' || key === '3') pickIdx = Number(key) - 1;
+      else if (pickCode === 'Digit1' || pickCode === 'Numpad1') pickIdx = 0;
+      else if (pickCode === 'Digit2' || pickCode === 'Numpad2') pickIdx = 1;
+      else if (pickCode === 'Digit3' || pickCode === 'Numpad3') pickIdx = 2;
+      if (pickIdx >= 0 && rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) {
+        event.preventDefault();
+        if (event.stopPropagation) event.stopPropagation();
+        chooseUpgrade(pickIdx);
       }
     }
     if (rt.state && rt.state.paused && rt.ui && rt.ui.pauseModal && !rt.ui.pauseModal.hidden) {

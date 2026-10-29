@@ -359,12 +359,23 @@ export function evaluateArchetypes(state, silent) {
 }
 
 export function chooseUpgrade(index) {
-  if (!rt.state || !rt.state.paused || !rt.state.upgradeChoices[index]) return;
+  if (!rt.state || !rt.state.paused) return;
+  var hand = rt.state.upgradeChoices || [];
+  if (!hand.length) {
+    // Stuck overlay with empty hand — force close so combat can resume.
+    if (rt.ui && rt.ui.overlay && !rt.ui.overlay.hidden) {
+      rt.ui.overlay.hidden = true;
+      rt.state.paused = false;
+      rt.state.banishPicking = false;
+    }
+    return;
+  }
+  if (!hand[index]) return;
   if (rt.state.banishPicking) {
     confirmBanish(index);
     return;
   }
-  var choice = rt.state.upgradeChoices[index];
+  var choice = hand[index];
   choice.apply(rt.state);
   if (!rt.state.acquiredUpgrades) rt.state.acquiredUpgrades = [];
   rt.state.acquiredUpgrades.push(choice);
