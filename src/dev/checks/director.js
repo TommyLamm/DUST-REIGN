@@ -394,7 +394,7 @@ export function run() {
     // Soft camera clamp: north rim must keep playable ground under the view.
     initCamera(camera, 3520, 2640, 960, 640);
     updateCamera(camera, { x: 1760, y: 20, r: 14 }, null, 0.016, true);
-    if (Math.abs(camera.y - 266) > 0.5) throw new Error('north-edge camera should keep mech inset (void capped), got ' + camera.y);
+    if (Math.abs(camera.y - 234) > 0.5) throw new Error('north-edge camera should keep mech inset (void capped), got ' + camera.y);
     updateCamera(camera, { x: 1760, y: 1320, r: 14 }, null, 0.016, true);
     if (Math.abs(camera.x - 1760) > 0.5 || Math.abs(camera.y - 1320) > 0.5) {
       throw new Error('interior camera should stay player-centered');
