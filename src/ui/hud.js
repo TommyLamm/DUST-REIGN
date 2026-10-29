@@ -186,6 +186,9 @@ function syncCooldowns() {
   if (badge) {
     badge.hidden = !ready;
     if (badge.classList) badge.classList.toggle('is-ready', ready);
+    // Keep cost visible so loot/combat chrome does not hide EMP price.
+    var costLabel = isChinese() ? ('EMP ' + empCost + ' · 就緒') : ('EMP ' + empCost + ' · RDY');
+    if (badge.textContent !== costLabel) badge.textContent = costLabel;
   }
   if (rt.ui && badge) rt.ui.empReady = badge;
 
@@ -859,16 +862,22 @@ export function updateDomUi() {
   if (!(batteryCap > 0)) batteryCap = 100;
   // Soft clamp sim energy so overcharge / maxEnergy drift cannot leave the pool above cap.
   if ((rt.state.player.energy || 0) > batteryCap) rt.state.player.energy = batteryCap;
+  var empCostHud = (typeof rt.state.player.empCost === 'number') ? rt.state.player.empCost : 50;
+  var energyNow = Math.max(0, Math.round(Number(rt.state.player.energy) || 0));
   var energyVal = Math.floor(rt.state.player.energy || 0);
   // HUD label is "NN%" — show fill ratio, never raw pool >100 (playtest: 107%).
   var energyPctNum = Math.round(clamp(energyVal / batteryCap, 0, 1) * 100);
-  var energyStr = String(energyPctNum);
+  // Absolute pool + % so half-bar start reads as 50/100, not a mystery decoy.
+  var energyStr = String(energyNow) + '/' + String(Math.round(batteryCap));
   if (rt.ui.hudEnergy) setText(rt.ui.hudEnergy, energyStr);
   if (rt.ui.meterEnergy && rt.ui.meterEnergy.setAttribute) {
     if (rt.ui.meterEnergy._lastAriaVal !== energyStr) {
       rt.ui.meterEnergy._lastAriaVal = energyStr;
-      rt.ui.meterEnergy.setAttribute('aria-valuenow', energyStr);
-      rt.ui.meterEnergy.setAttribute('aria-valuemax', '100');
+      rt.ui.meterEnergy.setAttribute('aria-valuenow', String(energyNow));
+      rt.ui.meterEnergy.setAttribute('aria-valuemax', String(Math.round(batteryCap)));
+      rt.ui.meterEnergy.setAttribute('aria-label', isChinese()
+        ? ('電池 ' + energyStr + ' · EMP 消耗 ' + empCostHud)
+        : ('Battery ' + energyStr + ' · EMP costs ' + empCostHud));
     }
   }
   if (rt.ui.energyFill && rt.ui.energyFill.style) {
@@ -877,6 +886,14 @@ export function updateDomUi() {
       rt.ui.energyFill._lastWidth = energyPct;
       rt.ui.energyFill.style.width = energyPct;
     }
+  }
+  // Tick mark at EMP cost so the ready badge cannot hide the price.
+  var costMark = byId('empCostMark');
+  if (costMark && costMark.style) {
+    var markPct = clamp(empCostHud / batteryCap, 0, 1) * 100;
+    costMark.style.left = markPct + '%';
+    costMark.hidden = false;
+    costMark.title = isChinese() ? ('EMP 消耗 ' + empCostHud) : ('EMP cost ' + empCostHud);
   }
   syncCooldowns();
   var hbPlayer = rt.state && rt.state.player;
