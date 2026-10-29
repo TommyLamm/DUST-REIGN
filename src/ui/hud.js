@@ -37,6 +37,18 @@ var lastStorm = '';
 var lastQuality = '';
 var waveTimerPin = { sec: -1, wave: -1, storm: '' };
 
+
+function stormWaveBit(zh) {
+  if (!rt.state) return '';
+  var remain = Math.max(0, WAVE_LENGTH - (rt.state.waveTime || 0));
+  var waveLeft = Math.max(0, Math.ceil(remain - 1e-9));
+  var storm = isStormFront();
+  if (zh) {
+    return ((rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 ')) + String(waveLeft).padStart(2, '0') + 's');
+  }
+  return ((rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ')) + String(waveLeft).padStart(2, '0') + 's');
+}
+
 function motionOff() {
   try { return isReducedMotion(); } catch (e) { return false; }
 }
@@ -1017,7 +1029,9 @@ export function updateDomUi() {
     rt.state.statusHold = Math.max(0, rt.state.statusHold - holdDt);
     if (rt.state.statusHoldKind === 'bountySurge') {
       var holdReward = rt.state.statusHoldBountyReward || 0;
-      var holdMsg = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+      var waveBit = stormWaveBit(zh);
+      // Completion sentence must keep storm/wave clock visible (match upgrade-strip #393).
+      var holdMsg = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's') + (waveBit ? (' · ' + waveBit) : '');
       if (rt.ui.statusText) rt.ui.statusText.textContent = holdMsg;
     }
     syncUpgradeTimerPin();
