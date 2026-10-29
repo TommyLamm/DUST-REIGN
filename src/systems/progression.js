@@ -36,6 +36,15 @@ function hasCard(state, id) {
   return stackCount(state, id) > 0;
 }
 
+function isChargeWeapon(state) {
+  var wid = currentWeaponId(state);
+  return wid === 'vanguard' || wid === 'colossus';
+}
+
+/** Fire-rate commons are low synergy on charge rails — keep pool honest. */
+function isLowSynergyForCharge(card) {
+  return !!(card && card.id === 'rapid-fire');
+}
 function cardBlocked(state, card) {
   if (!card) return true;
   if (cardIsBanned(state, card.id)) return true;
@@ -45,6 +54,7 @@ function cardBlocked(state, card) {
   if (stackCount(state, card.id) >= cap) return true;
   var req = card.weapon || card.weaponReq;
   if (req && req !== currentWeaponId(state)) return true;
+  if (isChargeWeapon(state) && isLowSynergyForCharge(card)) return true;
   return false;
 }
 
@@ -92,8 +102,12 @@ function withoutIds(list, used) {
   return list.filter(function (card) { return !used[card.id]; });
 }
 
-function offensivePool(pool) {
+function offensivePool(pool, state) {
   var offense = pool.filter(function (card) { return card.category === 'OFFENSE'; });
+  if (isChargeWeapon(state)) {
+    var chargeFriendly = offense.filter(function (card) { return !isLowSynergyForCharge(card); });
+    if (chargeFriendly.length) offense = chargeFriendly;
+  }
   if (offense.length) return offense;
   var weapons = pool.filter(function (card) { return card.category === 'WEAPON'; });
   if (weapons.length) return weapons;
@@ -146,7 +160,7 @@ export function randomUpgradeChoices() {
     }
   }
 
-  var offenseSource = offensivePool(withoutIds(pool, used));
+  var offenseSource = offensivePool(withoutIds(pool, used), state);
   if (!offenseSource.length) offenseSource = withoutIds(pool, used);
   var guaranteed = pickUniform(offenseSource);
   if (guaranteed && !used[guaranteed.id]) {
@@ -208,7 +222,7 @@ function drawReplacement(hand) {
     if (spec.length) return pickUniform(spec);
   }
   if (!handHasOffense) {
-    var offense = offensivePool(pool);
+    var offense = offensivePool(pool, state);
     if (offense.length) return pickUniform(offense);
   }
   if (pool.length) return pickWeighted(pool, (state && state.act) || 1);
