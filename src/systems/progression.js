@@ -100,6 +100,15 @@ function offensivePool(pool) {
   return pool;
 }
 
+/** Prefer current-weapon specialty cards so rerolls cannot wipe shotgun/rail kits. */
+function weaponSpecialtyPool(pool, state) {
+  var wid = currentWeaponId(state);
+  return pool.filter(function (card) {
+    var req = card.weapon || card.weaponReq;
+    return req && req === wid;
+  });
+}
+
 function shufflePicks(picks) {
   var i;
   for (i = picks.length - 1; i > 0; i -= 1) {
@@ -124,6 +133,16 @@ export function randomUpgradeChoices() {
     if (fusion) {
       picks.push(fusion);
       used[fusion.id] = true;
+    }
+  }
+
+  // Keep weapon kit alive across rerolls (e.g. Flechette Pack for Breacher).
+  var specialty = weaponSpecialtyPool(withoutIds(pool, used), state);
+  if (specialty.length) {
+    var specPick = pickUniform(specialty);
+    if (specPick && !used[specPick.id]) {
+      picks.push(specPick);
+      used[specPick.id] = true;
     }
   }
 
@@ -179,6 +198,15 @@ function drawReplacement(hand) {
   });
   var handHasFusion = hand.some(function (card) { return card && card.category === 'FUSION'; });
   if (!handHasFusion && fusions.length) return pickUniform(fusions);
+  var handHasSpecialty = hand.some(function (card) {
+    if (!card) return false;
+    var req = card.weapon || card.weaponReq;
+    return req && req === currentWeaponId(state);
+  });
+  if (!handHasSpecialty) {
+    var spec = weaponSpecialtyPool(pool, state);
+    if (spec.length) return pickUniform(spec);
+  }
   if (!handHasOffense) {
     var offense = offensivePool(pool);
     if (offense.length) return pickUniform(offense);
