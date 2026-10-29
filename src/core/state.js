@@ -127,6 +127,8 @@ export function makeState(width, height) {
     bossSpawned: false,
     deathSequenceTimer: 0,
     statusHold: 0,
+    statusHoldKind: '',
+    statusHoldBountyReward: 0,
     isNewRecord: false,
     coreSpawnTime: 8 + rng('spawn') * 8,
     coreSpawned: false,
