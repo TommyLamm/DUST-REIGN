@@ -382,7 +382,8 @@ function refresh() {
     ruleNode.setAttribute('aria-label', (zh ? '模式規則' : 'Mode rules') + ' — ' + ruleText);
   }
 
-  var scores = (zh ? '最佳分數 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '歷史最佳 ' : 'LEGACY BEST ') + padScore(readLegacyBestScore());
+  // V2 is the live board (same as HUD / results). Legacy is the pre-V2 archive — do not call it 歷史最佳.
+  var scores = (zh ? '最佳紀錄 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '舊版紀錄 ' : 'LEGACY ') + padScore(readLegacyBestScore());
   if (scoreNode.textContent !== scores) scoreNode.textContent = scores;
 
   status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase()) + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase()) + (currentMode !== 'hardcore' ? (' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat)) : '') + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);

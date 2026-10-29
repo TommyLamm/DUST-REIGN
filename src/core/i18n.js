@@ -1958,7 +1958,7 @@ export function syncStaticHtml(lang) {
     if (resSpans && resSpans.length >= 3) {
       resSpans[0].textContent = zh ? '抵達波次' : 'WAVE REACHED';
       resSpans[1].textContent = zh ? '廢料評分' : 'SCRAP SCORE';
-      resSpans[2].textContent = zh ? '歷史最佳' : 'BEST RUN';
+      resSpans[2].textContent = zh ? '最佳紀錄' : 'BEST';
     }
     var telSpans = gameOver.querySelectorAll('.run-telemetry-grid span');
     if (telSpans && telSpans.length >= 4) {
