@@ -372,6 +372,21 @@ export function run() {
     assert(!readMeta().achievements.untouchable, 'a broken flawless streak unlocked untouchable');
     onRunEnd(state);
     assert(readMeta().stats.runs === 1, 'onRunEnd counted the same run twice');
+
+    // Phantom: wave-1 contact death with no score/kills/damage must not pad sortie count.
+    resetMeta();
+    state = makeState(320, 240);
+    rt.state = state;
+    applyLoadout(state);
+    state.score = 0;
+    state.kills = 0;
+    state.wave = 1;
+    state.stats.damageDealt = 0;
+    state.stats.shotsFired = 0;
+    state.deathCause = 'contact:crawler';
+    onRunEnd(state);
+    assert(readMeta().stats.runs === 0, 'phantom sortie padded stats.runs');
+    assert(state.phantomRun === true, 'phantom flag missing');
     takeRunUnlocks();
 
     resetMeta();

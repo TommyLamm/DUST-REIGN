@@ -255,6 +255,14 @@ export function applyLoadout(state, dateKey) {
 
   session = emptySession();
   session.startedAt = Date.now();
+  // Stable ordinal for this attempt; phantoms reuse the number (do not consume).
+  var runsDone = 0;
+  try {
+    var metaNow = readMeta();
+    runsDone = (metaNow && metaNow.stats && metaNow.stats.runs) || 0;
+  } catch (eRuns) { runsDone = 0; }
+  state.runAttemptNumber = Math.max(1, (runsDone | 0) + 1);
+  state.phantomRun = false;
 }
 
 function scanEnemies(list) {
@@ -381,6 +389,19 @@ function pushUnlock(bucket, item) {
   bucket.push(copyUnlock(item));
 }
 
+/** Zero-effort deaths (spawn contact / standstill / instant abandon) must not pad sortie count. */
+function isPhantomRun(state, sess, waveReached) {
+  if (!state || state.extracted) return false;
+  var score = clampInt(Math.round(Number(state.score) || 0));
+  var kills = Math.max((sess && sess.kills) || 0, clampInt(state.kills || 0));
+  var wave = Math.max(1, waveReached | 0);
+  var dmg = statNum(state, 'damageDealt');
+  var shots = statNum(state, 'shotsFired');
+  if (score > 0 || kills > 0 || wave > 1) return false;
+  if (dmg > 0 || shots > 0) return false;
+  return true;
+}
+
 export function onRunEnd(state) {
   var meta;
   var dailyRun;
@@ -436,7 +457,11 @@ export function onRunEnd(state) {
   parts = Math.max(session.parts, statNum(state, 'partsDestroyed'));
   flawless = Math.max(session.bestFlawless, clampInt(state.flawlessStreak));
   elapsed = session.startedAt ? Math.max(0, (Date.now() - session.startedAt) / 1000) : 0;
-  meta.stats.runs = clampInt(meta.stats.runs + 1);
+  var phantom = isPhantomRun(state, session, waveReached);
+  state.phantomRun = phantom;
+  if (!phantom) {
+    meta.stats.runs = clampInt(meta.stats.runs + 1);
+  }
   meta.stats.kills = clampInt(meta.stats.kills + session.kills);
   meta.stats.justDashes = clampInt(meta.stats.justDashes + just);
   meta.stats.contracts = clampInt(meta.stats.contracts + contracts);
@@ -579,7 +604,7 @@ export function onRunEnd(state) {
     var curModBest = readModdedBestScore();
     if (score > curModBest) writeModdedBestScore(score);
   }
-  if (dailyRun) {
+  if (dailyRun && !phantom) {
     dailySaved = readDaily();
     if (dailySaved.date !== state.daily.date) dailySaved = { date: state.daily.date, best: 0, runs: 0 };
     dailySaved.runs = clampInt(dailySaved.runs + 1);
