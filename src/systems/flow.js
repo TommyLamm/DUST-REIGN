@@ -21,6 +21,7 @@ import { setStatusText, updateDomUi } from '../ui/hud.js';
 import { resize, syncCombatLayout } from '../ui/dom.js';
 import { draw } from '../render/draw.js';
 import { invalidateTerrainPatterns } from '../render/terrain.js';
+import { clearCombatVisuals } from '../render/fx.js';
 import { evaluateArchetypes } from './progression.js';
 import { getCurrentPauseTab, renderBuildInspector, resetAbandonConfirm, updateSettingsUi } from '../ui/pause-menu.js';
 
@@ -239,6 +240,8 @@ export function beginRun() {
     state.stageConfig = getHardcoreOperation(selOpId) || HARDCORE_OPERATIONS[0];
   }
 
+  // Drop leftover score/combat floaters so obstacle trees do not keep last-run numbers.
+  try { clearCombatVisuals(); } catch (eFx) {}
   // Every deploy must start a clean telemetry run (redeploy already makeState; fromStart alone used to keep prior damageDealt/hit rate).
   resetRunCombatStats(state);
   applyLoadout(state);
@@ -345,6 +348,7 @@ export function restart() {
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   syncCombatLayout();
   rt.state = makeState();
+  try { clearCombatVisuals(); } catch (eFx2) {}
   // Wipe result telemetry DOM so a prior run cannot linger on the card before the next death.
   if (rt.ui) {
     if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = '0%';
