@@ -16,6 +16,19 @@ export function noteAccuracyHit() {
   if (fired < hits) stats.shotsFired = hits;
 }
 
+/** Shotgun/volley: count at most one hit per trigger pull (avoids pellet-flooded %). */
+export function noteAccuracyVolleyHit(volleyId) {
+  if (!rt.state || !rt.state.stats) return;
+  if (volleyId == null) {
+    noteAccuracyHit();
+    return;
+  }
+  if (!rt.state._accVolleyHit) rt.state._accVolleyHit = Object.create(null);
+  if (rt.state._accVolleyHit[volleyId]) return;
+  rt.state._accVolleyHit[volleyId] = 1;
+  noteAccuracyHit();
+}
+
 export function recordAccuracyShots(count) {
   if (!rt.state || !rt.state.stats) return;
   var n = Number(count) || 0;

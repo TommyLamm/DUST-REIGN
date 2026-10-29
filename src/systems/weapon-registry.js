@@ -267,6 +267,8 @@ registerWeaponStrategy({
     var bTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(255, 170, 80, 0.32)');
     var bCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#ffd08a');
 
+    // Per-trigger accuracy (not per-pellet) — shotgun % was pellet-flooded.
+    var volleyId = (rt.state._accVolleySeq = (rt.state._accVolleySeq || 0) + 1);
     for (var bi = 0; bi < offsets.length; bi += 1) {
       var spreadAngle = aimAngle + offsets[bi];
       rt.state.bullets.push({
@@ -290,11 +292,18 @@ registerWeaponStrategy({
         colorCore: bCore,
         isVulcan: isVulcan,
         isPlasmaMeltdown: isPlasma,
-        isBreacher: true
+        isBreacher: true,
+        accuracyVolleyId: volleyId
       });
     }
 
-    recordAccuracyShots(offsets.length);
+    recordAccuracyShots(1);
+    // Teaching cue only: optimal breach band (~pellet travel at life 0.50).
+    if (rt.state.shockRings) {
+      rt.state.shockRings.push({
+        x: p.x, y: p.y, r: 40, maxR: 150, life: 0.18, maxLife: 0.18, color: 'rgba(255, 170, 80, 0.55)'
+      });
+    }
     p.cooldown = shotCooldown(p, p.fireRate * 1.85 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
     var recoilPush = (p.recoilMult || 1);

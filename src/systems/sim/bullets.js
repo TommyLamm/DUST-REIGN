@@ -10,7 +10,7 @@ import { triggerSpireAbsorption, triggerSpireMicroResonance } from '../abilities
 import { applyEnemySlow, onCrit, stepCardEffects } from '../card-effects.js';
 import { damageEnemy, explodeBarrel, explodeCore, killEnemy } from '../combat.js';
 import { stormWind } from '../flow.js';
-import { addScore, noteAccuracyHit } from '../scoring.js';
+import { addScore, noteAccuracyHit, noteAccuracyVolleyHit } from '../scoring.js';
 import { noteMetaEvent } from '../meta.js';
 import { arcChainProfile, spawnKineticShrapnel, spawnPlasmaMeltdownZone } from '../weapons.js';
 import { logEvent } from '../../ui/hud.js';
@@ -435,7 +435,8 @@ export function stepBullets(dt, frame) {
         b.hits.push(cTarget);
         cTarget.hp -= b.damage;
         if (rt.state.stats) {
-          noteAccuracyHit();
+          if (b && b.accuracyVolleyId != null) noteAccuracyVolleyHit(b.accuracyVolleyId);
+          else noteAccuracyHit();
           rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + (Number(b.damage) || 0);
         }
         spawnParticles(b.x, b.y, '#f5a623', 4, 80, 2);
@@ -462,7 +463,8 @@ export function stepBullets(dt, frame) {
           b.hits.push(bBarrel);
           bBarrel.hp -= b.damage;
           if (rt.state.stats) {
-            noteAccuracyHit();
+            if (b && b.accuracyVolleyId != null) noteAccuracyVolleyHit(b.accuracyVolleyId);
+            else noteAccuracyHit();
             rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + (Number(b.damage) || 0);
           }
           spawnParticles(b.x, b.y, '#ff8833', 5, 90, 2);
@@ -770,7 +772,8 @@ export function stepBullets(dt, frame) {
           }
 
           if (rt.state.stats) {
-            noteAccuracyHit();
+            if (b && b.accuracyVolleyId != null) noteAccuracyVolleyHit(b.accuracyVolleyId);
+            else noteAccuracyHit();
             if (isCrit) rt.state.stats.crits += 1;
           }
 
