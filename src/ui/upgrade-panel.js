@@ -283,6 +283,14 @@ export function renderUpgradePanel(options) {
   if (title) title.innerHTML = zh ? '強化機體，<span>兇悍進化。</span>' : 'MAKE THE RIG <span>MEANER.</span>';
   var hint = first(['.upgrade-hint'], rt.ui.overlay);
   if (hint) hint.textContent = zh ? '戰鬥已暫停 — 1–3 挑選 · R 重骰 · B 放逐 · X 跳過（修 10 / +100 分）' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP (HEAL 10 / +100)';
+  var upgradeTimerEl = (typeof document !== 'undefined') ? document.getElementById('upgradeTimer') : null;
+  if (rt.state.statusHold > 0 && rt.state.statusHoldKind === 'bountySurge' && upgradeTimerEl) {
+    var holdReward = rt.state.statusHoldBountyReward || 0;
+    // Reuse the same BOUNTY CLEAR status key (already localized via tStatus elsewhere).
+    upgradeTimerEl.textContent = zh
+      ? ('懸賞完成 +' + holdReward + ' 分數 // 湧浪 ' + rt.state.statusHold.toFixed(1) + 's')
+      : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+  }
   if (rt.ui.overlay.classList) rt.ui.overlay.classList.toggle('is-banish-mode', !!rt.state.banishPicking);
   cancelUpgradeHide();
   clearDealTimers();

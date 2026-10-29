@@ -878,9 +878,15 @@ export function updateDomUi() {
   } else if (rt.state.statusHold > 0) {
     var holdDt = rt.renderDt || 0;
     rt.state.statusHold = Math.max(0, rt.state.statusHold - holdDt);
-    if (rt.state.statusHoldKind === 'bountySurge' && rt.ui.statusText) {
+    if (rt.state.statusHoldKind === 'bountySurge') {
       var holdReward = rt.state.statusHoldBountyReward || 0;
-      rt.ui.statusText.textContent = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+      var holdMsg = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+      if (rt.ui.statusText) rt.ui.statusText.textContent = holdMsg;
+      var upgradeTimer = (typeof document !== 'undefined') ? document.getElementById('upgradeTimer') : null;
+      var upgradePanel = rt.ui.overlay;
+      if (upgradeTimer && upgradePanel && !upgradePanel.hidden) {
+        upgradeTimer.textContent = holdMsg;
+      }
     }
     if (rt.state.statusHold === 0 && rt.ui.statusText && !rt.state.paused && !rt.state.interlude) {
       rt.state.statusHoldKind = '';
