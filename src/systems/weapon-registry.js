@@ -6,6 +6,7 @@ import { rt } from '../core/runtime.js';
 import { clamp } from '../core/utils.js';
 import { weaponModActive } from '../data/upgrades.js';
 import { addCameraTrauma } from '../core/camera.js';
+import { recordAccuracyShots } from './scoring.js';
 
 var WEAPON_REGISTRY = new Map();
 
@@ -110,7 +111,7 @@ registerWeaponStrategy({
     var stdTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : null);
     var stdCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : null);
     var tracerLive = weaponModActive(rt.state, 'tracer-rounds');
-    if (rt.state.stats) rt.state.stats.shotsFired += stdCount;
+    recordAccuracyShots(stdCount);
 
     for (var si = 0; si < stdCount; si += 1) {
       var side = stdCount === 2 ? (si === 0 ? -1 : 1) : 0;
@@ -293,7 +294,7 @@ registerWeaponStrategy({
       });
     }
 
-    if (rt.state.stats) rt.state.stats.shotsFired += offsets.length;
+    recordAccuracyShots(offsets.length);
     p.cooldown = shotCooldown(p, p.fireRate * 1.85 * (p.overdrive > 0 ? OVERDRIVE_COOLDOWN : 1) * (isVulcan ? 0.7 : 1));
     p.recoil = 1.0;
     var recoilPush = (p.recoilMult || 1);
@@ -449,7 +450,7 @@ registerWeaponStrategy({
 
     var railBonus = weaponModActive(rt.state, 'capacitor-rail') ? 1.2 : 1;
     var vgDmg = Math.round(p.damage * 4.2 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1) * railBonus);
-    if (rt.state.stats) rt.state.stats.shotsFired += 1;
+    recordAccuracyShots(1);
     var vgR = 6.0 + (isPlasma ? 3 : 0);
     var vgTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.45)');
     var vgCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#5be7ff');
@@ -604,7 +605,7 @@ registerWeaponStrategy({
 
     var arcDmg = Math.max(1, Math.round(p.damage * 0.44 * (p.overdrive > 0 ? OVERDRIVE_DAMAGE : 1)));
     var arcSpeed = p.bulletSpeed * (p.bulletSpeedMult || 1);
-    if (rt.state.stats) rt.state.stats.shotsFired += 1;
+    recordAccuracyShots(1);
     var arcR = 3.0 + (isPlasma ? 3 : 0);
     var arcTrail = isPlasma ? 'rgba(255, 77, 46, 0.5)' : (isVulcan ? 'rgba(255, 69, 0, 0.45)' : 'rgba(91, 231, 255, 0.35)');
     var arcCore = isPlasma ? '#ff4d2e' : (isVulcan ? '#ffa022' : '#a8f5e5');
@@ -768,7 +769,7 @@ registerWeaponStrategy({
     var mastery = p.mastery || 0;
     var isCharged = (forceCharged !== undefined) ? forceCharged : ((p.chargeTime || 0) >= (p.chargeNeed || 0.70));
 
-    if (rt.state.stats) rt.state.stats.shotsFired += 1;
+    recordAccuracyShots(1);
 
     if (isCharged) {
       // 蓄滿釋放穿透 99 的重型軌道電漿束

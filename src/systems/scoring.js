@@ -2,6 +2,32 @@ import { rt } from '../core/runtime.js';
 import { getHeatModifiers } from '../data/heat.js';
 import { spawnScoreFloater } from '../render/fx.js';
 
+// Engagement accuracy: only shots fired while a living foe is within range count toward
+// shotsFired. Empty-sand suppression fire does not tank the displayed hit rate.
+var ACCURACY_ENGAGE_R2 = 1100 * 1100;
+
+export function recordAccuracyShots(count) {
+  if (!rt.state || !rt.state.stats) return;
+  var n = Number(count) || 0;
+  if (!(n > 0)) return;
+  var p = rt.state.player;
+  var enemies = rt.state.enemies;
+  if (!p || !enemies || !enemies.length) return;
+  var engaged = false;
+  for (var i = 0; i < enemies.length; i += 1) {
+    var e = enemies[i];
+    if (!e || !(e.hp > 0) || e.burrowed) continue;
+    var dx = e.x - p.x;
+    var dy = e.y - p.y;
+    if (dx * dx + dy * dy <= ACCURACY_ENGAGE_R2) {
+      engaged = true;
+      break;
+    }
+  }
+  if (!engaged) return;
+  rt.state.stats.shotsFired = (Number(rt.state.stats.shotsFired) || 0) + n;
+}
+
 function emptyBreakdown() {
   return {
     kill: 0,

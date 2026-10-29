@@ -423,7 +423,11 @@ function syncPauseBlur() {
 }
 
 function writeTelemetry(accPct, combo, grazes, dmg) {
-  if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = accPct + '%';
+  if (rt.ui.telAccuracy) {
+    rt.ui.telAccuracy.textContent = accPct + '%';
+    // Engagement accuracy: sand-only spray is excluded from the denominator.
+    rt.ui.telAccuracy.title = '交戰命中率（射程內有敵時開火；空地掃射不計） / Engagement hit rate (shots while foes in range)';
+  }
   if (rt.ui.telMaxCombo) rt.ui.telMaxCombo.textContent = 'x' + combo;
   if (rt.ui.telGrazes) rt.ui.telGrazes.textContent = String(grazes);
   // Plain decimal — never padStart (avoid "013" look) and coerce in case of string concat drift.
