@@ -386,7 +386,18 @@ function refresh() {
   var scores = (zh ? '最佳紀錄 ' : 'BEST ') + padScore(readBestScoreV2()) + '   ' + (zh ? '舊版紀錄 ' : 'LEGACY ') + padScore(readLegacyBestScore());
   if (scoreNode.textContent !== scores) scoreNode.textContent = scores;
 
-  status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase()) + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase()) + (currentMode !== 'hardcore' ? (' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat)) : '') + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);
+  var tacMeta = meta.selectedTactical || 'sentry-turret';
+  var tacDef = null;
+  for (var ti = 0; ti < TACTICALS.length; ti += 1) {
+    if (TACTICALS[ti].id === tacMeta) { tacDef = TACTICALS[ti]; break; }
+  }
+  var tacLabel = tacDef ? (zh ? tacDef.zhName : tacDef.name) : tacMeta;
+  // Always surface aux — heat never silently implies thermal-decoy.
+  status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase())
+    + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase())
+    + ' · ' + (zh ? ('副裝 ' + tacLabel) : ('AUX ' + tacLabel))
+    + (currentMode !== 'hardcore' ? (' · ' + (zh ? '熱度 ' : 'HEAT ') + pick.heat + ' · ' + formatMult(pick.heat)) : '')
+    + ' · ' + (zh ? '重骰 ' : 'REROLLS ') + rerollCount(pick);
   if (statusNode.textContent !== status) statusNode.textContent = status;
 
   var kicker = document.querySelector('#loadoutPanel .loadout-kicker');
