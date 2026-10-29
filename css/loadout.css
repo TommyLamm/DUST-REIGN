@@ -1117,3 +1117,14 @@ html.reduced-motion .cosmetic-card {
 html.reduced-motion .bounty-action-btn.is-claimable {
   animation: none !important;
 }
+
+
+/* Deploy CTA must stay clickable after hard reload / tall loadout paint. */
+#startBtn {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+.overlay--start .overlay-inner {
+  pointer-events: auto;
+}
