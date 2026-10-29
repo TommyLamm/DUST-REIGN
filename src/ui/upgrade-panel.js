@@ -1,3 +1,4 @@
+import { WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { stackCount } from '../data/upgrades.js';
@@ -274,6 +275,36 @@ function ensureOptionsMouse() {
   });
 }
 
+/** Pin live bounty/wave countdown onto the upgrade panel timer strip. */
+export function syncUpgradeTimerPin(force) {
+  if (!rt.state || typeof document === 'undefined') return;
+  var el = document.getElementById('upgradeTimer');
+  var panel = rt.ui && rt.ui.overlay;
+  if (!el || !panel) return;
+  if (panel.hidden && !force) return;
+  var zh = isChinese();
+  if (rt.state.statusHold > 0 && rt.state.statusHoldKind === 'bountySurge') {
+    var holdReward = rt.state.statusHoldBountyReward || 0;
+    el.textContent = zh
+      ? ('懸賞完成 +' + holdReward + ' 分數 // 湧浪 ' + rt.state.statusHold.toFixed(1) + 's')
+      : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
+    return;
+  }
+  var waveLeft = Math.max(0, Math.ceil(WAVE_LENGTH - (rt.state.waveTime || 0)));
+  var waveBit = zh
+    ? ('下一波次 ' + String(waveLeft).padStart(2, '0') + 's')
+    : ('NEXT FRONT ' + String(waveLeft).padStart(2, '0') + 's');
+  if (!rt.state.bountyClaimed && rt.state.bountyTarget > 0) {
+    var kills = rt.state.bountyKills || 0;
+    var target = rt.state.bountyTarget;
+    var reward = rt.state.bountyReward || 0;
+    el.textContent = zh
+      ? ('懸賞 ' + kills + '/' + target + ' · +' + reward + ' · ' + waveBit)
+      : ('BOUNTY ' + kills + '/' + target + ' · +' + reward + ' · ' + waveBit);
+    return;
+  }
+  el.textContent = waveBit;
+}
 export function renderUpgradePanel(options) {
   if (!rt.ui || !rt.ui.overlay || !rt.ui.optionsNode || !rt.state) return;
   var choices = rt.state.upgradeChoices || [];
@@ -283,14 +314,7 @@ export function renderUpgradePanel(options) {
   if (title) title.innerHTML = zh ? '強化機體，<span>兇悍進化。</span>' : 'MAKE THE RIG <span>MEANER.</span>';
   var hint = first(['.upgrade-hint'], rt.ui.overlay);
   if (hint) hint.textContent = zh ? '戰鬥已暫停 — 1–3 挑選 · R 重骰 · B 放逐 · X 跳過（修 10 / +100 分）' : 'COMBAT PAUSED — 1–3 PICK · R REROLL · B BANISH · X SKIP (HEAL 10 / +100)';
-  var upgradeTimerEl = (typeof document !== 'undefined') ? document.getElementById('upgradeTimer') : null;
-  if (rt.state.statusHold > 0 && rt.state.statusHoldKind === 'bountySurge' && upgradeTimerEl) {
-    var holdReward = rt.state.statusHoldBountyReward || 0;
-    // Reuse the same BOUNTY CLEAR status key (already localized via tStatus elsewhere).
-    upgradeTimerEl.textContent = zh
-      ? ('懸賞完成 +' + holdReward + ' 分數 // 湧浪 ' + rt.state.statusHold.toFixed(1) + 's')
-      : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
-  }
+  syncUpgradeTimerPin(true);
   if (rt.ui.overlay.classList) rt.ui.overlay.classList.toggle('is-banish-mode', !!rt.state.banishPicking);
   cancelUpgradeHide();
   clearDealTimers();
@@ -324,6 +348,7 @@ export function renderUpgradePanel(options) {
     if (typeof document.activeElement.blur === 'function') document.activeElement.blur();
   }
   rt.ui.overlay.hidden = false;
+  syncUpgradeTimerPin(true);
 }
 
 export function presentUpgradePick(index) {

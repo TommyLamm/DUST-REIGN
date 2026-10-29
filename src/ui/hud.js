@@ -14,6 +14,7 @@ import { updateLoadoutPanel } from './loadout-panel.js';
 import { updateAudioBtn } from './pause-menu.js';
 import { updateTips } from './tips.js';
 import { fitGameOverOverlay, resize, syncCombatLayout } from './dom.js';
+import { syncUpgradeTimerPin } from './upgrade-panel.js';
 import { isChinese, onLanguageChange, tLog, tRankTitle, tStatus } from '../core/i18n.js';
 
 var shownScore = null;
@@ -877,23 +878,22 @@ export function updateDomUi() {
     rt.state.statusHoldKind = '';
     rt.state.statusHoldBountyReward = 0;
   } else if (rt.state.statusHold > 0) {
-    var holdDt = rt.renderDt || 0;
+    // Freeze countdown display while upgrade/pause/interlude — player still sees the pin.
+    var holdDt = (rt.state.paused || rt.state.interlude) ? 0 : (rt.renderDt || 0);
     rt.state.statusHold = Math.max(0, rt.state.statusHold - holdDt);
     if (rt.state.statusHoldKind === 'bountySurge') {
       var holdReward = rt.state.statusHoldBountyReward || 0;
       var holdMsg = tStatus('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
       if (rt.ui.statusText) rt.ui.statusText.textContent = holdMsg;
-      var upgradeTimer = (typeof document !== 'undefined') ? document.getElementById('upgradeTimer') : null;
-      var upgradePanel = rt.ui.overlay;
-      if (upgradeTimer && upgradePanel && !upgradePanel.hidden) {
-        upgradeTimer.textContent = holdMsg;
-      }
     }
+    syncUpgradeTimerPin();
     if (rt.state.statusHold === 0 && rt.ui.statusText && !rt.state.paused && !rt.state.interlude) {
       rt.state.statusHoldKind = '';
       rt.state.statusHoldBountyReward = 0;
       rt.ui.statusText.textContent = tStatus('SIGNAL LIVE — KEEP MOVING');
     }
+  } else if (rt.state.paused && rt.ui.overlay && !rt.ui.overlay.hidden) {
+    syncUpgradeTimerPin();
   }
 }
 
