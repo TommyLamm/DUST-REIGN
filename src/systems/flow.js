@@ -17,7 +17,7 @@ import { applyLoadout, onRunEnd } from './meta.js';
 import { initMode } from './modes/mode-adapter.js';
 import { calculateCombatRank } from './scoring.js';
 import { spawnBarrels, spawnSpires } from './spawning.js';
-import { setStatusText, updateDomUi } from '../ui/hud.js';
+import { clearScorePops, setStatusText, updateDomUi } from '../ui/hud.js';
 import { resize, syncCombatLayout } from '../ui/dom.js';
 import { draw } from '../render/draw.js';
 import { invalidateTerrainPatterns } from '../render/terrain.js';
@@ -256,6 +256,7 @@ export function beginRun() {
 
   // Drop leftover score/combat floaters so obstacle trees do not keep last-run numbers.
   try { clearCombatVisuals(); } catch (eFx) {}
+  try { clearScorePops(); } catch (ePop) {}
   // Every deploy must start a clean telemetry run (redeploy already makeState; fromStart alone used to keep prior damageDealt/hit rate).
   resetRunCombatStats(state);
   applyLoadout(state);
@@ -363,6 +364,7 @@ export function restart() {
   syncCombatLayout();
   rt.state = makeState();
   try { clearCombatVisuals(); } catch (eFx2) {}
+  try { clearScorePops(); } catch (ePop2) {}
   // Wipe result telemetry DOM so a prior run cannot linger on the card before the next death.
   if (rt.ui) {
     if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = '0%';
