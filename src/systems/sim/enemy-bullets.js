@@ -246,15 +246,26 @@ export function stepArtilleryTargets(dt, frame) {
           at.damageTickTimer = 0;
           AudioFX.mortarImpact();
           rt.state.shake = Math.max(rt.state.shake, 8);
+          // Impact-moment readability (visual only — fuse/damage unchanged).
           rt.state.shockRings.push({
             x: at.x,
             y: at.y,
-            r: 8,
-            maxR: at.r,
-            life: 0.25,
-            maxLife: 0.25,
-            color: '#ed6842'
+            r: 10,
+            maxR: Math.max(at.r * 1.15, at.r + 18),
+            life: 0.32,
+            maxLife: 0.32,
+            color: '#ffd090'
           });
+          rt.state.shockRings.push({
+            x: at.x,
+            y: at.y,
+            r: 6,
+            maxR: at.r * 0.72,
+            life: 0.18,
+            maxLife: 0.18,
+            color: '#fff8e8'
+          });
+          spawnParticles(at.x, at.y, '#fff0c8', 10, 160, 3);
           spawnParticles(at.x, at.y, '#f5a623', 18, 180, 3);
           spawnParticles(at.x, at.y, '#df4028', 12, 140, 3);
           addDecal(at.x, at.y, at.r * 0.85, 14, 0.42, '#1b1715');

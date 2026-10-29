@@ -100,11 +100,13 @@ var PRESETS = {
     { kind: 'ring', count: 1, maxRadius: 115, color: '#ff6633', life: 0.28, size: 2.2 }
   ],
   mortar: [
-    { kind: 'flash', count: 1, radius: 48, color: '#fff0dc', life: 0.07 },
-    { kind: 'smoke', count: 6, speed: 48, color: '#5c463c', life: 0.45, size: 11 },
-    { kind: 'spark', count: 10, speed: 200, color: '#ed6842', life: 0.18 },
-    { kind: 'ember', count: 4, speed: 30, color: '#ffb15a', life: 0.45 },
-    { kind: 'ring', count: 1, maxRadius: 72, color: '#ed6842', life: 0.22, size: 1.8 }
+    { kind: 'flash', count: 1, radius: 78, color: '#fff8e8', life: 0.12 },
+    { kind: 'flash', count: 1, radius: 42, color: '#ffd090', life: 0.08 },
+    { kind: 'smoke', count: 7, speed: 54, color: '#5c463c', life: 0.48, size: 12 },
+    { kind: 'spark', count: 14, speed: 240, color: '#ed6842', life: 0.22 },
+    { kind: 'ember', count: 6, speed: 36, color: '#ffb15a', life: 0.48 },
+    { kind: 'ring', count: 1, maxRadius: 110, color: '#fff0c8', life: 0.28, size: 2.6 },
+    { kind: 'ring', count: 1, maxRadius: 78, color: '#ed6842', life: 0.24, size: 2.0 }
   ],
   emp: [
     { kind: 'flash', count: 1, radius: 64, color: '#f3fdff', life: 0.08 },
