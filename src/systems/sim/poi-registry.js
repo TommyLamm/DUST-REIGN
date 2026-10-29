@@ -488,18 +488,22 @@ export var POI_REGISTRY = {
                 se.shield = 0;
               }
               if (rt.state.shockRings) {
-                rt.state.shockRings.push({ x: poi.x, y: poi.y, r: 10, maxR: 350, life: 0.6, maxLife: 0.6, color: '#00f3ff' });
+                // Keep the EMP wave local — a 350px ring already reads as overload without spanning the whole view.
+                rt.state.shockRings.push({ x: poi.x, y: poi.y, r: 10, maxR: 220, life: 0.55, maxLife: 0.55, color: '#00f3ff' });
               }
               if (rt.state.lightningArcs) {
-                for (var lai = 0; lai < 3; lai += 1) {
+                // Short radial bolts only. Prior ±500 white arcs read as full-width dashed screen noise on the death frame.
+                for (var lai = 0; lai < 4; lai += 1) {
+                  var aAng = (lai / 4) * TAU + (rng('visual') - 0.5) * 0.4;
+                  var aLen = 70 + rng('visual') * 60;
                   rt.state.lightningArcs.push({
                     x0: poi.x,
                     y0: poi.y,
-                    x1: poi.x + (rng('visual') - 0.5) * 500,
-                    y1: poi.y + (rng('visual') - 0.5) * 500,
-                    life: 0.35,
-                    maxLife: 0.35,
-                    color: '#e8fbff'
+                    x1: poi.x + Math.cos(aAng) * aLen,
+                    y1: poi.y + Math.sin(aAng) * aLen,
+                    life: 0.28,
+                    maxLife: 0.28,
+                    color: '#7cf6ff'
                   });
                 }
               }
@@ -558,15 +562,15 @@ export var POI_REGISTRY = {
       ctx.fill();
       ctx.restore();
 
-      // Cyan/white dashed EMP telegraph — thick, high alpha, above body.
-      ctx.beginPath();
-      ctx.arc(px, py, ringR, 0, TAU);
-      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : ('rgba(0, 243, 255,' + (0.78 * ringPulse).toFixed(3) + ')');
-      ctx.lineWidth = spireDone ? 2 : 3.6;
-      if (!spireDone) ctx.setLineDash([10, 6]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      // Cyan/white dashed EMP telegraph — live only. Completed spires drop the dash (death-frame noise).
       if (!spireDone) {
+        ctx.beginPath();
+        ctx.arc(px, py, ringR, 0, TAU);
+        ctx.strokeStyle = 'rgba(0, 243, 255,' + (0.78 * ringPulse).toFixed(3) + ')';
+        ctx.lineWidth = 3.6;
+        ctx.setLineDash([10, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
         ctx.beginPath();
         ctx.arc(px, py, ringR + 5, 0, TAU);
         ctx.strokeStyle = 'rgba(255, 255, 255,' + (0.55 * ringPulse).toFixed(3) + ')';
