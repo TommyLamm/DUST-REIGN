@@ -1795,7 +1795,13 @@ export function syncStaticHtml(lang) {
 
   // Topbar
   var topEyebrow = document.querySelector('.topbar .eyebrow');
-  if (topEyebrow) topEyebrow.innerHTML = zh ? '廢土射擊 <span>/</span> 第 001 次出擊' : 'WASTELAND SHOOTER <span>/</span> RUN 001';
+  if (topEyebrow) {
+    var runPad = topEyebrow.getAttribute('data-run') || '1';
+    runPad = String(Math.max(1, parseInt(runPad, 10) || 1)).padStart(3, '0');
+    topEyebrow.innerHTML = zh
+      ? ('廢土射擊 <span>/</span> 第 ' + runPad + ' 次出擊')
+      : ('WASTELAND SHOOTER <span>/</span> RUN ' + runPad);
+  }
 
   var topLabels = document.querySelectorAll('.topbar .meta-label');
   if (topLabels && topLabels.length >= 3) {

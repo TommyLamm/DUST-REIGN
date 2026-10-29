@@ -100,9 +100,11 @@ export function formatDamageSourceLabel(source, zh) {
     if (s === 'bullet:elite') return '菁英彈';
     if (s === 'bullet:burrower' || s === 'bullet:spike') return '鑽地蟲尖刺';
     if (s.indexOf('bullet:') === 0) return '敵彈 · ' + s.slice(7);
+    if (s === 'abandon') return '主動放棄出擊';
     if (s === 'unknown') return '不明傷害';
     return s;
   }
+  if (s === 'abandon') return 'ABANDONED RUN';
   if (s === 'contact:dreadnought') return 'DREAD CHARGE';
   if (s.indexOf('contact:') === 0) return 'CONTACT · ' + s.slice(8).toUpperCase();
   if (s === 'bullet:projectile') return 'HOSTILE ROUND';
