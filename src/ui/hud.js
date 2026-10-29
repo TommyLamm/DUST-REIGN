@@ -16,6 +16,7 @@ import { updateTips } from './tips.js';
 import { fitGameOverOverlay, resize, syncCombatLayout } from './dom.js';
 import { syncUpgradeTimerPin } from './upgrade-panel.js';
 import { isChinese, onLanguageChange, tLog, tRankTitle, tStatus } from '../core/i18n.js';
+import { readMeta } from '../core/meta-store.js';
 
 var shownScore = null;
 var scoreState = null;
@@ -731,10 +732,27 @@ function syncWaveSubtitle() {
   label.textContent = text;
 }
 
+function syncRunEyebrow() {
+  if (typeof document === 'undefined') return;
+  var el = document.querySelector('.topbar .eyebrow');
+  if (!el) return;
+  var meta = readMeta();
+  var completed = (meta && meta.stats && meta.stats.runs) || 0;
+  var display = (rt.state && rt.state.over && rt.state.metaAccounted) ? Math.max(1, completed) : Math.max(1, completed + 1);
+  var pad = String(display).padStart(3, '0');
+  el.setAttribute('data-run', String(display));
+  var zh = isChinese();
+  var html = zh
+    ? ('廢土射擊 <span>/</span> 第 ' + pad + ' 次出擊')
+    : ('WASTELAND SHOOTER <span>/</span> RUN ' + pad);
+  if (el.innerHTML !== html) el.innerHTML = html;
+}
+
 export function updateDomUi() {
   if (!rt.state || !rt.ui) return;
   syncCombatLayout();
   updateAudioBtn();
+  syncRunEyebrow();
   var zh = isChinese();
   var pauseButton = typeof document !== 'undefined' ? document.getElementById('pauseBtn') : null;
   if (pauseButton) {
@@ -941,7 +959,10 @@ export function updateDomUi() {
   }
   if (rt.ui.newRecordStamp) rt.ui.newRecordStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0) || !rt.state.isNewRecord;
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = !rt.state.over || (rt.state.deathSequenceTimer > 0);
-  if (rt.ui.finalWave) rt.ui.finalWave.textContent = String(rt.state.wave).padStart(2, '0');
+  if (rt.ui.finalWave) {
+    var reached = Math.max(1, rt.state.wave | 0);
+    rt.ui.finalWave.textContent = String(reached).padStart(2, '0');
+  }
   if (rt.ui.finalScore) rt.ui.finalScore.textContent = String(rt.state.score).padStart(6, '0');
   if (rt.ui.finalBest) rt.ui.finalBest.textContent = String(rt.state.bestScore).padStart(6, '0');
   if (rt.state.over && rt.state.stats) {

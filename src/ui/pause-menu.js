@@ -32,7 +32,11 @@ export function handleAbandonClick() {
   if (abandonConfirmTimer > 0 && now < abandonConfirmTimer) {
     resetAbandonConfirm();
     if (rt.ui && rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
-    if (rt.state) rt.state.paused = false;
+    if (rt.state) {
+      rt.state.paused = false;
+      rt.state.deathCause = 'abandon';
+      rt.state.lastDamageSource = 'abandon';
+    }
     triggerGameOver();
   } else {
     if (abandonTimerId) clearTimeout(abandonTimerId);
