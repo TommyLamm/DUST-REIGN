@@ -66,6 +66,13 @@
   font-size: 10px;
 }
 
+.overlay--gameover .overlay-kicker {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #e8b89a;
+  max-width: 36em;
+}
+
 .overlay h2 {
   max-width: none;
   margin-bottom: clamp(10px, 2cqh, 21px);
