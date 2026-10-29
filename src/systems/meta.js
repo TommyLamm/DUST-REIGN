@@ -565,11 +565,16 @@ export function onRunEnd(state) {
     }
   }
 
-  // 3. High score handling (Standard vanilla vs modded score separation)
+  // 3. High score handling — keep state.bestScore in lockstep with persistence.
   score = clampInt(Math.round(Number(state.score) || 0));
   if (!state.isModded) {
-    prevBest = readBestScoreV2();
-    if (score > prevBest) writeBestScoreV2(score);
+    prevBest = Math.max(readBestScoreV2(), clampInt(Number(state.bestScore) || 0));
+    if (score > prevBest) {
+      writeBestScoreV2(score);
+      state.bestScore = score;
+    } else {
+      state.bestScore = prevBest;
+    }
   } else {
     var curModBest = readModdedBestScore();
     if (score > curModBest) writeModdedBestScore(score);
