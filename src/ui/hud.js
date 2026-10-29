@@ -181,8 +181,9 @@ function syncCooldowns() {
     }
     var nameEl = byId('hudTacticalName');
     if (nameEl && tac.id) {
+      // Always mirror equipped aux name from loadout/tacticalSlot (not world POI labels).
       var displayName = isChinese() ? (tac.name || tac.id) : (tac.enName || tac.id.toUpperCase());
-      if (nameEl.textContent !== displayName) nameEl.textContent = displayName;
+      nameEl.textContent = displayName;
     }
   }
 }
