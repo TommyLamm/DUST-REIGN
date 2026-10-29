@@ -598,6 +598,10 @@ export function drawShockRings(ctx) {
   var view = syncBud();
   var time = rt.renderTime || 0;
   var list = rt.state.shockRings;
+  // Pause / upgrade chrome dims the canvas — punch mortar impact rings brighter/thicker.
+  var uiDim = !!(rt.state.paused || (rt.state.upgradeChoices && rt.state.upgradeChoices.length));
+  var thickMul = uiDim ? 1.55 : 1;
+  var alphaMul = uiDim ? 1.45 : 1;
   ctx.save();
   ctx.lineCap = 'round';
   for (var i = 0; i < list.length; i += 1) {
@@ -611,8 +615,8 @@ export function drawShockRings(ctx) {
     var radius = ring.r + ((ring.maxR || ring.r) - ring.r) * progress;
     var color = (ring.color && ring.color !== '#75d1b0') ? ring.color : '#5be7ff';
     var wobble = view.reduced ? 0 : 2.4;
-    strokeRing(ctx, ring.x, ring.y, radius, 6.5, color, life * 0.28, wobble, time + i);
-    strokeRing(ctx, ring.x, ring.y, radius * 0.94, 1.7, '#fffaf0', life * 0.9, 0, time);
+    strokeRing(ctx, ring.x, ring.y, radius, 6.5 * thickMul, color, Math.min(1, life * 0.28 * alphaMul), wobble, time + i);
+    strokeRing(ctx, ring.x, ring.y, radius * 0.94, 1.7 * thickMul, '#fffaf0', Math.min(1, life * 0.9 * alphaMul), 0, time);
     if (!view.key) {
       var pips = 6;
       for (var p = 0; p < pips; p += 1) {

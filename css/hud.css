@@ -684,20 +684,21 @@ html.reduced-motion .tip-toast {
 }
 
 #gameCanvas.is-pause-blur {
-  filter: grayscale(0.72) brightness(0.78) blur(2px);
+  /* Soft dim only — keep mortar telegraph/impact rings readable under pause. */
+  filter: grayscale(0.35) brightness(0.90) blur(0.4px);
 }
 
 .canvas-stage[data-quality="low"] #gameCanvas.is-pause-blur {
-  filter: grayscale(0.78) brightness(0.8);
+  filter: grayscale(0.4) brightness(0.88);
 }
 
 @supports (backdrop-filter: blur(4px)) {
   .canvas-stage:not([data-quality="low"]) #gameCanvas.is-pause-blur {
-    filter: grayscale(0.5) brightness(0.84);
+    filter: grayscale(0.28) brightness(0.92);
   }
 
   .canvas-stage:not([data-quality="low"]) .overlay--pause {
-    backdrop-filter: blur(8px) saturate(0.7);
+    backdrop-filter: blur(3px) saturate(0.85);
   }
 }
 
