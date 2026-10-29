@@ -7,7 +7,7 @@ export var EDGE_PIN = 40;
 /** Peak soft spring push back into the map (px/s). */
 export var EDGE_REPEL_SPEED = 210;
 /** Extra spawn clearance when the player is edge-pressed. */
-export var EDGE_SPAWN_MARGIN = 110;
+export var EDGE_SPAWN_MARGIN = 140;
 
 /**
  * Measure how hard an entity is pressed into a world edge.

@@ -689,8 +689,8 @@ export function drawGround(ctx, camX, camY, viewW, viewH) {
   var cx = (typeof camX === 'number') ? camX : (rt.camera && typeof rt.camera.x === 'number') ? rt.camera.x : (rt.state && rt.state.player ? rt.state.player.x : ((rt.state && rt.state.width) || 3520) * 0.5);
   var cy = (typeof camY === 'number') ? camY : (rt.camera && typeof rt.camera.y === 'number') ? rt.camera.y : (rt.state && rt.state.player ? rt.state.player.y : ((rt.state && rt.state.height) || 2640) * 0.5);
 
-  // The camera stays on the player at the world edge, so the view can extend
-  // past the map; the void beyond it is painted over by render/boundary.js.
+  // Soft-clamped camera keeps most of the view on-map; a thin void strip can
+  // still appear and is painted over by render/boundary.js.
   var x0 = cx - w * 0.5;
   var y0 = cy - h * 0.5;
 

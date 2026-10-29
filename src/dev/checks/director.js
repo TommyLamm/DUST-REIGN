@@ -17,6 +17,7 @@ import { stepHazards } from '../../systems/sim/hazards.js';
 import { stepOrbs } from '../../systems/sim/orbs.js';
 import { pacingSpawnRate, wolfPackWindowsFor } from '../../systems/sim/timers-wave.js';
 import { EDGE_BAND, EDGE_PIN, edgeAwareSpawnMargin, edgePressure } from '../../systems/sim/world-edge.js';
+import { camera, initCamera, updateCamera } from '../../core/camera.js';
 
 function near(actual, expected) {
   return Math.abs(actual - expected) < 0.001;
@@ -356,13 +357,22 @@ export function run() {
     if (centerFree.pressed || centerFree.depth !== 0) throw new Error('center should be free of edge pressure');
     var corner = edgePressure(EDGE_PIN, EDGE_PIN, 16, 960, 640);
     if (!corner.pressed || !(corner.nx > 0 && corner.ny > 0)) throw new Error('corner pin normal drifted');
-    if (edgeAwareSpawnMargin({ x: 480, y: EDGE_PIN, r: 16 }, 960, 640, 32) < 110) {
+    if (edgeAwareSpawnMargin({ x: 480, y: EDGE_PIN, r: 16 }, 960, 640, 32) < 140) {
       throw new Error('edge-aware spawn margin failed while pinned');
     }
     if (edgeAwareSpawnMargin({ x: 480, y: 320, r: 16 }, 960, 640, 32) !== 32) {
       throw new Error('center spawn margin should stay at base');
     }
     if (!(EDGE_BAND > EDGE_PIN)) throw new Error('EDGE_BAND must exceed EDGE_PIN');
+
+    // Soft camera clamp: north rim must keep playable ground under the view.
+    initCamera(camera, 3520, 2640, 960, 640);
+    updateCamera(camera, { x: 1760, y: 20, r: 14 }, null, 0.016, true);
+    if (Math.abs(camera.y - 320) > 0.5) throw new Error('north-edge camera should clamp to half view height, got ' + camera.y);
+    updateCamera(camera, { x: 1760, y: 1320, r: 14 }, null, 0.016, true);
+    if (Math.abs(camera.x - 1760) > 0.5 || Math.abs(camera.y - 1320) > 0.5) {
+      throw new Error('interior camera should stay player-centered');
+    }
 
     // Wolf Pack surge pacing: early low-heat opener is single-pulse;
     // late pulse (if any) ends ≥4s before storm; Heat≥4 cancels late pulse.

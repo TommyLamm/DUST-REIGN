@@ -1,9 +1,11 @@
 /**
  * DUST//REIGN - Camera Tracking & Viewport System
  * Core Invariants:
- * 1. Hard Player Lock (view center == player position every frame, including at the world edge)
- * 2. No world clamp on the camera; the player is clamped by the simulation and the
- *    out-of-bounds void / barrier is drawn by render/boundary.js
+ * 1. Player follow with soft world clamp: interior tracking stays player-centered;
+ *    near map edges the camera biases inward so most of the view stays playable ground
+ *    (avoids half-screen void + swarm pinch against the hatch).
+ * 2. Player is hard-clamped by the simulation; void / barrier still drawn by render/boundary.js
+ *    for the thin strip that can remain at extreme edges.
  * 3. Trauma-based Orthogonal Screen Shake (Prime non-resonant frequencies, decoupling for mouse aim)
  * 4. 0-GC Execution Budget
  */
@@ -114,26 +116,33 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
   cam.viewH = viewH;
   if (rt.ui && rt.ui.dpr) cam.dpr = rt.ui.dpr;
 
-  // Hard lock: the player is always the exact view center. The world edge is not
-  // a camera limit; the player is held inside the world by the simulation and the
-  // void past the edge is drawn by render/boundary.js.
+  // Follow the player, then soft-clamp the view center inside the world so the
+  // hatch/void never eats half the screen when the hull is rim-pinned.
+  var halfW = viewW * 0.5;
+  var halfH = viewH * 0.5;
+  var worldW = cam.worldW || (rt.state && rt.state.width) || 3520;
+  var worldH = cam.worldH || (rt.state && rt.state.height) || 2640;
+  cam.worldW = worldW;
+  cam.worldH = worldH;
+
   if (player) {
     cam.targetX = player.x;
     cam.targetY = player.y;
-    cam.x = player.x;
-    cam.y = player.y;
+    cam.followX = player.x;
+    cam.followY = player.y;
+    var minCX = worldW > viewW ? halfW : worldW * 0.5;
+    var maxCX = worldW > viewW ? (worldW - halfW) : worldW * 0.5;
+    var minCY = worldH > viewH ? halfH : worldH * 0.5;
+    var maxCY = worldH > viewH ? (worldH - halfH) : worldH * 0.5;
+    cam.x = clamp(player.x, minCX, maxCX);
+    cam.y = clamp(player.y, minCY, maxCY);
   }
-  cam.followX = cam.x;
-  cam.followY = cam.y;
   cam.lookaheadX = 0;
   cam.lookaheadY = 0;
   cam.lookaheadVX = 0;
   cam.lookaheadVY = 0;
   cam.targetLookaheadX = 0;
   cam.targetLookaheadY = 0;
-
-  var halfW = viewW * 0.5;
-  var halfH = viewH * 0.5;
 
   cam.clampedX = cam.x;
   cam.clampedY = cam.y;
