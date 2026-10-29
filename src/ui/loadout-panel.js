@@ -392,6 +392,8 @@ function refresh() {
     if (TACTICALS[ti].id === tacMeta) { tacDef = TACTICALS[ti]; break; }
   }
   var tacLabel = tacDef ? (zh ? tacDef.zhName : tacDef.name) : tacMeta;
+  // Keep chrome HUD aux in lockstep with loadout pick (HTML default is sentry).
+  syncHudTacticalPreview(tacMeta, zh);
   // Always surface aux — heat never silently implies thermal-decoy.
   status = (zh ? tRigName(pick.rigId) : pick.rigId.toUpperCase())
     + ' · ' + (zh ? tWeaponName(pick.weaponId) : pick.weaponId.toUpperCase())
@@ -442,6 +444,29 @@ function chooseWeapon(id) {
   refresh();
 }
 
+
+function syncHudTacticalPreview(tacId, zh) {
+  if (typeof document === 'undefined') return;
+  var id = tacId || 'sentry-turret';
+  var def = null;
+  for (var i = 0; i < TACTICALS.length; i += 1) {
+    if (TACTICALS[i].id === id) { def = TACTICALS[i]; break; }
+  }
+  if (!def) return;
+  var iconEl = document.getElementById('hudTacticalIcon');
+  if (iconEl && def.icon && iconEl.textContent !== def.icon) iconEl.textContent = def.icon;
+  var nameEl = document.getElementById('hudTacticalName');
+  if (nameEl) {
+    var label = zh ? (def.zhName || def.name) : (def.name || def.id);
+    if (nameEl.textContent !== label) nameEl.textContent = label;
+  }
+  var cdEl = document.getElementById('hudTacticalCdText');
+  if (cdEl) {
+    var ready = zh ? '就緒' : 'RDY';
+    if (cdEl.textContent !== ready) cdEl.textContent = ready;
+    cdEl.style.color = '#5be7ff';
+  }
+}
 function chooseTactical(id) {
   var meta = readMeta();
   if (meta.selectedMode === 'hardcore') return;
