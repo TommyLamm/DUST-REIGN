@@ -452,6 +452,8 @@ function animateTelemetry(accPct, combo, grazes, dmg) {
       else if (local >= 1) shown[i] = targets[i];
       else shown[i] = Math.round(targets[i] * (1 - Math.pow(1 - local, 3)));
     }
+    // Damage is last in the roll (~780ms) — never flash 0; keep true total pinned.
+    shown[3] = dmg;
     writeTelemetry(shown[0], shown[1], shown[2], shown[3]);
     if (t < each * 4) telRoll.raf = requestAnimationFrame(frame);
     else {
@@ -461,8 +463,9 @@ function animateTelemetry(accPct, combo, grazes, dmg) {
     }
   }
   telRoll.busy = true;
+  // Do not blank damage to 0 at roll start (playtest: card stuck/looked like 總傷害量 0).
+  writeTelemetry(0, 0, 0, dmg);
   telRoll.raf = requestAnimationFrame(function (now) {
-    writeTelemetry(0, 0, 0, 0);
     frame(now);
   });
 }
@@ -576,9 +579,9 @@ function syncTelemetry(acc, stats) {
   var dmg = Math.max(0, Math.round(Number(stats.damageDealt) || 0));
   var key = accPct + '|' + combo + '|' + grazes + '|' + dmg + '|' + (rt.state.score || 0);
   if (!rt.state.over) return;
-  if (telRoll.busy && telRoll.key === key) return;
-  // Always pin the true total immediately so a mid-roll glance cannot stick on "013".
+  // Always pin the true total (esp. damage) — even mid-roll — so busy frames cannot stick on 0.
   writeTelemetry(accPct, combo, grazes, dmg);
+  if (telRoll.busy && telRoll.key === key) return;
   var visible = !rt.ui.gameOver || rt.ui.gameOver.hidden === false;
   if (!visible) return;
   if (telRoll.key === key) return;
