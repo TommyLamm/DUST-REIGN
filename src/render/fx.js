@@ -100,13 +100,14 @@ var PRESETS = {
     { kind: 'ring', count: 1, maxRadius: 115, color: '#ff6633', life: 0.28, size: 2.2 }
   ],
   mortar: [
-    { kind: 'flash', count: 1, radius: 78, color: '#fff8e8', life: 0.12 },
-    { kind: 'flash', count: 1, radius: 42, color: '#ffd090', life: 0.08 },
-    { kind: 'smoke', count: 7, speed: 54, color: '#5c463c', life: 0.48, size: 12 },
-    { kind: 'spark', count: 14, speed: 240, color: '#ed6842', life: 0.22 },
-    { kind: 'ember', count: 6, speed: 36, color: '#ffb15a', life: 0.48 },
-    { kind: 'ring', count: 1, maxRadius: 110, color: '#fff0c8', life: 0.28, size: 2.6 },
-    { kind: 'ring', count: 1, maxRadius: 78, color: '#ed6842', life: 0.24, size: 2.0 }
+    { kind: 'flash', count: 1, radius: 110, color: '#fffaf0', life: 0.20 },
+    { kind: 'flash', count: 1, radius: 64, color: '#ffe0a8', life: 0.14 },
+    { kind: 'flash', count: 1, radius: 36, color: '#ffffff', life: 0.08 },
+    { kind: 'smoke', count: 8, speed: 58, color: '#5c463c', life: 0.52, size: 13 },
+    { kind: 'spark', count: 18, speed: 280, color: '#ed6842', life: 0.28 },
+    { kind: 'ember', count: 8, speed: 42, color: '#ffb15a', life: 0.55 },
+    { kind: 'ring', count: 1, maxRadius: 130, color: '#fff4d0', life: 0.36, size: 3.0 },
+    { kind: 'ring', count: 1, maxRadius: 92, color: '#ed6842', life: 0.30, size: 2.4 }
   ],
   emp: [
     { kind: 'flash', count: 1, radius: 64, color: '#f3fdff', life: 0.08 },
@@ -733,7 +734,11 @@ function onFxEvent(ev) {
   else if (kind === 'crit') noteCrit(x, y);
   else if (kind === 'core') emitPreset('core', x, y);
   else if (kind === 'barrel') emitPreset(o && o.kicked ? 'barrelKicked' : 'barrel', x, y);
-  else if (kind === 'mortar') emitPreset('mortar', x, y);
+  else if (kind === 'mortar') {
+    var mScale = (o && typeof o.r === 'number' && o.r > 0) ? Math.max(1.1, Math.min(1.85, o.r / 64)) : 1.25;
+    emitBurst('mortar', x, y, '', mScale);
+    requestFlash('#ffd090', 0.30, 0.10);
+  }
   else if (kind === 'emp') {
     emitPreset('emp', x, y);
     requestFlash('#5be7ff', 0.32, 0.1);
