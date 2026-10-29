@@ -679,6 +679,18 @@ html.reduced-motion .tip-toast {
 }
 
 /* Author display must not override the hidden attribute (EMP ready lie). */
+.emp-cost-mark {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  margin-left: -1px;
+  background: #5be7ff;
+  box-shadow: 0 0 6px rgba(91, 231, 255, 0.8);
+  pointer-events: none;
+  z-index: 2;
+}
+.meter--energy { position: relative; }
 .emp-ready[hidden] {
   display: none !important;
 }
