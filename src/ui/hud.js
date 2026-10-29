@@ -34,6 +34,7 @@ var slamKey = '';
 var lastSector = '';
 var lastStorm = '';
 var lastQuality = '';
+var waveTimerPin = { sec: -1, wave: -1, storm: '' };
 
 function motionOff() {
   try { return isReducedMotion(); } catch (e) { return false; }
@@ -781,9 +782,27 @@ export function updateDomUi() {
     }
   }
   if (rt.ui.waveTimer) {
-    var seconds = Math.max(0, Math.ceil(WAVE_LENGTH - rt.state.waveTime));
+    // Stable countdown: pin whole seconds; objective-meta uppercase was flipping s→S.
+    var remain = Math.max(0, WAVE_LENGTH - (rt.state.waveTime || 0));
+    var seconds = Math.min(WAVE_LENGTH, Math.max(0, Math.ceil(remain - 1e-9)));
     var storm = isStormFront();
-    var prefix = zh ? (rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 ')) : (rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT '));
+    var waveN = rt.state.wave || 0;
+    if (waveTimerPin.wave !== waveN) {
+      waveTimerPin.wave = waveN;
+      waveTimerPin.sec = seconds;
+    } else if (seconds < waveTimerPin.sec) {
+      waveTimerPin.sec = seconds;
+    } else if (seconds > waveTimerPin.sec + 1) {
+      // Large jump (pause catch-up / heal) — resync without flicker bounce.
+      waveTimerPin.sec = seconds;
+    }
+    seconds = waveTimerPin.sec;
+    var stormKey = storm ? '1' : '0';
+    waveTimerPin.storm = stormKey;
+    var prefix = zh
+      ? (rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 '))
+      : (rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT '));
+    // Use ASCII "s"; CSS forces text-transform:none so it never becomes "S".
     setText(rt.ui.waveTimer, prefix + String(seconds).padStart(2, '0') + 's');
   }
   syncWaveProgress();
