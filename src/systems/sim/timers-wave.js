@@ -91,6 +91,10 @@ export function commitWaveAdvance(early) {
   if (!rt.state) return;
   var p = rt.state.player;
   rt.state._barrelChainMute = 1;
+  // Drop sticky status pins when the surge unlock / hold window ends with the wave.
+  rt.state.statusHold = 0;
+  rt.state.statusHoldKind = '';
+  rt.state.statusHoldBountyReward = 0;
   rt.state.stormKills = 0;
   rt.state.stormHurt = false;
   rt.state.stormCoresSpawned = false;
@@ -335,7 +339,8 @@ export function stepWaveClock(dt, frame) {
         rt.state.player.overdrive = Math.max(rt.state.player.overdrive, 3.5);
         rt.state.banner = 2.8;
         rt.state.bannerText = 'STORM BREAKER // SURGE UNLOCKED';
-        setStatusText('STORM BREAKER // SURGE UNLOCKED');
+        // Timed hold so status bar clears after surge unlock window (was sticky all wave).
+        setStatusText('STORM BREAKER // SURGE UNLOCKED', 4.5);
         logEvent('STORM BREAKER // SURGE UNLOCKED');
         AudioFX.pickup('overdrive');
         spawnParticles(p.x, p.y, '#75d1b0', 25, 240, 4);
