@@ -208,7 +208,7 @@ var UPGRADES_I18N = {
   },
   'superconductive-resonance': {
     title: { zh: '超導共鳴晶片', en: 'SUPERCONDUCTIVE RESONANCE' },
-    text: { zh: '暴擊向周圍 2 目標引爆 45% 電弧；全蓄力暴擊回能 4 點且減戰術 CD 0.3s', en: 'Crits arc 45% damage to 2 nearby foes; fully-charged crits grant +4 energy & -0.3s tactical CD' }
+    text: { zh: '暴擊向周圍 2 目標引爆 45% 電弧；暴擊回能 4 點且減戰術 CD 0.3s', en: 'Crits arc 45% damage to 2 nearby foes; crits also grant +4 energy & -0.3s tactical CD' }
   },
   'tactical-overdrive-coil': {
     title: { zh: '戰術過載線圈', en: 'TACTICAL OVERDRIVE COIL' },
