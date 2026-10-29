@@ -93,3 +93,19 @@ export function edgeAwareSpawnMargin(player, boundW, boundH, baseMargin) {
   if (edge.depth > EDGE_BAND * 0.35) return Math.max(base, 72);
   return base;
 }
+
+/**
+ * Fairness (not DPS): when the hull is rim-pinned, rewrite spawn angles that
+ * would place packs on the wall side into the open half-plane so wolf packs
+ * cannot close a pincer against the hatch.
+ */
+export function biasSpawnAngleAwayFromRim(angle, edge) {
+  if (!edge || !edge.pressed || (edge.nx === 0 && edge.ny === 0)) return angle;
+  var inward = Math.atan2(edge.ny, edge.nx);
+  var intoOpen = Math.cos(angle) * edge.nx + Math.sin(angle) * edge.ny;
+  if (intoOpen >= 0.2) return angle;
+  var lat = Math.sin(angle - inward);
+  var latSign = lat >= 0 ? 1 : -1;
+  // Open cone ~±100° around inward normal.
+  return inward + latSign * 1.05;
+}

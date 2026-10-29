@@ -9,7 +9,7 @@ import { enemyProfile } from '../data/enemies.js';
 import { planWave } from './director.js';
 import { createDreadnought, createSovereign } from './sim/bosses.js';
 import { primeEnemy } from './sim/new-enemies.js';
-import { edgeAwareSpawnMargin } from './sim/world-edge.js';
+import { biasSpawnAngleAwayFromRim, edgeAwareSpawnMargin, edgePressure } from './sim/world-edge.js';
 import { logEvent, setStatusText } from '../ui/hud.js';
 
 function currentRecipe() {
@@ -185,6 +185,10 @@ export function sampleRingSpawnPoint(player, camera, worldW, worldH) {
       angle = heading + Math.PI + (rng('spawn') - 0.5) * (140 * Math.PI / 180);
     }
   }
+
+  // Rim-pinned: bias angle into open half so packs do not hatch-pincer (no DPS change).
+  var rimEdge = edgePressure(p.x, p.y, p.r || 16, bW, bH);
+  angle = biasSpawnAngleAwayFromRim(angle, rimEdge);
 
   // Zone 1: Active spawn band (1.15 ~ 1.42 x Viewport)
   var halfW = vpW * 0.5;
