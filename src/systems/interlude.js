@@ -289,6 +289,16 @@ export function clearResidualCombatInput() {
     rt.input.gamepadX = 0;
     rt.input.gamepadY = 0;
   }
+  // Drop canvas capture so a held LMB cannot synthesize a click on the death card.
+  try {
+    var canvas = rt.ui && rt.ui.canvas;
+    if (canvas && typeof canvas.releasePointerCapture === 'function' && typeof canvas.hasPointerCapture === 'function') {
+      // Best-effort: release common pointer ids if still captured.
+      for (var pid = 0; pid < 8; pid += 1) {
+        try { if (canvas.hasPointerCapture(pid)) canvas.releasePointerCapture(pid); } catch (eCap) {}
+      }
+    }
+  } catch (eClearCap) {}
 }
 
 function leaveInterludeInput() {
