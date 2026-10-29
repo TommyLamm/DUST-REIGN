@@ -73,18 +73,18 @@ console.log(' -> AC-03 Player projects to the exact view center.');
 
 // 5. AC-04: Soft edge clamp keeps mech inset (thin void OK, no beam-only rim)
 console.log('[5/9] Verifying AC-04: Soft Edge Clamp Keeps Mech Visible...');
-// keep=(16)+40=56; maxVoidX=480-56=424; maxVoidY=320-56=264
+// keep=(16)+72=88; maxVoidX=480-88=392; maxVoidY=320-88=232
 mockPlayer.x = 15;
 mockPlayer.y = 1320;
 mockPlayer.aimX = 15;
 mockPlayer.aimY = 1320;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-assert.strictEqual(camera.clampedX, 424, `Left-edge camera should inset-clamp, got ${camera.clampedX}`);
+assert.strictEqual(camera.clampedX, 392, `Left-edge camera should inset-clamp, got ${camera.clampedX}`);
 mockPlayer.x = 3505;
 mockPlayer.y = 2625;
 updateCamera(camera, mockPlayer, {}, 0.5, false);
-assert.strictEqual(camera.clampedX, 3096, `Right-edge camera should inset-clamp, got ${camera.clampedX}`);
-assert.strictEqual(camera.clampedY, 2376, `Bottom-edge camera should inset-clamp, got ${camera.clampedY}`);
+assert.strictEqual(camera.clampedX, 3128, `Right-edge camera should inset-clamp, got ${camera.clampedX}`);
+assert.strictEqual(camera.clampedY, 2408, `Bottom-edge camera should inset-clamp, got ${camera.clampedY}`);
 console.log(' -> AC-04 Soft clamp keeps hull on-screen at the rim.');
 
 // 6. AC-05: Trauma Shake & Decoupled Inverse Coordinate Transform

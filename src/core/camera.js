@@ -131,9 +131,9 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
     cam.targetY = player.y;
     cam.followX = player.x;
     cam.followY = player.y;
-    // Keep hull inset when rim-clamped: allow a thin void strip instead of pinning
-    // the mech to the absolute screen edge (beam-only silhouette).
-    var keep = ((player.r || 16) + 40);
+    // Keep hull well inset when rim-clamped: allow a thin void strip instead of
+    // half-offscreen mech buried under stacked warn rings at the absolute rim.
+    var keep = ((player.r || 16) + 72);
     var maxVoidX = Math.max(0, halfW - keep);
     var maxVoidY = Math.max(0, halfH - keep);
     var minCX = worldW > viewW ? maxVoidX : worldW * 0.5;

@@ -1801,7 +1801,33 @@ function drawFieldTelegraphs(ctx) {
       }
       if (e.meleeProximityWarn > 0) {
         var meleeR = (e.r || 12) + 30;
-        warnRing(ctx, e.x, e.y, meleeR, 1 - Math.min(1, e.meleeProximityWarn), '#d889ff', reduced);
+        // Stroke-forward melee cue: skip heavy fill so stacked violet rings cannot bury the hull at the rim.
+        var meleeRemain = 1 - Math.min(1, e.meleeProximityWarn);
+        var meleePulse = reduced ? 0.9 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * (reduced ? 0 : 16)));
+        var meleeAlpha = reduced ? 0.92 : (0.55 + (1 - meleeRemain) * 0.35);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, meleeR, 0, TAU);
+        ctx.strokeStyle = 'rgba(6, 6, 8, 0.88)';
+        ctx.lineWidth = isHighContrast() ? 4.4 : 3.4;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, meleeR, 0, TAU);
+        ctx.setLineDash(reduced ? NO_DASH : [6, 4]);
+        ctx.strokeStyle = '#d889ff';
+        ctx.globalAlpha = meleeAlpha;
+        ctx.lineWidth = isHighContrast() ? 2.8 : 2.2;
+        ctx.stroke();
+        ctx.setLineDash(NO_DASH);
+        ctx.globalAlpha = (reduced ? 0.10 : 0.06) + (1 - meleeRemain) * 0.08;
+        ctx.fillStyle = '#d889ff';
+        ctx.fill();
+        ctx.globalAlpha = meleePulse * 0.85;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 3.2, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
       }
       if (e.kind === 'burrower' && e.state === 'warn') {
         var warnLeft = e.warnT > 0 ? e.warnT / 0.8 : 0;
