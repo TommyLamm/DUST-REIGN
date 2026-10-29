@@ -965,47 +965,78 @@ export function drawOffscreenChevrons(ctx) {
   }
 
   // 2. Key POI Indicators (SPIRE threat chevrons) - Priority P1
+  // Build a unified list: conduction spires + live emp_spire POIs.
+  var spireCueList = [];
   var spires = rt.state.spires;
-  if (spires && spires.length > 0) {
-    var lowHull = p && p.maxHp > 0 && (p.hp / p.maxHp) <= 0.35;
-    for (var si = 0; si < spires.length; si += 1) {
-      var sp = spires[si];
+  if (spires && spires.length) {
+    for (var si0 = 0; si0 < spires.length; si0 += 1) {
+      var sp0 = spires[si0];
+      if (sp0) spireCueList.push({ x: sp0.x, y: sp0.y, resonanceTimer: sp0.resonanceTimer || 0, tag: 'SPIRE' });
+    }
+  }
+  var pois = rt.state.pois;
+  if (pois && pois.length) {
+    for (var pi0 = 0; pi0 < pois.length; pi0 += 1) {
+      var poi0 = pois[pi0];
+      if (!poi0 || poi0.kind !== 'emp_spire' || poi0.status === 'completed') continue;
+      spireCueList.push({ x: poi0.x, y: poi0.y, resonanceTimer: 0, tag: 'EMP' });
+    }
+  }
+  if (spireCueList.length > 0) {
+    var lowHull = p && p.maxHp > 0 && (p.hp / p.maxHp) <= 0.45;
+    for (var si = 0; si < spireCueList.length; si += 1) {
+      var sp = spireCueList[si];
       var sRes = computeEdgeIntersection(sp.x, sp.y, cam, viewW, viewH, margin, _CHEVRON_INTERSECT);
       if (sRes) {
         var sDistPx = Math.hypot(sp.x - p.x, sp.y - p.y);
         var sDistM = Math.round(sDistPx / 16);
         var resonating = (sp.resonanceTimer || 0) > 0;
-        var hot = resonating || lowHull || sDistPx < 720;
+        var hot = resonating || lowHull || sDistPx < 960;
         var col = hot ? '#ffb020' : '#00e5a3';
-        var scale = hot ? 1.45 : 1;
+        var scale = hot ? 1.75 : 1;
         ctx.save();
         ctx.translate(sRes.x, sRes.y);
         ctx.rotate(sRes.angle);
         ctx.scale(scale, scale);
+        // Plate under chevrons when hot so single orange elite arrows cannot be confused with SPIRE.
+        if (hot) {
+          ctx.fillStyle = 'rgba(12, 8, 2, 0.78)';
+          ctx.beginPath();
+          ctx.moveTo(20, 0); ctx.lineTo(-8, -10); ctx.lineTo(-8, 10); ctx.closePath();
+          ctx.fill();
+        }
         // Double chevron when dangerous so direction still reads at low HP / haze.
         ctx.fillStyle = col;
         ctx.beginPath();
-        ctx.moveTo(9, 0); ctx.lineTo(-4, -6.5); ctx.lineTo(-1.5, 0); ctx.lineTo(-4, 6.5); ctx.closePath();
+        ctx.moveTo(10, 0); ctx.lineTo(-5, -7.5); ctx.lineTo(-2, 0); ctx.lineTo(-5, 7.5); ctx.closePath();
         ctx.fill();
         if (hot) {
           ctx.beginPath();
-          ctx.moveTo(16, 0); ctx.lineTo(3, -6.5); ctx.lineTo(5.5, 0); ctx.lineTo(3, 6.5); ctx.closePath();
+          ctx.moveTo(19, 0); ctx.lineTo(4, -7.5); ctx.lineTo(7, 0); ctx.lineTo(4, 7.5); ctx.closePath();
           ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 248, 220, 0.85)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(10, 0); ctx.lineTo(-5, -7.5); ctx.lineTo(-2, 0); ctx.lineTo(-5, 7.5); ctx.closePath();
+          ctx.stroke();
         }
         ctx.restore();
 
-        ctx.font = hot ? '800 10px ui-monospace, SFMono-Regular, Consolas, monospace' : '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+        ctx.font = hot ? '800 11px ui-monospace, SFMono-Regular, Consolas, monospace' : '700 8.5px ui-monospace, SFMono-Regular, Consolas, monospace';
         ctx.fillStyle = col;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * (hot ? 20 : 14), 36, viewW - 36);
-        var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * (hot ? 20 : 14), 18, viewH - 18);
-        var label = (resonating ? 'SPIRE!' : 'SPIRE') + ' ' + sDistM + 'm';
-        // Tiny plate behind label when hot so sand/haze cannot wash it out.
+        var sxOffset = clamp(sRes.x - Math.cos(sRes.angle) * (hot ? 24 : 14), 40, viewW - 40);
+        var syOffset = clamp(sRes.y - Math.sin(sRes.angle) * (hot ? 24 : 14), 20, viewH - 20);
+        var label = ((resonating || hot) ? (sp.tag + '!') : sp.tag) + ' ' + sDistM + 'm';
+        // Plate behind label when hot so sand/haze cannot wash it out.
         if (hot) {
           var tw = ctx.measureText(label).width;
-          ctx.fillStyle = 'rgba(10, 8, 4, 0.72)';
-          ctx.fillRect(sxOffset - tw * 0.5 - 4, syOffset - 7, tw + 8, 14);
+          ctx.fillStyle = 'rgba(10, 8, 4, 0.82)';
+          ctx.fillRect(sxOffset - tw * 0.5 - 5, syOffset - 8, tw + 10, 16);
+          ctx.strokeStyle = 'rgba(255, 176, 32, 0.55)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(sxOffset - tw * 0.5 - 5, syOffset - 8, tw + 10, 16);
           ctx.fillStyle = col;
         }
         ctx.fillText(label, sxOffset, syOffset);
