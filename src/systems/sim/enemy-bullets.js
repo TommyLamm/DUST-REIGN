@@ -250,20 +250,29 @@ export function stepArtilleryTargets(dt, frame) {
           rt.state.shockRings.push({
             x: at.x,
             y: at.y,
-            r: 12,
-            maxR: Math.max(at.r * 1.35, at.r + 28),
-            life: 0.42,
-            maxLife: 0.42,
+            r: 14,
+            maxR: Math.max(at.r * 1.45, at.r + 34),
+            life: 0.50,
+            maxLife: 0.50,
             color: '#ffe0a8'
           });
           rt.state.shockRings.push({
             x: at.x,
             y: at.y,
-            r: 8,
-            maxR: at.r * 0.85,
-            life: 0.26,
-            maxLife: 0.26,
+            r: 9,
+            maxR: at.r * 0.95,
+            life: 0.34,
+            maxLife: 0.34,
             color: '#fffaf0'
+          });
+          rt.state.shockRings.push({
+            x: at.x,
+            y: at.y,
+            r: 5,
+            maxR: at.r * 0.55,
+            life: 0.22,
+            maxLife: 0.22,
+            color: '#ffffff'
           });
           spawnParticles(at.x, at.y, '#fffaf0', 14, 200, 3.5);
           spawnParticles(at.x, at.y, '#fff0c8', 12, 170, 3);
