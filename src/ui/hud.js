@@ -1035,10 +1035,12 @@ export function updateDomUi() {
       if (rt.ui.statusText) rt.ui.statusText.textContent = holdMsg;
     }
     syncUpgradeTimerPin();
-    if (rt.state.statusHold === 0 && rt.ui.statusText && !rt.state.paused && !rt.state.interlude) {
+    if (rt.state.statusHold === 0) {
       rt.state.statusHoldKind = '';
       rt.state.statusHoldBountyReward = 0;
-      rt.ui.statusText.textContent = tStatus('SIGNAL LIVE — KEEP MOVING');
+      if (rt.ui.statusText && !rt.state.paused && !rt.state.interlude && !rt.state.over) {
+        rt.ui.statusText.textContent = tStatus('SIGNAL LIVE — KEEP MOVING');
+      }
     }
   } else if (rt.state.paused && rt.ui.overlay && !rt.ui.overlay.hidden) {
     syncUpgradeTimerPin();
