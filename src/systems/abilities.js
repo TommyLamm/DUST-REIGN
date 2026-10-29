@@ -1,3 +1,4 @@
+import { addCameraTrauma } from '../core/camera.js';
 import { AudioFX } from '../audio/audio-fx.js';
 import { DASH_PULSE_DURATION, DASH_PULSE_RADIUS, MAX_COMBO } from '../config.js';
 import { addDecal, spawnParticles } from '../core/pools.js';
@@ -502,29 +503,44 @@ export function triggerEmp() {
 
   AudioFX.emp();
   triggerHaptic([35, 20, 50]);
-  rt.state.shake = Math.max(rt.state.shake, 10);
+  rt.state.shake = Math.max(rt.state.shake, 16);
+  // Screen-readable EMP punch — tiny cyan flash was easy to miss vs HUD text.
+  rt.state.hurtFlash = Math.max(rt.state.hurtFlash || 0, 0.28);
+  addCameraTrauma(0.18);
+  rt.state.banner = Math.max(rt.state.banner || 0, 0.85);
+  rt.state.bannerText = 'EMP DISCHARGE // FIELD CLEARED';
 
   rt.state.shockRings.push({
     x: empX,
     y: empY,
-    r: 12,
+    r: 18,
     maxR: empR,
-    life: 0.35,
-    maxLife: 0.35,
+    life: 0.55,
+    maxLife: 0.55,
     color: '#5be7ff'
   });
   rt.state.shockRings.push({
     x: empX,
     y: empY,
-    r: 6,
-    maxR: empR * 0.65,
-    life: 0.22,
-    maxLife: 0.22,
+    r: 10,
+    maxR: empR * 0.75,
+    life: 0.4,
+    maxLife: 0.4,
     color: '#ffffff'
   });
+  rt.state.shockRings.push({
+    x: empX,
+    y: empY,
+    r: 4,
+    maxR: empR * 1.15,
+    life: 0.28,
+    maxLife: 0.28,
+    color: 'rgba(189, 244, 255, 0.9)'
+  });
 
-  spawnParticles(empX, empY, '#5be7ff', 24, 230, 3.5);
-  spawnParticles(empX, empY, '#ffffff', 14, 160, 2);
+  spawnParticles(empX, empY, '#5be7ff', 42, 280, 4.2);
+  spawnParticles(empX, empY, '#ffffff', 28, 210, 3.2);
+  spawnParticles(empX, empY, '#bdf4ff', 18, 160, 2.4);
 
   for (var bi = rt.state.enemyBullets.length - 1; bi >= 0; bi -= 1) {
     var eb = rt.state.enemyBullets[bi];

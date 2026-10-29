@@ -532,11 +532,36 @@ export function spawnSpires() {
   var margin = 90;
   var sx = margin + rng('spawn') * (boundW - margin * 2);
   var sy = margin + rng('spawn') * (boundH - margin * 2);
-  for (var sTry = 0; sTry < 40; sTry += 1) {
-    if (Math.hypot(sx - p.x, sy - p.y) >= 160) break;
-    sx = margin + rng('spawn') * (boundW - margin * 2);
-    sy = margin + rng('spawn') * (boundH - margin * 2);
+  function packPressure(x, y) {
+    var foes = rt.state.enemies || [];
+    var near = 0;
+    var i;
+    for (i = 0; i < foes.length; i += 1) {
+      var e = foes[i];
+      if (!e || e.hp <= 0) continue;
+      if (Math.hypot(e.x - x, e.y - y) < 220) near += 1;
+    }
+    return near;
   }
+  var bestX = sx;
+  var bestY = sy;
+  var bestScore = 1e9;
+  for (var sTry = 0; sTry < 48; sTry += 1) {
+    var candX = margin + rng('spawn') * (boundW - margin * 2);
+    var candY = margin + rng('spawn') * (boundH - margin * 2);
+    var distP = Math.hypot(candX - p.x, candY - p.y);
+    if (distP < 160) continue;
+    // Prefer clear ground — avoid dropping a spire into a wolf-pack knot.
+    var score = packPressure(candX, candY) * 1000 + (distP < 200 ? 200 : 0);
+    if (score < bestScore) {
+      bestScore = score;
+      bestX = candX;
+      bestY = candY;
+      if (score === 0) break;
+    }
+  }
+  sx = bestX;
+  sy = bestY;
   if (Math.hypot(sx - p.x, sy - p.y) < 150) {
     sx = p.x < boundW / 2 ? (boundW - margin) : margin;
     sy = p.y < boundH / 2 ? (boundH - margin) : margin;

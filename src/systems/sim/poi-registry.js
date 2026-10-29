@@ -564,28 +564,43 @@ export var POI_REGISTRY = {
       ctx.fill();
       ctx.restore();
 
-      // Cyan/white dashed EMP telegraph — live only. Completed spires drop the dash (death-frame noise).
+      // Cyan HEX field — not a dashed circle (melee warnRing vocabulary).
       if (!spireDone) {
         ctx.beginPath();
-        ctx.arc(px, py, ringR, 0, TAU);
-        ctx.strokeStyle = 'rgba(0, 243, 255,' + (0.78 * ringPulse).toFixed(3) + ')';
-        ctx.lineWidth = 3.6;
-        ctx.setLineDash([10, 6]);
+        for (var hi = 0; hi < 6; hi += 1) {
+          var hAng = (hi / 6) * TAU + Math.PI / 6;
+          var hx = px + Math.cos(hAng) * ringR;
+          var hy = py + Math.sin(hAng) * ringR;
+          if (hi === 0) ctx.moveTo(hx, hy);
+          else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(0, 243, 255,' + (0.88 * ringPulse).toFixed(3) + ')';
+        ctx.lineWidth = 3.8;
         ctx.stroke();
-        ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.arc(px, py, ringR + 5, 0, TAU);
-        ctx.strokeStyle = 'rgba(255, 255, 255,' + (0.55 * ringPulse).toFixed(3) + ')';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 8]);
+        for (var hi2 = 0; hi2 < 6; hi2 += 1) {
+          var hAng2 = (hi2 / 6) * TAU + Math.PI / 6;
+          var hx2 = px + Math.cos(hAng2) * (ringR + 7);
+          var hy2 = py + Math.sin(hAng2) * (ringR + 7);
+          if (hi2 === 0) ctx.moveTo(hx2, hy2);
+          else ctx.lineTo(hx2, hy2);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(255, 255, 255,' + (0.5 * ringPulse).toFixed(3) + ')';
+        ctx.lineWidth = 1.8;
         ctx.stroke();
-        ctx.setLineDash([]);
-        // Soft fill wash so the field reads even when the stroke is behind haze.
         ctx.beginPath();
-        ctx.arc(px, py, ringR, 0, TAU);
-        ctx.strokeStyle = 'rgba(0, 243, 255, 0.18)';
-        ctx.lineWidth = 10;
-        ctx.stroke();
+        for (var hi3 = 0; hi3 < 6; hi3 += 1) {
+          var hAng3 = (hi3 / 6) * TAU + Math.PI / 6;
+          var hx3 = px + Math.cos(hAng3) * ringR;
+          var hy3 = py + Math.sin(hAng3) * ringR;
+          if (hi3 === 0) ctx.moveTo(hx3, hy3);
+          else ctx.lineTo(hx3, hy3);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 243, 255, 0.08)';
+        ctx.fill();
       }
     },
     getLight: function (poi) {

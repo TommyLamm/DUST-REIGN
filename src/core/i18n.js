@@ -1754,6 +1754,7 @@ export function tBanner(text) {
 
   if (text.indexOf('SILO OVERCHARGE DEFENSE') === 0) return '發射井超載防禦：危地封鎖 20 秒！';
   if (text.indexOf('EXTRACTION COMPLETE') === 0) return '撤離完成：+80 精煉廢料 & 600px 真空吸力！';
+  if (text.indexOf('EMP DISCHARGE') === 0) return 'EMP 放電 // 場域清除';
   if (text.indexOf('ORBITAL POD OPENED') === 0) return '軌道艙開啟：全面超頻 & 電池過充！';
   if (text.indexOf('FIELD RIG OVERCLOCK') === 0) return '野戰機體超頻：射速 +35% & 強化底盤！';
   if (text.indexOf('XENO NEST DESTROYED') === 0) return '異種巢穴摧毀：衝擊波已引爆！';
