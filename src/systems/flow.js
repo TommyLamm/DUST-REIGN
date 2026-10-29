@@ -130,6 +130,47 @@ export function stormWind() {
   return { angle: STORM_ANGLE, power: STORM_POWER };
 }
 
+function resetRunCombatStats(state) {
+  if (!state) return;
+  state.score = 0;
+  state.kills = 0;
+  state.combo = 0;
+  state.comboTimer = 0;
+  state.grazeCombo = 0;
+  state.grazeTimer = 0;
+  state.wave = 1;
+  state.waveTime = 0;
+  state.level = 1;
+  state.xp = 0;
+  state.xpNext = 55;
+  state.deathCause = null;
+  state.lastDamageSource = '';
+  state.lastNonEliteDamageSource = '';
+  state.recentDamageSources = [];
+  state.evalRank = null;
+  state.isNewRecord = false;
+  state.scoreBreakdown = { kill: 0, bounty: 0, storm: 0, graze: 0, repair: 0, wave: 0, flawless: 0, boss: 0, style: 0, contract: 0, overtime: 0, extract: 0 };
+  state.scrapCollectedInStage = 0;
+  state.damageTakenInStage = 0;
+  state.waveDamageTaken = 0;
+  state.flawlessStreak = 0;
+  state.stats = {
+    shotsFired: 0,
+    shotsHit: 0,
+    damageDealt: 0,
+    crits: 0,
+    coresDetonated: 0,
+    grazes: 0,
+    maxCombo: 0,
+    contractsCompleted: 0,
+    justDashes: 0,
+    partsDestroyed: 0,
+    flawlessWaves: 0,
+    barrelChainMax: 0,
+    fusionsUnlocked: 0
+  };
+}
+
 export function beginRun() {
   if (!rt.state) return;
   // Start-screen deploy must win over leftover over/upgrade residue (hard reload / half-reset).
@@ -164,6 +205,8 @@ export function beginRun() {
     state.stageConfig = getHardcoreOperation(selOpId) || HARDCORE_OPERATIONS[0];
   }
 
+  // Every deploy must start a clean telemetry run (redeploy already makeState; fromStart alone used to keep prior damageDealt/hit rate).
+  resetRunCombatStats(state);
   applyLoadout(state);
   initMode(state, state.mode, state.stageConfig);
   evaluateArchetypes(state);
@@ -257,6 +300,13 @@ export function restart() {
   if (rt.ui.combatRankStamp) rt.ui.combatRankStamp.hidden = true;
   syncCombatLayout();
   rt.state = makeState();
+  // Wipe result telemetry DOM so a prior run cannot linger on the card before the next death.
+  if (rt.ui) {
+    if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = '0%';
+    if (rt.ui.telMaxCombo) rt.ui.telMaxCombo.textContent = 'x0';
+    if (rt.ui.telGrazes) rt.ui.telGrazes.textContent = '0';
+    if (rt.ui.telDamage) rt.ui.telDamage.textContent = '0';
+  }
   evaluateArchetypes(rt.state);
   var meta = readMeta();
   var selectedMode = (meta && meta.selectedMode) || 'standard';
