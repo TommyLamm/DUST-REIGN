@@ -337,7 +337,7 @@ export var UPGRADES = [
     maxStacks: 1,
     archetype: 'static',
     title: 'SUPERCONDUCTIVE RESONANCE',
-    text: 'Crits arc 45% damage to 2 nearby foes; crits also grant +4 energy & -0.3s tactical CD',
+    text: 'Crits arc 45% damage to 2 nearby foes (charged rail/colossus crits also +4 energy & -0.3s tactical CD)',
     apply: function (s) { s.player.superconductiveResonance = true; }
   },
   {
