@@ -4,8 +4,10 @@
   justify-content: center;
   padding: clamp(12px, 4cqh, 48px);
   overflow: hidden;
-  background: rgba(10, 11, 9, 0.58);
-  backdrop-filter: blur(2px);
+  /* Soft radial dim — keep center mortar rings visible under the player. */
+  background:
+    radial-gradient(ellipse 48% 44% at 50% 58%, rgba(10, 11, 9, 0.10) 0%, rgba(10, 11, 9, 0.40) 52%, rgba(10, 11, 9, 0.62) 100%);
+  backdrop-filter: blur(1px);
 }
 
 .upgrade-panel::before {
@@ -95,18 +97,18 @@
   text-align: left;
   border: 1px solid rgba(232, 224, 198, 0.48);
   border-top: 3px solid var(--muted);
-  background: rgba(40, 36, 28, 0.96);
+  background: rgba(40, 36, 28, 0.72);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 .upgrade-card:hover,
 .upgrade-card:focus-visible {
   border-color: var(--amber);
   border-top-color: var(--amber);
-  background: rgba(72, 61, 34, 0.92);
+  background: rgba(72, 61, 34, 0.78);
   transform: translateY(-5px);
 }
 
@@ -123,19 +125,19 @@
   border-top: 3px solid var(--muted) !important;
   border-radius: 0 !important;
   color: var(--bone) !important;
-  background: rgba(40, 36, 28, 0.96) !important;
+  background: rgba(40, 36, 28, 0.72) !important;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   font-family: var(--body) !important;
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 #upgradeChoices .upgrade-choice:hover,
 #upgradeChoices .upgrade-choice:focus-visible {
   border-color: var(--amber) !important;
   border-top-color: var(--amber) !important;
-  background: rgba(72, 61, 34, 0.92) !important;
+  background: rgba(72, 61, 34, 0.78) !important;
   transform: translateY(-5px);
 }
 
