@@ -110,8 +110,9 @@ export function updateCamera(cam, player, input, dt, reducedMotion) {
 
   if (dt <= 0) return;
 
-  var viewW = cam.viewW || (rt.ui && rt.ui.width) || 960;
-  var viewH = cam.viewH || (rt.ui && rt.ui.height) || 640;
+  // Prefer live canvas CSS size (rt.ui) over a stale cam.viewW from pre-layout deploy.
+  var viewW = (rt.ui && rt.ui.width) || cam.viewW || 960;
+  var viewH = (rt.ui && rt.ui.height) || cam.viewH || 640;
   cam.viewW = viewW;
   cam.viewH = viewH;
   if (rt.ui && rt.ui.dpr) cam.dpr = rt.ui.dpr;
@@ -189,8 +190,8 @@ var _WORLD_OUT = { x: 0, y: 0 };
 export function screenToWorld(sx, sy, cam, out) {
   cam = cam || (rt && rt.camera) || camera;
   out = out || _WORLD_OUT;
-  var viewW = cam.viewW || (rt.ui && rt.ui.width) || 960;
-  var viewH = cam.viewH || (rt.ui && rt.ui.height) || 640;
+  var viewW = (rt.ui && rt.ui.width) || cam.viewW || 960;
+  var viewH = (rt.ui && rt.ui.height) || cam.viewH || 640;
   var originX = viewW * 0.5;
   var originY = viewH * 0.5;
 
@@ -215,8 +216,8 @@ export function screenToWorld(sx, sy, cam, out) {
 export function worldToScreen(wx, wy, cam, out) {
   cam = cam || (rt && rt.camera) || camera;
   out = out || _SCREEN_OUT;
-  var viewW = cam.viewW || (rt.ui && rt.ui.width) || 960;
-  var viewH = cam.viewH || (rt.ui && rt.ui.height) || 640;
+  var viewW = (rt.ui && rt.ui.width) || cam.viewW || 960;
+  var viewH = (rt.ui && rt.ui.height) || cam.viewH || 640;
   var relX = wx - (cam.clampedX !== undefined ? cam.clampedX : cam.x);
   var relY = wy - (cam.clampedY !== undefined ? cam.clampedY : cam.y);
 

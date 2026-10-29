@@ -292,8 +292,10 @@ export function syncCombatLayout() {
 export function resize() {
   if (!rt.ui || !rt.ui.canvas) return;
   var rect = rt.ui.canvas.getBoundingClientRect ? rt.ui.canvas.getBoundingClientRect() : {};
-  var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || window.innerWidth || 960));
-  var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || window.innerHeight || 640));
+  var winW = (typeof window !== "undefined" && window.innerWidth) ? window.innerWidth : 960;
+  var winH = (typeof window !== "undefined" && window.innerHeight) ? window.innerHeight : 640;
+  var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || winW || 960));
+  var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || winH || 640));
 
   var q = 'high';
   try { q = getQuality(); } catch (e) {}
