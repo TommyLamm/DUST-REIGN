@@ -313,6 +313,8 @@ export function beginRun() {
   spawnBarrels();
   spawnSpires();
   recoverCombatView();
+  // Push selected aux into HUD immediately — HTML seed shows sentry until first frame sync.
+  try { updateDomUi(); } catch (eUiDeploy) {}
   // Second pass after LIVE CSS settles — aim/camera + canvas self-heal (death→R blank grid).
   if (typeof requestAnimationFrame === 'function') {
     requestAnimationFrame(function () {
