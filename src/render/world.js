@@ -1009,6 +1009,7 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
     }
 
     // World-site plate (not player tactical gear) — prefer localized poi.name
+    // I18N-FREEZE: Latin poi.label (ORBITAL POD / SILO-N) stays as site telemetry code; banners already go through tBanner.
     // IDLE plates stay quiet so wolf-pack / field tips keep visual priority.
     var isIdle = !poi.status || poi.status === 'idle';
     var isActive = poi.status === 'active' || poi.status === 'interacting' || poi.status === 'armed' || poi.status === 'hostile';
