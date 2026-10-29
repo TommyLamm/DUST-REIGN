@@ -123,9 +123,10 @@ function init(options) {
 
   var visibilityAutoPaused = false;
   var onVisibilityChange = function () {
+    var onStart = !!(rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden);
     if (document.hidden) {
-      // Silent auto-pause only when LIVE (not already paused / dead).
-      if (rt.state && !rt.state.over && !rt.state.paused) {
+      // Silent auto-pause only when LIVE (not already paused / dead / on loadout).
+      if (rt.state && !rt.state.over && !rt.state.paused && !onStart) {
         visibilityAutoPaused = true;
         pause();
       } else {
@@ -138,7 +139,22 @@ function init(options) {
     try { invalidateTerrainPatterns(); } catch (e1) {}
     rt.lastTime = 0;
     try { draw(); } catch (e2) {}
-    if (rt.state && rt.state.over) {
+    // Loadout / start screen: never resume a phantom run or force GO over the menu.
+    if (onStart) {
+      visibilityAutoPaused = false;
+      if (rt.state) {
+        rt.state.paused = true;
+        // Zero-effort phantom settle behind menu — fold GO chrome back under standby.
+        if (rt.state.over && !(rt.state.wave > 1 || (rt.state.score | 0) > 0 || (rt.state.kills | 0) > 0)) {
+          rt.state.over = false;
+          rt.state.deathCause = null;
+          rt.state.deathSequenceTimer = 0;
+          if (rt.state.player && rt.state.player.maxHp) rt.state.player.hp = rt.state.player.maxHp;
+          if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+        }
+      }
+      try { updateDomUi(); } catch (eStart) {}
+    } else if (rt.state && rt.state.over) {
       // Death hard-freeze: force result card without needing R / full reload.
       rt.state.paused = false;
       rt.state.deathSequenceTimer = 0;
@@ -162,7 +178,7 @@ function init(options) {
     try { if (typeof healStaleLive === "function") healStaleLive(); } catch (e3) {}
     try { kickFrame(); } catch (e4) {}
   };
-  document.addEventListener('visibilitychange', onVisibilityChange);
+document.addEventListener('visibilitychange', onVisibilityChange);
   rt.listeners.push(function () {
     document.removeEventListener('visibilitychange', onVisibilityChange);
   });
@@ -187,7 +203,9 @@ function pause() {
 }
 
 function resume() {
-  if (rt.state && !rt.state.over && !rt.state.upgradeChoices.length) { rt.state.paused = false; updateDomUi(); }
+  // Standby / loadout is not an active run — never unpause behind the start screen.
+  if (rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden) return;
+  if (rt.state && !rt.state.over && !(rt.state.upgradeChoices && rt.state.upgradeChoices.length)) { rt.state.paused = false; updateDomUi(); }
 }
 
 function destroy() {

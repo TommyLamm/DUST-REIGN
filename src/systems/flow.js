@@ -191,6 +191,18 @@ export function healStaleLive() {
   if (!rt.state || !rt.ui) return false;
   var onStart = !!(rt.ui.startScreen && !rt.ui.startScreen.hidden);
   if (onStart) {
+    // Keep standby frozen; never surface a phantom game-over over loadout.
+    if (rt.state) {
+      rt.state.paused = true;
+      if (rt.state.over && !(rt.state.wave > 1 || (rt.state.score | 0) > 0 || (rt.state.kills | 0) > 0)) {
+        rt.state.over = false;
+        rt.state.deathCause = null;
+        rt.state.deathSequenceTimer = 0;
+        if (rt.state.player && rt.state.player.maxHp) rt.state.player.hp = rt.state.player.maxHp;
+      }
+    }
+    if (rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+    if (rt.ui.overlay) rt.ui.overlay.hidden = true;
     recoverCombatView();
     if (typeof rt.kickFrame === "function") try { rt.kickFrame(); } catch (eK0) {}
     return false;
@@ -493,6 +505,12 @@ export function extractRun() {
 
 export function triggerGameOver(options) {
   if (!rt.state || rt.state.over) return;
+  // Start / loadout UI is not an active run — refuse in-run settlement behind the menu.
+  if (rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden) {
+    rt.state.paused = true;
+    if (rt.state.player && rt.state.player.maxHp) rt.state.player.hp = Math.max(rt.state.player.hp || 0, 1);
+    return;
+  }
   var isVictory = Boolean(options && options.victory);
   if (!isVictory) {
     rt.state.player.hp = 0;
