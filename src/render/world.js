@@ -983,7 +983,13 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
   for (var i = 0; i < pois.length; i += 1) {
     var poi = pois[i];
     if (!poi) continue;
-    if (poi.x < minX || poi.x > maxX || poi.y < minY || poi.y > maxY) continue;
+    // emp_spire telegraph ring is >=120px — wider cull so dashed field is not clipped at the view edge.
+    var pad = (poi.kind === 'emp_spire' && poi.status !== 'completed') ? 180 : 150;
+    var pMinX = hasBounds ? x0 - pad : minX;
+    var pMaxX = hasBounds ? x0 + viewW + pad : maxX;
+    var pMinY = hasBounds ? y0 - pad : minY;
+    var pMaxY = hasBounds ? y0 + viewH + pad : maxY;
+    if (poi.x < pMinX || poi.x > pMaxX || poi.y < pMinY || poi.y > pMaxY) continue;
 
     ctx.save();
     var px = poi.x;

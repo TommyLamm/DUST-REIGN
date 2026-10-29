@@ -502,28 +502,12 @@ export var POI_REGISTRY = {
       var px = poi.x;
       var py = poi.y;
       var pr = poi.r || 80;
+      // Larger than interact radius so the cyan dashed telegraph reads on sand mid-range.
+      var ringR = Math.max(pr, 120);
       var spireDone = poi.status === 'completed';
+      var ringPulse = reduced ? 1 : (0.86 + 0.14 * (0.5 + 0.5 * Math.sin((rTime || 0) * 4.2 + (poi.pulsePhase || 0))));
 
-      // Ring (cyan/white dashed telegraph — distinct from violet melee warn)
-      ctx.beginPath();
-      ctx.arc(px, py, pr, 0, TAU);
-      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : 'rgba(0, 243, 255, 0.92)';
-      ctx.lineWidth = 2.4;
-      if (!spireDone) ctx.setLineDash([6, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // Soft white outer halo for contrast on sand
-      if (!spireDone) {
-        ctx.beginPath();
-        ctx.arc(px, py, pr + 3, 0, TAU);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([3, 7]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      // Triangular Base
+      // Body first so the ring paints above the silhouette (near-view contrast).
       ctx.save();
       ctx.translate(px, py);
       ctx.beginPath();
@@ -541,7 +525,6 @@ export var POI_REGISTRY = {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Capacitors at vertices
       if (!spireDone) {
         for (var ci = 0; ci < poi.capacitors; ci += 1) {
           var cAng = (ci / 3) * TAU - Math.PI / 2;
@@ -554,12 +537,35 @@ export var POI_REGISTRY = {
         }
       }
 
-      // Central Spire Core
       ctx.beginPath();
       ctx.arc(0, 0, 10, 0, TAU);
       ctx.fillStyle = spireDone ? '#495057' : '#00f3ff';
       ctx.fill();
       ctx.restore();
+
+      // Cyan/white dashed EMP telegraph — thick, high alpha, above body.
+      ctx.beginPath();
+      ctx.arc(px, py, ringR, 0, TAU);
+      ctx.strokeStyle = spireDone ? 'rgba(100, 100, 120, 0.3)' : ('rgba(0, 243, 255,' + (0.78 * ringPulse).toFixed(3) + ')');
+      ctx.lineWidth = spireDone ? 2 : 3.6;
+      if (!spireDone) ctx.setLineDash([10, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (!spireDone) {
+        ctx.beginPath();
+        ctx.arc(px, py, ringR + 5, 0, TAU);
+        ctx.strokeStyle = 'rgba(255, 255, 255,' + (0.55 * ringPulse).toFixed(3) + ')';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Soft fill wash so the field reads even when the stroke is behind haze.
+        ctx.beginPath();
+        ctx.arc(px, py, ringR, 0, TAU);
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.18)';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+      }
     },
     getLight: function (poi) {
       if (poi.status !== 'completed') {
