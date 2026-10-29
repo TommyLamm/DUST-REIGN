@@ -164,7 +164,7 @@ function drawFog(ctx, v) {
   ctx.save();
   for (i = 0; i < bands; i += 1) {
     var shift = v.reduced ? i * 70 : ((time * (36 + i * 16) + i * 90) % (diag + 180)) - 90;
-    var alpha = (0.1 + i * 0.022) * v.storm;
+    var alpha = (0.055 + i * 0.012) * v.storm;
     if (v.hc) alpha *= 0.22;
     ctx.save();
     ctx.translate(v.w * 0.5, v.h * 0.5);
@@ -175,7 +175,7 @@ function drawFog(ctx, v) {
     ctx.fillRect(-diag, -26 - i * 8, diag * 2, 54 + i * 16);
     ctx.restore();
   }
-  var streaks = v.hc ? 5 : 14;
+  var streaks = v.hc ? 4 : 9;
   var speed = 720;
   var clock = v.reduced ? 0 : v.waveTime;
   var si;
@@ -188,11 +188,11 @@ function drawFog(ctx, v) {
     var sLen = 150 + (si % 4) * 70;
     var eX = sX + COS_W * sLen;
     var eY = sY + SIN_W * sLen;
-    var sa = (si % 2 === 0 ? 0.26 : 0.18) * v.storm;
+    var sa = (si % 2 === 0 ? 0.14 : 0.09) * v.storm;
     if (v.hc) sa *= 0.28;
     ctx.globalAlpha = sa;
     ctx.strokeStyle = si % 2 === 0 ? streakA : streakB;
-    ctx.lineWidth = 2.2 + (si % 3) * 0.85;
+    ctx.lineWidth = 1.6 + (si % 3) * 0.55;
     ctx.beginPath();
     ctx.moveTo(sX, sY);
     ctx.lineTo(eX, eY);
@@ -373,7 +373,7 @@ export function drawScreenPost(ctx) {
   var v = view();
   var budget = getBudget();
   if (!v.hc) {
-    var gradeAlpha = 0.34 + v.storm * 0.1;
+    var gradeAlpha = 0.30 + v.storm * 0.06;
     ctx.save();
     ctx.globalCompositeOperation = 'soft-light';
     ctx.globalAlpha = gradeAlpha;
