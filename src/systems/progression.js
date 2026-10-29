@@ -188,6 +188,7 @@ function drawReplacement(hand) {
 }
 
 function openUpgradePick() {
+  if (!rt.state || rt.state.over) return;
   clearResidualCombatInput();
   rt.state.banishPicking = false;
   rt.state.upgradeChoices = randomUpgradeChoices();
@@ -202,6 +203,7 @@ export function addXp(amount) {
   rt.state.totalScrapCollected = (rt.state.totalScrapCollected || 0) + gain;
   rt.state.xp += gain;
   if (rt.state.xp >= rt.state.xpNext) {
+    if (rt.state.over) return;
     if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) return;
     rt.state.xp -= rt.state.xpNext;
     rt.state.level += 1;
