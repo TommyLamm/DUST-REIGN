@@ -280,6 +280,15 @@ export function stepEnemies(dt, frame) {
       var nearPin = touchD2 <= (touchR + 36) * (touchR + 36);
       if (nearPin) shoveEnemyOffEdge(e, playerEdge, 95 * dt, boundW, boundH, false);
     }
+    // Melee proximity flare (VFX only — no damage/timing retune).
+    e.meleeProximityWarn = 0;
+    if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && !e.isBoss) {
+      var warnR = touchR + 44;
+      if (touchD2 <= warnR * warnR) {
+        var warnDist = Math.sqrt(touchD2);
+        e.meleeProximityWarn = Math.max(0.12, 1 - warnDist / warnR);
+      }
+    }
     if (!isCulled && !e.burrowed && e.kind !== 'mine' && e.kind !== 'stormTower' && e.kind !== 'scurrier' && touchD2 <= touchR * touchR && e.touchCooldown <= 0 && p.invulnerable <= 0) {
       var contactDmg = e.damage;
       if (e.kind === 'burrower') {
@@ -326,6 +335,13 @@ export function stepEnemies(dt, frame) {
           shoveEnemyOffEdge(e, playerEdge, 34, boundW, boundH, true);
           p.x = clamp(p.x + playerEdge.nx * 16, p.r, boundW - p.r);
           p.y = clamp(p.y + playerEdge.ny * 16, p.r, boundH - p.r);
+        } else if (!e.knockbackImmune) {
+          // Modest separation shove so point-blank contact does not stick (feel only).
+          var push = Math.hypot(tdx, tdy) || 1;
+          e.x -= (tdx / push) * 24;
+          e.y -= (tdy / push) * 24;
+          e.x = clamp(e.x, e.r || 12, boundW - (e.r || 12));
+          e.y = clamp(e.y, e.r || 12, boundH - (e.r || 12));
         }
         AudioFX.hurt();
         triggerHaptic([45]);
