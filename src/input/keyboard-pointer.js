@@ -147,6 +147,10 @@ export function bindInput() {
       rt.firePointers.delete(event.pointerId);
     }
     rt.input.mouse.down = rt.firePointers.size > 0 || Boolean(rt.input.gamepadFiring);
+    // After death, first full release arms restart (blocks held-LMB skip of Dust Realm).
+    if (rt.state && rt.state.over && rt.state.redeployNeedsRelease && !rt.input.mouse.down) {
+      rt.state.redeployNeedsRelease = false;
+    }
   }
   on(window, 'pointerup', releaseFire);
   on(window, 'pointercancel', releaseFire);
@@ -157,6 +161,7 @@ export function bindInput() {
     rt.input.mouse.down = false;
     rt.input.gamepadX = 0;
     rt.input.gamepadY = 0;
+    if (rt.state && rt.state.over) rt.state.redeployNeedsRelease = false;
   });
   on(window, 'gamepadconnected', function (e) {
     rt.gamepadState.connected = true;

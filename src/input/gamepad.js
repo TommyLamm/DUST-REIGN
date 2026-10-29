@@ -32,6 +32,7 @@ function releaseGamepadFire() {
   if (!rt.input || !rt.input.gamepadFiring) return;
   rt.input.gamepadFiring = false;
   if (!rt.firePointers || rt.firePointers.size === 0) rt.input.mouse.down = false;
+  if (rt.state && rt.state.over && rt.state.redeployNeedsRelease && !rt.input.mouse.down) rt.state.redeployNeedsRelease = false;
 }
 
 function enemyLive(enemy) {

@@ -431,7 +431,11 @@ export function armRedeployGate(extraSec) {
   clearResidualCombatInput();
   var seq = (rt.state.deathSequenceTimer > 0) ? rt.state.deathSequenceTimer : 0;
   var hold = seq + (typeof extraSec === 'number' ? extraSec : 0.55);
-  rt.state.redeployGateUntilMs = nowMs() + Math.max(0.35, hold) * 1000;
+  // Keep Dust Realm readable past death reveal (~1.2s) before R / click restart.
+  var revealPad = 0.35;
+  rt.state.redeployGateUntilMs = nowMs() + Math.max(0.35, hold + revealPad) * 1000;
+  // Held LMB / pad fire at death must release once before restart is accepted.
+  rt.state.redeployNeedsRelease = true;
   if (rt.ui && rt.ui.restart) {
     try { rt.ui.restart.disabled = true; } catch (e) {}
   }
@@ -439,6 +443,9 @@ export function armRedeployGate(extraSec) {
 
 export function canAcceptRedeploy() {
   if (!rt.state || !rt.state.over) return false;
+  if (rt.state.redeployNeedsRelease) return false;
+  if (rt.input && rt.input.mouse && rt.input.mouse.down) return false;
+  if (rt.firePointers && rt.firePointers.size > 0) return false;
   var until = rt.state.redeployGateUntilMs || 0;
   if (!(until > 0)) return true;
   return nowMs() >= until;
@@ -446,7 +453,10 @@ export function canAcceptRedeploy() {
 
 export function redeploy() {
   if (rt.state && rt.state.over && !canAcceptRedeploy()) return;
-  if (rt.state) rt.state.redeployGateUntilMs = 0;
+  if (rt.state) {
+    rt.state.redeployGateUntilMs = 0;
+    rt.state.redeployNeedsRelease = false;
+  }
   if (rt.ui && rt.ui.restart) {
     try { rt.ui.restart.disabled = false; } catch (e0) {}
   }
