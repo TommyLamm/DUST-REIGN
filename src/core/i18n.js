@@ -2021,6 +2021,7 @@ export function syncStaticHtml(lang) {
     setHtmlById('pauseTitle', zh ? '機體診斷<br /><span>// 待命中</span>' : 'RIG DIAGNOSTICS<br /><span>// STANDBY</span>');
     var pKicker = pauseModal.querySelector('.pause-head .overlay-kicker');
     if (pKicker) pKicker.textContent = zh ? '戰鬥訊號掛起 · 系統終端運作中' : 'COMBAT SIGNAL SUSPENDED · SYSTEM TERMINAL ACTIVE';
+    setTextById('pauseStormClockLabel', zh ? '沙暴時鐘' : 'STORM CLOCK');
 
     setTextById('tabBtnSystem', zh ? '系統設定' : 'SYSTEM');
     setTextById('tabBtnBuild', zh ? '機體構築' : 'RIG BUILD');

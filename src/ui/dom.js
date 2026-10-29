@@ -109,6 +109,7 @@ export function setupDom(options) {
   function byId(id, scope) {
     return (typeof document !== 'undefined' && document.getElementById(id)) || (scope && scope.querySelector ? scope.querySelector('#' + id) : null);
   }
+  var pauseStormTimer = byId('pauseStormTimer', pauseModal) || first(['#pauseStormTimer', '[data-pause-storm-timer]']);
   var tabBtnSystem = byId('tabBtnSystem', pauseModal);
   var tabBtnBuild = byId('tabBtnBuild', pauseModal);
   var tabBtnControls = byId('tabBtnControls', pauseModal);
@@ -198,6 +199,7 @@ export function setupDom(options) {
     objectiveProgress: objectiveProgress,
     threatIndex: threatIndex,
     waveTimer: waveTimer,
+    pauseStormTimer: pauseStormTimer,
     runLog: runLog,
     accountSaveBadge: accountSaveBadge,
     audioBtn: audioBtn,

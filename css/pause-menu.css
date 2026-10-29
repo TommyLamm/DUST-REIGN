@@ -32,6 +32,30 @@
   margin-bottom: 4px;
 }
 
+/* Compact storm clock — mission rail is hidden while diagnostic is open. */
+.pause-storm-clock {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(232, 185, 78, 0.35);
+  background: rgba(8, 9, 7, 0.55);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.pause-storm-clock strong,
+#pauseStormTimer {
+  color: var(--amber);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.08em;
+}
+
 .pause-tabs {
   position: relative;
   display: flex;
