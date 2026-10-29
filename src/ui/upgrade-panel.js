@@ -1,5 +1,6 @@
 import { WAVE_LENGTH } from '../config.js';
 import { rt } from '../core/runtime.js';
+import { isStormFront } from '../systems/flow.js';
 import { isReducedMotion } from '../core/settings.js';
 import { stackCount } from '../data/upgrades.js';
 import { beginBanish, cancelBanish, evaluateArchetypes, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
@@ -290,10 +291,13 @@ export function syncUpgradeTimerPin(force) {
       : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
     return;
   }
-  var waveLeft = Math.max(0, Math.ceil(WAVE_LENGTH - (rt.state.waveTime || 0)));
+  var remain = Math.max(0, WAVE_LENGTH - (rt.state.waveTime || 0));
+  var waveLeft = Math.max(0, Math.ceil(remain - 1e-9));
+  var storm = isStormFront();
+  // Match HUD waveTimer copy (reuse existing 暴風逼近 / STORM FRONT strings).
   var waveBit = zh
-    ? ('下一波次 ' + String(waveLeft).padStart(2, '0') + 's')
-    : ('NEXT FRONT ' + String(waveLeft).padStart(2, '0') + 's');
+    ? ((rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 ')) + String(waveLeft).padStart(2, '0') + 's')
+    : ((rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ')) + String(waveLeft).padStart(2, '0') + 's');
   if (!rt.state.bountyClaimed && rt.state.bountyTarget > 0) {
     var kills = rt.state.bountyKills || 0;
     var target = rt.state.bountyTarget;
