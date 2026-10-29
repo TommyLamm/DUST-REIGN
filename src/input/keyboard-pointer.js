@@ -5,7 +5,7 @@ import { clamp, on } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
 import { triggerTacticalAuxiliary } from '../systems/tactical.js';
 import { doubleDownCurrentContract } from '../systems/contracts.js';
-import { beginRun, restart, togglePause } from '../systems/flow.js';
+import { beginRun, redeploy, restart, togglePause } from '../systems/flow.js';
 import { isCodexOpen } from '../ui/codex-panel.js';
 import { chooseUpgrade } from '../systems/progression.js';
 import { resize } from '../ui/dom.js';
@@ -105,7 +105,7 @@ export function bindInput() {
       var typingLoadout = enterTarget && enterTarget.closest && enterTarget.closest('#loadoutPanel') && enterTarget.id !== 'startBtn';
       if (!typingLoadout && !isCodexOpen()) beginRun();
     }
-    if (rt.state && rt.state.over && key === 'r') restart();
+    if (rt.state && rt.state.over && key === 'r') redeploy();
     if (rt.state && rt.state.paused && (key === '1' || key === '2' || key === '3')) {
       if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) {
         chooseUpgrade(Number(key) - 1);
@@ -130,7 +130,7 @@ export function bindInput() {
     updateCanvasRect();
     pointerPosition(event);
     if (rt.ui.canvas.focus) rt.ui.canvas.focus();
-    if (rt.state && rt.state.over) { restart(); return; }
+    if (rt.state && rt.state.over) { redeploy(); return; }
     if (event.button === 2) {
       event.preventDefault();
       if (!rt.state || !rt.state.paused) triggerEmp();
@@ -188,7 +188,7 @@ export function bindInput() {
       toggleLanguage();
     });
   }
-  if (rt.ui.restart) on(rt.ui.restart, 'click', restart);
+  if (rt.ui.restart) on(rt.ui.restart, 'click', redeploy);
   if (rt.ui.startButton) on(rt.ui.startButton, 'click', beginRun);
 
   if (rt.ui.tabBtnSystem) on(rt.ui.tabBtnSystem, 'click', function () { switchPauseTab('system'); });

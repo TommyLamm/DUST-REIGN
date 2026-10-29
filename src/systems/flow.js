@@ -252,6 +252,12 @@ export function restart() {
   updateDomUi();
 }
 
+// True same-loadout redeploy: results R / 再次出擊 skip the loadout screen.
+export function redeploy() {
+  restart();
+  beginRun();
+}
+
 function recordBestScore() {
   if (!rt.state) return;
   var finalScore = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(rt.state.score || 0)));
