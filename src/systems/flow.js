@@ -1,5 +1,7 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
+import { initCamera } from '../core/camera.js';
+import { SPAWN_CENTER_X, SPAWN_CENTER_Y } from '../core/constants.js';
 import { rt } from '../core/runtime.js';
 import { getCampaignStore, getHardcoreStore, readMeta, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
@@ -129,7 +131,19 @@ export function stormWind() {
 }
 
 export function beginRun() {
-  if (!rt.state || rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)) return;
+  if (!rt.state) return;
+  // Start-screen deploy must win over leftover over/upgrade residue (hard reload / half-reset).
+  var fromStart = !!(rt.ui && rt.ui.startScreen && !rt.ui.startScreen.hidden);
+  if (!fromStart && (rt.state.over || (rt.state.upgradeChoices && rt.state.upgradeChoices.length))) return;
+  if (fromStart) {
+    rt.state.over = false;
+    rt.state.deathSequenceTimer = 0;
+    rt.state.upgradeChoices = [];
+    rt.state.banishPicking = false;
+    if (rt.ui.overlay) rt.ui.overlay.hidden = true;
+    if (rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+    if (rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
+  }
 
   var state = rt.state;
   var meta = readMeta();
@@ -166,13 +180,20 @@ export function beginRun() {
   setStatusText('SIGNAL LIVE — KEEP MOVING');
   if (rt.ui && rt.ui.canvas && rt.ui.canvas.focus) rt.ui.canvas.focus();
   syncCombatLayout();
-  if (rt.state && rt.state.player && rt.ui && rt.ui.width) {
-    rt.state.player.x = rt.ui.width / 2;
-    rt.state.player.y = rt.ui.height / 2;
+  clearResidualCombatInput();
+  // World spawn (not viewport half) — ui.width/2 left the hull on the map rim after redeploy.
+  if (rt.state && rt.state.player) {
+    var spawnX = (typeof SPAWN_CENTER_X === "number") ? SPAWN_CENTER_X : (rt.state.width / 2);
+    var spawnY = (typeof SPAWN_CENTER_Y === "number") ? SPAWN_CENTER_Y : (rt.state.height / 2);
+    rt.state.player.x = spawnX;
+    rt.state.player.y = spawnY;
     if (rt.input && rt.input.mouse) {
-      rt.input.mouse.x = rt.ui.width / 2 + 100;
-      rt.input.mouse.y = rt.ui.height / 2;
+      rt.input.mouse.x = spawnX + 100;
+      rt.input.mouse.y = spawnY;
     }
+  }
+  if (rt.camera && rt.state) {
+    initCamera(rt.camera, rt.state.width, rt.state.height, (rt.ui && rt.ui.width) || 960, (rt.ui && rt.ui.height) || 640);
   }
   spawnBarrels();
   spawnSpires();
@@ -249,6 +270,9 @@ export function restart() {
   if (breakdown && breakdown.parentNode) breakdown.parentNode.removeChild(breakdown);
   if (rt.ui.runState) rt.ui.runState.textContent = 'STANDBY';
   setStatusText('SELECT A RIG — PRESS ENTER TO DEPLOY');
+  if (rt.camera && rt.state) {
+    initCamera(rt.camera, rt.state.width, rt.state.height, (rt.ui && rt.ui.width) || 960, (rt.ui && rt.ui.height) || 640);
+  }
   updateDomUi();
 }
 
@@ -336,6 +360,8 @@ export function triggerGameOver(options) {
     }
   }
   rt.state.over = true;
+  // Arm reveal timer before side effects so a throw cannot leave over without a timer.
+  rt.state.deathSequenceTimer = 0.55;
   // Level-up / pause must not freeze the death sequence: upgrade pick sets paused=true
   // mid-frame, which would otherwise stall deathSequenceTimer and ignore R forever.
   rt.state.paused = false;
@@ -343,6 +369,7 @@ export function triggerGameOver(options) {
   rt.state.upgradeChoices = [];
   if (rt.ui && rt.ui.overlay) rt.ui.overlay.hidden = true;
   if (rt.ui && rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
+  if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
   grantDeferredExtract(rt.state);
   onRunEnd(rt.state);
   AudioFX.setLowpass(0);
@@ -356,8 +383,8 @@ export function triggerGameOver(options) {
   rt.input.mouse.down = false;
   rt.state.isNewRecord = (rt.state.score > previousBest && rt.state.score > 0);
   rt.state.evalRank = calculateCombatRank(rt.state.wave, rt.state.score, rt.state.stats);
-  rt.state.deathSequenceTimer = 0.55;
-  if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
+  // Keep timer armed even if later code paths touched it.
+  if (!(rt.state.deathSequenceTimer > 0)) rt.state.deathSequenceTimer = 0.55;
   saveAccountCheckpoint();
 }
 
