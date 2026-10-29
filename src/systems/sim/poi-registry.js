@@ -196,16 +196,16 @@ export var POI_REGISTRY = {
       var pr = poi.r || 80;
       var podDone = poi.status === 'completed';
 
-      // Landing Scorch & Beam
+      // Landing beam (crate drop, not a mech laser)
       if (!podDone) {
-        var grad = ctx.createLinearGradient(px, py, px, py - 160);
-        grad.addColorStop(0, 'rgba(56, 217, 169, 0.45)');
+        var grad = ctx.createLinearGradient(px, py, px, py - 150);
+        grad.addColorStop(0, 'rgba(56, 217, 169, 0.4)');
         grad.addColorStop(1, 'rgba(56, 217, 169, 0.0)');
         ctx.fillStyle = grad;
-        ctx.fillRect(px - 14, py - 160, 28, 160);
+        ctx.fillRect(px - 10, py - 150, 20, 150);
       }
 
-      // Ground Ring
+      // Ground ring
       ctx.beginPath();
       ctx.arc(px, py, pr, 0, TAU);
       ctx.strokeStyle = podDone ? 'rgba(56, 217, 169, 0.3)' : 'rgba(56, 217, 169, 0.85)';
@@ -222,27 +222,42 @@ export var POI_REGISTRY = {
         ctx.stroke();
       }
 
-      // Pod Octagonal Hull
+      // Cargo drop-crate silhouette (rectangular + fins) — not a player hull.
       ctx.save();
       ctx.translate(px, py);
+      ctx.fillStyle = podDone ? '#2b3035' : '#3d454c';
+      ctx.fillRect(-22, -16, 44, 32);
+      ctx.strokeStyle = podDone ? '#1a1d20' : '#20c997';
+      ctx.lineWidth = 2.4;
+      ctx.strokeRect(-22, -16, 44, 32);
+      // Corner landing fins
       ctx.beginPath();
-      for (var pi = 0; pi < 8; pi += 1) {
-        var ang = (pi / 8) * TAU + Math.PI / 8;
-        var hx = Math.cos(ang) * 26;
-        var hy = Math.sin(ang) * 26;
-        if (pi === 0) ctx.moveTo(hx, hy);
-        else ctx.lineTo(hx, hy);
-      }
-      ctx.closePath();
-      ctx.fillStyle = podDone ? '#343a40' : '#495057';
-      ctx.fill();
-      ctx.strokeStyle = podDone ? '#212529' : '#20c997';
-      ctx.lineWidth = 2.5;
+      ctx.moveTo(-26, -10); ctx.lineTo(-34, -18); ctx.lineTo(-26, -4);
+      ctx.moveTo(26, -10); ctx.lineTo(34, -18); ctx.lineTo(26, -4);
+      ctx.moveTo(-26, 10); ctx.lineTo(-34, 18); ctx.lineTo(-26, 4);
+      ctx.moveTo(26, 10); ctx.lineTo(34, 18); ctx.lineTo(26, 4);
+      ctx.strokeStyle = podDone ? '#495057' : '#63e6be';
+      ctx.lineWidth = 2;
       ctx.stroke();
-
-      // Vent ports
-      ctx.fillStyle = podDone ? '#111' : '#63e6be';
-      ctx.fillRect(-10, -10, 20, 20);
+      // Hatch strip (crate lid, not cockpit)
+      ctx.fillStyle = podDone ? '#111' : '#12b886';
+      ctx.fillRect(-14, -6, 28, 12);
+      ctx.strokeStyle = podDone ? '#000' : '#e6fcf5';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-14, -6, 28, 12);
+      // Explicit SITE chip on the crate so it never reads as a second mech
+      if (!podDone) {
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(10, 14, 12, 0.82)';
+        ctx.fillRect(-28, -34, 56, 14);
+        ctx.strokeStyle = '#38d9a9';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-28, -34, 56, 14);
+        ctx.fillStyle = '#e6fcf5';
+        ctx.fillText('DROP POD', 0, -27);
+      }
       ctx.restore();
     },
     getLight: function (poi) {

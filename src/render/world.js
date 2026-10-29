@@ -1013,6 +1013,7 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
     var isIdle = !poi.status || poi.status === 'idle';
     var isActive = poi.status === 'active' || poi.status === 'interacting' || poi.status === 'armed' || poi.status === 'hostile';
     var isDone = poi.status === 'completed';
+    var isDropSite = poi.kind === 'orbital_pod';
     if (isIdle && !contrast) {
       // Soften: smaller + low alpha; skip far IDLE clutter beyond ~520px of view center.
       var viewCx = (typeof x0 === 'number' && typeof viewW === 'number') ? (x0 + viewW * 0.5) : px;
@@ -1038,13 +1039,13 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
         : (siteName + ' [' + statusText + ']');
     }
 
-    ctx.font = isIdle ? 'bold 9px monospace' : 'bold 11px monospace';
+    ctx.font = (isIdle && !isDropSite) ? 'bold 9px monospace' : 'bold 11px monospace';
     var tw = ctx.measureText(fullTag).width;
     var padX = isIdle ? 4 : 6;
     var padY = isIdle ? 8 : 11;
     var boxH = isIdle ? 12 : 16;
-    ctx.globalAlpha = isIdle ? (contrast ? 0.7 : 0.38) : 1;
-    ctx.fillStyle = isIdle ? 'rgba(10, 12, 16, 0.55)' : 'rgba(10, 12, 16, 0.9)';
+    ctx.globalAlpha = (isIdle && !isDropSite) ? (contrast ? 0.7 : 0.38) : 1;
+    ctx.fillStyle = (isIdle && !isDropSite) ? 'rgba(10, 12, 16, 0.55)' : 'rgba(10, 12, 16, 0.9)';
     ctx.fillRect(px - tw * 0.5 - padX, labelY - padY, tw + padX * 2, boxH);
     // Amber/bone site chrome — distinct from player tactical cyan HUD.
     ctx.strokeStyle = contrast ? '#ffffff' : (isDone ? '#38d9a9' : (isActive ? '#e8b94e' : 'rgba(232, 185, 78, 0.45)'));
