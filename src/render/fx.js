@@ -100,14 +100,15 @@ var PRESETS = {
     { kind: 'ring', count: 1, maxRadius: 115, color: '#ff6633', life: 0.28, size: 2.2 }
   ],
   mortar: [
-    { kind: 'flash', count: 1, radius: 110, color: '#fffaf0', life: 0.20 },
-    { kind: 'flash', count: 1, radius: 64, color: '#ffe0a8', life: 0.14 },
-    { kind: 'flash', count: 1, radius: 36, color: '#ffffff', life: 0.08 },
+    { kind: 'flash', count: 1, radius: 110, color: '#fffaf0', life: 0.22 },
+    { kind: 'flash', count: 1, radius: 64, color: '#ffe0a8', life: 0.16 },
+    { kind: 'flash', count: 1, radius: 36, color: '#ffffff', life: 0.10 },
     { kind: 'smoke', count: 8, speed: 58, color: '#5c463c', life: 0.52, size: 13 },
     { kind: 'spark', count: 18, speed: 280, color: '#ed6842', life: 0.28 },
     { kind: 'ember', count: 8, speed: 42, color: '#ffb15a', life: 0.55 },
-    { kind: 'ring', count: 1, maxRadius: 130, color: '#fff4d0', life: 0.36, size: 3.0 },
-    { kind: 'ring', count: 1, maxRadius: 92, color: '#ed6842', life: 0.30, size: 2.4 }
+    { kind: 'ring', count: 1, maxRadius: 145, color: '#fff4d0', life: 0.44, size: 3.4 },
+    { kind: 'ring', count: 1, maxRadius: 105, color: '#ed6842', life: 0.38, size: 2.8 },
+    { kind: 'ring', count: 1, maxRadius: 70, color: '#ffffff', life: 0.28, size: 2.2 }
   ],
   emp: [
     { kind: 'flash', count: 1, radius: 64, color: '#f3fdff', life: 0.08 },
@@ -741,9 +742,11 @@ function onFxEvent(ev) {
   else if (kind === 'core') emitPreset('core', x, y);
   else if (kind === 'barrel') emitPreset(o && o.kicked ? 'barrelKicked' : 'barrel', x, y);
   else if (kind === 'mortar') {
-    var mScale = (o && typeof o.r === 'number' && o.r > 0) ? Math.max(1.1, Math.min(1.85, o.r / 64)) : 1.25;
+    var mScale = (o && typeof o.r === 'number' && o.r > 0) ? Math.max(1.15, Math.min(1.95, o.r / 60)) : 1.35;
     emitBurst('mortar', x, y, '', mScale);
-    requestFlash('#ffd090', 0.30, 0.10);
+    // Upgrade / pause chrome covers full-screen flash — lean on local rings instead.
+    var uiBlocked = !!(rt.state && ((rt.state.upgradeChoices && rt.state.upgradeChoices.length) || rt.state.paused));
+    if (!uiBlocked) requestFlash("#ffd090", 0.30, 0.10);
   }
   else if (kind === 'emp') {
     emitPreset('emp', x, y);
