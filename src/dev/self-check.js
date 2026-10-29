@@ -274,7 +274,8 @@ export function selfCheck() {
     rt.input.mouse.y = 100;
     for (var vi = 0; vi < 24; vi += 1) update(0.025);
     var vanguardSlowOk = test.player.isCharging === true && test.player.chargeTime >= 0.55;
-    for (var vj = 0; vj < 3; vj += 1) update(0.025);
+    // Allow full-charge aim-settle commit (~0.10s) before auto-release.
+    for (var vj = 0; vj < 10; vj += 1) update(0.025);
     var vanguardShootOk = test.bullets.length === 1 &&
       test.bullets[0].r === 6.0 &&
       test.bullets[0].pierce === 99 &&

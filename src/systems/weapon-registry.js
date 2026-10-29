@@ -90,6 +90,7 @@ registerWeaponStrategy({
   },
   onTick: function (p, dt, isMouseDown) {
     p.chargeTime = 0;
+    p.chargeCommit = 0;
     p.isCharging = false;
     if (isMouseDown && p.cooldown <= 0) {
       this.onFire(p, p.aim);
@@ -246,6 +247,7 @@ registerWeaponStrategy({
   },
   onTick: function (p, dt, isMouseDown) {
     p.chargeTime = 0;
+    p.chargeCommit = 0;
     p.isCharging = false;
     if (isMouseDown && p.cooldown <= 0) {
       this.onFire(p, p.aim);
@@ -424,16 +426,24 @@ registerWeaponStrategy({
       if (p.cooldown <= 0) {
         if (!p.isCharging) {
           p.isCharging = true;
+          p.chargeCommit = 0;
           if (AudioFX && typeof AudioFX.vanguardChargeStart === 'function') {
             AudioFX.vanguardChargeStart(p.chargeNeed);
           }
         }
         p.chargeTime += dt;
         if (p.chargeTime >= p.chargeNeed) {
-          if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
-            AudioFX.vanguardChargeStop();
+          p.chargeTime = p.chargeNeed;
+          // Brief aim-settle before auto-release while held (UX only — no DPS change).
+          if (!(p.chargeCommit > 0)) p.chargeCommit = 0.10;
+          else p.chargeCommit -= dt;
+          if (p.chargeCommit <= 0) {
+            p.chargeCommit = 0;
+            if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
+              AudioFX.vanguardChargeStop();
+            }
+            this.onFire(p, p.aim);
           }
-          this.onFire(p, p.aim);
         }
       }
     } else {
@@ -442,6 +452,7 @@ registerWeaponStrategy({
           this.onFire(p, p.aim);
         }
         p.chargeTime = 0;
+        p.chargeCommit = 0;
         p.isCharging = false;
         if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
           AudioFX.vanguardChargeStop();
@@ -511,6 +522,7 @@ registerWeaponStrategy({
     rt.state.hitstop = Math.max(rt.state.hitstop, 0.04);
     addCameraTrauma(0.15);
     p.chargeTime = 0;
+    p.chargeCommit = 0;
     p.isCharging = false;
   },
   bulletProfile: {
@@ -599,6 +611,7 @@ registerWeaponStrategy({
   },
   onTick: function (p, dt, isMouseDown) {
     p.chargeTime = 0;
+    p.chargeCommit = 0;
     p.isCharging = false;
     if (isMouseDown && p.cooldown <= 0) {
       this.onFire(p, p.aim);
@@ -741,16 +754,24 @@ registerWeaponStrategy({
         if (!p.isCharging) {
           p.isCharging = true;
           p.chargeTime = 0;
+          p.chargeCommit = 0;
           if (AudioFX && typeof AudioFX.vanguardChargeStart === 'function') {
             AudioFX.vanguardChargeStart(p.chargeNeed);
           }
         }
         p.chargeTime += dt;
         if (p.chargeTime >= p.chargeNeed) {
-          if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
-            AudioFX.vanguardChargeStop();
+          p.chargeTime = p.chargeNeed;
+          // Brief aim-settle before auto-release while held (UX only — no DPS change).
+          if (!(p.chargeCommit > 0)) p.chargeCommit = 0.10;
+          else p.chargeCommit -= dt;
+          if (p.chargeCommit <= 0) {
+            p.chargeCommit = 0;
+            if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
+              AudioFX.vanguardChargeStop();
+            }
+            this.onFire(p, p.aim, true);
           }
-          this.onFire(p, p.aim, true);
         }
       }
     } else {
@@ -761,6 +782,7 @@ registerWeaponStrategy({
           this.onFire(p, p.aim, false);
         }
         p.chargeTime = 0;
+        p.chargeCommit = 0;
         p.isCharging = false;
         if (AudioFX && typeof AudioFX.vanguardChargeStop === 'function') {
           AudioFX.vanguardChargeStop();
@@ -902,6 +924,7 @@ registerWeaponStrategy({
     }
 
     p.chargeTime = 0;
+    p.chargeCommit = 0;
     p.isCharging = false;
   },
   bulletProfile: {
