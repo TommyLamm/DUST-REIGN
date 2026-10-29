@@ -203,6 +203,16 @@ export function beginRun() {
     }
   }
   snapDeploySpawn();
+  // Fair open: drop menu leftovers and grant brief spawn i-frames (no DPS retune).
+  if (rt.state) {
+    if (rt.state.enemies) rt.state.enemies.length = 0;
+    if (rt.state.enemyBullets) rt.state.enemyBullets.length = 0;
+    if (rt.state.artilleryTargets) rt.state.artilleryTargets.length = 0;
+    if (rt.state.player) {
+      rt.state.player.invulnerable = Math.max(rt.state.player.invulnerable || 0, 1.35);
+      rt.state.player._capNextInvuln = undefined;
+    }
+  }
   // Second pass after browser paints LIVE layout so aim/camera use post-deploy canvas size.
   if (typeof requestAnimationFrame === "function") {
     requestAnimationFrame(function () {
