@@ -230,10 +230,11 @@ export function sampleRingSpawnPoint(player, camera, worldW, worldH) {
 export function spawnEnemy() {
   if (!rt.state) return null;
   var recipe = currentRecipe();
-  var boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
-  var boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+  // World map size — never ui canvas (that crushed ring spawns onto the player near SPAWN_CENTER).
+  var boundW = (rt.state && rt.state.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || 2640;
   var p = (rt.state && rt.state.player) || { x: boundW * 0.5, y: boundH * 0.5, vx: 0, vy: 0 };
-  var pt = sampleRingSpawnPoint(p, rt.state.camera, boundW, boundH);
+  var pt = sampleRingSpawnPoint(p, rt.camera || (rt.state && rt.state.camera), boundW, boundH);
   var x = pt.x;
   var y = pt.y;
 
@@ -315,8 +316,8 @@ function announceBoss(text) {
 
 export function spawnBoss(kind) {
   if (!rt.state) return null;
-  var boundW = (rt.ui && rt.ui.width) || rt.state.width || 960;
-  var boundH = (rt.ui && rt.ui.height) || rt.state.height || 640;
+  var boundW = rt.state.width || 3520;
+  var boundH = rt.state.height || 2640;
   var boss = null;
   if (kind === 'dreadnought') {
     announceBoss('WARNING // DREADNOUGHT INBOUND');
@@ -484,8 +485,8 @@ export function spawnTitan() {
 export function spawnBarrels() {
   if (!rt.state) return;
   if (!rt.state.barrels) rt.state.barrels = [];
-  var boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
-  var boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+  var boundW = (rt.state && rt.state.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || 2640;
   var p = rt.state.player || { x: boundW / 2, y: boundH / 2 };
   var margin = 70;
   var count = 2 + Math.floor(rng('spawn') * 2);
@@ -521,8 +522,8 @@ export function spawnSpires() {
   if (!rt.state) return;
   if (!rt.state.spires) rt.state.spires = [];
   if (rt.state.wave < 3) return;
-  var boundW = (rt.ui && rt.ui.width) || (rt.state && rt.state.width) || 960;
-  var boundH = (rt.ui && rt.ui.height) || (rt.state && rt.state.height) || 640;
+  var boundW = (rt.state && rt.state.width) || 3520;
+  var boundH = (rt.state && rt.state.height) || 2640;
   var p = rt.state.player || { x: boundW / 2, y: boundH / 2 };
   var margin = 90;
   var sx = margin + rng('spawn') * (boundW - margin * 2);
@@ -548,8 +549,8 @@ export function spawnSpires() {
 export function fireArtillery(e) {
   if (!rt.state) return;
   var p = rt.state.player;
-  var boundW = rt.ui ? rt.ui.width : rt.state.width;
-  var boundH = rt.ui ? rt.ui.height : rt.state.height;
+  var boundW = rt.state.width || 3520;
+  var boundH = rt.state.height || 2640;
   // 預測落點公式：P_target = P_player + v_player * (1.2 * 0.85) + 微隨機偏移(±15px)
   var pvx = p.vx || 0;
   var pvy = p.vy || 0;
