@@ -1,6 +1,7 @@
 import { TAU } from '../config.js';
 import { rt } from '../core/runtime.js';
 import { isHighContrast, isReducedMotion } from '../core/settings.js';
+import { isChinese } from '../core/i18n.js';
 import { clamp } from '../core/utils.js';
 import { arcDepth, decay, ensureFx, keyGlowsOnly, outline, tickFlash } from './entity-style.js';
 import { PALETTE } from './palette.js';
@@ -1001,23 +1002,29 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
       handler.draw(ctx, poi, pulse, rTime, reduced);
     }
 
-    // High-Contrast Tactical HUD Label above POI
+    // World-site plate (not player tactical gear) — prefer localized poi.name
     var labelY = py - pr - 14;
     var statusText = poi.status.toUpperCase();
     if (poi.status === 'active' && poi.activeTimer > 0) {
       statusText = Math.ceil(poi.activeTimer) + 's';
     }
-    var fullTag = poi.label + ' [' + statusText + ']';
+    var zh = isChinese();
+    var siteName = (zh && poi.name) ? poi.name : (poi.label || poi.name || 'POI');
+    // Keep Latin site code secondary so SILO-N reads as a map node, not aux gear.
+    var fullTag = (zh && poi.label && poi.name)
+      ? (siteName + ' · ' + poi.label + ' [' + statusText + ']')
+      : (siteName + ' [' + statusText + ']');
 
     ctx.font = 'bold 11px monospace';
     var tw = ctx.measureText(fullTag).width;
-    ctx.fillStyle = 'rgba(10, 12, 16, 0.85)';
+    ctx.fillStyle = 'rgba(10, 12, 16, 0.9)';
     ctx.fillRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
-    ctx.strokeStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#e0a800');
-    ctx.lineWidth = 1;
+    // Amber/bone site chrome — distinct from player tactical cyan HUD.
+    ctx.strokeStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#e8b94e');
+    ctx.lineWidth = 1.2;
     ctx.strokeRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
 
-    ctx.fillStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#f8f9fa');
+    ctx.fillStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#f2e6c9');
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(fullTag, px, labelY - 3);
