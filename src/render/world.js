@@ -1003,31 +1003,53 @@ export function drawPois(ctx, x0, y0, viewW, viewH) {
     }
 
     // World-site plate (not player tactical gear) — prefer localized poi.name
-    var labelY = py - pr - 14;
-    var statusText = poi.status.toUpperCase();
+    // IDLE plates stay quiet so wolf-pack / field tips keep visual priority.
+    var isIdle = !poi.status || poi.status === 'idle';
+    var isActive = poi.status === 'active' || poi.status === 'interacting' || poi.status === 'armed' || poi.status === 'hostile';
+    var isDone = poi.status === 'completed';
+    if (isIdle && !contrast) {
+      // Soften: smaller + low alpha; skip far IDLE clutter beyond ~520px of view center.
+      var viewCx = (typeof x0 === 'number' && typeof viewW === 'number') ? (x0 + viewW * 0.5) : px;
+      var viewCy = (typeof y0 === 'number' && typeof viewH === 'number') ? (y0 + viewH * 0.5) : py;
+      var idleDist = Math.hypot(px - viewCx, py - viewCy);
+      if (idleDist > 520) { ctx.restore(); continue; }
+    }
+    var labelY = py - pr - (isIdle ? 10 : 14);
+    var statusText = String(poi.status || 'idle').toUpperCase();
     if (poi.status === 'active' && poi.activeTimer > 0) {
       statusText = Math.ceil(poi.activeTimer) + 's';
     }
     var zh = isChinese();
     var siteName = (zh && poi.name) ? poi.name : (poi.label || poi.name || 'POI');
     // Keep Latin site code secondary so SILO-N reads as a map node, not aux gear.
-    var fullTag = (zh && poi.label && poi.name)
-      ? (siteName + ' · ' + poi.label + ' [' + statusText + ']')
-      : (siteName + ' [' + statusText + ']');
+    // IDLE: name only (no [IDLE] shout). Active/completed keep status chip.
+    var fullTag;
+    if (isIdle) {
+      fullTag = (zh && poi.label && poi.name) ? (siteName + ' · ' + poi.label) : siteName;
+    } else {
+      fullTag = (zh && poi.label && poi.name)
+        ? (siteName + ' · ' + poi.label + ' [' + statusText + ']')
+        : (siteName + ' [' + statusText + ']');
+    }
 
-    ctx.font = 'bold 11px monospace';
+    ctx.font = isIdle ? 'bold 9px monospace' : 'bold 11px monospace';
     var tw = ctx.measureText(fullTag).width;
-    ctx.fillStyle = 'rgba(10, 12, 16, 0.9)';
-    ctx.fillRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
+    var padX = isIdle ? 4 : 6;
+    var padY = isIdle ? 8 : 11;
+    var boxH = isIdle ? 12 : 16;
+    ctx.globalAlpha = isIdle ? (contrast ? 0.7 : 0.38) : 1;
+    ctx.fillStyle = isIdle ? 'rgba(10, 12, 16, 0.55)' : 'rgba(10, 12, 16, 0.9)';
+    ctx.fillRect(px - tw * 0.5 - padX, labelY - padY, tw + padX * 2, boxH);
     // Amber/bone site chrome — distinct from player tactical cyan HUD.
-    ctx.strokeStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#e8b94e');
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(px - tw * 0.5 - 6, labelY - 11, tw + 12, 16);
+    ctx.strokeStyle = contrast ? '#ffffff' : (isDone ? '#38d9a9' : (isActive ? '#e8b94e' : 'rgba(232, 185, 78, 0.45)'));
+    ctx.lineWidth = isIdle ? 0.8 : 1.2;
+    ctx.strokeRect(px - tw * 0.5 - padX, labelY - padY, tw + padX * 2, boxH);
 
-    ctx.fillStyle = contrast ? '#ffffff' : (poi.status === 'completed' ? '#38d9a9' : '#f2e6c9');
+    ctx.fillStyle = contrast ? '#ffffff' : (isDone ? '#38d9a9' : (isActive ? '#f2e6c9' : 'rgba(242, 230, 201, 0.75)'));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(fullTag, px, labelY - 3);
+    ctx.fillText(fullTag, px, labelY - (isIdle ? 2 : 3));
+    ctx.globalAlpha = 1;
 
     ctx.restore();
   }
