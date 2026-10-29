@@ -284,13 +284,6 @@ export function syncUpgradeTimerPin(force) {
   if (!el || !panel) return;
   if (panel.hidden && !force) return;
   var zh = isChinese();
-  if (rt.state.statusHold > 0 && rt.state.statusHoldKind === 'bountySurge') {
-    var holdReward = rt.state.statusHoldBountyReward || 0;
-    el.textContent = zh
-      ? ('懸賞完成 +' + holdReward + ' 分數 // 湧浪 ' + rt.state.statusHold.toFixed(1) + 's')
-      : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's');
-    return;
-  }
   var remain = Math.max(0, WAVE_LENGTH - (rt.state.waveTime || 0));
   var waveLeft = Math.max(0, Math.ceil(remain - 1e-9));
   var storm = isStormFront();
@@ -298,6 +291,14 @@ export function syncUpgradeTimerPin(force) {
   var waveBit = zh
     ? ((rt.state.overtime ? (storm ? '加時暴風 ' : '加時推進 ') : (storm ? '暴風逼近 ' : '下一波次 ')) + String(waveLeft).padStart(2, '0') + 's')
     : ((rt.state.overtime ? (storm ? 'OT STORM ' : 'OT FRONT ') : (storm ? 'STORM FRONT ' : 'NEXT FRONT ')) + String(waveLeft).padStart(2, '0') + 's');
+  // Bounty surge must not wipe the storm/wave pin — append waveBit after surge text.
+  if (rt.state.statusHold > 0 && rt.state.statusHoldKind === 'bountySurge') {
+    var holdReward = rt.state.statusHoldBountyReward || 0;
+    el.textContent = zh
+      ? ('懸賞完成 +' + holdReward + ' 分數 // 湧浪 ' + rt.state.statusHold.toFixed(1) + 's · ' + waveBit)
+      : ('BOUNTY CLEAR +' + holdReward + ' SCORE // SURGE ' + rt.state.statusHold.toFixed(1) + 's · ' + waveBit);
+    return;
+  }
   if (!rt.state.bountyClaimed && rt.state.bountyTarget > 0) {
     var kills = rt.state.bountyKills || 0;
     var target = rt.state.bountyTarget;
