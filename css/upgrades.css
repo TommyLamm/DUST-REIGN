@@ -6,7 +6,7 @@
   overflow: hidden;
   /* Soft radial dim — keep center mortar rings visible under the player. */
   background:
-    radial-gradient(ellipse 48% 44% at 50% 58%, rgba(10, 11, 9, 0.10) 0%, rgba(10, 11, 9, 0.40) 52%, rgba(10, 11, 9, 0.62) 100%);
+    radial-gradient(ellipse 54% 50% at 50% 58%, rgba(10, 11, 9, 0.03) 0%, rgba(10, 11, 9, 0.26) 55%, rgba(10, 11, 9, 0.52) 100%);
   backdrop-filter: blur(1px);
 }
 
@@ -103,7 +103,7 @@
   text-align: left;
   border: 1px solid rgba(232, 224, 198, 0.48);
   border-top: 3px solid var(--muted);
-  background: rgba(40, 36, 28, 0.72);
+  background: rgba(40, 36, 28, 0.55);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.55);
@@ -114,7 +114,7 @@
 .upgrade-card:focus-visible {
   border-color: var(--amber);
   border-top-color: var(--amber);
-  background: rgba(72, 61, 34, 0.78);
+  background: rgba(72, 61, 34, 0.62);
   transform: translateY(-5px);
 }
 
@@ -131,7 +131,7 @@
   border-top: 3px solid var(--muted) !important;
   border-radius: 0 !important;
   color: var(--bone) !important;
-  background: rgba(40, 36, 28, 0.72) !important;
+  background: rgba(40, 36, 28, 0.55) !important;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   font-family: var(--body) !important;
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
@@ -143,7 +143,7 @@
 #upgradeChoices .upgrade-choice:focus-visible {
   border-color: var(--amber) !important;
   border-top-color: var(--amber) !important;
-  background: rgba(72, 61, 34, 0.78) !important;
+  background: rgba(72, 61, 34, 0.62) !important;
   transform: translateY(-5px);
 }
 

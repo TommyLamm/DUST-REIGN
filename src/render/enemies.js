@@ -1733,12 +1733,17 @@ function warnRing(ctx, x, y, radius, remain, color, reduced) {
   if (!(radius > 1)) return;
   var pulse = reduced ? 0.9 : (0.55 + 0.45 * Math.sin((rt.renderTime || 0) * (reduced ? 0 : 16)));
   var alpha = reduced ? 0.95 : (0.58 + (1 - remain) * 0.4);
+  // Modal / upgrade dim washes center rings — boost stroke+fill (visual only).
+  var uiDim = !!(rt.state && (rt.state.paused || (rt.state.upgradeChoices && rt.state.upgradeChoices.length)));
+  var thickBoost = uiDim ? 1.55 : 1;
+  var alphaBoost = uiDim ? 1.4 : 1;
+  alpha = Math.min(1, alpha * alphaBoost);
   ctx.save();
   // Contrast backing dark rim (thicker — visual only)
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, TAU);
   ctx.strokeStyle = 'rgba(6, 6, 8, 0.92)';
-  ctx.lineWidth = isHighContrast() ? 5.6 : 4.4;
+  ctx.lineWidth = (isHighContrast() ? 5.6 : 4.4) * thickBoost;
   ctx.stroke();
 
   ctx.beginPath();
@@ -1746,15 +1751,15 @@ function warnRing(ctx, x, y, radius, remain, color, reduced) {
   ctx.setLineDash(reduced ? NO_DASH : [6, 4]);
   ctx.strokeStyle = color;
   ctx.globalAlpha = alpha;
-  ctx.lineWidth = isHighContrast() ? 3.2 : 2.5;
+  ctx.lineWidth = (isHighContrast() ? 3.2 : 2.5) * thickBoost;
   ctx.stroke();
   ctx.setLineDash(NO_DASH);
-  ctx.globalAlpha = (reduced ? 0.32 : 0.2) + (1 - remain) * 0.22;
+  ctx.globalAlpha = Math.min(1, ((reduced ? 0.32 : 0.2) + (1 - remain) * 0.22) * alphaBoost);
   ctx.fillStyle = color;
   ctx.fill();
-  ctx.globalAlpha = pulse;
+  ctx.globalAlpha = Math.min(1, pulse * (uiDim ? 1.15 : 1));
   ctx.beginPath();
-  ctx.arc(x, y, 3.8, 0, TAU);
+  ctx.arc(x, y, uiDim ? 5.2 : 3.8, 0, TAU);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.restore();
