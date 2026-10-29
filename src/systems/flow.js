@@ -3,7 +3,7 @@ import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { initCamera } from '../core/camera.js';
 import { SPAWN_CENTER_X, SPAWN_CENTER_Y } from '../core/constants.js';
 import { rt } from '../core/runtime.js';
-import { getCampaignStore, getHardcoreStore, readMeta, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
+import { getCampaignStore, getHardcoreStore, readBestScoreV2, readMeta, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
 import { makeState } from '../core/state.js';
 import { qa } from '../core/utils.js';
 import { applyRig } from '../data/rigs.js';
@@ -548,17 +548,27 @@ export function triggerGameOver(options) {
   if (rt.ui && rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
   if (rt.ui && rt.ui.gameOver) rt.ui.gameOver.hidden = true;
   grantDeferredExtract(rt.state);
+  // Snapshot best before onRunEnd mutates persistence + state.bestScore.
+  var previousBest = Math.max(
+    Number(rt.state.bestScore) || 0,
+    (typeof readBestScoreV2 === 'function' ? readBestScoreV2() : 0)
+  );
   onRunEnd(rt.state);
   AudioFX.setLowpass(0);
-  var previousBest = rt.state.bestScore;
+  var finalRounded = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(rt.state.score || 0)));
   if (rt.state.mode === 'standard' || rt.state.mode === 'daily') {
     recordBestScore();
     if (!rt.state.isModded) {
       finishAccountRun();
     }
   }
+  // Agree stamp with displayed best: new record only if we beat the pre-run best,
+  // and pin state.bestScore to the greater of persisted / run score when stamped.
   rt.input.mouse.down = false;
-  rt.state.isNewRecord = (rt.state.score > previousBest && rt.state.score > 0);
+  rt.state.isNewRecord = (finalRounded > previousBest && finalRounded > 0);
+  if (rt.state.isNewRecord && !rt.state.isModded) {
+    rt.state.bestScore = Math.max(Number(rt.state.bestScore) || 0, finalRounded);
+  }
   rt.state.evalRank = calculateCombatRank(rt.state.wave, rt.state.score, rt.state.stats);
   // Keep timer armed even if later code paths touched it.
   if (!(rt.state.deathSequenceTimer > 0)) rt.state.deathSequenceTimer = 0.55;
