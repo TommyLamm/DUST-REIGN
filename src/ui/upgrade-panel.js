@@ -3,7 +3,7 @@ import { rt } from '../core/runtime.js';
 import { isStormFront } from '../systems/flow.js';
 import { isReducedMotion } from '../core/settings.js';
 import { stackCount } from '../data/upgrades.js';
-import { beginBanish, cancelBanish, evaluateArchetypes, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
+import { beginBanish, cancelBanish, chooseUpgrade, evaluateArchetypes, rerollUpgrades, skipUpgrade, upgradeCompletesLabel } from '../systems/progression.js';
 import { first, qa } from '../core/utils.js';
 import { isChinese, onLanguageChange, tCategory, tFusionTitle, tRarity, tUpgradeText, tUpgradeTitle } from '../core/i18n.js';
 
@@ -242,7 +242,19 @@ function onUpgradeKey(event) {
   if (!rt.state || !rt.state.upgradeChoices || !rt.state.upgradeChoices.length) return;
   if (event.repeat) return;
   var key = String(event.key || '').toLowerCase();
+  var code = event.code || '';
   if ((key === 'r' || key === 'b' || key === 'x') && Date.now() < shortcutReadyAt) return;
+  var pickIdx = -1;
+  if (key === '1' || key === '2' || key === '3') pickIdx = Number(key) - 1;
+  else if (code === 'Digit1' || code === 'Numpad1') pickIdx = 0;
+  else if (code === 'Digit2' || code === 'Numpad2') pickIdx = 1;
+  else if (code === 'Digit3' || code === 'Numpad3') pickIdx = 2;
+  if (pickIdx >= 0) {
+    event.preventDefault();
+    if (event.stopPropagation) event.stopPropagation();
+    chooseUpgrade(pickIdx);
+    return;
+  }
   if (key === 'r') {
     event.preventDefault();
     rerollUpgrades();
