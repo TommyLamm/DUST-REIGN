@@ -138,7 +138,7 @@ function pollGamepadInner(dt) {
 
   if (rt.state.over) {
     releaseGamepadFire();
-    if ((justPressed(0) || justPressed(9)) && rt.state.deathSequenceTimer <= 0) restart();
+    if (justPressed(0) || justPressed(9)) restart();
     for (var obi = 0; obi < buttons.length; obi += 1) rt.gamepadState.prevButtons[obi] = isBtnPressed(buttons[obi]);
     return;
   }

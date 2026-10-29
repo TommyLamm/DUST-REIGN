@@ -46,8 +46,10 @@ function gateHitstop(dt) {
 }
 
 export function update(dt) {
-  if (!rt.state || rt.state.paused) return;
+  if (!rt.state) return;
+  // Death/results must advance even if a mid-frame level-up left paused=true.
   if (rt.state.over) {
+    if (rt.state.paused) rt.state.paused = false;
     if (rt.state.deathSequenceTimer > 0) {
       rt.state.deathSequenceTimer = Math.max(0, rt.state.deathSequenceTimer - dt);
       if (rt.state.deathSequenceTimer === 0) {
@@ -59,6 +61,7 @@ export function update(dt) {
     }
     return;
   }
+  if (rt.state.paused) return;
   if (rt.state.interlude) { updateDomUi(); return; }
   if (isReducedMotion()) {
     rt.state.hitstop = 0;

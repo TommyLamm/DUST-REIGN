@@ -11,6 +11,7 @@ import { getSectorOfStage, getSectorReqStars, getStageChain } from '../../core/m
 import { spawnCrate } from '../../systems/drops.js';
 import { explodeBarrel, killEnemy } from '../../systems/combat.js';
 import { triggerGameOver } from '../../systems/flow.js';
+import { update } from '../../systems/update.js';
 import { assignRoute, chooseInterlude, chooseRepair, confirmExtract, confirmPushDeeper, grantDeferredExtract } from '../../systems/interlude.js';
 import { stepHazards } from '../../systems/sim/hazards.js';
 import { stepOrbs } from '../../systems/sim/orbs.js';
@@ -304,6 +305,26 @@ export function run() {
     var scoreOnce = ended.score;
     triggerGameOver();
     if (ended.score !== scoreOnce) throw new Error('triggerGameOver paid extract twice');
+
+    // Regression: mid-frame level-up pause must not freeze death results / redeploy.
+    var stuck = fresh();
+    stuck.paused = true;
+    stuck.upgradeChoices = [{ id: 'dummy' }];
+    stuck.player.hp = 0;
+    rt.ui = rt.ui || {};
+    rt.ui.gameOver = { hidden: true };
+    rt.ui.overlay = { hidden: false };
+    rt.ui.pauseModal = { hidden: true };
+    rt.ui.newRecordStamp = { hidden: true };
+    rt.ui.combatRankStamp = { hidden: true };
+    triggerGameOver();
+    if (stuck.paused) throw new Error('triggerGameOver left paused true');
+    if (stuck.upgradeChoices && stuck.upgradeChoices.length) throw new Error('triggerGameOver left upgradeChoices');
+    if (rt.ui.overlay && rt.ui.overlay.hidden !== true) throw new Error('triggerGameOver did not hide upgrade overlay');
+    if (!(stuck.deathSequenceTimer > 0)) throw new Error('deathSequenceTimer not armed');
+    for (var di = 0; di < 20; di += 1) update(0.05);
+    if (stuck.deathSequenceTimer !== 0) throw new Error('deathSequenceTimer did not drain under former pause');
+    if (rt.ui.gameOver.hidden !== false) throw new Error('results card stayed hidden after death sequence');
 
     var immune = fresh();
     immune.player.invulnerable = 5;

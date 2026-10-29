@@ -302,6 +302,13 @@ export function triggerGameOver(options) {
     }
   }
   rt.state.over = true;
+  // Level-up / pause must not freeze the death sequence: upgrade pick sets paused=true
+  // mid-frame, which would otherwise stall deathSequenceTimer and ignore R forever.
+  rt.state.paused = false;
+  rt.state.banishPicking = false;
+  rt.state.upgradeChoices = [];
+  if (rt.ui && rt.ui.overlay) rt.ui.overlay.hidden = true;
+  if (rt.ui && rt.ui.pauseModal) rt.ui.pauseModal.hidden = true;
   grantDeferredExtract(rt.state);
   onRunEnd(rt.state);
   AudioFX.setLowpass(0);

@@ -105,7 +105,7 @@ export function bindInput() {
       var typingLoadout = enterTarget && enterTarget.closest && enterTarget.closest('#loadoutPanel') && enterTarget.id !== 'startBtn';
       if (!typingLoadout && !isCodexOpen()) beginRun();
     }
-    if (rt.state && rt.state.over && rt.state.deathSequenceTimer <= 0 && key === 'r') restart();
+    if (rt.state && rt.state.over && key === 'r') restart();
     if (rt.state && rt.state.paused && (key === '1' || key === '2' || key === '3')) {
       if (rt.state.upgradeChoices && rt.state.upgradeChoices.length > 0) {
         chooseUpgrade(Number(key) - 1);
@@ -130,7 +130,7 @@ export function bindInput() {
     updateCanvasRect();
     pointerPosition(event);
     if (rt.ui.canvas.focus) rt.ui.canvas.focus();
-    if (rt.state && rt.state.over) { if (rt.state.deathSequenceTimer <= 0) restart(); return; }
+    if (rt.state && rt.state.over) { restart(); return; }
     if (event.button === 2) {
       event.preventDefault();
       if (!rt.state || !rt.state.paused) triggerEmp();
