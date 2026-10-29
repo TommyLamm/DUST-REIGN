@@ -330,11 +330,22 @@ export function stepEnemies(dt, frame) {
         contactDmg = Math.max(1, Math.round(contactDmg * 0.55));
       }
       var touched = damagePlayer(contactDmg, 'contact:' + (e.kind || 'enemy'), e.x, e.y);
-      // Slightly longer per-target touch CD + short player-side contact lock (fairness vs stack melt; no DPS retune).
-      e.touchCooldown = firstTitan ? 1.25 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier || e._burrowTeach) ? 1.15 : (e.kind === 'dreadnought' ? 1.15 : 1.05));
+      // Longer per-target touch CD + stronger player contactLock (stack-melt fairness; no enemy DPS retune).
+      e.touchCooldown = firstTitan ? 1.55 : ((earlyBrute || earlyElite || earlyArtillery || earlyScurrier || e._burrowTeach) ? 1.45 : (e.kind === 'dreadnought' ? 1.45 : 1.40));
       if (touched > 0) {
         p.invulnerable = playerEdge.pressed ? 1.05 : (e.kind === 'dreadnought' ? 1.0 : 0.7);
-        p.contactLock = Math.max(p.contactLock || 0, playerEdge.pressed ? 0.55 : 0.42);
+        // Count other bodies already in touch range so wolf-packs cannot chain the instant lock ends.
+        var packNear = 0;
+        for (var pj = 0; pj < rt.state.enemies.length; pj += 1) {
+          var pe = rt.state.enemies[pj];
+          if (!pe || pe === e || pe.hp <= 0 || pe.burrowed) continue;
+          if (pe.kind === 'mine' || pe.kind === 'stormTower' || pe.kind === 'scurrier') continue;
+          var pr = (pe.r || 12) + (p.r || 14) + 6;
+          if (dist2(pe.x, pe.y, p.x, p.y) <= pr * pr) packNear += 1;
+        }
+        var lockBase = playerEdge.pressed ? 0.95 : 0.78;
+        var lockExtra = Math.min(0.55, packNear * 0.14);
+        p.contactLock = Math.max(p.contactLock || 0, lockBase + lockExtra);
         if (playerEdge.pressed) {
           shoveEnemyOffEdge(e, playerEdge, 34, boundW, boundH, true);
           p.x = clamp(p.x + playerEdge.nx * 16, p.r, boundW - p.r);
