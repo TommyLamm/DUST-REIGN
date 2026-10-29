@@ -18,6 +18,7 @@ import { bindInput } from './input/keyboard-pointer.js';
 import { getPlayroom, loadAccountProgress, saveAccountCheckpoint, saveAccountProgress, startAccountRun } from './platform/playroom.js';
 import { exportUnifiedSaveData, importUnifiedSaveData } from './core/meta-store.js';
 import { draw } from './render/draw.js';
+import { invalidateTerrainPatterns } from './render/terrain.js';
 import { sampleFrame } from './render/quality.js';
 import { directorStartRun } from './systems/director.js';
 import { calculateCombatRank, restart, triggerGameOver } from './systems/flow.js';
@@ -76,7 +77,13 @@ function init(options) {
   var onVisibilityChange = function () {
     if (document.hidden) {
       pause();
+      return;
     }
+    // Browser may drop/zero the canvas while backgrounded; rebuild size + ground and redraw.
+    try { resize(); } catch (e0) {}
+    try { invalidateTerrainPatterns(); } catch (e1) {}
+    rt.lastTime = 0;
+    try { draw(); } catch (e2) {}
   };
   document.addEventListener('visibilitychange', onVisibilityChange);
   rt.listeners.push(function () {

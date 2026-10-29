@@ -296,6 +296,15 @@ export function resize() {
   var winH = (typeof window !== "undefined" && window.innerHeight) ? window.innerHeight : 640;
   var width = Math.max(1, Math.round(rect.width || rt.ui.canvas.clientWidth || rt.ui.canvas.width || winW || 960));
   var height = Math.max(1, Math.round(rect.height || rt.ui.canvas.clientHeight || rt.ui.canvas.height || winH || 640));
+  // Tab-hide / collapsed layout can report a tiny rect; rewriting the backing store to that
+  // blanks the combat view (HUD DOM still lives). Keep the last good size until we are visible.
+  var hidden = (typeof document !== 'undefined' && document.hidden);
+  var prevW = rt.ui.width || 0;
+  var prevH = rt.ui.height || 0;
+  if ((hidden || width < 64 || height < 64) && prevW >= 64 && prevH >= 64 && (width < 64 || height < 64 || width * height < prevW * prevH * 0.25)) {
+    width = prevW;
+    height = prevH;
+  }
 
   var q = 'high';
   try { q = getQuality(); } catch (e) {}

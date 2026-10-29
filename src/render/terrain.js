@@ -634,6 +634,12 @@ export function lastTerrainBakeMs() {
   return lastBakeMs;
 }
 
+/** Drop cached fill patterns so a tab-return / GPU recycle still paints ground. */
+export function invalidateTerrainPatterns() {
+  slotA.pattern = null;
+  slotB.pattern = null;
+}
+
 function ensure(sector, detail, protect) {
   var key = cacheKey(sector, detail);
   if (slotA.key === key && slotA.canvas) return slotA;
