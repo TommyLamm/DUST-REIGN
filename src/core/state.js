@@ -126,6 +126,7 @@ export function makeState(width, height) {
     stormCoresHarvested: 0,
     bossSpawned: false,
     deathSequenceTimer: 0,
+    statusHold: 0,
     isNewRecord: false,
     coreSpawnTime: 8 + rng('spawn') * 8,
     coreSpawned: false,

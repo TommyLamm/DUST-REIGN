@@ -477,7 +477,8 @@ export function drawTacticalCursorReticle(ctx) {
   }
 
   // 3. EMP Ready Pip (Cyan diamond right below reticle)
-  if (p && (p.energy || 0) >= 50) {
+  var empCostPip = (p && typeof p.empCost === 'number') ? p.empCost : 50;
+  if (p && (p.energy || 0) >= empCostPip) {
     ctx.fillStyle = '#00f3ff';
     ctx.beginPath();
     ctx.moveTo(mx, my + R + 6);

@@ -11,7 +11,7 @@ import { onEnemyEmp } from './sim/enemy-defense.js';
 import { noteContractEvent } from './contracts.js';
 import { noteMetaEvent } from './meta.js';
 import { addScore } from './scoring.js';
-import { logEvent, setStatusText } from '../ui/hud.js';
+import { logEvent, setStatusText, updateDomUi } from '../ui/hud.js';
 
 var DASH_HEAT_MAX = 3;
 var DASH_HEAT_WINDOW = 3;
@@ -467,6 +467,7 @@ export function triggerEmp() {
   if (rt.input) rt.input.empDrop = null;
   if ((p.energy || 0) < cost) return;
   p.energy -= cost;
+  updateDomUi();
 
   if (p.surgeUnit) {
     p.surgeUnit.active = true;
@@ -602,7 +603,7 @@ export function triggerEmp() {
 
   logEvent('EMP BLAST // SECTOR DISRUPTED');
   if (rt.ui && rt.ui.statusText && !decoySupernovaTriggered) {
-    setStatusText('EMP BLAST DISCHARGED // SECTOR DISRUPTED');
+    setStatusText('EMP BLAST DISCHARGED // SECTOR DISRUPTED', 1.4);
   }
 
   if (rt.state.spires && rt.state.spires.length > 0) {

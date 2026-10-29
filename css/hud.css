@@ -678,6 +678,11 @@ html.reduced-motion .tip-toast {
   box-shadow: 0 0 10px var(--glow-tech);
 }
 
+/* Author display must not override the hidden attribute (EMP ready lie). */
+.emp-ready[hidden] {
+  display: none !important;
+}
+
 #gameCanvas.is-pause-blur {
   filter: grayscale(0.72) brightness(0.78) blur(2px);
 }
