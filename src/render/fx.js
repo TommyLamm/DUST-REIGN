@@ -220,6 +220,12 @@ function ensurePools() {
   }
 }
 
+/** Wipe floating combat/score text + VFX pools (call on beginRun / redeploy). */
+export function clearCombatVisuals() {
+  clearVisuals();
+  if (rt && rt.state && rt.state.particles) rt.state.particles.length = 0;
+}
+
 function clearVisuals() {
   var i;
   if (pool) {
