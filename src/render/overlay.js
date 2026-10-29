@@ -437,24 +437,48 @@ export function drawTacticalCursorReticle(ctx) {
   ctx.arc(mx, my, 1.5, 0, TAU);
   ctx.fill();
 
-  // 2. Vanguard / Colossus 360° Charge Progress Arc
+  // 2. Vanguard / Colossus charge telegraph (progress + plant/slow cue + full-ready flash)
   if (p && p.isCharging && (p.chargeNeed || 0) > 0) {
     var prog = clamp((p.chargeTime || 0) / p.chargeNeed, 0, 1);
-    var isFull = prog >= 1;
+    var commitLeft = Math.max(0, p.chargeCommit || 0);
+    var isFull = prog >= 1 || commitLeft > 0;
     var pulse = isReducedMotion() ? 1 : (0.8 + 0.2 * Math.sin((rt.renderTime || 0) * 16));
+    var arcR = R + 5;
 
     ctx.beginPath();
-    ctx.arc(mx, my, R + 4, -Math.PI / 2, -Math.PI / 2 + prog * TAU);
-    ctx.strokeStyle = isFull ? ('rgba(255, 211, 107, ' + pulse.toFixed(2) + ')') : 'rgba(0, 243, 255, 0.85)';
-    ctx.lineWidth = isFull ? 2.5 : 1.8;
+    ctx.arc(mx, my, arcR, 0, TAU);
+    ctx.strokeStyle = 'rgba(8, 24, 32, 0.55)';
+    ctx.lineWidth = 3.2;
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(mx, my, arcR, -Math.PI / 2, -Math.PI / 2 + Math.min(1, prog) * TAU);
+    ctx.strokeStyle = isFull ? ('rgba(255, 211, 107, ' + pulse.toFixed(2) + ')') : 'rgba(0, 243, 255, 0.95)';
+    ctx.lineWidth = isFull ? 3.2 : 2.4;
+    ctx.stroke();
+
+    // Amber dashed halo = charging slows hull (move x0.65) — telegraph only.
+    ctx.beginPath();
+    ctx.setLineDash([3, 4]);
+    ctx.arc(mx, my, arcR + 5, 0, TAU);
+    ctx.strokeStyle = isFull ? ('rgba(255, 170, 70, ' + (0.55 * pulse).toFixed(2) + ')') : 'rgba(255, 140, 60, 0.45)';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.setLineDash([]);
 
     if (isFull) {
       ctx.beginPath();
-      ctx.arc(mx, my, R + 6, 0, TAU);
-      ctx.strokeStyle = 'rgba(255, 211, 107, 0.4)';
-      ctx.lineWidth = 1.2;
+      ctx.arc(mx, my, arcR + 2, 0, TAU);
+      ctx.strokeStyle = 'rgba(255, 211, 107, ' + (0.55 * pulse).toFixed(2) + ')';
+      ctx.lineWidth = 1.6;
       ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 211, 107, ' + pulse.toFixed(2) + ')';
+      for (var ti = 0; ti < 4; ti += 1) {
+        var ta = -Math.PI / 2 + ti * (Math.PI / 2);
+        ctx.beginPath();
+        ctx.arc(mx + Math.cos(ta) * (arcR + 8), my + Math.sin(ta) * (arcR + 8), 1.6, 0, TAU);
+        ctx.fill();
+      }
     }
   }
 
