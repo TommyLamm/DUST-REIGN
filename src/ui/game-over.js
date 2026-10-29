@@ -2,7 +2,7 @@ import { isChinese, tCampaignStageStar } from '../core/i18n.js';
 import { formatDamageSourceLabel } from '../systems/combat.js';
 import { getCampaignStore, isStageUnlocked, saveCampaignStore } from '../core/meta-store.js';
 import { CAMPAIGN_STAGES, getCampaignStage } from '../data/campaign-stages.js';
-import { beginRun, restart } from '../systems/flow.js';
+import { redeploy, restart } from '../systems/flow.js';
 import { openCampaignModal } from './campaign-modal.js';
 import { on } from '../core/utils.js';
 
@@ -47,8 +47,7 @@ export function handleNextSector() {
   if (nextId) {
     store.selectedStage = nextId;
     saveCampaignStore(store);
-    restart();
-    beginRun();
+    redeploy();
   } else {
     // If no next stage or next stage locked, open stage modal
     restart();
@@ -257,8 +256,7 @@ export function initGameOverUi() {
     on(replayBtn, 'click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      restart();
-      beginRun();
+      redeploy();
     });
   }
 

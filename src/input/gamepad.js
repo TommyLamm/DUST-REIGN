@@ -3,7 +3,7 @@ import { qa } from '../core/utils.js';
 import { dash, triggerEmp } from '../systems/abilities.js';
 import { doubleDownCurrentContract } from '../systems/contracts.js';
 import { triggerTacticalAuxiliary } from '../systems/tactical.js';
-import { beginRun, restart, togglePause } from '../systems/flow.js';
+import { beginRun, redeploy, restart, togglePause } from '../systems/flow.js';
 import { beginBanish, chooseUpgrade, rerollUpgrades, skipUpgrade } from '../systems/progression.js';
 import { isCodexOpen } from '../ui/codex-panel.js';
 import { loadoutCommand } from '../ui/loadout-panel.js';
@@ -138,7 +138,7 @@ function pollGamepadInner(dt) {
 
   if (rt.state.over) {
     releaseGamepadFire();
-    if (justPressed(0) || justPressed(9)) restart();
+    if (justPressed(0) || justPressed(9)) redeploy();
     for (var obi = 0; obi < buttons.length; obi += 1) rt.gamepadState.prevButtons[obi] = isBtnPressed(buttons[obi]);
     return;
   }
