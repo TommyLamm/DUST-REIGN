@@ -63,12 +63,38 @@ function pulse(el, key, value) {
   el._pulseKey = next;
 }
 
+/** Remove every DOM .score-pop (module ref + orphans) — call on beginRun / redeploy. */
+export function clearScorePops() {
+  if (popTimer) {
+    try { clearTimeout(popTimer); } catch (e0) {}
+    popTimer = 0;
+  }
+  popValue = 0;
+  popAt = 0;
+  if (popEl && popEl.parentNode) {
+    try { popEl.parentNode.removeChild(popEl); } catch (e1) {}
+  }
+  popEl = null;
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  var nodes = document.querySelectorAll('.score-pop');
+  for (var i = 0; i < nodes.length; i += 1) {
+    var n = nodes[i];
+    if (n && n.parentNode) {
+      try { n.parentNode.removeChild(n); } catch (e2) {}
+    }
+  }
+}
+
 function popScore(delta) {
   if (!delta || typeof document === 'undefined' || motionOff()) return;
   var host = rt.ui && rt.ui.score && rt.ui.score.parentElement;
   if (!host || !host.appendChild) return;
   var now = Date.now();
   if (!popEl || !popEl.parentNode || now - popAt > 280) {
+    // Always drop the previous span before creating a new one (was leaking when >280ms).
+    if (popEl && popEl.parentNode) {
+      try { popEl.parentNode.removeChild(popEl); } catch (eRm) {}
+    }
     popEl = document.createElement('span');
     popEl.className = 'score-pop';
     host.appendChild(popEl);

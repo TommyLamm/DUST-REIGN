@@ -225,6 +225,16 @@ function ensurePools() {
 export function clearCombatVisuals() {
   clearVisuals();
   if (rt && rt.state && rt.state.particles) rt.state.particles.length = 0;
+  // DOM score-pop spans live in hud.js — sweep orphans here too so one call clears both layers.
+  if (typeof document !== 'undefined' && document.querySelectorAll) {
+    var nodes = document.querySelectorAll('.score-pop');
+    for (var i = 0; i < nodes.length; i += 1) {
+      var n = nodes[i];
+      if (n && n.parentNode) {
+        try { n.parentNode.removeChild(n); } catch (eDom) {}
+      }
+    }
+  }
 }
 
 function clearVisuals() {
