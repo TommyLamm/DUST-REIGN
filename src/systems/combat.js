@@ -382,9 +382,14 @@ export function damageEnemy(e, amount, info) {
   info = info || {};
   var filtered = filterEnemyDamage(e, requested, info);
   var applied = softenBossHit(e, Number(filtered), info);
+  // Credit shield soak + hull chips (absorb stashed by filterEnemyDamage).
+  var absorbed = (info && Number(info._absorbed)) || 0;
+  if (rt.state.stats) {
+    var credit = (Number(applied) > 0 ? Number(applied) : 0) + (absorbed > 0 ? absorbed : 0);
+    if (credit > 0) rt.state.stats.damageDealt = (Number(rt.state.stats.damageDealt) || 0) + credit;
+  }
   if (!(applied > 0)) return 0;
   e.hp -= applied;
-  if (rt.state.stats) rt.state.stats.damageDealt += applied;
   if (rt.state.player) {
     var p = rt.state.player;
     p.hitmarkerTime = rt.renderTime || 0;

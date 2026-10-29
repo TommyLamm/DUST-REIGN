@@ -426,7 +426,8 @@ function writeTelemetry(accPct, combo, grazes, dmg) {
   if (rt.ui.telAccuracy) rt.ui.telAccuracy.textContent = accPct + '%';
   if (rt.ui.telMaxCombo) rt.ui.telMaxCombo.textContent = 'x' + combo;
   if (rt.ui.telGrazes) rt.ui.telGrazes.textContent = String(grazes);
-  if (rt.ui.telDamage) rt.ui.telDamage.textContent = String(dmg);
+  // Plain decimal — never padStart (avoid "013" look) and coerce in case of string concat drift.
+  if (rt.ui.telDamage) rt.ui.telDamage.textContent = String(Math.max(0, Math.round(Number(dmg) || 0)));
 }
 
 function canRollNumbers() {
@@ -568,16 +569,19 @@ function syncTelemetry(acc, stats) {
   var accPct = Math.round(acc * 100);
   var combo = stats.maxCombo || 0;
   var grazes = stats.grazes || 0;
-  var dmg = Math.round(stats.damageDealt || 0);
+  var dmg = Math.max(0, Math.round(Number(stats.damageDealt) || 0));
   var key = accPct + '|' + combo + '|' + grazes + '|' + dmg + '|' + (rt.state.score || 0);
   if (!rt.state.over) return;
   if (telRoll.busy && telRoll.key === key) return;
-  if (!telRoll.busy) writeTelemetry(accPct, combo, grazes, dmg);
+  // Always pin the true total immediately so a mid-roll glance cannot stick on "013".
+  writeTelemetry(accPct, combo, grazes, dmg);
   var visible = !rt.ui.gameOver || rt.ui.gameOver.hidden === false;
   if (!visible) return;
   if (telRoll.key === key) return;
   telRoll.key = key;
   if (!canRollNumbers()) return;
+  if (telRoll.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(telRoll.raf);
+  telRoll.busy = false;
   animateTelemetry(accPct, combo, grazes, dmg);
 }
 
