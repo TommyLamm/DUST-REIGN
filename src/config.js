@@ -7,6 +7,14 @@ export var DASH_PULSE_RADIUS = 88;
 export var OVERDRIVE_DURATION = 6;
 export var OVERDRIVE_COOLDOWN = 0.62;
 export var OVERDRIVE_DAMAGE = 1.5;
+/** Timed full-map loot vacuum after picking up a magnet orb (seconds). */
+export var MAGNET_PICKUP_DURATION = 8;
+/** Chance a normal enemy kill also drops a magnet orb. */
+export var MAGNET_KILL_DROP_CHANCE = 0.035;
+/** Extra kill-drop chance for elites (added on top of base). */
+export var MAGNET_ELITE_DROP_BONUS = 0.04;
+/** Per-wave chance to refresh one magnet orb on the ground (away from player). */
+export var MAGNET_GROUND_SPAWN_CHANCE = 0.55;
 export var BOUNTY_SURGE_DURATION = 3;
 export var REPAIR_OVERFLOW_SCORE = 12;
 export var STORM_FRONT_SECONDS = 5;

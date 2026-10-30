@@ -9,6 +9,7 @@ import { dashRechargeCooldown } from '../abilities.js';
 import { onWaveEnd, onWaveStart } from '../director.js';
 import { addScore } from '../scoring.js';
 import * as spawning from '../spawning.js';
+import { trySpawnGroundMagnet } from '../drops.js';
 import { logEvent, setStatusText } from '../../ui/hud.js';
 
 function stormSeconds() {
@@ -99,6 +100,8 @@ export function commitWaveAdvance(early) {
   rt.state.stormHurt = false;
   rt.state.stormCoresSpawned = false;
   rt.state.stormCoresHarvested = 0;
+  rt.state.magnetGroundSpawned = false;
+  rt.state.magnetGroundDueAt = 8 + rng('spawn') * 14;
   rt.state.volatileCores = [];
   rt.state.barrels = [];
   rt.state.convoy = null;
@@ -219,6 +222,7 @@ export function stepWaveClock(dt, frame) {
   p.dashPulse = Math.max(0, p.dashPulse - dt);
   p.dashAmbushTimer = Math.max(0, (p.dashAmbushTimer || 0) - dt);
   p.overdrive = Math.max(0, p.overdrive - dt);
+  p.lootMagnet = Math.max(0, (p.lootMagnet || 0) - dt);
   if (p.reactiveMicroEmp && (p.reactiveMicroEmp.timer || 0) > 0) {
     p.reactiveMicroEmp.timer = Math.max(0, p.reactiveMicroEmp.timer - dt);
   }
@@ -278,6 +282,21 @@ export function stepWaveClock(dt, frame) {
     }
   } else {
     rt.state.wolfPackSurge = false;
+  }
+
+  // Mid-wave loot-magnet ground refresh (once per wave, chance-gated in trySpawnGroundMagnet).
+  if (!rt.state.magnetGroundSpawned && !rt.state.over) {
+    var dueMag = (typeof rt.state.magnetGroundDueAt === 'number') ? rt.state.magnetGroundDueAt : 12;
+    if ((rt.state.waveTime || 0) >= dueMag) {
+      var magOrb = trySpawnGroundMagnet(
+        (rt.state && rt.state.width) || 3520,
+        (rt.state && rt.state.height) || 2640
+      );
+      if (magOrb) {
+        logEvent('LOOT MAGNET SIGNAL // FIELD ANOMALY DETECTED');
+        pushFxEvent('burst', magOrb.x, magOrb.y, { preset: 'emp', tint: '#5be7ff', scale: 0.55 });
+      }
+    }
   }
 
   if (frontActive() && !rt.state.stormAlerted && !rt.state.over) {

@@ -1,4 +1,4 @@
-import { COMBO_WINDOW, OVERDRIVE_DURATION, WAVE_LENGTH, TAU } from '../config.js';
+import { COMBO_WINDOW, MAGNET_PICKUP_DURATION, OVERDRIVE_DURATION, WAVE_LENGTH, TAU } from '../config.js';
 import { rt } from '../core/runtime.js';
 import { isReducedMotion } from '../core/settings.js';
 import { clamp } from '../core/utils.js';
@@ -331,18 +331,32 @@ export function drawHud(ctx) {
     ctx.fillStyle = 'rgba(233,217,185,.75)';
     ctx.fillText('KEEP THE SIGNAL HOT', 20, 155);
   }
+  var buffY = 176;
   if (p.overdrive > 0) {
     var zhOd = isChinese();
     ctx.textAlign = 'left';
     ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = '#f0cf88';
     // Locale bug fix: canvas fallback chrome was EN-only under zh (I18N-FREEZE allows).
-    ctx.fillText((zhOd ? '超頻 ' : 'OVERCLOCK ') + p.overdrive.toFixed(1) + 's', 20, 176);
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, 197, 148, 4);
-    ctx.fillStyle = '#f0cf88'; ctx.fillRect(20, 197, 148 * p.overdrive / OVERDRIVE_DURATION, 4);
+    ctx.fillText((zhOd ? '超頻 ' : 'OVERCLOCK ') + p.overdrive.toFixed(1) + 's', 20, buffY);
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, buffY + 21, 148, 4);
+    ctx.fillStyle = '#f0cf88'; ctx.fillRect(20, buffY + 21, 148 * Math.min(1, p.overdrive / OVERDRIVE_DURATION), 4);
     ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
     ctx.fillStyle = 'rgba(233,217,185,.75)';
-    ctx.fillText(zhOd ? '傷害 +50% / 冷卻 -38%' : 'DAMAGE +50% / COOLDOWN -38%', 20, 207);
+    ctx.fillText(zhOd ? '傷害 +50% / 冷卻 -38%' : 'DAMAGE +50% / COOLDOWN -38%', 20, buffY + 31);
+    buffY += 52;
+  }
+  if ((p.lootMagnet || 0) > 0) {
+    var zhMag = isChinese();
+    ctx.textAlign = 'left';
+    ctx.font = '700 13px ui-monospace, SFMono-Regular, Consolas, monospace';
+    ctx.fillStyle = '#5be7ff';
+    ctx.fillText((zhMag ? '磁鐵 ' : 'LOOT MAGNET ') + p.lootMagnet.toFixed(1) + 's', 20, buffY);
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(20, buffY + 21, 148, 4);
+    ctx.fillStyle = '#5be7ff'; ctx.fillRect(20, buffY + 21, 148 * Math.min(1, p.lootMagnet / MAGNET_PICKUP_DURATION), 4);
+    ctx.font = '10px ui-monospace, SFMono-Regular, Consolas, monospace';
+    ctx.fillStyle = 'rgba(233,217,185,.75)';
+    ctx.fillText(zhMag ? '全場吸取掉落物' : 'FULL-FIELD LOOT VACUUM', 20, buffY + 31);
   }
   // The page HUD shows wave progress under the wave pill; only fallback hosts get the canvas bar.
   if (!rt.ui.wave) {

@@ -278,6 +278,27 @@ export function run() {
     if (Math.abs(crate.x - crateX) > 0.01) throw new Error('supply crate was pulled by the magnet');
     if (repair.x <= 100) throw new Error('repair scrap was not pulled by the magnet');
 
+    // Timed loot-magnet vacuum pulls distant scrap AND crates across the whole map.
+    var vac = fresh();
+    vac.player.x = 200;
+    vac.player.y = 200;
+    vac.player.lootMagnet = 5;
+    vac.player.magnetRadius = 50;
+    vac.orbs = [];
+    var farScrap = { kind: 'scrap', x: 900, y: 900, vx: 0, vy: 0, r: 7, value: 10, life: 20 };
+    var farCrate = spawnCrate(850, 850, 0, 0);
+    vac.orbs.push(farScrap);
+    var farScrapX = farScrap.x;
+    var farCrateX = farCrate.x;
+    stepOrbs(0.25, frameFor(vac));
+    if (!(farScrap.x < farScrapX)) throw new Error('loot-magnet vacuum did not pull distant scrap');
+    if (!(farCrate.x < farCrateX)) throw new Error('loot-magnet vacuum did not pull distant crate');
+    vac.player.lootMagnet = 0;
+    var magnetOrb = { kind: 'magnet', x: vac.player.x, y: vac.player.y, vx: 0, vy: 0, r: 11, value: 0, life: 20 };
+    vac.orbs = [magnetOrb];
+    stepOrbs(0.05, frameFor(vac));
+    if (!((vac.player.lootMagnet || 0) > 0)) throw new Error('magnet pickup did not arm lootMagnet buff');
+
     var payout = fresh();
     payout.wave = 5;
     payout.enemies = [{ kind: 'titan', isBoss: true, score: 800, x: 40, y: 40, r: 20, hp: 0, maxHp: 650, color: '#e69535' }];

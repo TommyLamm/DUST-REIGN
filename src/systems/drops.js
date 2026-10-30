@@ -1,6 +1,9 @@
+import { MAGNET_ELITE_DROP_BONUS, MAGNET_GROUND_SPAWN_CHANCE, MAGNET_KILL_DROP_CHANCE } from '../config.js';
+import { MAP_MARGIN } from '../core/constants.js';
 import { pushFxEvent } from '../core/fx-events.js';
 import { rng } from '../core/rng.js';
 import { rt } from '../core/runtime.js';
+import { clamp } from '../core/utils.js';
 import { damageEnemy, killEnemy } from './combat.js';
 import { damageConvoy } from './mutators.js';
 import { addScore } from './scoring.js';
@@ -36,6 +39,73 @@ export function spawnCrate(x, y, vx, vy) {
   };
   pushOrb(orb);
   return orb;
+}
+
+
+export function spawnMagnet(x, y, vx, vy) {
+  if (!rt.state) return null;
+  var orb = {
+    kind: 'magnet',
+    x: x,
+    y: y,
+    vx: typeof vx === 'number' ? vx : (rng('loot') - 0.5) * 60,
+    vy: typeof vy === 'number' ? vy : (rng('loot') - 0.5) * 60,
+    r: 11,
+    value: 0,
+    life: 26
+  };
+  pushOrb(orb);
+  return orb;
+}
+
+function magnetKillChance(elite) {
+  var chance = MAGNET_KILL_DROP_CHANCE + (elite ? MAGNET_ELITE_DROP_BONUS : 0);
+  if (chance > 0.35) chance = 0.35;
+  if (chance < 0) chance = 0;
+  return chance;
+}
+
+function maybeDropMagnet(e, elite) {
+  if (!e || e.kind === 'phoenix-core') return;
+  if (rng('loot') >= magnetKillChance(!!elite)) return;
+  spawnMagnet(e.x, e.y);
+}
+
+/** Random ground refresh: at most one live magnet orb per call; world-space away from player. */
+export function trySpawnGroundMagnet(boundW, boundH) {
+  if (!rt.state || rt.state.over) return null;
+  if (rt.state.magnetGroundSpawned) return null;
+  if (rng('loot') >= MAGNET_GROUND_SPAWN_CHANCE) {
+    rt.state.magnetGroundSpawned = true;
+    return null;
+  }
+  var orbs = rt.state.orbs || [];
+  var i;
+  for (i = 0; i < orbs.length; i += 1) {
+    if (orbs[i] && orbs[i].kind === 'magnet') {
+      rt.state.magnetGroundSpawned = true;
+      return null;
+    }
+  }
+  var p = rt.state.player || { x: 0, y: 0 };
+  var w = typeof boundW === 'number' ? boundW : (rt.state.width || 3520);
+  var h = typeof boundH === 'number' ? boundH : (rt.state.height || 2640);
+  var margin = Math.max(80, MAP_MARGIN || 160);
+  var cx = margin + rng('spawn') * Math.max(20, w - margin * 2);
+  var cy = margin + rng('spawn') * Math.max(20, h - margin * 2);
+  var tries;
+  for (tries = 0; tries < 12; tries += 1) {
+    if (Math.hypot(cx - p.x, cy - p.y) >= 220) break;
+    cx = margin + rng('spawn') * Math.max(20, w - margin * 2);
+    cy = margin + rng('spawn') * Math.max(20, h - margin * 2);
+  }
+  if (Math.hypot(cx - p.x, cy - p.y) < 220) {
+    var ang = Math.atan2(cy - p.y, cx - p.x) || 0;
+    cx = clamp(p.x + Math.cos(ang) * 220, margin, w - margin);
+    cy = clamp(p.y + Math.sin(ang) * 220, margin, h - margin);
+  }
+  rt.state.magnetGroundSpawned = true;
+  return spawnMagnet(cx, cy, 0, 0);
 }
 
 export function spawnScrap(x, y, value) {
@@ -166,6 +236,7 @@ export function rollDrops(e) {
         life: 35
       });
     }
+    maybeDropMagnet(e, true);
     chainReact(e);
     return;
   }
@@ -190,5 +261,6 @@ export function rollDrops(e) {
       spawnCrate(e.x, e.y, (rng('loot') - 0.5) * 40, (rng('loot') - 0.5) * 40);
     }
   }
+  maybeDropMagnet(e, elite);
   chainReact(e);
 }

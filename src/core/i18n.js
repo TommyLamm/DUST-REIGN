@@ -1326,6 +1326,13 @@ export function tLog(msg) {
   if (msg.indexOf('SUPPLY CRATE // OVERDRIVE') === 0) {
     return msg.replace('SUPPLY CRATE // OVERDRIVE', '物資補給箱 // 超頻');
   }
+  if (msg.indexOf('LOOT MAGNET ONLINE') === 0) {
+    return msg.replace('LOOT MAGNET ONLINE', '戰利品磁鐵上線').replace('FULL-FIELD VACUUM', '全場吸取');
+  }
+  if (msg === 'LOOT MAGNET SIGNAL // FIELD ANOMALY DETECTED') return '戰利品磁鐵訊號 // 偵測到磁場異常';
+  if (msg.indexOf('LOOT MAGNET ') === 0 && msg.indexOf('FULL-FIELD VACUUM') !== -1) {
+    return msg.replace('LOOT MAGNET ', '戰利品磁鐵 ').replace('FULL-FIELD VACUUM', '全場吸取');
+  }
   if (msg.indexOf('REPAIR SCRAP +') === 0) {
     return msg.replace('REPAIR SCRAP +', '維修廢料 +').replace('HULL', '裝甲');
   }
