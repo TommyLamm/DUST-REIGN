@@ -1,5 +1,5 @@
 import { AudioFX } from '../../audio/audio-fx.js';
-import { OVERDRIVE_DURATION, REPAIR_OVERFLOW_SCORE } from '../../config.js';
+import { MAGNET_PICKUP_DURATION, OVERDRIVE_DURATION, REPAIR_OVERFLOW_SCORE } from '../../config.js';
 import { spawnParticles } from '../../core/pools.js';
 import { rt } from '../../core/runtime.js';
 import { dist2, fastUnorderedRemove } from '../../core/utils.js';
@@ -64,21 +64,25 @@ export function stepOrbs(dt, frame) {
   // Early-run magnet bump until first upgrade so scrap to level 2 is easier to vacuum.
   var magnetReach = p.magnetRadius || 165;
   if ((rt.state.level || 1) <= 1) magnetReach += 40;
+  var vacuumActive = (p.lootMagnet || 0) > 0;
   for (var oi = rt.state.orbs.length - 1; oi >= 0; oi -= 1) {
     var orb = rt.state.orbs[oi];
     var crate = isCrate(orb);
     var isStormCore = (orb.kind === 'storm_core');
+    var isMagnetOrb = (orb.kind === 'magnet');
     var odx = p.x - orb.x;
     var ody = p.y - orb.y;
     var od = Math.hypot(odx, ody) || 1;
-    var reach = magnetReach;
-    if (orb.kind === 'repair' && typeof p.repairPickupRadiusMult === 'number') {
+    var reach = vacuumActive ? 1e9 : magnetReach;
+    if (!vacuumActive && orb.kind === 'repair' && typeof p.repairPickupRadiusMult === 'number') {
       reach *= p.repairPickupRadiusMult;
     }
     var pickupRadius = isStormCore ? (p.r + orb.r + 14) : (p.r + orb.r + 5);
-    // Latch magnet once the orb enters reach: never cancel if the player outruns
-    // the radius (dash / dash-burst used to leave scrap lagging on the ground).
-    if (!crate && !isStormCore && (orb.magnetized || od < reach)) {
+    // Passive magnet: scrap/repair/overdrive/magnet orbs (not crates / storm cores).
+    // Timed loot-magnet buff: full-map vacuum pulls ALL ground loot including crates.
+    var canPassivePull = !crate && !isStormCore && (orb.magnetized || od < reach);
+    var canVacuumPull = vacuumActive && !isMagnetOrb;
+    if (canVacuumPull || canPassivePull) {
       if (!orb.magnetized) orb.magnetized = true;
       orb.magnetAge = (orb.magnetAge || 0) + dt;
       // Ramp chase so a latched orb catches a fast player; skip heavy damp.
@@ -164,6 +168,13 @@ export function stepOrbs(dt, frame) {
           rt.state.banner = Math.max(rt.state.banner || 0, 2.5);
           rt.state.bannerText = 'STORM HARVEST GRAND SLAM // +' + (2000 * act) + ' SCORE';
         }
+      } else if (orb.kind === 'magnet') {
+        var magDur = MAGNET_PICKUP_DURATION;
+        p.lootMagnet = Math.max(p.lootMagnet || 0, magDur);
+        AudioFX.pickup('overdrive');
+        spawnParticles(orb.x, orb.y, '#5be7ff', 16, 180, 3.2);
+        setStatusText('LOOT MAGNET ' + magDur.toFixed(0) + 's // FULL-FIELD VACUUM');
+        logEvent('LOOT MAGNET ONLINE // ' + magDur.toFixed(0) + 's FULL-FIELD VACUUM');
       } else if (orb.kind === 'overdrive') {
         var dur = OVERDRIVE_DURATION + (p.overdriveDurationBonus || 0);
         p.overdrive = dur;

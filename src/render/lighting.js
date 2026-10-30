@@ -114,6 +114,7 @@ function collect(w, h, ox, oy) {
       var orb = list[i];
       if (!orb) continue;
       if (orb.kind === 'overdrive') addLight(orb.x, orb.y, 78, PALETTE.emissive.gold, 0.7, px, py, w, h, ox, oy);
+      else if (orb.kind === 'magnet') addLight(orb.x, orb.y, 72, PALETTE.emissive.tech, 0.68, px, py, w, h, ox, oy);
       else if (orb.kind === 'repair') addLight(orb.x, orb.y, 56, PALETTE.emissive.player, 0.48, px, py, w, h, ox, oy);
       else addLight(orb.x, orb.y, 40, PALETTE.hud.amber, 0.32, px, py, w, h, ox, oy);
     }

@@ -73,8 +73,9 @@ export function drawOrb(ctx, orb) {
   if (!ctx || !orb) return;
   var crate = orb.kind === 'crate' || orb.type === 'crate';
   var power = !crate && orb.kind === 'overdrive';
+  var magnet = !crate && orb.kind === 'magnet';
   var repair = !crate && orb.kind === 'repair';
-  var color = crate ? crateColor(orb.payload) : power ? PALETTE.emissive.gold : repair ? PALETTE.hud.rust : PALETTE.hud.mint;
+  var color = crate ? crateColor(orb.payload) : power ? PALETTE.emissive.gold : magnet ? PALETTE.emissive.tech : repair ? PALETTE.hud.rust : PALETTE.hud.mint;
   var fadeWrap = false;
   if (crate && orb.life <= 3) {
     fadeWrap = true;
@@ -110,6 +111,16 @@ export function drawOrb(ctx, orb) {
     ctx.lineWidth = 2.4;
     ctx.stroke();
     ctx.strokeStyle = 'rgba(255, 215, 80, ' + (0.75 * ocPulse).toFixed(3) + ')';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  } else if (magnet) {
+    var magPulse = reduced ? 0.8 : (0.6 + 0.4 * Math.sin((rt.renderTime || 0) * 7 + (orb.x || 0)));
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 1.5, s * 0.74, 0, 0, TAU);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(91, 231, 255, ' + (0.8 * magPulse).toFixed(3) + ')';
     ctx.lineWidth = 1.4;
     ctx.stroke();
   } else if (repair) {
@@ -170,6 +181,21 @@ export function drawOrb(ctx, orb) {
     ctx.lineTo(orb.x, orb.y - 36);
     ctx.stroke();
     ctx.restore();
+  } else if (magnet) {
+    ctx.save();
+    var magBeamGrad = ctx.createLinearGradient(0, orb.y, 0, orb.y - 34);
+    magBeamGrad.addColorStop(0, 'rgba(91, 231, 255, 0.7)');
+    magBeamGrad.addColorStop(0.5, 'rgba(91, 231, 255, 0.3)');
+    magBeamGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = magBeamGrad;
+    ctx.fillRect(orb.x - s * 0.75, orb.y - 34, s * 1.5, 34);
+    ctx.strokeStyle = 'rgba(220, 250, 255, 0.8)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(orb.x, orb.y);
+    ctx.lineTo(orb.x, orb.y - 34);
+    ctx.stroke();
+    ctx.restore();
   } else if (crate) {
     // 28px Cargo Crate Vertical Beacon
     ctx.save();
@@ -188,7 +214,7 @@ export function drawOrb(ctx, orb) {
 
   ctx.save();
   ctx.translate(orb.x, bodyY);
-  if (!keyGlowsOnly()) drawGlow(ctx, 0, 0, s * 2.2, color, power || repair ? 0.45 : 0.4);
+  if (!keyGlowsOnly()) drawGlow(ctx, 0, 0, s * 2.2, color, power || magnet || repair ? 0.45 : 0.4);
 
   if (power) {
     // Overclock Core (金色超頻核心): Heavy angle-iron reinforced container + inverted high-contrast icon
@@ -224,6 +250,49 @@ export function drawOrb(ctx, orb) {
     ctx.strokeStyle = '#ffdf7a';
     ctx.lineWidth = 1.2;
     ctx.strokeRect(-s * 0.52, -s * 0.92, s * 1.04, s * 1.64);
+  } else if (magnet) {
+    // Loot Magnet: cyan horseshoe with dual poles
+    ctx.rotate(reduced ? 0 : Math.sin((rt.renderTime || 0) * 2.2) * 0.12);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // Obsidian backing U
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.72, -s * 0.85);
+    ctx.lineTo(-s * 0.72, s * 0.35);
+    ctx.quadraticCurveTo(-s * 0.72, s * 0.95, 0, s * 0.95);
+    ctx.quadraticCurveTo(s * 0.72, s * 0.95, s * 0.72, s * 0.35);
+    ctx.lineTo(s * 0.72, -s * 0.85);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = s * 0.55;
+    ctx.stroke();
+    // Cyan body U
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.72, -s * 0.85);
+    ctx.lineTo(-s * 0.72, s * 0.35);
+    ctx.quadraticCurveTo(-s * 0.72, s * 0.95, 0, s * 0.95);
+    ctx.quadraticCurveTo(s * 0.72, s * 0.95, s * 0.72, s * 0.35);
+    ctx.lineTo(s * 0.72, -s * 0.85);
+    ctx.strokeStyle = '#1a8fa8';
+    ctx.lineWidth = s * 0.42;
+    ctx.stroke();
+    ctx.strokeStyle = '#5be7ff';
+    ctx.lineWidth = s * 0.22;
+    ctx.stroke();
+    // Pole tips (N/S caps)
+    ctx.fillStyle = '#ff4d4d';
+    ctx.fillRect(-s * 0.95, -s * 1.05, s * 0.46, s * 0.32);
+    ctx.fillStyle = '#4d7cff';
+    ctx.fillRect(s * 0.49, -s * 1.05, s * 0.46, s * 0.32);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-s * 0.95, -s * 1.05, s * 0.46, s * 0.32);
+    ctx.strokeRect(s * 0.49, -s * 1.05, s * 0.46, s * 0.32);
+    // Inner white highlight arc
+    ctx.beginPath();
+    ctx.arc(0, s * 0.2, s * 0.38, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
   } else if (repair) {
     // Repair Scrap: 2.5px pure black outline + crimson box body + blazing white cross core (2Hz breath flashing)
     ctx.fillStyle = '#000000';
