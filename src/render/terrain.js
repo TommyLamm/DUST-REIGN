@@ -667,12 +667,14 @@ function drawSlotPattern(ctx, slot, alpha, x0, y0, viewW, viewH) {
 
   var inv = 1 / (slot.scale || 1);
   var mat;
+  // Fill is already in world space under the camera CTM. Translating the
+  // pattern by -x0/-y0 double-scrolled the ground under the hull (float look).
+  // Scale alone maps HiDPI-baked tiles back to world units.
   if (typeof DOMMatrix !== 'undefined') {
     mat = new DOMMatrix();
-    mat.translateSelf(-x0, -y0);
     if (inv !== 1) mat.scaleSelf(inv, inv);
   } else {
-    mat = { a: inv, b: 0, c: 0, d: inv, e: -x0, f: -y0 };
+    mat = { a: inv, b: 0, c: 0, d: inv, e: 0, f: 0 };
   }
   terrainPattern.setTransform(mat);
   ctx.fillStyle = terrainPattern;
