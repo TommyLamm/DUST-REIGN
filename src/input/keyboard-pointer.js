@@ -17,6 +17,8 @@ import { onTipsReset, updateTips } from '../ui/tips.js';
 import { screenToWorld } from '../core/camera.js';
 
 export var cachedCanvasRect = { left: 0, top: 0, width: 1, height: 1 };
+/** Last window pointer client coords — used to seed sx/sy on beginRun before first canvas move. */
+export var lastPointerClient = { x: 0, y: 0, ok: false };
 
 export function updateCanvasRect() {
   if (!rt.ui || !rt.ui.canvas || typeof rt.ui.canvas.getBoundingClientRect !== 'function') return;
@@ -47,6 +49,38 @@ function pointerPosition(event) {
     var viewH = (rt.ui && rt.ui.height) || 640;
     rt.input.mouse.x = sx + (camX - viewW * 0.5);
     rt.input.mouse.y = sy + (camY - viewH * 0.5);
+  }
+  var p = rt.state && rt.state.player;
+  if (p) {
+    p.aimX = rt.input.mouse.x;
+    p.aimY = rt.input.mouse.y;
+    var dx = p.aimX - p.x;
+    var dy = p.aimY - p.y;
+    if (dx || dy) p.aim = Math.atan2(dy, dx);
+  }
+}
+
+/** Sync mouse.sx/sy + world aim from last client (or canvas centre). Call after camera snap on beginRun. */
+export function syncAimFromPointer() {
+  if (!rt.input || !rt.input.mouse || !rt.ui) return;
+  updateCanvasRect();
+  var vw = rt.ui.width || 960;
+  var vh = rt.ui.height || 640;
+  var sx;
+  var sy;
+  if (lastPointerClient.ok && cachedCanvasRect.width > 1) {
+    sx = (lastPointerClient.x - cachedCanvasRect.left) * (vw / cachedCanvasRect.width);
+    sy = (lastPointerClient.y - cachedCanvasRect.top) * (vh / cachedCanvasRect.height);
+  } else {
+    sx = vw * 0.5;
+    sy = vh * 0.5;
+  }
+  if (!(sx >= 0) || !(sx <= vw)) sx = vw * 0.5;
+  if (!(sy >= 0) || !(sy <= vh)) sy = vh * 0.5;
+  rt.input.mouse.sx = sx;
+  rt.input.mouse.sy = sy;
+  if (rt.camera) {
+    screenToWorld(sx, sy, rt.camera, rt.input.mouse);
   }
   var p = rt.state && rt.state.player;
   if (p) {
@@ -135,6 +169,14 @@ export function bindInput() {
   on(window, 'keyup', function (event) { rt.input.keys.delete(event.key.toLowerCase()); });
   on(rt.ui.canvas, 'contextmenu', function (event) { event.preventDefault(); });
   on(rt.ui.canvas, 'pointermove', pointerPosition);
+  // Seed last client even while hovering loadout / start CTA (canvas may not see moves).
+  on(window, 'pointermove', function (event) {
+    if (event && typeof event.clientX === 'number') {
+      lastPointerClient.x = event.clientX;
+      lastPointerClient.y = event.clientY;
+      lastPointerClient.ok = true;
+    }
+  }, { passive: true });
   on(rt.ui.canvas, 'pointerdown', function (event) {
     updateCanvasRect();
     pointerPosition(event);

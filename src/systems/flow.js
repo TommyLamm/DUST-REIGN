@@ -1,6 +1,7 @@
 import { AudioFX } from '../audio/audio-fx.js';
 import { STORM_FRONT_SECONDS, WAVE_LENGTH } from '../config.js';
 import { initCamera } from '../core/camera.js';
+import { syncAimFromPointer } from '../input/keyboard-pointer.js';
 import { SPAWN_CENTER_X, SPAWN_CENTER_Y } from '../core/constants.js';
 import { rt } from '../core/runtime.js';
 import { getCampaignStore, getHardcoreStore, readBestScoreV2, readMeta, readModdedBestScore, recordHardcoreClear, recordStageClear, writeBestScoreV2, writeModdedBestScore } from '../core/meta-store.js';
@@ -303,12 +304,15 @@ export function beginRun() {
     var spawnY = (typeof SPAWN_CENTER_Y === "number") ? SPAWN_CENTER_Y : (rt.state.height / 2);
     rt.state.player.x = spawnX;
     rt.state.player.y = spawnY;
-    if (rt.input && rt.input.mouse) {
-      rt.input.mouse.x = spawnX + 100;
-      rt.input.mouse.y = spawnY;
-    }
     if (rt.camera && rt.state) {
       initCamera(rt.camera, rt.state.width, rt.state.height, (rt.ui && rt.ui.width) || 960, (rt.ui && rt.ui.height) || 640);
+    }
+    // Seed screen + world aim together so canvas reticle matches from frame 1 (no dual/stale pip).
+    try { syncAimFromPointer(); } catch (eAim) {
+      if (rt.input && rt.input.mouse) {
+        rt.input.mouse.x = spawnX + 100;
+        rt.input.mouse.y = spawnY;
+      }
     }
   }
   snapDeploySpawn();
