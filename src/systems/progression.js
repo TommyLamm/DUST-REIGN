@@ -247,6 +247,7 @@ export function addXp(amount) {
   if (!isFinite(gain) || gain < 1) gain = 1;
   rt.state.totalScrapCollected = (rt.state.totalScrapCollected || 0) + gain;
   if (!(typeof rt.state.xp === 'number') || !isFinite(rt.state.xp)) rt.state.xp = 0;
+  if (!(typeof rt.state.xpNext === 'number') || !isFinite(rt.state.xpNext) || rt.state.xpNext <= 0) rt.state.xpNext = XP_START;
   rt.state.xp += gain;
   if (rt.state.xp >= rt.state.xpNext) {
     if (rt.state.over) return;
