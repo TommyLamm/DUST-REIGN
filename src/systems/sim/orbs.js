@@ -226,7 +226,8 @@ export function stepOrbs(dt, frame) {
           setStatusText('GRAVITON BURST // BULLETS DISSIPATED');
         }
       } else {
-        var scrapXp = orb.value;
+        var scrapXp = (typeof orb.value === 'number' && isFinite(orb.value)) ? orb.value
+          : ((typeof orb.val === 'number' && isFinite(orb.val)) ? orb.val : 10);
         if (rt.state.route && rt.state.route.xpMultiplier && rt.state.route.xpMultiplier !== 1) {
           scrapXp = Math.round((scrapXp || 0) * rt.state.route.xpMultiplier);
         }

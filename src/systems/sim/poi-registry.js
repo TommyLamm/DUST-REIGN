@@ -19,7 +19,8 @@ export function spawnScrapBurst(cx, cy, count) {
       vx: Math.cos(ang) * speed,
       vy: Math.sin(ang) * speed,
       r: 4.5,
-      val: 1,
+      value: 1,
+      life: 28,
       kind: 'scrap'
     });
   }
@@ -924,7 +925,8 @@ export var POI_REGISTRY = {
                 vx: Math.cos(ang) * spd,
                 vy: Math.sin(ang) * spd,
                 r: 4.5,
-                val: 1,
+                value: 1,
+                life: 28,
                 kind: 'scrap'
               });
             }
